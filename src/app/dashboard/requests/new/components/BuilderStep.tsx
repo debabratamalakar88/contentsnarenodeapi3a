@@ -1,62 +1,35 @@
 'use client'
 
-import React, { useState } from "react"
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Bold, Italic, Underline, Strikethrough, List, Pilcrow, Link, Image, Video, Code2, MoreHorizontal, Settings, Trash2, GripVertical, ChevronDown, Folder
+  MoreHorizontal, Settings, GripVertical, Folder, ChevronDown
 } from "lucide-react"
 
-import type { Page, Section, Question } from "../page"
+import type { Page } from "../page"
 
 interface BuilderStepProps {
   pages: Page[];
   setPages: React.Dispatch<React.SetStateAction<Page[]>>;
+  addPage: () => void;
+  addSection: (pageId: number) => void;
+  onAddFieldClick: (pageId: number, sectionId: number) => void;
 }
 
-const RichTextToolbar = () => (
-    <div className="flex items-center gap-1 bg-card border-b p-1">
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Bold className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Italic className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Underline className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Strikethrough className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <List className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Pilcrow className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Link className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Image className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Video className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Code2 className="h-4 w-4" />
-        </Button>
-    </div>
-)
+interface PagesSidebarProps {
+  pages: Page[];
+  addPage: () => void;
+}
 
-const PagesSidebar = ({ pages, setPages }: BuilderStepProps) => {
+const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
     return (
         <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
             <div className="p-4 border-b">
                 <h2 className="font-semibold text-sm">PAGES</h2>
             </div>
-            <div className="flex-grow p-2 space-y-1">
+            <div className="flex-grow p-2 space-y-1 overflow-y-auto">
                 {pages.map(page => (
                     <div key={page.id}>
                         <a href={`#page-${page.id}`} className="flex items-center justify-between text-sm p-2 rounded-md bg-primary/10 text-primary font-semibold">
@@ -84,19 +57,19 @@ const PagesSidebar = ({ pages, setPages }: BuilderStepProps) => {
                 ))}
             </div>
             <div className="p-2 border-t">
-                <Button variant="outline" className="w-full">
-                    Add a Page <ChevronDown className="h-4 w-4 ml-2" />
+                <Button variant="outline" className="w-full" onClick={addPage}>
+                    Add a Page
                 </Button>
             </div>
         </aside>
     )
 }
 
-export default function BuilderStep({ pages, setPages }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick }: BuilderStepProps) {
 
   return (
     <div className="flex h-full">
-      <PagesSidebar pages={pages} setPages={setPages} />
+      <PagesSidebar pages={pages} addPage={addPage} />
       
       <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
@@ -153,10 +126,10 @@ export default function BuilderStep({ pages, setPages }: BuilderStepProps) {
                                         </div>
                                     </div>
                                 ))}
-                                <Button variant="outline" size="sm">Add a Field</Button>
+                                <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)}>Add a Field</Button>
                             </div>
                         ))}
-                         <Button variant="outline" size="sm">Add a Section <ChevronDown className="h-4 w-4 ml-2" /></Button>
+                         <Button variant="outline" size="sm" onClick={() => addSection(page.id)}>Add a Section</Button>
                     </div>
                 ))}
             </div>
