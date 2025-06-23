@@ -129,6 +129,32 @@ export default function NewRequestPage() {
         }));
     };
 
+    const updatePageTitle = (pageId: number, newTitle: string) => {
+        setPages(prevPages => prevPages.map(page => {
+            if (page.id === pageId) {
+                return { ...page, title: newTitle };
+            }
+            return page;
+        }));
+    };
+
+    const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => {
+        setPages(prevPages => prevPages.map(page => {
+            if (page.id === pageId) {
+                return {
+                    ...page,
+                    sections: page.sections.map(section => {
+                        if (section.id === sectionId) {
+                            return { ...section, title: newTitle };
+                        }
+                        return section;
+                    })
+                };
+            }
+            return page;
+        }));
+    };
+
     const handleAddFieldClick = (pageId: number, sectionId: number) => {
         setCurrentLocation({ pageId, sectionId });
         setQuestionTypeDialogOpen(true);
@@ -175,6 +201,8 @@ export default function NewRequestPage() {
                                         addPage={addPage}
                                         addSection={addSection}
                                         onAddFieldClick={handleAddFieldClick}
+                                        updatePageTitle={updatePageTitle}
+                                        updateSectionTitle={updateSectionTitle}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;

@@ -16,6 +16,8 @@ interface BuilderStepProps {
   addPage: () => void;
   addSection: (pageId: number) => void;
   onAddFieldClick: (pageId: number, sectionId: number) => void;
+  updatePageTitle: (pageId: number, newTitle: string) => void;
+  updateSectionTitle: (pageId: number, sectionId: number, newTitle: string) => void;
 }
 
 interface PagesSidebarProps {
@@ -65,7 +67,7 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle }: BuilderStepProps) {
 
   return (
     <div className="flex h-full">
@@ -90,7 +92,11 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                 {pages.map(page => (
                     <div key={page.id} id={`page-${page.id}`}>
                         <div className="flex items-center gap-2 mb-2">
-                            <h2 className="text-xl font-bold">{page.title}</h2>
+                             <Input
+                                value={page.title}
+                                onChange={(e) => updatePageTitle(page.id, e.target.value)}
+                                className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                            />
                             <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                         </div>
                         <Textarea 
@@ -102,7 +108,11 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                         {page.sections.map(section => (
                             <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="text-lg font-semibold">{section.title}</h3>
+                                     <Input
+                                        value={section.title}
+                                        onChange={(e) => updateSectionTitle(page.id, section.id, e.target.value)}
+                                        className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                                    />
                                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                 </div>
 
