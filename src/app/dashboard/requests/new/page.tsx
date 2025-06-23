@@ -9,6 +9,7 @@ import FinalizeStep from './components/FinalizeStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 // Type definitions for the entire wizard
 export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio';
@@ -54,7 +55,7 @@ const initialPagesData: Page[] = [
 const steps = ["Templates", "Essentials", "Builder", "Preview", "Finalize"];
 
 export default function NewRequestPage() {
-    const [currentStep, setCurrentStep] = useState(steps[2]); // Default to builder
+    const [currentStep, setCurrentStep] = useState(steps[0]);
     
     // State for the whole wizard
     const [requestTitle, setRequestTitle] = useState("New Request");
@@ -77,7 +78,7 @@ export default function NewRequestPage() {
 
     const renderStep = () => {
         switch (currentStep) {
-            case "Templates": return <TemplatesStep />;
+            case "Templates": return <TemplatesStep onNext={nextStep} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep pages={pages} setPages={setPages} />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
@@ -98,7 +99,7 @@ export default function NewRequestPage() {
                 </div>
             </div>
             
-            <div className="flex-grow">
+            <div className={cn("flex-grow", currentStep !== 'Builder' && "p-6 flex justify-center items-center")}>
                 {renderStep()}
             </div>
 

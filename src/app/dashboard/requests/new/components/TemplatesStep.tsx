@@ -26,7 +26,11 @@ const templates = [
   },
 ];
 
-export default function TemplatesStep() {
+interface TemplatesStepProps {
+    onNext: () => void;
+}
+
+export default function TemplatesStep({ onNext }: TemplatesStepProps) {
     return (
         <div className="flex flex-col items-center gap-6 animate-in fade-in-50">
             <div className="text-center">
@@ -35,7 +39,7 @@ export default function TemplatesStep() {
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-5xl">
                 {templates.map((template) => (
-                    <Card key={template.title} className="flex flex-col text-center hover:shadow-lg hover:border-primary cursor-pointer transition-all group">
+                    <Card key={template.title} className="flex flex-col text-center hover:shadow-lg hover:border-primary cursor-pointer transition-all group" onClick={onNext}>
                         <CardHeader className="flex-grow">
                              <FileText className="mx-auto h-12 w-12 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardHeader>
@@ -44,11 +48,11 @@ export default function TemplatesStep() {
                              <CardDescription>{template.category}</CardDescription>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="secondary" className="w-full">Select</Button>
+                            <Button variant="secondary" className="w-full" onClick={(e) => { e.stopPropagation(); onNext(); }}>Select</Button>
                         </CardFooter>
                     </Card>
                 ))}
-                 <Card className="flex flex-col text-center hover:shadow-lg hover:border-primary cursor-pointer transition-all group justify-center items-center min-h-[280px]">
+                 <Card className="flex flex-col text-center hover:shadow-lg hover:border-primary cursor-pointer transition-all group justify-center items-center min-h-[280px]" onClick={onNext}>
                     <Plus className="h-12 w-12 text-muted-foreground group-hover:text-primary transition-colors" />
                     <CardTitle className="text-base font-semibold leading-tight mt-4">Start from scratch</CardTitle>
                     <CardDescription>Blank Template</CardDescription>
