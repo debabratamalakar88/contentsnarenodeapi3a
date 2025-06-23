@@ -7,10 +7,13 @@ import BuilderStep from './components/BuilderStep';
 import PreviewStep from './components/PreviewStep';
 import FinalizeStep from './components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 
 // Type definitions for the entire wizard
@@ -47,7 +50,7 @@ const initialPagesData: Page[] = [
             title: "1.1 New Section",
             instructions: "",
             questions: [
-                { id: 1001, label: "New Single Line Text Field", type: 'text', instructions: "Enter field instructions here..." },
+                { id: 1001, label: "New Single Line Text Field", type: 'text', instructions: "Enter field instructions here...", placeholder: "", options: [] },
             ]
         }
     ]
@@ -78,9 +81,14 @@ export default function NewRequestPage() {
     const [requestDescription, setRequestDescription] = useState("Please provide all the necessary documents and information to get you set up in our system.");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
 
-    // Dialog State
+    // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
+    
+    // Question Settings Dialog State
+    const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+    const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
 
     const currentStepIndex = steps.indexOf(currentStep);
 
@@ -191,6 +199,57 @@ export default function NewRequestPage() {
         setCurrentLocation(null);
     };
 
+    const openQuestionSettings = (question: Question) => {
+        setEditingQuestion(question);
+        setTempQuestion(question); // Initialize temp state for editing
+        setQuestionSettingsOpen(true);
+    };
+    
+    const updateQuestion = () => {
+        if (!tempQuestion) return;
+        setPages(prevPages => prevPages.map(page => ({
+            ...page,
+            sections: page.sections.map(section => ({
+                ...section,
+                questions: section.questions.map(q =>
+                    q.id === tempQuestion.id ? tempQuestion : q
+                )
+            }))
+        })));
+        setQuestionSettingsOpen(false);
+        setEditingQuestion(null);
+        setTempQuestion(null);
+    };
+    
+    const handleTempQuestionChange = (field: keyof Question, value: any) => {
+        if (tempQuestion) {
+            setTempQuestion({ ...tempQuestion, [field]: value });
+        }
+    };
+    
+    const handleTempOptionChange = (index: number, value: string) => {
+        if (tempQuestion && tempQuestion.options) {
+            const newOptions = [...tempQuestion.options];
+            newOptions[index] = value;
+            setTempQuestion({ ...tempQuestion, options: newOptions });
+        }
+    };
+
+    const addTempOption = () => {
+        if (tempQuestion) {
+            const newOptions = [...(tempQuestion.options || []), `Option ${(tempQuestion.options?.length || 0) + 1}`];
+            setTempQuestion({ ...tempQuestion, options: newOptions });
+        }
+    };
+
+    const removeTempOption = (index: number) => {
+        if (tempQuestion && tempQuestion.options) {
+            const newOptions = tempQuestion.options.filter((_, i) => i !== index);
+            setTempQuestion({ ...tempQuestion, options: newOptions });
+        }
+    };
+
+
     const renderStep = () => {
         switch (currentStep) {
             case "Templates": return <TemplatesStep onNext={nextStep} />;
@@ -203,6 +262,7 @@ export default function NewRequestPage() {
                                         onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle}
                                         updateSectionTitle={updateSectionTitle}
+                                        openQuestionSettings={openQuestionSettings}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;
@@ -248,6 +308,57 @@ export default function NewRequestPage() {
                             </button>
                         ))}
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Field Settings</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your field here. Click save when you're done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {tempQuestion && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="label">Label</Label>
+                                <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Textarea id="instructions" value={tempQuestion.instructions} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} />
+                            </div>
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url') && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="placeholder">Placeholder</Label>
+                                    <Input id="placeholder" value={tempQuestion.placeholder} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
+                                </div>
+                            )}
+                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio') && (
+                                <div className="grid gap-2">
+                                    <Label>Options</Label>
+                                    <div className="space-y-2">
+                                        {tempQuestion.options?.map((option, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <Input value={option} onChange={(e) => handleTempOptionChange(index, e.target.value)} />
+                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2">
+                                        <Plus className="h-4 w-4 mr-2" /> Add Option
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setQuestionSettingsOpen(false)}>Cancel</Button>
+                        <Button onClick={updateQuestion}>Save changes</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

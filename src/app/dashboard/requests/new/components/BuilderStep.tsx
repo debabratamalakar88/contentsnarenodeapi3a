@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil
+  MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil,
+  Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2
 } from "lucide-react"
 
-import type { Page } from "../page"
+import type { Page, Question, QuestionType } from "../page"
 
 interface BuilderStepProps {
   pages: Page[];
@@ -18,11 +19,29 @@ interface BuilderStepProps {
   onAddFieldClick: (pageId: number, sectionId: number) => void;
   updatePageTitle: (pageId: number, newTitle: string) => void;
   updateSectionTitle: (pageId: number, sectionId: number, newTitle: string) => void;
+  openQuestionSettings: (question: Question, pageId: number, sectionId: number) => void;
 }
 
 interface PagesSidebarProps {
   pages: Page[];
   addPage: () => void;
+}
+
+const QuestionIcon = ({ type }: { type: QuestionType }) => {
+    const iconProps = { className: "h-4 w-4 text-primary" };
+    switch (type) {
+        case 'text': return <Type {...iconProps} />;
+        case 'textarea': return <Pilcrow {...iconProps} />;
+        case 'checkbox': return <CheckSquare {...iconProps} />;
+        case 'dropdown': return <ChevronDown {...iconProps} />;
+        case 'radio': return <ListOrdered {...iconProps} />;
+        case 'file': return <UploadCloud {...iconProps} />;
+        case 'date': return <CalendarDays {...iconProps} />;
+        case 'email': return <AtSign {...iconProps} />;
+        case 'tel': return <Phone {...iconProps} />;
+        case 'url': return <Link2 {...iconProps} />;
+        default: return <Type {...iconProps} />;
+    }
 }
 
 const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
@@ -67,7 +86,7 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
@@ -167,12 +186,14 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                                             <div className="flex items-center gap-2">
                                                 <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
                                                 <div className="flex items-center justify-center h-6 w-6 bg-primary/10 rounded">
-                                                   <span className="font-bold text-primary text-xs">Aa</span>
+                                                   <QuestionIcon type={question.type} />
                                                 </div>
                                                 <span className="font-semibold">{question.label}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" className="h-6 w-6"><Settings className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question, page.id, section.id)}>
+                                                  <Settings className="h-4 w-4" />
+                                                </Button>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                             </div>
                                         </div>
