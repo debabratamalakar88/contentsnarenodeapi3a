@@ -152,41 +152,41 @@ export default function NewRequestPage() {
                     title: "Action Forbidden",
                     description: "You cannot delete the only page in a request.",
                     variant: "destructive"
-                })
+                });
                 return prevPages;
             }
     
             const pageIndexToDelete = prevPages.findIndex(p => p.id === pageId);
+            const pagesAfterDelete = prevPages.filter(p => p.id !== pageId);
             let newActivePageId = activePageId;
     
             if (pageId === activePageId) {
                 const newActiveIndex = pageIndexToDelete > 0 ? pageIndexToDelete - 1 : 0;
-                newActivePageId = prevPages.filter(p => p.id !== pageId)[newActiveIndex]?.id || null;
+                newActivePageId = pagesAfterDelete[newActiveIndex]?.id || null;
             }
     
-            const newPages = prevPages.filter(p => p.id !== pageId)
-                .map((page, pageIndex) => {
-                    const newPageNumber = pageIndex + 1;
-                    const titleText = page.title.replace(/^[0-9]+\.\s*/, '');
-                    
-                    const newSections = page.sections.map((section, sectionIndex) => {
-                        const newSectionNumber = sectionIndex + 1;
-                        const sectionTitleText = section.title.replace(/^[0-9]+\.[0-9]+\s*/, '');
-                        return {
-                            ...section,
-                            title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
-                        };
-                    });
-    
+            const finalPages = pagesAfterDelete.map((page, pageIndex) => {
+                const newPageNumber = pageIndex + 1;
+                const titleText = page.title.replace(/^[0-9\.]+\s*/, '');
+                
+                const newSections = page.sections.map((section, sectionIndex) => {
+                    const newSectionNumber = sectionIndex + 1;
+                    const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
                     return {
-                        ...page,
-                        title: `${newPageNumber}. ${titleText}`,
-                        sections: newSections,
+                        ...section,
+                        title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
                     };
                 });
+    
+                return {
+                    ...page,
+                    title: `${newPageNumber}. ${titleText}`,
+                    sections: newSections,
+                };
+            });
             
             setActivePageId(newActivePageId);
-            return newPages;
+            return finalPages;
         });
     };
 
@@ -197,16 +197,15 @@ export default function NewRequestPage() {
     
             const pageToDuplicate = prevPages[pageIndexToDuplicate];
     
-            const newPage: Page = {
-                ...JSON.parse(JSON.stringify(pageToDuplicate)), // Deep copy
-                id: Date.now(),
-            };
+            const newPage: Page = JSON.parse(JSON.stringify(pageToDuplicate)); // Deep copy
+            
             // Assign new IDs to nested elements to avoid key conflicts
+            newPage.id = Date.now();
             newPage.sections.forEach(section => {
                 section.id = Date.now() + Math.random();
                 section.questions.forEach(question => {
                     question.id = Date.now() + Math.random();
-                    question.apiId = slugify(`${question.label}_${question.id}`);
+                    question.apiId = slugify(`${question.label}_${Date.now()}`);
                 });
             });
             
@@ -214,16 +213,14 @@ export default function NewRequestPage() {
             tempPages.splice(pageIndexToDuplicate + 1, 0, newPage);
     
             // Re-number all pages and sections
-            const newPages = tempPages.map((page, pageIndex) => {
+            const finalPages = tempPages.map((page, pageIndex) => {
                 const newPageNumber = pageIndex + 1;
                 let titleText;
     
                 if (page.id === newPage.id) { // This is the newly duplicated page
-                    const originalTitle = pageToDuplicate.title.replace(/^[0-9]+\.\s*/, '');
-                    // Ensure it gets a (Copy) suffix, avoiding multiple (Copy) (Copy)
+                    const originalTitle = pageToDuplicate.title.replace(/^[0-9\.]+\s*/, '');
                     titleText = `${originalTitle.replace(/\s*\(Copy\)/g, '')} (Copy)`;
-                } else { // This is for all other pages
-                    // Just get the text part of the title, leaving existing (Copy) suffixes if they exist
+                } else {
                     titleText = page.title.replace(/^[0-9\.]+\s*/, '');
                 }
                 
@@ -244,7 +241,7 @@ export default function NewRequestPage() {
             });
     
             setActivePageId(newPage.id);
-            return newPages;
+            return finalPages;
         });
     };
 

@@ -27,7 +27,7 @@ interface BuilderStepProps {
   onAddFieldClick: (pageId: number, sectionId: number) => void;
   updatePageTitle: (pageId: number, newTitle: string) => void;
   updateSectionTitle: (pageId: number, sectionId: number, newTitle: string) => void;
-  openQuestionSettings: (question: Question, pageId: number, sectionId: number) => void;
+  openQuestionSettings: (question: Question) => void;
   duplicateQuestion: (pageId: number, sectionId: number, questionId: number) => void;
   deleteQuestion: (pageId: number, sectionId: number, questionId: number) => void;
   activePageId: number | null;
@@ -283,7 +283,7 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                                                 <span className="font-semibold">{question.label}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question, page.id, section.id)}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}>
                                                   <Settings className="h-4 w-4" />
                                                 </Button>
                                                 <DropdownMenu>
@@ -294,7 +294,7 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                                                         <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>
                                                             Duplicate
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => openQuestionSettings(question, page.id, section.id)}>
+                                                        <DropdownMenuItem onClick={() => openQuestionSettings(question)}>
                                                             Rename
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
