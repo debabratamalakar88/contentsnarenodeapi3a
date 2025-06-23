@@ -315,7 +315,7 @@ export default function NewRequestPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {pages.map((page) => (
-                <div key={page.id} className="rounded-lg border bg-card p-4 space-y-4">
+                <div key={page.id} className="group rounded-lg border bg-card p-4 space-y-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-grow min-w-0">
                       <GripVertical className="h-5 w-5 text-muted-foreground cursor-move flex-shrink-0" />
@@ -339,13 +339,13 @@ export default function NewRequestPage() {
                         </h3>
                       )}
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => removePage(page.id)} className="flex-shrink-0">
+                    <Button variant="ghost" size="icon" onClick={() => removePage(page.id)} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                   <Separator />
                   {page.questions.map((question) => (
-                    <div key={question.id} className="flex items-center gap-2 pl-4">
+                    <div key={question.id} className="group flex items-center gap-2 pl-4">
                       <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
                       <div className="flex-1 space-y-2">
                          {editingQuestionId === question.id ? (
@@ -368,10 +368,10 @@ export default function NewRequestPage() {
                         )}
                         {renderQuestionInput(question)}
                       </div>
-                       <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(page.id, question)}>
+                       <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(page.id, question)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => removeQuestion(page.id, question.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => removeQuestion(page.id, question.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
