@@ -97,7 +97,7 @@ export default function NewRequestPage() {
                 <div className="ml-auto flex items-center gap-2">
                     {currentStepIndex > 0 && currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep}>
-                            Next: {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
+                            {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}
                 </div>
