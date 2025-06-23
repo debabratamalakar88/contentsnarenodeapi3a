@@ -5,10 +5,10 @@ import {
   Users,
   FileText,
   ClipboardList,
-  Folder,
   Settings,
   User,
   PanelLeft,
+  Shield,
 } from "lucide-react"
 
 import {
@@ -34,7 +34,7 @@ const navItems = [
   { href: "/dashboard/templates", icon: FileText, label: "Templates" },
   { href: "/dashboard/clients", icon: Users, label: "Clients" },
   { href: "/dashboard/team", icon: User, label: "Team" },
-  { href: "/dashboard/admin", icon: Settings, label: "Admin" },
+  { href: "/dashboard/admin", icon: Shield, label: "Admin" },
 ];
 
 export default function DashboardLayout({
@@ -120,7 +120,9 @@ export default function DashboardLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings">Settings</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Logout</DropdownMenuItem>
