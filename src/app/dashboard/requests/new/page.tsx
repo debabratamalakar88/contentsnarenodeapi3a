@@ -48,6 +48,7 @@ const initialPages: Page[] = [
 
 export default function NewRequestPage() {
   const [pages, setPages] = useState<Page[]>(initialPages)
+  const [editingPageId, setEditingPageId] = useState<number | null>(null);
 
   const addPage = () => {
     const newPage: Page = {
@@ -61,6 +62,15 @@ export default function NewRequestPage() {
   const removePage = (pageId: number) => {
     setPages(pages.filter((p) => p.id !== pageId))
   }
+  
+  const updatePageTitle = (pageId: number, newTitle: string) => {
+    setPages(
+      pages.map((p) =>
+        p.id === pageId ? { ...p, title: newTitle.trim() || `Untitled Page` } : p
+      )
+    );
+    setEditingPageId(null);
+  };
 
   const addQuestion = (pageId: number) => {
     const newQuestion: Question = {
@@ -141,12 +151,30 @@ export default function NewRequestPage() {
           <CardContent className="space-y-4">
             {pages.map((page) => (
               <div key={page.id} className="rounded-lg border bg-card p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                    <h3 className="font-semibold">{page.title}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-grow min-w-0">
+                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-move flex-shrink-0" />
+                    {editingPageId === page.id ? (
+                      <Input
+                        defaultValue={page.title}
+                        onBlur={(e) => updatePageTitle(page.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updatePageTitle(page.id, e.currentTarget.value);
+                          } else if (e.key === 'Escape') {
+                            setEditingPageId(null);
+                          }
+                        }}
+                        autoFocus
+                        className="font-semibold"
+                      />
+                    ) : (
+                      <h3 className="font-semibold cursor-pointer truncate" onClick={() => setEditingPageId(page.id)}>
+                        {page.title}
+                      </h3>
+                    )}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => removePage(page.id)}>
+                  <Button variant="ghost" size="icon" onClick={() => removePage(page.id)} className="flex-shrink-0">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
