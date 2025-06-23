@@ -27,7 +27,7 @@ import {
 
 export default function Dashboard() {
   return (
-    <>
+    <div className="p-6 flex flex-col gap-6">
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
       </div>
@@ -176,6 +176,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   )
 }

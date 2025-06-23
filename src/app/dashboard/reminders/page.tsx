@@ -9,7 +9,7 @@ import { BellRing } from "lucide-react"
 
 export default function RemindersPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Reminders</h1>
         <p className="text-muted-foreground">

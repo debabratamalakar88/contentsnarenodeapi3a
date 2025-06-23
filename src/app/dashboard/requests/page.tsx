@@ -79,104 +79,106 @@ const statusVariant = {
 
 export default function RequestsPage() {
   return (
-    <Tabs defaultValue="all">
-      <div className="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="published">Published</TabsTrigger>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="completed" className="hidden sm:flex">
-            Completed
-          </TabsTrigger>
-        </TabsList>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline">
-            Export
-          </Button>
-          <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href="/dashboard/requests/new">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                New Request
-              </span>
-            </Link>
-          </Button>
+    <div className="p-6">
+      <Tabs defaultValue="all">
+        <div className="flex items-center">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="published">Published</TabsTrigger>
+            <TabsTrigger value="draft">Draft</TabsTrigger>
+            <TabsTrigger value="completed" className="hidden sm:flex">
+              Completed
+            </TabsTrigger>
+          </TabsList>
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline">
+              Export
+            </Button>
+            <Button size="sm" className="h-8 gap-1" asChild>
+              <Link href="/dashboard/requests/new">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  New Request
+                </span>
+              </Link>
+            </Button>
+          </div>
         </div>
-      </div>
-      <TabsContent value="all">
-        <Card>
-          <CardHeader>
-            <CardTitle>Requests</CardTitle>
-            <CardDescription>
-              Manage your content requests and view their status.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="hidden w-[100px] sm:table-cell">
-                    ID
-                  </TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Status
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Due Date
-                  </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="hidden sm:table-cell font-medium">
-                      {request.id}
-                    </TableCell>
-                    <TableCell className="font-medium">{request.title}</TableCell>
-                    <TableCell>{request.client}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant={statusVariant[request.status as keyof typeof statusVariant]}>
-                        {request.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {request.dueDate}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Preview</DropdownMenuItem>
-                          <DropdownMenuItem>Send Reminder</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>Requests</CardTitle>
+              <CardDescription>
+                Manage your content requests and view their status.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="hidden w-[100px] sm:table-cell">
+                      ID
+                    </TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Status
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Due Date
+                    </TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+                </TableHeader>
+                <TableBody>
+                  {requests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="hidden sm:table-cell font-medium">
+                        {request.id}
+                      </TableCell>
+                      <TableCell className="font-medium">{request.title}</TableCell>
+                      <TableCell>{request.client}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={statusVariant[request.status as keyof typeof statusVariant]}>
+                          {request.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {request.dueDate}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuItem>Preview</DropdownMenuItem>
+                            <DropdownMenuItem>Send Reminder</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
