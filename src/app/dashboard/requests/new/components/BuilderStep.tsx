@@ -15,7 +15,7 @@ import {
   Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2
 } from "lucide-react"
 
-import type { Page, Question, QuestionType } from "../page"
+import type { Page, Question, QuestionType, Section } from "../page"
 import { cn } from "@/lib/utils"
 
 interface BuilderStepProps {
@@ -75,16 +75,28 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSi
                                  : "text-foreground hover:bg-accent/50"
                            )}
                         >
-                           <span>{page.title}</span>
+                           <span className="truncate">{page.title}</span>
                            <MoreHorizontal className="h-4 w-4" />
                         </button>
                         {activePageId === page.id && (
-                           <div className="pl-4 border-l ml-4 mt-2">
+                           <div className="pl-4 border-l ml-4 mt-2 space-y-2">
                                 {page.sections.map(section => (
                                     <div key={section.id}>
-                                        <a href={`#section-${section.id}`} className="block text-sm p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50">
+                                        <a href={`#section-${section.id}`} className="block text-sm p-2 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 truncate">
                                             {section.title}
                                         </a>
+                                        <div className="pl-4 border-l ml-2 mt-1 space-y-1">
+                                            {section.questions.map(question => (
+                                                <a
+                                                    key={question.id}
+                                                    href={`#question-${question.id}`}
+                                                    className="block text-xs p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 truncate"
+                                                    title={question.label}
+                                                >
+                                                    {question.label}
+                                                </a>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -101,10 +113,13 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSi
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId }: BuilderStepProps) {
+export default function BuilderStep({ pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
+  const [editingPageTitle, setEditingPageTitle] = useState("");
+
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState("");
 
   const getTitleParts = (title: string) => {
     const match = title.match(/^([0-9\.]+)\s*(.*)/);
@@ -113,6 +128,38 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
     }
     return { number: '', text: title };
   }
+
+  const handlePageTitleEdit = (page: Page) => {
+    setEditingPageId(page.id);
+    setEditingPageTitle(getTitleParts(page.title).text);
+  }
+
+  const handlePageTitleSave = (pageId: number) => {
+    const page = pages.find(p => p.id === pageId);
+    if (page) {
+      const { number } = getTitleParts(page.title);
+      updatePageTitle(pageId, `${number} ${editingPageTitle}`);
+    }
+    setEditingPageId(null);
+    setEditingPageTitle("");
+  }
+
+  const handleSectionTitleEdit = (section: Section) => {
+    setEditingSectionId(section.id);
+    setEditingSectionTitle(getTitleParts(section.title).text);
+  }
+
+  const handleSectionTitleSave = (pageId: number, sectionId: number) => {
+    const page = pages.find(p => p.id === pageId);
+    const section = page?.sections.find(s => s.id === sectionId);
+    if (section) {
+        const { number } = getTitleParts(section.title);
+        updateSectionTitle(pageId, sectionId, `${number} ${editingSectionTitle}`);
+    }
+    setEditingSectionId(null);
+    setEditingSectionTitle("");
+  }
+
 
   return (
     <div className="flex h-full">
@@ -135,28 +182,27 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
 
             <div className="space-y-6">
                 {pages.filter(p => p.id === activePageId).map(page => {
-                    const { number: pageNumber, text: pageText } = getTitleParts(page.title);
                     return (
                     <div key={page.id} id={`page-${page.id}`}>
                         <div className="flex items-center gap-2 mb-2 group">
                              {editingPageId === page.id ? (
                                 <div className="flex items-center gap-2 flex-1">
-                                    <span className="text-xl font-bold">{pageNumber}</span>
+                                    <span className="text-xl font-bold">{getTitleParts(page.title).number}</span>
                                     <Input
-                                        value={pageText}
-                                        onChange={(e) => updatePageTitle(page.id, `${pageNumber} ${e.target.value}`)}
-                                        onBlur={() => setEditingPageId(null)}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') setEditingPageId(null); }}
+                                        value={editingPageTitle}
+                                        onChange={(e) => setEditingPageTitle(e.target.value)}
+                                        onBlur={() => handlePageTitleSave(page.id)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handlePageTitleSave(page.id); }}
                                         className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
                                         autoFocus
                                     />
                                 </div>
                              ) : (
-                                <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => setEditingPageId(page.id)}>
+                                <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => handlePageTitleEdit(page)}>
                                     {page.title}
                                 </h2>
                              )}
-                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingPageId(page.id)}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handlePageTitleEdit(page)}>
                                 <Pencil className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -168,28 +214,27 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                         />
 
                         {page.sections.map(section => {
-                            const { number: sectionNumber, text: sectionText } = getTitleParts(section.title);
                             return (
                             <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
                                 <div className="flex items-center gap-2 mb-2 group">
                                      {editingSectionId === section.id ? (
                                         <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-lg font-semibold">{sectionNumber}</span>
+                                            <span className="text-lg font-semibold">{getTitleParts(section.title).number}</span>
                                             <Input
-                                                value={sectionText}
-                                                onChange={(e) => updateSectionTitle(page.id, section.id, `${sectionNumber} ${e.target.value}`)}
-                                                onBlur={() => setEditingSectionId(null)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') setEditingSectionId(null); }}
+                                                value={editingSectionTitle}
+                                                onChange={(e) => setEditingSectionTitle(e.target.value)}
+                                                onBlur={() => handleSectionTitleSave(page.id, section.id)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') handleSectionTitleSave(page.id, section.id); }}
                                                 className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
                                                 autoFocus
                                             />
                                         </div>
                                      ) : (
-                                        <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => setEditingSectionId(section.id)}>
+                                        <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => handleSectionTitleEdit(section)}>
                                             {section.title}
                                         </h3>
                                      )}
-                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingSectionId(section.id)}>
+                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleSectionTitleEdit(section)}>
                                         <Pencil className="h-4 w-4" />
                                      </Button>
                                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
