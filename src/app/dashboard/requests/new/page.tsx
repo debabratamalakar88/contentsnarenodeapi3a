@@ -97,13 +97,14 @@ export default function NewRequestPage() {
     };
 
     const addPage = () => {
+        const newPageNumber = pages.length + 1;
         const newPage: Page = {
             id: Date.now(),
-            title: `${pages.length + 1}. New Page`,
+            title: `${newPageNumber}. New Page`,
             instructions: "",
             sections: [{
                 id: Date.now() + 1,
-                title: 'New Section',
+                title: `${newPageNumber}.1 New Section`,
                 instructions: '',
                 questions: []
             }]
@@ -114,9 +115,11 @@ export default function NewRequestPage() {
     const addSection = (pageId: number) => {
         setPages(prevPages => prevPages.map(page => {
             if (page.id === pageId) {
+                const pageNumber = page.title.split('.')[0];
+                const newSectionNumber = page.sections.length + 1;
                 const newSection: Section = {
                     id: Date.now(),
-                    title: 'New Section',
+                    title: `${pageNumber}.${newSectionNumber} New Section`,
                     instructions: '',
                     questions: []
                 };
