@@ -72,6 +72,14 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
 
+  const getTitleParts = (title: string) => {
+    const match = title.match(/^([0-9\.]+)\s*(.*)/);
+    if (match) {
+        return { number: match[1], text: match[2] };
+    }
+    return { number: '', text: title };
+  }
+
   return (
     <div className="flex h-full">
       <PagesSidebar pages={pages} addPage={addPage} />
@@ -92,18 +100,23 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
 
 
             <div className="space-y-6">
-                {pages.map(page => (
+                {pages.map(page => {
+                    const { number: pageNumber, text: pageText } = getTitleParts(page.title);
+                    return (
                     <div key={page.id} id={`page-${page.id}`}>
                         <div className="flex items-center gap-2 mb-2 group">
                              {editingPageId === page.id ? (
-                                <Input
-                                    value={page.title}
-                                    onChange={(e) => updatePageTitle(page.id, e.target.value)}
-                                    onBlur={() => setEditingPageId(null)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') setEditingPageId(null); }}
-                                    className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
-                                    autoFocus
-                                />
+                                <div className="flex items-center gap-2 flex-1">
+                                    <span className="text-xl font-bold">{pageNumber}</span>
+                                    <Input
+                                        value={pageText}
+                                        onChange={(e) => updatePageTitle(page.id, `${pageNumber} ${e.target.value}`)}
+                                        onBlur={() => setEditingPageId(null)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') setEditingPageId(null); }}
+                                        className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                                        autoFocus
+                                    />
+                                </div>
                              ) : (
                                 <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => setEditingPageId(page.id)}>
                                     {page.title}
@@ -120,18 +133,23 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                             defaultValue={page.instructions}
                         />
 
-                        {page.sections.map(section => (
+                        {page.sections.map(section => {
+                            const { number: sectionNumber, text: sectionText } = getTitleParts(section.title);
+                            return (
                             <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
                                 <div className="flex items-center gap-2 mb-2 group">
                                      {editingSectionId === section.id ? (
-                                        <Input
-                                            value={section.title}
-                                            onChange={(e) => updateSectionTitle(page.id, section.id, e.target.value)}
-                                            onBlur={() => setEditingSectionId(null)}
-                                            onKeyDown={(e) => { if (e.key === 'Enter') setEditingSectionId(null); }}
-                                            className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
-                                            autoFocus
-                                        />
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <span className="text-lg font-semibold">{sectionNumber}</span>
+                                            <Input
+                                                value={sectionText}
+                                                onChange={(e) => updateSectionTitle(page.id, section.id, `${sectionNumber} ${e.target.value}`)}
+                                                onBlur={() => setEditingSectionId(null)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') setEditingSectionId(null); }}
+                                                className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                                                autoFocus
+                                            />
+                                        </div>
                                      ) : (
                                         <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => setEditingSectionId(section.id)}>
                                             {section.title}
@@ -165,10 +183,10 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                                 ))}
                                 <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)}>Add a Field</Button>
                             </div>
-                        ))}
+                        )})}
                          <Button variant="outline" size="sm" onClick={() => addSection(page.id)}>Add a Section</Button>
                     </div>
-                ))}
+                )})}
             </div>
         </div>
       </main>
