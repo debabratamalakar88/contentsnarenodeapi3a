@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,7 +16,90 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { FileText, GripVertical, Plus, Trash2 } from "lucide-react"
 
+interface Question {
+  id: number;
+  label: string;
+  type: 'text' | 'textarea' | 'file';
+}
+
+interface Page {
+  id: number;
+  title: string;
+  questions: Question[];
+}
+
+const initialPages: Page[] = [
+  {
+    id: 1,
+    title: "Page 1: Company Information",
+    questions: [
+      { id: 1, label: "Company Name", type: 'text' },
+      { id: 2, label: "Business Address", type: 'textarea' },
+    ],
+  },
+  {
+    id: 2,
+    title: "Page 2: Document Uploads",
+    questions: [
+      { id: 3, label: "Business License", type: 'file' },
+    ],
+  },
+]
+
 export default function NewRequestPage() {
+  const [pages, setPages] = useState<Page[]>(initialPages)
+
+  const addPage = () => {
+    const newPage: Page = {
+      id: Date.now(),
+      title: `Page ${pages.length + 1}: Untitled Page`,
+      questions: [],
+    }
+    setPages([...pages, newPage])
+  }
+
+  const removePage = (pageId: number) => {
+    setPages(pages.filter((p) => p.id !== pageId))
+  }
+
+  const addQuestion = (pageId: number) => {
+    const newQuestion: Question = {
+      id: Date.now(),
+      label: "New Question",
+      type: 'text',
+    }
+    setPages(
+      pages.map((p) =>
+        p.id === pageId
+          ? { ...p, questions: [...p.questions, newQuestion] }
+          : p
+      )
+    )
+  }
+
+  const removeQuestion = (pageId: number, questionId: number) => {
+    setPages(
+      pages.map((p) =>
+        p.id === pageId
+          ? { ...p, questions: p.questions.filter((q) => q.id !== questionId) }
+          : p
+      )
+    )
+  }
+
+  const renderQuestionInput = (question: Question) => {
+    switch(question.type) {
+      case 'text':
+        return <Input type="text" placeholder="Short text answer" disabled />
+      case 'textarea':
+        return <Textarea placeholder="Long text answer" disabled />
+      case 'file':
+        return <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground items-center">File Upload</div>
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
@@ -47,68 +133,46 @@ export default function NewRequestPage() {
           </CardContent>
         </Card>
 
-        {/* Mockup of a drag-and-drop builder */}
         <Card>
           <CardHeader>
             <CardTitle>Request Builder</CardTitle>
             <CardDescription>Drag and drop to reorder pages and questions.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Page 1 */}
-            <div className="rounded-lg border bg-card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                  <h3 className="font-semibold">Page 1: Company Information</h3>
+            {pages.map((page) => (
+              <div key={page.id} className="rounded-lg border bg-card p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
+                    <h3 className="font-semibold">{page.title}</h3>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => removePage(page.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
+                <Separator />
+                {page.questions.map((question) => (
+                  <div key={question.id} className="flex items-center gap-2 pl-4">
+                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
+                    <div className="flex-1">
+                      <Label>{question.label}</Label>
+                      {renderQuestionInput(question)}
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => removeQuestion(page.id, question.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="ml-4" onClick={() => addQuestion(page.id)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Question
+                </Button>
               </div>
-              <Separator />
-              {/* Question 1 */}
-              <div className="flex items-center gap-2 pl-4">
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                <div className="flex-1">
-                  <Label>Company Name</Label>
-                  <Input type="text" placeholder="Short text answer" disabled />
-                </div>
-                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
-              </div>
-              {/* Question 2 */}
-              <div className="flex items-center gap-2 pl-4">
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                <div className="flex-1">
-                  <Label>Business Address</Label>
-                  <Textarea placeholder="Long text answer" disabled />
-                </div>
-                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
-              </div>
-              <Button variant="outline" size="sm" className="ml-4"><Plus className="h-4 w-4 mr-2" />Add Question</Button>
-            </div>
-            
-            {/* Page 2 */}
-            <div className="rounded-lg border bg-card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                  <h3 className="font-semibold">Page 2: Document Uploads</h3>
-                </div>
-                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
-              </div>
-              <Separator />
-               {/* Question 3 */}
-               <div className="flex items-center gap-2 pl-4">
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                <div className="flex-1">
-                  <Label>Business License</Label>
-                  <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground items-center">File Upload</div>
-                </div>
-                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
-              </div>
-               <Button variant="outline" size="sm" className="ml-4"><Plus className="h-4 w-4 mr-2" />Add Question</Button>
-            </div>
-
-            <Button variant="secondary" className="w-full"><Plus className="h-4 w-4 mr-2" />Add Page</Button>
-
+            ))}
+            <Button variant="secondary" className="w-full" onClick={addPage}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Page
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -129,7 +193,6 @@ export default function NewRequestPage() {
             <CardTitle>Assign Clients</CardTitle>
           </CardHeader>
           <CardContent>
-             {/* This would be a multi-select component */}
              <Label>Select one or more clients</Label>
              <Input placeholder="Search for clients..." />
              <div className="mt-2 text-sm text-muted-foreground">Assigned: Acme Inc.</div>
