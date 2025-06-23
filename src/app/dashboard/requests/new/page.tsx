@@ -371,7 +371,7 @@ export default function NewRequestPage() {
                                 <Checkbox 
                                     id="required" 
                                     checked={tempQuestion.required} 
-                                    onCheckedChange={(checked) => handleTempQuestionChange('required', checked)}
+                                    onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)}
                                 />
                                 <Label htmlFor="required" className="font-normal">Required</Label>
                             </div>
@@ -385,7 +385,7 @@ export default function NewRequestPage() {
                                     <Input id="placeholder" value={tempQuestion.placeholder} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="defaultValue">Default Value</Label>
                                     <Input id="defaultValue" value={tempQuestion.defaultValue} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
