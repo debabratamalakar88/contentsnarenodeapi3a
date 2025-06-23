@@ -44,7 +44,6 @@ interface PagesSidebarProps {
   duplicatePage: (pageId: number) => void;
   deletePage: (pageId: number) => void;
   addSection: (pageId: number) => void;
-  renamePage: (page: Page) => void;
 }
 
 const QuestionIcon = ({ type }: { type: QuestionType }) => {
@@ -64,7 +63,7 @@ const QuestionIcon = ({ type }: { type: QuestionType }) => {
     }
 }
 
-const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicatePage, deletePage, addSection, renamePage }: PagesSidebarProps) => {
+const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicatePage, deletePage, addSection }: PagesSidebarProps) => {
     return (
         <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
             <div className="p-4 border-b">
@@ -92,7 +91,6 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenuItem onClick={() => renamePage(page)}>Rename Page</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => duplicatePage(page.id)}>Duplicate Page</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => addSection(page.id)}>Create New Section</DropdownMenuItem>
                                     {pages.length > 1 && (
@@ -198,7 +196,6 @@ export default function BuilderStep({ pages, addPage, addSection, onAddFieldClic
         duplicatePage={duplicatePage}
         deletePage={deletePage}
         addSection={addSection}
-        renamePage={handlePageTitleEdit}
        />
       
       <main className="flex-1 p-6 overflow-y-auto">
