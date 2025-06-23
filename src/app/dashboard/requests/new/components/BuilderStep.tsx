@@ -1,11 +1,11 @@
 'use client'
 
-import React from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  MoreHorizontal, Settings, GripVertical, Folder, ChevronDown
+  MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil
 } from "lucide-react"
 
 import type { Page } from "../page"
@@ -69,6 +69,9 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
 
 export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle }: BuilderStepProps) {
 
+  const [editingPageId, setEditingPageId] = useState<number | null>(null);
+  const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
+
   return (
     <div className="flex h-full">
       <PagesSidebar pages={pages} addPage={addPage} />
@@ -91,12 +94,24 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
             <div className="space-y-6">
                 {pages.map(page => (
                     <div key={page.id} id={`page-${page.id}`}>
-                        <div className="flex items-center gap-2 mb-2">
-                             <Input
-                                value={page.title}
-                                onChange={(e) => updatePageTitle(page.id, e.target.value)}
-                                className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
-                            />
+                        <div className="flex items-center gap-2 mb-2 group">
+                             {editingPageId === page.id ? (
+                                <Input
+                                    value={page.title}
+                                    onChange={(e) => updatePageTitle(page.id, e.target.value)}
+                                    onBlur={() => setEditingPageId(null)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') setEditingPageId(null); }}
+                                    className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                                    autoFocus
+                                />
+                             ) : (
+                                <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => setEditingPageId(page.id)}>
+                                    {page.title}
+                                </h2>
+                             )}
+                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingPageId(page.id)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                         </div>
                         <Textarea 
@@ -107,12 +122,24 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
 
                         {page.sections.map(section => (
                             <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                     <Input
-                                        value={section.title}
-                                        onChange={(e) => updateSectionTitle(page.id, section.id, e.target.value)}
-                                        className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
-                                    />
+                                <div className="flex items-center gap-2 mb-2 group">
+                                     {editingSectionId === section.id ? (
+                                        <Input
+                                            value={section.title}
+                                            onChange={(e) => updateSectionTitle(page.id, section.id, e.target.value)}
+                                            onBlur={() => setEditingSectionId(null)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') setEditingSectionId(null); }}
+                                            className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1"
+                                            autoFocus
+                                        />
+                                     ) : (
+                                        <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => setEditingSectionId(section.id)}>
+                                            {section.title}
+                                        </h3>
+                                     )}
+                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingSectionId(section.id)}>
+                                        <Pencil className="h-4 w-4" />
+                                     </Button>
                                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                 </div>
 
