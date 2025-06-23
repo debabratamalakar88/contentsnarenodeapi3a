@@ -24,7 +24,11 @@ import {
   CheckSquare, 
   List, 
   UploadCloud, 
-  Calendar as CalendarIcon 
+  Calendar as CalendarIcon,
+  Mail,
+  Phone,
+  Link,
+  CircleDot
 } from "lucide-react"
 import {
   Dialog,
@@ -35,9 +39,10 @@ import {
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 
-type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date';
+type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio';
 
 interface Question {
   id: number;
@@ -76,6 +81,10 @@ const fieldTypes: { icon: React.ElementType; label: string; type: QuestionType }
     { icon: CheckSquare, label: "Checkbox", type: 'checkbox' },
     { icon: List, label: "Dropdown", type: 'dropdown' },
     { icon: CalendarIcon, label: "Date", type: 'date' },
+    { icon: Mail, label: "Email", type: 'email' },
+    { icon: Phone, label: "Phone", type: 'tel' },
+    { icon: Link, label: "URL", type: 'url' },
+    { icon: CircleDot, label: "Radio Button", type: 'radio' },
 ];
 
 export default function NewRequestPage() {
@@ -172,6 +181,26 @@ export default function NewRequestPage() {
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 <span>Pick a date</span>
             </Button>
+        )
+      case 'email':
+        return <Input type="email" placeholder="email@example.com" disabled />
+      case 'tel':
+        return <Input type="tel" placeholder="(123) 456-7890" disabled />
+      case 'url':
+        return <Input type="url" placeholder="https://example.com" disabled />
+      case 'radio':
+        return (
+            <RadioGroup disabled>
+                <div className="flex items-center space-x-2 pt-2">
+                    <RadioGroupItem value="option-one" id={`radio-${question.id}`} />
+                    <label
+                        htmlFor={`radio-${question.id}`}
+                        className="text-sm font-medium leading-none text-muted-foreground"
+                    >
+                        Sample option
+                    </label>
+                </div>
+            </RadioGroup>
         )
       default:
         return null
