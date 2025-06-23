@@ -14,17 +14,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 // Type definitions for the entire wizard
 export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio';
+
+export interface QuestionOption {
+  label: string;
+  value: string;
+}
+
 export interface Question {
   id: number;
   label: string;
   type: QuestionType;
   instructions?: string;
   placeholder?: string;
-  options?: string[];
+  options?: QuestionOption[];
+  required?: boolean;
+  defaultValue?: string;
+  apiId?: string;
 }
 export interface Section {
   id: number;
@@ -50,7 +61,16 @@ const initialPagesData: Page[] = [
             title: "1.1 New Section",
             instructions: "",
             questions: [
-                { id: 1001, label: "New Single Line Text Field", type: 'text', instructions: "Enter field instructions here...", placeholder: "", options: [] },
+                { 
+                    id: 1001, 
+                    label: "New Single Line Text Field", 
+                    type: 'text', 
+                    instructions: "Enter field instructions here...", 
+                    placeholder: "", 
+                    options: [], 
+                    required: false,
+                    apiId: "new_single_line_text_field" 
+                },
             ]
         }
     ]
@@ -167,6 +187,8 @@ export default function NewRequestPage() {
         setCurrentLocation({ pageId, sectionId });
         setQuestionTypeDialogOpen(true);
     };
+    
+    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     const addQuestion = (type: QuestionType) => {
         if (!currentLocation) return;
@@ -178,13 +200,18 @@ export default function NewRequestPage() {
                     ...page,
                     sections: page.sections.map(section => {
                         if (section.id === sectionId) {
+                             const baseLabel = `New ${type.charAt(0).toUpperCase() + type.slice(1)} Field`;
                             const newQuestion: Question = {
                                 id: Date.now(),
                                 type: type,
-                                label: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Field`,
+                                label: baseLabel,
                                 instructions: "",
                                 placeholder: "",
-                                options: type === 'radio' || type === 'dropdown' ? ['Option 1', 'Option 2'] : [],
+                                options: (type === 'radio' || type === 'dropdown') 
+                                    ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] 
+                                    : (type === 'checkbox' ? [{ label: 'Accept terms', value: 'accepted'}] : undefined),
+                                required: false,
+                                apiId: slugify(baseLabel),
                             };
                             return { ...section, questions: [...section.questions, newQuestion] };
                         }
@@ -201,7 +228,7 @@ export default function NewRequestPage() {
 
     const openQuestionSettings = (question: Question) => {
         setEditingQuestion(question);
-        setTempQuestion(question); // Initialize temp state for editing
+        setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
         setQuestionSettingsOpen(true);
     };
     
@@ -223,21 +250,36 @@ export default function NewRequestPage() {
     
     const handleTempQuestionChange = (field: keyof Question, value: any) => {
         if (tempQuestion) {
-            setTempQuestion({ ...tempQuestion, [field]: value });
+            const newTempQuestion = { ...tempQuestion, [field]: value };
+            if(field === 'label') {
+                newTempQuestion.apiId = slugify(value);
+            }
+            setTempQuestion(newTempQuestion);
         }
     };
     
-    const handleTempOptionChange = (index: number, value: string) => {
+    const handleTempOptionChange = (index: number, field: keyof QuestionOption, value: string) => {
         if (tempQuestion && tempQuestion.options) {
             const newOptions = [...tempQuestion.options];
-            newOptions[index] = value;
+            newOptions[index] = {...newOptions[index], [field]: value};
+            
+            // Auto-slugify value from label if value is empty
+            if(field === 'label' && (!newOptions[index].value || slugify(newOptions[index].value) === slugify(tempQuestion.options[index].label))) {
+                newOptions[index].value = slugify(value);
+            }
+
             setTempQuestion({ ...tempQuestion, options: newOptions });
         }
     };
 
     const addTempOption = () => {
         if (tempQuestion) {
-            const newOptions = [...(tempQuestion.options || []), `Option ${(tempQuestion.options?.length || 0) + 1}`];
+            const nextOptionNum = (tempQuestion.options?.length || 0) + 1;
+            const newOption: QuestionOption = {
+                label: `Option ${nextOptionNum}`,
+                value: `option_${nextOptionNum}`
+            }
+            const newOptions = [...(tempQuestion.options || []), newOption];
             setTempQuestion({ ...tempQuestion, options: newOptions });
         }
     };
@@ -312,7 +354,7 @@ export default function NewRequestPage() {
             </Dialog>
 
             <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Field Settings</DialogTitle>
                         <DialogDescription>
@@ -320,29 +362,51 @@ export default function NewRequestPage() {
                         </DialogDescription>
                     </DialogHeader>
                     {tempQuestion && (
-                        <div className="grid gap-4 py-4">
+                        <div className="space-y-4 py-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
+                             <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id="required" 
+                                    checked={tempQuestion.required} 
+                                    onCheckedChange={(checked) => handleTempQuestionChange('required', checked)}
+                                />
+                                <Label htmlFor="required" className="font-normal">Required</Label>
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} />
+                                <Textarea id="instructions" value={tempQuestion.instructions} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users on how to fill this field" />
                             </div>
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url') && (
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Placeholder</Label>
                                     <Input id="placeholder" value={tempQuestion.placeholder} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
-                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio') && (
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
                                 <div className="grid gap-2">
+                                    <Label htmlFor="defaultValue">Default Value</Label>
+                                    <Input id="defaultValue" value={tempQuestion.defaultValue} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
+                                </div>
+                            )}
+                            
+                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio') && (
+                                <div className="grid gap-4">
                                     <Label>Options</Label>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {tempQuestion.options?.map((option, index) => (
                                             <div key={index} className="flex items-center gap-2">
-                                                <Input value={option} onChange={(e) => handleTempOptionChange(index, e.target.value)} />
-                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)}>
+                                                <div className="grid gap-1.5 flex-1">
+                                                    <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
+                                                    <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
+                                                </div>
+                                                <div className="grid gap-1.5 flex-1">
+                                                    <Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label>
+                                                    <Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} />
+                                                </div>
+                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end">
                                                     <X className="h-4 w-4" />
                                                 </Button>
                                             </div>
@@ -353,6 +417,19 @@ export default function NewRequestPage() {
                                     </Button>
                                 </div>
                             )}
+
+                             <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="advanced">
+                                    <AccordionTrigger className="text-sm">Advanced Settings</AccordionTrigger>
+                                    <AccordionContent className="space-y-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="apiId">API Identifier</Label>
+                                            <Input id="apiId" value={tempQuestion.apiId} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
+                                            <p className="text-xs text-muted-foreground">Used as the `name` attribute in the form. Must be unique.</p>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </div>
                     )}
                     <DialogFooter>

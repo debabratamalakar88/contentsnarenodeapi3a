@@ -25,57 +25,58 @@ interface PreviewStepProps {
 const renderQuestionInput = (question: Question) => {
     switch(question.type) {
         case 'text':
-            return <Input type="text" id={`preview-${question.id}`} placeholder={question.placeholder} />
+            return <Input type="text" id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />
         case 'textarea':
-            return <Textarea id={`preview-${question.id}`} placeholder={question.placeholder} />
+            return <Textarea id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />
         case 'file':
-            return <Input id={`preview-${question.id}`} type="file" />
+            return <Input id={`preview-${question.id}`} type="file" name={question.apiId} />
         case 'checkbox':
+            // Assuming single checkbox for now as per current data structure
             return (
                 <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id={`preview-${question.id}`} />
+                    <Checkbox id={`preview-${question.id}`} name={question.apiId} value={question.options?.[0].value} />
                     <label
                         htmlFor={`preview-${question.id}`}
                         className="text-sm font-medium leading-none"
                     >
-                        {question.options?.[0] || 'Sample option'}
+                        {question.options?.[0].label || 'Sample option'}
                     </label>
                 </div>
             )
         case 'dropdown':
             return (
-                <Select>
+                <Select name={question.apiId}>
                     <SelectTrigger id={`preview-${question.id}`}>
                         <SelectValue placeholder={question.placeholder || "Select an option"} />
                     </SelectTrigger>
                     <SelectContent>
-                        {question.options?.map((opt, i) => <SelectItem key={i} value={opt}>{opt}</SelectItem>)}
+                        {question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}
                     </SelectContent>
                 </Select>
             )
         case 'date':
             return (
                 <div className="relative">
-                    <Input type="date" id={`preview-${question.id}`} className="block w-full max-w-[240px]" />
+                    <Input type="date" id={`preview-${question.id}`} className="block w-full max-w-[240px]" name={question.apiId} defaultValue={question.defaultValue}/>
                 </div>
             )
         case 'email':
-            return <Input type="email" id={`preview-${question.id}`} placeholder={question.placeholder || "email@example.com"} />
+            return <Input type="email" id={`preview-${question.id}`} placeholder={question.placeholder || "email@example.com"} defaultValue={question.defaultValue} name={question.apiId}/>
         case 'tel':
-            return <Input type="tel" id={`preview-${question.id}`} placeholder={question.placeholder || "(123) 456-7890"} />
+            return <Input type="tel" id={`preview-${question.id}`} placeholder={question.placeholder || "(123) 456-7890"} defaultValue={question.defaultValue} name={question.apiId}/>
         case 'url':
-            return <Input type="url" id={`preview-${question.id}`} placeholder={question.placeholder || "https://example.com"} />
+            return <Input type="url" id={`preview-${question.id}`} placeholder={question.placeholder || "https://example.com"} defaultValue={question.defaultValue} name={question.apiId}/>
         case 'radio':
             return (
-                <RadioGroup>
+                <RadioGroup name={question.apiId} defaultValue={question.defaultValue}>
                 {question.options?.map((opt, i) => (
                     <div key={i} className="flex items-center space-x-2 pt-2">
-                        <RadioGroupItem value={opt} id={`preview-${question.id}-${i}`} />
+                        <RadioGroupItem value={opt.value} id={`preview-${question.id}-${i}`} />
                         <label
                             htmlFor={`preview-${question.id}-${i}`}
                             className="text-sm font-medium leading-none"
                         >
-                            {opt}
+                            {opt.label}
                         </label>
                     </div>
                 ))}
@@ -104,7 +105,10 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                                         <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
                                         {section.questions.map(question => (
                                             <div key={question.id} className="grid gap-2 mb-4">
-                                                <Label htmlFor={`preview-${question.id}`}>{question.label}</Label>
+                                                <Label htmlFor={`preview-${question.id}`}>
+                                                  {question.label}
+                                                  {question.required && <span className="text-destructive"> *</span>}
+                                                </Label>
                                                 {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
                                                 {renderQuestionInput(question)}
                                             </div>
