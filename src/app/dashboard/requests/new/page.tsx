@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
 
 
 // Type definitions for the entire wizard
@@ -95,6 +96,7 @@ const questionTypes: { type: QuestionType; label: string; icon: React.ElementTyp
 
 export default function NewRequestPage() {
     const [currentStep, setCurrentStep] = useState(steps[0]);
+    const { toast } = useToast();
     
     // State for the whole wizard
     const [requestTitle, setRequestTitle] = useState("New Request");
@@ -141,6 +143,105 @@ export default function NewRequestPage() {
         };
         setPages(prev => [...prev, newPage]);
         setActivePageId(newPageId);
+    };
+
+    const deletePage = (pageId: number) => {
+        setPages(prevPages => {
+            if (prevPages.length <= 1) {
+                toast({
+                    title: "Action Forbidden",
+                    description: "You cannot delete the only page in a request.",
+                    variant: "destructive"
+                })
+                return prevPages;
+            }
+    
+            const pageIndexToDelete = prevPages.findIndex(p => p.id === pageId);
+            let newActivePageId = activePageId;
+    
+            if (pageId === activePageId) {
+                const newActiveIndex = pageIndexToDelete > 0 ? pageIndexToDelete - 1 : 0;
+                newActivePageId = prevPages.filter(p => p.id !== pageId)[newActiveIndex]?.id || null;
+            }
+    
+            const newPages = prevPages.filter(p => p.id !== pageId)
+                .map((page, pageIndex) => {
+                    const newPageNumber = pageIndex + 1;
+                    const titleText = page.title.replace(/^[0-9]+\.\s*/, '');
+                    
+                    const newSections = page.sections.map((section, sectionIndex) => {
+                        const newSectionNumber = sectionIndex + 1;
+                        const sectionTitleText = section.title.replace(/^[0-9]+\.[0-9]+\s*/, '');
+                        return {
+                            ...section,
+                            title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
+                        };
+                    });
+    
+                    return {
+                        ...page,
+                        title: `${newPageNumber}. ${titleText}`,
+                        sections: newSections,
+                    };
+                });
+            
+            setActivePageId(newActivePageId);
+            return newPages;
+        });
+    };
+
+    const duplicatePage = (pageId: number) => {
+        setPages(prevPages => {
+            const pageIndexToDuplicate = prevPages.findIndex(p => p.id === pageId);
+            if (pageIndexToDuplicate === -1) return prevPages;
+    
+            const pageToDuplicate = prevPages[pageIndexToDuplicate];
+    
+            const newPage: Page = {
+                ...JSON.parse(JSON.stringify(pageToDuplicate)),
+                id: Date.now(),
+            };
+            newPage.sections.forEach(section => {
+                section.id = Date.now() + Math.random();
+                section.questions.forEach(question => {
+                    question.id = Date.now() + Math.random();
+                    question.apiId = slugify(`${question.label}_${question.id}`);
+                });
+            });
+            
+            const tempPages = [...prevPages];
+            tempPages.splice(pageIndexToDuplicate + 1, 0, newPage);
+    
+            const newPages = tempPages.map((page, pageIndex) => {
+                const newPageNumber = pageIndex + 1;
+                let titleText;
+    
+                if (page.id === newPage.id) {
+                    const originalTitle = pageToDuplicate.title.replace(/^[0-9]+\.\s*/, '');
+                    titleText = `${originalTitle.replace(/\s*\(Copy\)/g, '')} (Copy)`;
+                } else {
+                    titleText = page.title.replace(/^[0-9]+\.\s*/, '').replace(/\s*\(Copy\)/g, '');
+                }
+                
+                const newSections = page.sections.map((section, sectionIndex) => {
+                    const newSectionNumber = sectionIndex + 1;
+                    const sectionTitleText = section.title.replace(/^[0-9]+\.[0-9]+\s*/, '');
+                    return {
+                        ...section,
+                        title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
+                    };
+                });
+    
+                return {
+                    ...page,
+                    title: `${newPageNumber}. ${titleText}`,
+                    sections: newSections,
+                };
+            });
+    
+            setActivePageId(newPage.id);
+            return newPages;
+        });
     };
 
     const addSection = (pageId: number) => {
@@ -338,7 +439,7 @@ export default function NewRequestPage() {
 
     const renderStep = () => {
         switch (currentStep) {
-            case "Templates": return <TemplatesStep onNext={nextStep} />;
+            case "Templates": return <TemplatesStep onNext={() => setCurrentStep("Essentials")} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
                                         pages={pages} 
@@ -353,6 +454,8 @@ export default function NewRequestPage() {
                                         deleteQuestion={deleteQuestion}
                                         activePageId={activePageId}
                                         setActivePageId={setActivePageId}
+                                        duplicatePage={duplicatePage}
+                                        deletePage={deletePage}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;
@@ -430,18 +533,18 @@ export default function NewRequestPage() {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users on how to fill this field" />
+                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users on how to fill this field" />
                             </div>
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Placeholder</Label>
-                                    <Input id="placeholder" value={tempQuestion.placeholder} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
+                                    <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="defaultValue">Default Value</Label>
-                                    <Input id="defaultValue" value={tempQuestion.defaultValue} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
+                                    <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
                                 </div>
                             )}
                             
@@ -477,7 +580,7 @@ export default function NewRequestPage() {
                                     <AccordionContent className="space-y-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
-                                            <Input id="apiId" value={tempQuestion.apiId} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
+                                            <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
                                             <p className="text-xs text-muted-foreground">Used as the `name` attribute in the form. Must be unique.</p>
                                         </div>
                                     </AccordionContent>

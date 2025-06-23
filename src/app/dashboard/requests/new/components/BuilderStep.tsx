@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -31,6 +32,8 @@ interface BuilderStepProps {
   deleteQuestion: (pageId: number, sectionId: number, questionId: number) => void;
   activePageId: number | null;
   setActivePageId: (id: number) => void;
+  duplicatePage: (pageId: number) => void;
+  deletePage: (pageId: number) => void;
 }
 
 interface PagesSidebarProps {
@@ -38,6 +41,10 @@ interface PagesSidebarProps {
   addPage: () => void;
   activePageId: number | null;
   setActivePageId: (id: number) => void;
+  duplicatePage: (pageId: number) => void;
+  deletePage: (pageId: number) => void;
+  addSection: (pageId: number) => void;
+  renamePage: (page: Page) => void;
 }
 
 const QuestionIcon = ({ type }: { type: QuestionType }) => {
@@ -57,7 +64,7 @@ const QuestionIcon = ({ type }: { type: QuestionType }) => {
     }
 }
 
-const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSidebarProps) => {
+const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicatePage, deletePage, addSection, renamePage }: PagesSidebarProps) => {
     return (
         <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
             <div className="p-4 border-b">
@@ -66,18 +73,33 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSi
             <div className="flex-grow p-2 space-y-1 overflow-y-auto">
                 {pages.map(page => (
                     <div key={page.id}>
-                        <button
-                           onClick={() => setActivePageId(page.id)}
-                           className={cn(
-                               "w-full flex items-center justify-between text-sm p-2 rounded-md font-semibold text-left",
-                               activePageId === page.id
-                                 ? "bg-primary/10 text-primary"
-                                 : "text-foreground hover:bg-accent/50"
-                           )}
-                        >
-                           <span className="truncate">{page.title}</span>
-                           <MoreHorizontal className="h-4 w-4" />
-                        </button>
+                         <div className={cn(
+                            "w-full flex items-center justify-between text-sm p-2 rounded-md font-semibold",
+                            activePageId === page.id
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-accent/50"
+                          )}>
+                            <button
+                                onClick={() => setActivePageId(page.id)}
+                                className="flex-1 text-left truncate"
+                            >
+                                {page.title}
+                            </button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onClick={() => renamePage(page)}>Rename Page</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => duplicatePage(page.id)}>Duplicate Page</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => addSection(page.id)}>Create New Section</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onClick={() => deletePage(page.id)}>Delete Page</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                         {activePageId === page.id && (
                            <div className="pl-4 border-l ml-4 mt-2 space-y-2">
                                 {page.sections.map(section => (
@@ -113,7 +135,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSi
     )
 }
 
-export default function BuilderStep({ pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
@@ -163,7 +185,16 @@ export default function BuilderStep({ pages, addPage, addSection, onAddFieldClic
 
   return (
     <div className="flex h-full">
-      <PagesSidebar pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId} />
+      <PagesSidebar
+        pages={pages} 
+        addPage={addPage} 
+        activePageId={activePageId} 
+        setActivePageId={setActivePageId}
+        duplicatePage={duplicatePage}
+        deletePage={deletePage}
+        addSection={addSection}
+        renamePage={handlePageTitleEdit}
+       />
       
       <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
