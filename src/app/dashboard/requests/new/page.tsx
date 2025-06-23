@@ -100,6 +100,7 @@ export default function NewRequestPage() {
     const [requestTitle, setRequestTitle] = useState("New Request");
     const [requestDescription, setRequestDescription] = useState("Please provide all the necessary documents and information to get you set up in our system.");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
+    const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -125,9 +126,10 @@ export default function NewRequestPage() {
     };
 
     const addPage = () => {
+        const newPageId = Date.now();
         const newPageNumber = pages.length + 1;
         const newPage: Page = {
-            id: Date.now(),
+            id: newPageId,
             title: `${newPageNumber}. New Page`,
             instructions: "",
             sections: [{
@@ -138,6 +140,7 @@ export default function NewRequestPage() {
             }]
         };
         setPages(prev => [...prev, newPage]);
+        setActivePageId(newPageId);
     };
 
     const addSection = (pageId: number) => {
@@ -348,6 +351,8 @@ export default function NewRequestPage() {
                                         openQuestionSettings={openQuestionSettings}
                                         duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion}
+                                        activePageId={activePageId}
+                                        setActivePageId={setActivePageId}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;
@@ -421,7 +426,7 @@ export default function NewRequestPage() {
                                     checked={tempQuestion.required} 
                                     onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)}
                                 />
-                                <Label htmlFor="required" className="font-normal">Required</Label>
+                                <Label htmlFor="required">Required</Label>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="instructions">Instructions</Label>

@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import type { Page, Question, QuestionType } from "../page"
+import { cn } from "@/lib/utils"
 
 interface BuilderStepProps {
   pages: Page[];
@@ -28,11 +29,15 @@ interface BuilderStepProps {
   openQuestionSettings: (question: Question, pageId: number, sectionId: number) => void;
   duplicateQuestion: (pageId: number, sectionId: number, questionId: number) => void;
   deleteQuestion: (pageId: number, sectionId: number, questionId: number) => void;
+  activePageId: number | null;
+  setActivePageId: (id: number) => void;
 }
 
 interface PagesSidebarProps {
   pages: Page[];
   addPage: () => void;
+  activePageId: number | null;
+  setActivePageId: (id: number) => void;
 }
 
 const QuestionIcon = ({ type }: { type: QuestionType }) => {
@@ -52,7 +57,7 @@ const QuestionIcon = ({ type }: { type: QuestionType }) => {
     }
 }
 
-const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
+const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId }: PagesSidebarProps) => {
     return (
         <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
             <div className="p-4 border-b">
@@ -61,27 +66,29 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
             <div className="flex-grow p-2 space-y-1 overflow-y-auto">
                 {pages.map(page => (
                     <div key={page.id}>
-                        <a href={`#page-${page.id}`} className="flex items-center justify-between text-sm p-2 rounded-md bg-primary/10 text-primary font-semibold">
+                        <button
+                           onClick={() => setActivePageId(page.id)}
+                           className={cn(
+                               "w-full flex items-center justify-between text-sm p-2 rounded-md font-semibold text-left",
+                               activePageId === page.id
+                                 ? "bg-primary/10 text-primary"
+                                 : "text-foreground hover:bg-accent/50"
+                           )}
+                        >
                            <span>{page.title}</span>
                            <MoreHorizontal className="h-4 w-4" />
-                        </a>
-                        <div className="pl-4">
-                            {page.sections.map(section => (
-                                <div key={section.id}>
-                                    <a href={`#section-${section.id}`} className="block text-sm p-2 text-muted-foreground hover:text-foreground">
-                                        {section.title}
-                                    </a>
-                                     <div className="pl-4">
-                                        {section.questions.map(question => (
-                                             <a key={question.id} href={`#question-${question.id}`} className="flex items-center justify-between text-sm p-2 text-muted-foreground hover:text-foreground">
-                                                <span className="truncate">{question.label}</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                             </a>
-                                        ))}
+                        </button>
+                        {activePageId === page.id && (
+                           <div className="pl-4 border-l ml-4 mt-2">
+                                {page.sections.map(section => (
+                                    <div key={section.id}>
+                                        <a href={`#section-${section.id}`} className="block text-sm p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50">
+                                            {section.title}
+                                        </a>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -94,7 +101,7 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
@@ -109,7 +116,7 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
 
   return (
     <div className="flex h-full">
-      <PagesSidebar pages={pages} addPage={addPage} />
+      <PagesSidebar pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId} />
       
       <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
@@ -127,7 +134,7 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
 
 
             <div className="space-y-6">
-                {pages.map(page => {
+                {pages.filter(p => p.id === activePageId).map(page => {
                     const { number: pageNumber, text: pageText } = getTitleParts(page.title);
                     return (
                     <div key={page.id} id={`page-${page.id}`}>
