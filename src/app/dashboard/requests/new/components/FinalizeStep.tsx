@@ -63,6 +63,11 @@ export default function FinalizeStep() {
                     <Button variant="link" className="p-0">Configure reminder schedule</Button>
                 </CardFooter>
             </Card>
+
+            <div className="flex flex-col items-center gap-2 mt-4">
+                <Button size="lg" className="w-full max-w-xs">Publish and Send</Button>
+                <Button variant="link" className="text-muted-foreground">Or Save As A Draft</Button>
+            </div>
         </div>
     )
 }
