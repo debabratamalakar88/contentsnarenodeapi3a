@@ -7,7 +7,7 @@ import BuilderStep from './components/BuilderStep';
 import PreviewStep from './components/PreviewStep';
 import FinalizeStep from './components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -95,15 +95,17 @@ export default function NewRequestPage() {
                 </Button>
                 <StepNavigation currentStep={currentStep} onStepClick={setCurrentStep} />
                 <div className="ml-auto flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep("Preview")}>Preview</Button>
+                    {currentStepIndex > 0 && currentStepIndex < steps.length - 1 && (
+                        <Button onClick={nextStep}>
+                            Next: {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    )}
                 </div>
             </div>
             
             <div className={cn("flex-grow", currentStep !== 'Builder' && "p-6 flex justify-center items-center")}>
                 {renderStep()}
             </div>
-
-            {/* The bottom navigation is removed to match the image, but could be added back if needed */}
         </div>
     );
 }
