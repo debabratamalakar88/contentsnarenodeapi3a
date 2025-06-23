@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -14,21 +14,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { 
-  FileText, 
-  GripVertical, 
-  Plus, 
-  Trash2, 
-  Text, 
-  Heading2, 
-  CheckSquare, 
-  List, 
-  UploadCloud, 
+import {
+  FileText,
+  GripVertical,
+  Plus,
+  Trash2,
+  Text,
+  Heading2,
+  CheckSquare,
+  List,
+  UploadCloud,
   Calendar as CalendarIcon,
   Mail,
   Phone,
-  Link,
-  CircleDot
+  Link as LinkIcon,
+  CircleDot,
+  Pencil,
 } from "lucide-react"
 import {
   Dialog,
@@ -36,6 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -48,6 +50,8 @@ interface Question {
   id: number;
   label: string;
   type: QuestionType;
+  placeholder?: string;
+  options?: string[];
 }
 
 interface Page {
@@ -56,13 +60,13 @@ interface Page {
   questions: Question[];
 }
 
-const initialPages: Page[] = [
+const initialPagesData: Page[] = [
   {
     id: 1,
     title: "Page 1: Company Information",
     questions: [
-      { id: 1, label: "Company Name", type: 'text' },
-      { id: 2, label: "Business Address", type: 'textarea' },
+      { id: 1, label: "Company Name", type: 'text', placeholder: "e.g. Acme Inc." },
+      { id: 2, label: "Business Address", type: 'textarea', placeholder: "Enter your full business address" },
     ],
   },
   {
@@ -70,6 +74,7 @@ const initialPages: Page[] = [
     title: "Page 2: Document Uploads",
     questions: [
       { id: 3, label: "Business License", type: 'file' },
+      { id: 4, label: "Services Needed", type: 'radio', options: ["Web Design", "SEO", "Marketing"] }
     ],
   },
 ]
@@ -83,16 +88,26 @@ const fieldTypes: { icon: React.ElementType; label: string; type: QuestionType }
     { icon: CalendarIcon, label: "Date", type: 'date' },
     { icon: Mail, label: "Email", type: 'email' },
     { icon: Phone, label: "Phone", type: 'tel' },
-    { icon: Link, label: "URL", type: 'url' },
+    { icon: LinkIcon, label: "URL", type: 'url' },
     { icon: CircleDot, label: "Radio Button", type: 'radio' },
 ];
 
 export default function NewRequestPage() {
-  const [pages, setPages] = useState<Page[]>(initialPages)
+  const [pages, setPages] = useState<Page[]>(initialPagesData)
+  
+  // Page editing state
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   
+  // Add question modal state
   const [isQuestionModalOpen, setQuestionModalOpen] = useState(false);
   const [targetPageId, setTargetPageId] = useState<number | null>(null);
+
+  // Question editing state
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [questionToEdit, setQuestionToEdit] = useState<{ pageId: number; question: Question } | null>(null);
+  const [editFormData, setEditFormData] = useState({ placeholder: '', options: '' });
+
 
   const addPage = () => {
     const newPage: Page = {
@@ -121,6 +136,8 @@ export default function NewRequestPage() {
       id: Date.now(),
       label: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Question`,
       type,
+      placeholder: '',
+      options: type === 'dropdown' || type === 'radio' ? ['Option 1', 'Option 2'] : undefined,
     }
     setPages(
       pages.map((p) =>
@@ -142,17 +159,62 @@ export default function NewRequestPage() {
     )
   }
 
+  const updateQuestionLabel = (pageId: number, questionId: number, newLabel: string) => {
+    setPages(
+      pages.map((p) =>
+        p.id === pageId
+          ? {
+              ...p,
+              questions: p.questions.map((q) =>
+                q.id === questionId ? { ...q, label: newLabel.trim() || `Untitled Question` } : q
+              ),
+            }
+          : p
+      )
+    );
+    setEditingQuestionId(null);
+  };
+
   const handleOpenQuestionModal = (pageId: number) => {
     setTargetPageId(pageId);
     setQuestionModalOpen(true);
+  };
+  
+  const handleOpenEditModal = (pageId: number, question: Question) => {
+    setQuestionToEdit({ pageId, question });
+    setEditFormData({
+        placeholder: question.placeholder || '',
+        options: question.options?.join('\n') || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateQuestionSettings = () => {
+      if (!questionToEdit) return;
+
+      const { pageId, question } = questionToEdit;
+      const updatedQuestion = {
+          ...question,
+          placeholder: editFormData.placeholder,
+          options: editFormData.options.split('\n').filter(opt => opt.trim() !== '')
+      };
+
+      setPages(pages.map(p =>
+          p.id === pageId ? {
+              ...p,
+              questions: p.questions.map(q => q.id === question.id ? updatedQuestion : q)
+          } : p
+      ));
+      setIsEditModalOpen(false);
+      setQuestionToEdit(null);
   };
 
   const renderQuestionInput = (question: Question) => {
     switch(question.type) {
       case 'text':
-        return <Input type="text" placeholder="Short text answer" disabled />
+        return <Input type="text" placeholder={question.placeholder || "Short text answer"} disabled />
       case 'textarea':
-        return <Textarea placeholder="Long text answer" disabled />
+        return <Textarea placeholder={question.placeholder || "Long text answer"} disabled />
       case 'file':
         return <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground items-center">File Upload</div>
       case 'checkbox':
@@ -163,7 +225,7 @@ export default function NewRequestPage() {
                     htmlFor={`checkbox-${question.id}`}
                     className="text-sm font-medium leading-none text-muted-foreground"
                 >
-                    Sample option
+                    {question.options?.[0] || 'Sample option'}
                 </label>
             </div>
         )
@@ -171,35 +233,40 @@ export default function NewRequestPage() {
         return (
             <Select disabled>
                 <SelectTrigger>
-                    <SelectValue placeholder="Select an option" />
+                    <SelectValue placeholder={question.placeholder || "Select an option"} />
                 </SelectTrigger>
+                <SelectContent>
+                  {question.options?.map((opt, i) => <SelectItem key={i} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
             </Select>
         )
       case 'date':
         return (
             <Button variant={"outline"} disabled className="w-full max-w-[240px] justify-start text-left font-normal text-muted-foreground">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                <span>Pick a date</span>
+                <span>{question.placeholder || 'Pick a date'}</span>
             </Button>
         )
       case 'email':
-        return <Input type="email" placeholder="email@example.com" disabled />
+        return <Input type="email" placeholder={question.placeholder || "email@example.com"} disabled />
       case 'tel':
-        return <Input type="tel" placeholder="(123) 456-7890" disabled />
+        return <Input type="tel" placeholder={question.placeholder || "(123) 456-7890"} disabled />
       case 'url':
-        return <Input type="url" placeholder="https://example.com" disabled />
+        return <Input type="url" placeholder={question.placeholder || "https://example.com"} disabled />
       case 'radio':
         return (
             <RadioGroup disabled>
-                <div className="flex items-center space-x-2 pt-2">
-                    <RadioGroupItem value="option-one" id={`radio-${question.id}`} />
+              {question.options?.map((opt, i) => (
+                <div key={i} className="flex items-center space-x-2 pt-2">
+                    <RadioGroupItem value={opt} id={`radio-${question.id}-${i}`} />
                     <label
-                        htmlFor={`radio-${question.id}`}
+                        htmlFor={`radio-${question.id}-${i}`}
                         className="text-sm font-medium leading-none text-muted-foreground"
                     >
-                        Sample option
+                        {opt}
                     </label>
                 </div>
+              ))}
             </RadioGroup>
         )
       default:
@@ -278,12 +345,32 @@ export default function NewRequestPage() {
                   </div>
                   <Separator />
                   {page.questions.map((question) => (
-                    <div key={question.id} className="flex items-center gap-2 pl-4">
-                      <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
-                      <div className="flex-1">
-                        <Label>{question.label}</Label>
+                    <div key={question.id} className="flex items-start gap-2 pl-4">
+                      <GripVertical className="h-5 w-5 text-muted-foreground cursor-move mt-2.5" />
+                      <div className="flex-1 space-y-2">
+                         {editingQuestionId === question.id ? (
+                            <Input
+                                defaultValue={question.label}
+                                onBlur={(e) => updateQuestionLabel(page.id, question.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        updateQuestionLabel(page.id, question.id, e.currentTarget.value);
+                                    } else if (e.key === 'Escape') {
+                                        setEditingQuestionId(null);
+                                    }
+                                }}
+                                autoFocus
+                            />
+                        ) : (
+                            <Label onClick={() => setEditingQuestionId(question.id)} className="cursor-pointer font-medium text-base">
+                                {question.label}
+                            </Label>
+                        )}
                         {renderQuestionInput(question)}
                       </div>
+                       <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(page.id, question)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => removeQuestion(page.id, question.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -361,6 +448,42 @@ export default function NewRequestPage() {
               </button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Question Settings</DialogTitle>
+            <DialogDescription>
+              Make changes to your question here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="placeholder">Placeholder Text</Label>
+              <Input
+                id="placeholder"
+                value={editFormData.placeholder}
+                onChange={(e) => setEditFormData({ ...editFormData, placeholder: e.target.value })}
+              />
+            </div>
+            {(questionToEdit?.question.type === 'dropdown' || questionToEdit?.question.type === 'radio') && (
+              <div className="grid gap-2">
+                <Label htmlFor="options">Options (one per line)</Label>
+                <Textarea
+                  id="options"
+                  className="min-h-[120px]"
+                  value={editFormData.options}
+                  onChange={(e) => setEditFormData({ ...editFormData, options: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateQuestionSettings}>Save Changes</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
