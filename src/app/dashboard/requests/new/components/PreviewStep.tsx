@@ -11,13 +11,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Calendar as CalendarIcon,
-} from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { Page, Question } from "../page"
+import type { Page, Question, Section } from "../page"
 
 interface PreviewStepProps {
     title: string;
@@ -91,7 +88,7 @@ const renderQuestionInput = (question: Question) => {
 
 export default function PreviewStep({ title, description, pages }: PreviewStepProps) {    
     return (
-        <div className="max-w-3xl mx-auto animate-in fade-in-50">
+        <div className="max-w-3xl mx-auto animate-in fade-in-50 py-8 px-4">
             <Card>
                 <CardHeader>
                     <CardTitle>{title}</CardTitle>
@@ -102,10 +99,16 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                         <div key={page.id}>
                             <h3 className="text-xl font-semibold border-b pb-2 mb-4">{page.title}</h3>
                             <div className="space-y-6">
-                                {page.questions.map(question => (
-                                    <div key={question.id} className="grid gap-2">
-                                        <Label htmlFor={`preview-${question.id}`}>{question.label}</Label>
-                                        {renderQuestionInput(question)}
+                                {page.sections.map(section => (
+                                    <div key={section.id}>
+                                        <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
+                                        {section.questions.map(question => (
+                                            <div key={question.id} className="grid gap-2 mb-4">
+                                                <Label htmlFor={`preview-${question.id}`}>{question.label}</Label>
+                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                {renderQuestionInput(question)}
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
                             </div>
