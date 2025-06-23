@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil,
   Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2
 } from "lucide-react"
@@ -20,6 +26,8 @@ interface BuilderStepProps {
   updatePageTitle: (pageId: number, newTitle: string) => void;
   updateSectionTitle: (pageId: number, sectionId: number, newTitle: string) => void;
   openQuestionSettings: (question: Question, pageId: number, sectionId: number) => void;
+  duplicateQuestion: (pageId: number, sectionId: number, questionId: number) => void;
+  deleteQuestion: (pageId: number, sectionId: number, questionId: number) => void;
 }
 
 interface PagesSidebarProps {
@@ -86,7 +94,7 @@ const PagesSidebar = ({ pages, addPage }: PagesSidebarProps) => {
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings }: BuilderStepProps) {
+export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
@@ -194,7 +202,25 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question, page.id, section.id)}>
                                                   <Settings className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>
+                                                            Duplicate
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => openQuestionSettings(question, page.id, section.id)}>
+                                                            Rename
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => deleteQuestion(page.id, section.id, question.id)}
+                                                            className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                                                        >
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                         </div>
                                         <div className="p-3">

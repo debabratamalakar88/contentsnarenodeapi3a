@@ -248,6 +248,47 @@ export default function NewRequestPage() {
         setTempQuestion(null);
     };
     
+    const duplicateQuestion = (pageId: number, sectionId: number, questionId: number) => {
+        setPages(prevPages => {
+            const newPages = JSON.parse(JSON.stringify(prevPages));
+            const page = newPages.find((p: Page) => p.id === pageId);
+            if (page) {
+                const section = page.sections.find((s: Section) => s.id === sectionId);
+                if (section) {
+                    const questionIndex = section.questions.findIndex((q: Question) => q.id === questionId);
+                    if (questionIndex > -1) {
+                        const originalQuestion = section.questions[questionIndex];
+                        const duplicatedQuestion: Question = {
+                            ...originalQuestion,
+                            id: Date.now(),
+                            label: `${originalQuestion.label} (Copy)`,
+                            apiId: slugify(`${originalQuestion.label} (Copy) ${Date.now()}`),
+                        };
+                        section.questions.splice(questionIndex + 1, 0, duplicatedQuestion);
+                    }
+                }
+            }
+            return newPages;
+        });
+    };
+
+    const deleteQuestion = (pageId: number, sectionId: number, questionId: number) => {
+        setPages(prevPages => prevPages.map(page => {
+            if (page.id === pageId) {
+                return {
+                    ...page,
+                    sections: page.sections.map(section => {
+                        if (section.id === sectionId) {
+                            return { ...section, questions: section.questions.filter(q => q.id !== questionId) };
+                        }
+                        return section;
+                    })
+                };
+            }
+            return page;
+        }));
+    };
+
     const handleTempQuestionChange = (field: keyof Question, value: any) => {
         if (tempQuestion) {
             const newTempQuestion = { ...tempQuestion, [field]: value };
@@ -305,6 +346,8 @@ export default function NewRequestPage() {
                                         updatePageTitle={updatePageTitle}
                                         updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings}
+                                        duplicateQuestion={duplicateQuestion}
+                                        deleteQuestion={deleteQuestion}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;
@@ -320,9 +363,14 @@ export default function NewRequestPage() {
                 </Button>
                 <StepNavigation currentStep={currentStep} onStepClick={setCurrentStep} />
                 <div className="ml-auto flex items-center gap-2">
-                     {currentStepIndex > 0 && currentStepIndex < steps.length - 1 && (
+                     {currentStepIndex > 0 && currentStepIndex < steps.length - 2 && (
                         <Button onClick={nextStep}>
                             {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    )}
+                     {currentStepIndex === steps.length - 2 && (
+                        <Button onClick={nextStep} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                           {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}
                 </div>
@@ -362,7 +410,7 @@ export default function NewRequestPage() {
                         </DialogDescription>
                     </DialogHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 py-4">
+                        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
