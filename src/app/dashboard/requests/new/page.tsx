@@ -345,8 +345,8 @@ export default function NewRequestPage() {
                   </div>
                   <Separator />
                   {page.questions.map((question) => (
-                    <div key={question.id} className="flex items-start gap-2 pl-4">
-                      <GripVertical className="h-5 w-5 text-muted-foreground cursor-move mt-2.5" />
+                    <div key={question.id} className="flex items-center gap-2 pl-4">
+                      <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
                       <div className="flex-1 space-y-2">
                          {editingQuestionId === question.id ? (
                             <Input
