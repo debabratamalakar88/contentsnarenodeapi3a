@@ -1,3 +1,4 @@
+
 'use client'
 import { useState } from "react";
 import StepNavigation from './components/StepNavigation';
@@ -29,7 +30,7 @@ export interface QuestionOption {
 
 export interface Question {
   id: number;
-  label: string;
+  label:string;
   type: QuestionType;
   instructions?: string;
   placeholder?: string;
@@ -127,21 +128,43 @@ export default function NewRequestPage() {
         }
     };
 
+    const renumberItems = (pagesToRenumber: Page[]): Page[] => {
+      return pagesToRenumber.map((page, pageIndex) => {
+          const newPageNumber = pageIndex + 1;
+          const pageTitleText = page.title.replace(/^[0-9\.]+\s*/, '');
+  
+          const renumberedSections = page.sections.map((section, sectionIndex) => {
+              const newSectionNumber = sectionIndex + 1;
+              const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
+              return {
+                  ...section,
+                  title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`,
+              };
+          });
+  
+          return {
+              ...page,
+              title: `${newPageNumber}. ${pageTitleText}`,
+              sections: renumberedSections,
+          };
+      });
+    };
+
     const addPage = () => {
         const newPageId = Date.now();
-        const newPageNumber = pages.length + 1;
         const newPage: Page = {
             id: newPageId,
-            title: `${newPageNumber}. New Page`,
+            title: `New Page`,
             instructions: "",
             sections: [{
                 id: Date.now() + 1,
-                title: `${newPageNumber}.1 New Section`,
+                title: `New Section`,
                 instructions: '',
                 questions: []
             }]
         };
-        setPages(prev => [...prev, newPage]);
+        const newPages = renumberItems([...pages, newPage]);
+        setPages(newPages);
         setActivePageId(newPageId);
     };
 
@@ -155,111 +178,64 @@ export default function NewRequestPage() {
                 });
                 return prevPages;
             }
-    
-            const pageIndexToDelete = prevPages.findIndex(p => p.id === pageId);
-            const pagesAfterDelete = prevPages.filter(p => p.id !== pageId);
-            let newActivePageId = activePageId;
-    
-            if (pageId === activePageId) {
-                const newActiveIndex = pageIndexToDelete > 0 ? pageIndexToDelete - 1 : 0;
-                newActivePageId = pagesAfterDelete[newActiveIndex]?.id || null;
-            }
-    
-            const finalPages = pagesAfterDelete.map((page, pageIndex) => {
-                const newPageNumber = pageIndex + 1;
-                const titleText = page.title.replace(/^[0-9\.]+\s*/, '');
-                
-                const newSections = page.sections.map((section, sectionIndex) => {
-                    const newSectionNumber = sectionIndex + 1;
-                    const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
-                    return {
-                        ...section,
-                        title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
-                    };
-                });
-    
-                return {
-                    ...page,
-                    title: `${newPageNumber}. ${titleText}`,
-                    sections: newSections,
-                };
-            });
             
-            setActivePageId(newActivePageId);
-            return finalPages;
+            const pageIndexToDelete = prevPages.findIndex(p => p.id === pageId);
+            const newPages = prevPages.filter(p => p.id !== pageId);
+
+            if (activePageId === pageId) {
+                const newActiveIndex = Math.max(0, pageIndexToDelete - 1);
+                setActivePageId(newPages[newActiveIndex]?.id || null);
+            }
+
+            return renumberItems(newPages);
         });
     };
 
     const duplicatePage = (pageId: number) => {
-        setPages(prevPages => {
-            const pageIndexToDuplicate = prevPages.findIndex(p => p.id === pageId);
-            if (pageIndexToDuplicate === -1) return prevPages;
-    
-            const pageToDuplicate = prevPages[pageIndexToDuplicate];
-    
-            const newPage: Page = JSON.parse(JSON.stringify(pageToDuplicate)); // Deep copy
-            
-            // Assign new IDs to nested elements to avoid key conflicts
-            newPage.id = Date.now();
-            newPage.sections.forEach(section => {
-                section.id = Date.now() + Math.random();
-                section.questions.forEach(question => {
-                    question.id = Date.now() + Math.random();
-                    question.apiId = slugify(`${question.label}_${Date.now()}`);
-                });
-            });
-            
-            const tempPages = [...prevPages];
-            tempPages.splice(pageIndexToDuplicate + 1, 0, newPage);
-    
-            // Re-number all pages and sections
-            const finalPages = tempPages.map((page, pageIndex) => {
-                const newPageNumber = pageIndex + 1;
-                let titleText;
-    
-                if (page.id === newPage.id) { // This is the newly duplicated page
-                    const originalTitle = pageToDuplicate.title.replace(/^[0-9\.]+\s*/, '');
-                    titleText = `${originalTitle.replace(/\s*\(Copy\)/g, '')} (Copy)`;
-                } else {
-                    titleText = page.title.replace(/^[0-9\.]+\s*/, '');
-                }
-                
-                const newSections = page.sections.map((section, sectionIndex) => {
-                    const newSectionNumber = sectionIndex + 1;
-                    const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
-                    return {
-                        ...section,
-                        title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
-                    };
-                });
-    
-                return {
-                    ...page,
-                    title: `${newPageNumber}. ${titleText}`,
-                    sections: newSections,
-                };
-            });
-    
-            setActivePageId(newPage.id);
-            return finalPages;
-        });
+      setPages(prevPages => {
+          const pageToDuplicate = prevPages.find(p => p.id === pageId);
+          if (!pageToDuplicate) return prevPages;
+
+          const pageIndex = prevPages.findIndex(p => p.id === pageId);
+
+          const newPage: Page = JSON.parse(JSON.stringify(pageToDuplicate));
+          
+          newPage.id = Date.now();
+          const originalTitle = newPage.title.replace(/^[0-9\.]+\s*/, '');
+          newPage.title = `${originalTitle.replace(/\s*\(Copy\)/gi, '').trim()} (Copy)`;
+
+          newPage.sections.forEach(section => {
+              section.id = Date.now() + Math.random();
+              section.questions.forEach(question => {
+                  question.id = Date.now() + Math.random();
+                  question.apiId = slugify(`${question.label}_${Date.now()}`);
+              });
+          });
+
+          const newPages = [...prevPages];
+          newPages.splice(pageIndex + 1, 0, newPage);
+
+          setActivePageId(newPage.id);
+          return renumberItems(newPages);
+      });
     };
 
     const addSection = (pageId: number) => {
-        setPages(prevPages => prevPages.map(page => {
-            if (page.id === pageId) {
-                const pageNumber = page.title.split('.')[0];
-                const newSectionNumber = page.sections.length + 1;
-                const newSection: Section = {
-                    id: Date.now(),
-                    title: `${pageNumber}.${newSectionNumber} New Section`,
-                    instructions: '',
-                    questions: []
-                };
-                return { ...page, sections: [...page.sections, newSection] };
-            }
-            return page;
-        }));
+        setPages(prevPages => {
+            const newPages = prevPages.map(page => {
+                if (page.id === pageId) {
+                    const newSection: Section = {
+                        id: Date.now(),
+                        title: `New Section`,
+                        instructions: '',
+                        questions: []
+                    };
+                    return { ...page, sections: [...page.sections, newSection] };
+                }
+                return page;
+            })
+            return renumberItems(newPages);
+        });
     };
 
     const updatePageTitle = (pageId: number, newTitle: string) => {
@@ -409,7 +385,6 @@ export default function NewRequestPage() {
             const newOptions = [...tempQuestion.options];
             newOptions[index] = {...newOptions[index], [field]: value};
             
-            // Auto-slugify value from label if value is empty
             if(field === 'label' && (!newOptions[index].value || slugify(newOptions[index].value) === slugify(tempQuestion.options[index].label))) {
                 newOptions[index].value = slugify(value);
             }
@@ -443,8 +418,7 @@ export default function NewRequestPage() {
             case "Templates": return <TemplatesStep onNext={() => setCurrentStep("Essentials")} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
-                                        pages={pages} 
-                                        setPages={setPages}
+                                        pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}
                                         onAddFieldClick={handleAddFieldClick}
@@ -577,7 +551,7 @@ export default function NewRequestPage() {
                                         <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
-                                            <p className="text-xs text-muted-foreground">Used as the `name` attribute in the form. Must be unique.</p>
+                                            <p className="text-xs text-muted-foreground">Used as the 'name' attribute in the form. Must be unique.</p>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>

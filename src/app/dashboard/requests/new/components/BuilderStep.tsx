@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState } from "react"
@@ -21,7 +22,6 @@ import { cn } from "@/lib/utils"
 
 interface BuilderStepProps {
   pages: Page[];
-  setPages: React.Dispatch<React.SetStateAction<Page[]>>;
   addPage: () => void;
   addSection: (pageId: number) => void;
   onAddFieldClick: (pageId: number, sectionId: number) => void;
@@ -135,7 +135,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
     )
 }
 
-export default function BuilderStep({ pages, setPages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage }: BuilderStepProps) {
+export default function BuilderStep({ pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
