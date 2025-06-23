@@ -198,9 +198,10 @@ export default function NewRequestPage() {
             const pageToDuplicate = prevPages[pageIndexToDuplicate];
     
             const newPage: Page = {
-                ...JSON.parse(JSON.stringify(pageToDuplicate)),
+                ...JSON.parse(JSON.stringify(pageToDuplicate)), // Deep copy
                 id: Date.now(),
             };
+            // Assign new IDs to nested elements to avoid key conflicts
             newPage.sections.forEach(section => {
                 section.id = Date.now() + Math.random();
                 section.questions.forEach(question => {
@@ -212,20 +213,23 @@ export default function NewRequestPage() {
             const tempPages = [...prevPages];
             tempPages.splice(pageIndexToDuplicate + 1, 0, newPage);
     
+            // Re-number all pages and sections
             const newPages = tempPages.map((page, pageIndex) => {
                 const newPageNumber = pageIndex + 1;
                 let titleText;
     
-                if (page.id === newPage.id) {
+                if (page.id === newPage.id) { // This is the newly duplicated page
                     const originalTitle = pageToDuplicate.title.replace(/^[0-9]+\.\s*/, '');
+                    // Ensure it gets a (Copy) suffix, avoiding multiple (Copy) (Copy)
                     titleText = `${originalTitle.replace(/\s*\(Copy\)/g, '')} (Copy)`;
-                } else {
-                    titleText = page.title.replace(/^[0-9]+\.\s*/, '').replace(/\s*\(Copy\)/g, '');
+                } else { // This is for all other pages
+                    // Just get the text part of the title, leaving existing (Copy) suffixes if they exist
+                    titleText = page.title.replace(/^[0-9\.]+\s*/, '');
                 }
                 
                 const newSections = page.sections.map((section, sectionIndex) => {
                     const newSectionNumber = sectionIndex + 1;
-                    const sectionTitleText = section.title.replace(/^[0-9]+\.[0-9]+\s*/, '');
+                    const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
                     return {
                         ...section,
                         title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}`
@@ -471,14 +475,9 @@ export default function NewRequestPage() {
                 </Button>
                 <StepNavigation currentStep={currentStep} onStepClick={setCurrentStep} />
                 <div className="ml-auto flex items-center gap-2">
-                     {currentStepIndex > 0 && currentStepIndex < steps.length - 2 && (
+                     {currentStepIndex > 0 && currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep}>
                             {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    )}
-                     {currentStepIndex === steps.length - 2 && (
-                        <Button onClick={nextStep} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                           {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}
                 </div>

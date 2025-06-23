@@ -152,6 +152,7 @@ export default function BuilderStep({ pages, setPages, addPage, addSection, onAd
   }
 
   const handlePageTitleEdit = (page: Page) => {
+    setActivePageId(page.id);
     setEditingPageId(page.id);
     setEditingPageTitle(getTitleParts(page.title).text);
   }
