@@ -95,8 +95,12 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
                                     <DropdownMenuItem onClick={() => renamePage(page)}>Rename Page</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => duplicatePage(page.id)}>Duplicate Page</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => addSection(page.id)}>Create New Section</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onClick={() => deletePage(page.id)}>Delete Page</DropdownMenuItem>
+                                    {pages.length > 1 && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onClick={() => deletePage(page.id)}>Delete Page</DropdownMenuItem>
+                                        </>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
