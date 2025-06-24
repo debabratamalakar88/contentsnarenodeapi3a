@@ -11,8 +11,8 @@ const ptSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ContentSnare Lite',
-  description: 'Collect structured content from clients with customizable templates.',
+  title: 'Narlax',
+  description: 'Streamlined client collaboration.',
 };
 
 export default function RootLayout({
