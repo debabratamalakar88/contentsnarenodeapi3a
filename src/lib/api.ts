@@ -45,3 +45,27 @@ export async function forgotPassword(emailData: any) {
   });
   return handleResponse(response);
 }
+
+export async function logoutUser(token: string) {
+  const response = await fetch(`${API_BASE_URL}/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    // Try to parse error json, but fallback if it's not there
+    const errorData = await response.json().catch(() => ({ message: 'Server error during logout' }));
+    throw errorData;
+  }
+
+  // Success, but no content to parse
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return { message: 'Logged out successfully' };
+  }
+  
+  return response.json();
+}

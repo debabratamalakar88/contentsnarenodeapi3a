@@ -22,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/icons"
 import { NavLinks } from "./NavLinks"
+import { logoutUser } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
   children,
@@ -30,6 +32,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -40,9 +43,27 @@ export default function DashboardLayout({
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    router.push('/login');
+  const handleLogout = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    try {
+      if (token) {
+        await logoutUser(token);
+        toast({
+          title: "Success",
+          description: "Logged out successfully.",
+        });
+      }
+    } catch (error: any) {
+       toast({
+        variant: "destructive",
+        title: "Logout Error",
+        description: error.message || "Could not log out from the server, but you have been logged out locally.",
+      });
+    } finally {
+        localStorage.removeItem('authToken');
+        router.push('/login');
+    }
   };
 
   if (isChecking) {
