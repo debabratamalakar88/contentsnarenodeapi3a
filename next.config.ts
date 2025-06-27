@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost/projects/laravel/laravel12/contentsnare_api/api/:path*',
+        destination: 'http://localhost/projects/laravel/laravel12/contentsnare_api/:path*',
       },
     ]
   },
