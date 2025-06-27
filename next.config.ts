@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/backend/:path*',
+        destination: 'http://localhost/projects/laravel/laravel12/contentsnare_api/api/:path*',
+      },
+    ]
+  },
 };
 
 export default nextConfig;
