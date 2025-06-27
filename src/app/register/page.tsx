@@ -67,11 +67,14 @@ export default function RegisterPage() {
       });
       router.push('/login');
     } catch (error: any) {
-      const errorMessages = error.errors ? Object.values(error.errors).flat().join("\n") : "An unexpected error occurred.";
+      const description = error.errors
+        ? Object.values(error.errors).flat().join("\n")
+        : error.message || "An unexpected error occurred.";
+
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: error.message || errorMessages,
+        description: description,
       });
     }
   }

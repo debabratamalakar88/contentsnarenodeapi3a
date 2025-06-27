@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -59,10 +60,14 @@ export default function ForgotPasswordPage() {
       });
       form.reset();
     } catch (error: any) {
+      const description = error.errors
+        ? Object.values(error.errors).flat().join("\n")
+        : error.message || "Could not send password reset link. Please try again.";
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Could not send password reset link. Please try again.",
+        description: description,
       });
     }
   }
