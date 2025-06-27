@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -55,12 +56,22 @@ export default function LoginPage() {
     try {
       const data = await loginUser(values);
       if (data.token && data.user) {
-        localStorage.setItem('authToken', data.token);
-        toast({
-          title: "Success",
-          description: "Logged in successfully.",
-        });
-        router.push('/dashboard');
+        if (data.user.email_verified_at === null) {
+          localStorage.setItem('authToken', data.token);
+          toast({
+            title: "Verification Required",
+            description: "Please check your email to verify your account.",
+            variant: "destructive"
+          });
+          router.push('/verify-email');
+        } else {
+          localStorage.setItem('authToken', data.token);
+          toast({
+            title: "Success",
+            description: "Logged in successfully.",
+          });
+          router.push('/dashboard');
+        }
       } else {
         throw new Error("Invalid response from server.");
       }
