@@ -120,10 +120,10 @@ export default function Dashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Client</TableHead>
-                  <TableHead className="hidden xl:table-column">
+                  <TableHead className="hidden xl:table-cell">
                     Request
                   </TableHead>
-                  <TableHead className="hidden xl:table-column">
+                  <TableHead className="hidden xl:table-cell">
                     Status
                   </TableHead>
                   <TableHead className="hidden md:table-cell">Due Date</TableHead>
@@ -138,10 +138,10 @@ export default function Dashboard() {
                       liam@example.com
                     </div>
                   </TableCell>
-                  <TableCell className="hidden xl:table-column">
+                  <TableCell className="hidden xl:table-cell">
                     Onboarding Documents
                   </TableCell>
-                  <TableCell className="hidden xl:table-column">
+                  <TableCell className="hidden xl:table-cell">
                     <Badge className="text-xs" variant="outline">
                       In Progress
                     </Badge>
@@ -158,10 +158,10 @@ export default function Dashboard() {
                       olivia@example.com
                     </div>
                   </TableCell>
-                  <TableCell className="hidden xl:table-column">
+                  <TableCell className="hidden xl:table-cell">
                     Website Copy
                   </TableCell>
-                  <TableCell className="hidden xl:table-column">
+                  <TableCell className="hidden xl:table-cell">
                     <Badge className="text-xs" variant="outline">
                       Waiting
                     </Badge>
