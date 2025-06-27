@@ -1,6 +1,6 @@
 'use client';
 
-const API_BASE_URL = 'http://localhost/projects/laravel/laravel12/contentsnare_api/api';
+const API_BASE_URL = 'https://narlaxsoftware.com/dev/contentsnare_api/api';
 
 async function handleResponse(response: Response) {
   const data = await response.json();

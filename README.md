@@ -10,6 +10,8 @@ To get started, take a look at src/app/page.tsx.
 
 This document outlines the API endpoints the frontend application expects for user authentication.
 
+Base API URL : https://narlaxsoftware.com/dev/contentsnare_api
+
 ### User Registration
 
 - **Endpoint:** `POST /api/register`
@@ -30,7 +32,6 @@ This document outlines the API endpoints the frontend application expects for us
       "id": 1,
       "name": "John Doe",
       "email": "john.doe@example.com",
-      "email_verified_at": null,
       "created_at": "2024-08-01T12:00:00.000000Z",
       "updated_at": "2024-08-01T12:00:00.000000Z"
     },
@@ -61,14 +62,12 @@ This document outlines the API endpoints the frontend application expects for us
   }
   ```
 - **Success Response (200 OK):**
-  The `email_verified_at` field will be `null` if the user has not yet verified their email address. The frontend will prevent login if this field is `null`.
   ```json
   {
     "user": {
       "id": 1,
       "name": "John Doe",
-      "email": "john.doe@example.com",
-      "email_verified_at": "2024-08-01T12:00:00.000000Z"
+      "email": "john.doe@example.com"
     },
     "token": "your_auth_token_here"
   }

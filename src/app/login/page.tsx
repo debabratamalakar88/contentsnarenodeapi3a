@@ -55,20 +55,12 @@ export default function LoginPage() {
     try {
       const data = await loginUser(values);
       if (data.token && data.user) {
-        if (data.user.email_verified_at) {
-            localStorage.setItem('authToken', data.token);
-            toast({
-              title: "Success",
-              description: "Logged in successfully.",
-            });
-            router.push('/dashboard');
-        } else {
-            toast({
-                variant: "destructive",
-                title: "Email Verification Required",
-                description: "Please verify your email address to log in.",
-            });
-        }
+        localStorage.setItem('authToken', data.token);
+        toast({
+          title: "Success",
+          description: "Logged in successfully.",
+        });
+        router.push('/dashboard');
       } else {
         throw new Error("Invalid response from server.");
       }
