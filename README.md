@@ -110,6 +110,40 @@ Base API URL : https://narlaxsoftware.com/dev/contentsnare_api
   }
   ```
 
+### 🔒 Reset Password
+
+Resets the user's password using a valid token and new credentials.
+
+- **URL**: `/api/reset-password`
+- **Method**: `POST`
+- **Controller**: `AuthController@resetPassword`
+- **Middleware**: _Typically none_, but you can add throttling or guest middleware if needed.
+
+---
+
+### 🔐 Request Body
+
+```json
+{
+  "token": "string",             // Required: The password reset token from the email
+  "email": "user@example.com",   // Required: The user's email address
+  "password": "newpassword",     // Required: The new password
+  "password_confirmation": "newpassword" // Required: Must match 'password'
+}
+```
+
+---
+
+### ✅ Success Response
+
+```json
+{
+  "message": "Password has been reset successfully."
+}
+```
+
+---
+
 ### Email Verification
 
 #### 1. **Get Email Verification Notice**

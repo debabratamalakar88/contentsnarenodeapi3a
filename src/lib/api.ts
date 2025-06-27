@@ -65,6 +65,18 @@ export async function forgotPassword(emailData: any) {
   return handleResponse(response);
 }
 
+export async function resetPassword(data: any) {
+  const response = await fetch(`${API_BASE_URL}/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
 export async function logoutUser(token: string) {
   const response = await fetch(`${API_BASE_URL}/logout`, {
     method: 'POST',
