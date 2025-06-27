@@ -27,7 +27,7 @@ async function handleResponse(response: Response) {
 }
 
 export async function registerUser(userData: any): Promise<{user: User; token: string}> {
-  const response = await fetch(`/api/backend/register`, {
+  const response = await fetch(`/api/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ export async function registerUser(userData: any): Promise<{user: User; token: s
 }
 
 export async function loginUser(credentials: any): Promise<AuthResponse> {
-  const response = await fetch(`/api/backend/login`, {
+  const response = await fetch(`/api/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export async function loginUser(credentials: any): Promise<AuthResponse> {
 }
 
 export async function forgotPassword(emailData: any) {
-  const response = await fetch(`/api/backend/forgot-password`, {
+  const response = await fetch(`/api/forgot-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export async function forgotPassword(emailData: any) {
 }
 
 export async function resetPassword(data: any) {
-  const response = await fetch(`/api/backend/reset-password`, {
+  const response = await fetch(`/api/reset-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export async function resetPassword(data: any) {
 }
 
 export async function logoutUser(token: string) {
-  const response = await fetch(`/api/backend/logout`, {
+  const response = await fetch(`/api/logout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export async function logoutUser(token: string) {
 
 
 export async function resendVerificationEmail(token: string) {
-  const response = await fetch(`/api/backend/email/verification-notification`, {
+  const response = await fetch(`/api/email/verification-notification`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
