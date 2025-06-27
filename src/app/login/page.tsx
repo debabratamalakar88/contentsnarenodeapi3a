@@ -54,13 +54,23 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const data = await loginUser(values);
-      if(data.token) {
-        localStorage.setItem('authToken', data.token);
-        toast({
-          title: "Success",
-          description: "Logged in successfully.",
-        });
-        router.push('/dashboard');
+      if (data.token && data.user) {
+        if (data.user.email_verified_at) {
+            localStorage.setItem('authToken', data.token);
+            toast({
+              title: "Success",
+              description: "Logged in successfully.",
+            });
+            router.push('/dashboard');
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Email Verification Required",
+                description: "Please verify your email address to log in.",
+            });
+        }
+      } else {
+        throw new Error("Invalid response from server.");
       }
     } catch (error: any) {
       toast({

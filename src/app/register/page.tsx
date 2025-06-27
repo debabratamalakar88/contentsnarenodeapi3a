@@ -61,8 +61,8 @@ export default function RegisterPage() {
     try {
       await registerUser(values);
       toast({
-        title: "Success",
-        description: "Your account has been created. Please log in.",
+        title: "Registration Successful",
+        description: "Your account has been created. Please check your email to verify your account.",
       });
       router.push('/login');
     } catch (error: any) {
