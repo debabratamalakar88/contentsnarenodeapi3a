@@ -11,8 +11,6 @@ To get started, take a look at src/app/page.tsx.
 
 This document outlines the API endpoints the frontend application expects for user authentication.
 
-Base API URL : https://narlaxsoftware.com/dev/contentsnare_api
-
 ### User Registration
 
 - **Endpoint:** `POST /api/register`
@@ -85,64 +83,30 @@ Base API URL : https://narlaxsoftware.com/dev/contentsnare_api
 ### Forgot Password
 
 - **Endpoint:** `POST /api/forgot-password`
-- **Description:** Sends a password reset link to the user's email address.
+- **Description:** Sends a password reset link to the user's registered email.
 - **Request Body:**
-  ```json
-  {
-    "email": "john.doe@example.com"
-  }
-  ```
-- **Success Response (200 OK):**
-  ```json
-  {
-    "message": "Password reset link sent."
-  }
-  ```
-- **Error Response (422 Unprocessable Entity):**
-  ```json
-  {
-    "message": "The given data was invalid.",
-    "errors": {
-      "email": [
-        "We can't find a user with that email address."
-      ]
-    }
-  }
-  ```
+| Field | Type   | Required | Description                   |
+|-------|--------|----------|-------------------------------|
+| `email` | String | ✅ Yes   | User's registered email address |
+- **Response:**
+- `200 OK`: Email sent successfully  
+- `422 Unprocessable Entity`: Validation error (e.g. invalid email)
 
-### 🔒 Reset Password
+### Reset Password
 
-Resets the user's password using a valid token and new credentials.
-
-- **URL**: `/api/reset-password`
-- **Method**: `POST`
-- **Controller**: `AuthController@resetPassword`
-- **Middleware**: _Typically none_, but you can add throttling or guest middleware if needed.
-
----
-
-### 🔐 Request Body
-
-```json
-{
-  "token": "string",             // Required: The password reset token from the email
-  "email": "user@example.com",   // Required: The user's email address
-  "password": "newpassword",     // Required: The new password
-  "password_confirmation": "newpassword" // Required: Must match 'password'
-}
-```
-
----
-
-### ✅ Success Response
-
-```json
-{
-  "message": "Password has been reset successfully."
-}
-```
-
----
+- **Endpoint:** `POST /api/reset-password`
+- **Description:** Resets the user's password using the token from the email.
+- **Request Body:**
+| Field      | Type   | Required | Description                      |
+|------------|--------|----------|----------------------------------|
+| `email`    | String | ✅ Yes   | User's email address             |
+| `token`    | String | ✅ Yes   | Token received in the reset link |
+| `password` | String | ✅ Yes   | New password                     |
+| `password_confirmation` | String | ✅ Yes | Must match `password`        |
+- **Response:**
+- `200 OK`: Password successfully reset  
+- `422 Unprocessable Entity`: Validation failed  
+- `400 Bad Request`: Invalid token or email
 
 ### Email Verification
 

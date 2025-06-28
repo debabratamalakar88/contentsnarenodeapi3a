@@ -153,7 +153,7 @@ export default function ResetPasswordPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} readOnly disabled />
+                        <Input {...field} readOnly className="bg-muted/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
