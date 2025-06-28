@@ -131,7 +131,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
+                <TableRow key="liam-johnson-request">
                   <TableCell>
                     <div className="font-medium">Liam Johnson</div>
                     <div className="hidden text-sm text-muted-foreground md:inline">
@@ -151,7 +151,7 @@ export default function Dashboard() {
                   </TableCell>
                   <TableCell className="text-right">75%</TableCell>
                 </TableRow>
-                <TableRow>
+                <TableRow key="olivia-smith-request">
                   <TableCell>
                     <div className="font-medium">Olivia Smith</div>
                     <div className="hidden text-sm text-muted-foreground md:inline">
