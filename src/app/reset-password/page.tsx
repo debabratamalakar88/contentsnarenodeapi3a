@@ -91,6 +91,12 @@ export default function ResetPasswordPage() {
         title: "Error",
         description: description,
       });
+
+      // If the error message from the API indicates an invalid token,
+      // update the state to show the "Invalid Token" message.
+      if (description.toLowerCase().includes('token')) {
+        setIsValidLink(false);
+      }
     }
   }
 
@@ -107,7 +113,7 @@ export default function ResetPasswordPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <CardTitle>Invalid Link</CardTitle>
+            <CardTitle>Invalid Token</CardTitle>
             <CardDescription>
               The password reset link is invalid or has expired. Please request a new one.
             </CardDescription>
