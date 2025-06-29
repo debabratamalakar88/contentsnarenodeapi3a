@@ -142,7 +142,7 @@ export async function getProfile(token: string): Promise<Profile> {
 }
 
 export async function updateProfile(token: string, profileData: Partial<Profile>) {
-  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+  const response = await fetch(`${API_BASE_URL}/api/updateProfile`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

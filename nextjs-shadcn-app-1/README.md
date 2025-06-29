@@ -186,3 +186,41 @@ POST /api/reset-password
   "message": "Email verified successfully."
 }
 ```
+
+### Update User Profile
+
+- **Endpoint:** `PUT /api/updateProfile`
+- **Description:** Updates the authenticated user's profile information.
+- **Headers**:
+  - `Authorization: Bearer <token>`
+- **Request Body:** An object containing any of the updatable profile fields.
+  ```json
+  {
+    "name": "John Doe Updated",
+    "phone": "555-555-5555"
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Profile updated successfully.",
+    "user": {
+        "id": 1,
+        "name": "John Doe Updated",
+        "email": "john.doe@example.com",
+        "phone": "555-555-5555",
+        "email_verified_at": "2024-08-01T12:00:00.000000Z"
+    }
+  }
+  ```
+- **Error Response (422 Unprocessable Entity):**
+  ```json
+  {
+    "message": "The given data was invalid.",
+    "errors": {
+      "name": [
+        "The name must be at least 2 characters."
+      ]
+    }
+  }
+  ```
