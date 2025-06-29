@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
     }
 
     setIsChecking(false);
-  }, [router, searchParams, form]);
+  }, []);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
