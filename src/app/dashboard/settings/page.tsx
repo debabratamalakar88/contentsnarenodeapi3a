@@ -35,7 +35,10 @@ const profileFormSchema = z.object({
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   zip: z.string().optional().nullable(),
+  country_code: z.string().optional().nullable(),
   country_name: z.string().optional().nullable(),
+  country_flag: z.string().optional().nullable(),
+  country_phone_code: z.string().optional().nullable(),
   locale: z.string().optional().nullable(),
   currency: z.string().optional().nullable(),
   timezone: z.string().optional().nullable(),
@@ -63,7 +66,10 @@ export default function SettingsPage() {
       city: "",
       state: "",
       zip: "",
+      country_code: "",
       country_name: "",
+      country_flag: "",
+      country_phone_code: "",
       locale: "",
       currency: "",
       timezone: "",
@@ -169,6 +175,11 @@ export default function SettingsPage() {
                                 <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-10 w-full" />
                             </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
                         </div>
                      ) : (
                         <>
@@ -254,7 +265,12 @@ export default function SettingsPage() {
                                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State / Province</FormLabel><FormControl><Input placeholder="CA" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                      <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip / Postal Code</FormLabel><FormControl><Input placeholder="90210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={form.control} name="country_name" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="United States" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                     <FormField control={form.control} name="country_name" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="United States" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="country_code" render={({ field }) => (<FormItem><FormLabel>Country Code</FormLabel><FormControl><Input placeholder="US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="country_phone_code" render={({ field }) => (<FormItem><FormLabel>Phone Code</FormLabel><FormControl><Input placeholder="+1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
 
                              {/* Regional Settings */}
