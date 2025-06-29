@@ -1,3 +1,4 @@
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -9,6 +10,26 @@ interface User {
   email_verified_at: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Profile extends User {
+  phone?: string;
+  bio?: string;
+  company?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country_code?: string;
+  country_name?: string;
+  country_flag?: string;
+  country_phone_code?: string;
+  locale?: string;
+  currency?: string;
+  timezone?: string;
+  date_format?: string;
+  time_format?: string;
+  language?: string;
 }
 
 interface AuthResponse {
@@ -104,6 +125,31 @@ export async function resendVerificationEmail(token: string) {
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
+  });
+  return handleResponse(response);
+}
+
+export async function getProfile(token: string): Promise<Profile> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function updateProfile(token: string, profileData: Partial<Profile>) {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData)
   });
   return handleResponse(response);
 }
