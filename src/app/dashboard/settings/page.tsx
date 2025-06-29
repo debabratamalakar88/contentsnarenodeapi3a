@@ -93,7 +93,10 @@ export default function SettingsPage() {
       }
 
       try {
-        const profileData = await getProfile(token);
+        const responseData = await getProfile(token);
+        // Handle potential nested data structures from the API
+        const profileData = responseData.user || responseData.data || responseData;
+
         form.reset(profileData);
         if(profileData.email) {
             setUserEmail(profileData.email);
@@ -110,7 +113,7 @@ export default function SettingsPage() {
     }
 
     loadProfile();
-  }, []);
+  }, [form, toast]);
   
   async function onSubmit(data: ProfileFormValues) {
     const token = localStorage.getItem("authToken");
@@ -209,7 +212,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Phone</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
+                                                <Input placeholder="(123) 456-7890" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -222,7 +225,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Company</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Acme Inc." {...field} value={field.value ?? ''} />
+                                                <Input placeholder="Acme Inc." {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -236,7 +239,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Bio</FormLabel>
                                             <FormControl>
-                                                <Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''} />
+                                                <Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -254,32 +257,32 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Street Address</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="123 Main St" {...field} value={field.value ?? ''} />
+                                                <Input placeholder="123 Main St" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="Anytown" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State / Province</FormLabel><FormControl><Input placeholder="CA" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip / Postal Code</FormLabel><FormControl><Input placeholder="90210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="Anytown" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State / Province</FormLabel><FormControl><Input placeholder="CA" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip / Postal Code</FormLabel><FormControl><Input placeholder="90210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="country_name" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="United States" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="country_code" render={({ field }) => (<FormItem><FormLabel>Country Code</FormLabel><FormControl><Input placeholder="US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="country_phone_code" render={({ field }) => (<FormItem><FormLabel>Phone Code</FormLabel><FormControl><Input placeholder="+1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="country_name" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="United States" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="country_code" render={({ field }) => (<FormItem><FormLabel>Country Code</FormLabel><FormControl><Input placeholder="US" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="country_phone_code" render={({ field }) => (<FormItem><FormLabel>Phone Code</FormLabel><FormControl><Input placeholder="+1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
 
                              {/* Regional Settings */}
                             <div className="space-y-4">
                                 <h3 className="text-lg font-medium">Regional Settings</h3>
                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>Language</FormLabel><FormControl><Input placeholder="English" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="currency" render={({ field }) => (<FormItem><FormLabel>Currency</FormLabel><FormControl><Input placeholder="USD" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="timezone" render={({ field }) => (<FormItem><FormLabel>Timezone</FormLabel><FormControl><Input placeholder="Pacific Time (US & Canada)" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>Language</FormLabel><FormControl><Input placeholder="English" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="currency" render={({ field }) => (<FormItem><FormLabel>Currency</FormLabel><FormControl><Input placeholder="USD" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="timezone" render={({ field }) => (<FormItem><FormLabel>Timezone</FormLabel><FormControl><Input placeholder="Pacific Time (US & Canada)" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                      <FormField
                                         control={form.control}
                                         name="date_format"
@@ -319,7 +322,7 @@ export default function SettingsPage() {
                                             </FormItem>
                                         )}
                                      />
-                                     <FormField control={form.control} name="locale" render={({ field }) => (<FormItem><FormLabel>Locale</FormLabel><FormControl><Input placeholder="en_US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="locale" render={({ field }) => (<FormItem><FormLabel>Locale</FormLabel><FormControl><Input placeholder="en_US" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                  </div>
                             </div>
                         </>
