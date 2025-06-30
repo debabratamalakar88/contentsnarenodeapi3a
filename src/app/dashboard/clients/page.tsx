@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, PlusCircle } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown } from "lucide-react";
 
 const clients = [
   {
@@ -74,11 +74,12 @@ const clients = [
 ];
 
 export default function ClientsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
   return (
+    <Dialog>
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <Tabs defaultValue="active" className="flex flex-col h-full">
         <div className="flex items-center p-6 pb-0 border-b bg-card">
@@ -92,53 +93,9 @@ export default function ClientsPage() {
             </TabsList>
             <div className="ml-auto flex items-center gap-2 mb-2">
                 <Button variant="outline">IMPORT</Button>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Client
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Add New Client</DialogTitle>
-                            <DialogDescription>
-                                Enter the details for the new client. Click save when you're done.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">
-                                    Name
-                                </Label>
-                                <Input id="name" placeholder="Acme Inc." className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="company" className="text-right">
-                                    Company
-                                </Label>
-                                <Input id="company" placeholder="Acme Corporation" className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">
-                                    Email
-                                </Label>
-                                <Input id="email" type="email" placeholder="contact@acme.com" className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="phone" className="text-right">
-                                    Phone
-                                </Label>
-                                <Input id="phone" type="tel" placeholder="555-0101" className="col-span-3" />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">Save Client</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-1">
+                        <Button variant="outline" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/5 hover:text-primary">
                             <ViewIcon className="h-4 w-4" />
                             <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -164,7 +121,7 @@ export default function ClientsPage() {
                         <Card key={client.email} className="bg-card shadow-sm hover:shadow-md transition-shadow">
                             <CardHeader className="flex-row items-center justify-between p-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarFallback className="bg-green-100 text-green-700 font-bold text-lg">
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
                                         {client.initials}
                                     </AvatarFallback>
                                 </Avatar>
@@ -192,36 +149,37 @@ export default function ClientsPage() {
                             </CardContent>
                         </Card>
                     ))}
+                     <DialogTrigger asChild>
+                        <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow min-h-[220px] cursor-pointer border-dashed hover:border-primary">
+                                <p className="text-primary font-semibold">Add a client...</p>
+                        </Card>
+                    </DialogTrigger>
                 </div>
               )}
               {viewMode === 'list' && (
                 <Card className="bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Client</TableHead>
-                                <TableHead className="hidden md:table-cell">Company</TableHead>
-                                <TableHead className="hidden md:table-cell">Email</TableHead>
-                                <TableHead className="hidden lg:table-cell">Phone</TableHead>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">
+                                    <div className="flex items-center">
+                                        Full Name
+                                        <ArrowUpDown className="ml-1 h-3 w-3" />
+                                    </div>
+                                </TableHead>
+                                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Company Name</TableHead>
+                                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Email Address</TableHead>
+                                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Phone Number</TableHead>
                                 <TableHead><span className="sr-only">Actions</span></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {clients.map((client) => (
                                 <TableRow key={client.email}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-10 w-10">
-                                                <AvatarFallback className="bg-green-100 text-green-700 font-bold">
-                                                    {client.initials}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-semibold">{client.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell">{client.company}</TableCell>
-                                    <TableCell className="hidden md:table-cell">{client.email}</TableCell>
-                                    <TableCell className="hidden lg:table-cell">{client.phone}</TableCell>
+                                    <TableCell className="font-medium">{client.name}</TableCell>
+                                    <TableCell>{client.company}</TableCell>
+                                    <TableCell>{client.email}</TableCell>
+                                    <TableCell>{client.phone}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -239,6 +197,13 @@ export default function ClientsPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
+                             <TableRow>
+                                <TableCell colSpan={5} className="py-4">
+                                    <DialogTrigger asChild>
+                                        <button className="text-primary hover:underline text-sm font-medium">Add a client...</button>
+                                    </DialogTrigger>
+                                </TableCell>
+                            </TableRow>
                         </TableBody>
                     </Table>
                 </Card>
@@ -252,5 +217,43 @@ export default function ClientsPage() {
         </div>
       </Tabs>
     </div>
+     <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+            <DialogDescription>
+                Enter the details for the new client. Click save when you're done.
+            </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                    Name
+                </Label>
+                <Input id="name" placeholder="Acme Inc." className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="company" className="text-right">
+                    Company
+                </Label>
+                <Input id="company" placeholder="Acme Corporation" className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                    Email
+                </Label>
+                <Input id="email" type="email" placeholder="contact@acme.com" className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                    Phone
+                </Label>
+                <Input id="phone" type="tel" placeholder="555-0101" className="col-span-3" />
+            </div>
+        </div>
+        <DialogFooter>
+            <Button type="submit">Save Client</Button>
+        </DialogFooter>
+    </DialogContent>
+    </Dialog>
   );
 }
