@@ -58,8 +58,11 @@ export default function ClientsPage() {
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToPermanentlyDelete, setClientToPermanentlyDelete] = useState<Client | null>(null);
   const [currentTab, setCurrentTab] = useState('active');
+  const [dataVersion, setDataVersion] = useState(0);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  const refetchData = () => setDataVersion(v => v + 1);
 
   useEffect(() => {
     async function fetchClientsData() {
@@ -71,19 +74,20 @@ export default function ClientsPage() {
         }
         
         setIsLoading(true);
+        setError(null);
         try {
-            const endpoint = currentTab === 'active' ? getClients : getArchivedClients;
-            const data = await endpoint(token);
             if (currentTab === 'active') {
+                const data = await getClients(token);
                 setActiveClients(data);
             } else {
+                const data = await getArchivedClients(token);
                 setArchivedClients(data);
             }
         } catch (err: any) {
-            setError(err.message || 'Failed to fetch clients.');
+            setError(err.message || `Failed to fetch ${currentTab} clients.`);
             toast({
                 variant: 'destructive',
-                title: 'Error fetching clients',
+                title: `Error fetching ${currentTab} clients`,
                 description: err.message || 'An unexpected error occurred.',
             });
         } finally {
@@ -91,7 +95,7 @@ export default function ClientsPage() {
         }
     }
     fetchClientsData();
-  }, [toast, token, router, currentTab]);
+  }, [toast, token, router, currentTab, dataVersion]);
 
   const handleArchive = async (clientId: number) => {
     if (!token) {
@@ -100,12 +104,8 @@ export default function ClientsPage() {
     }
     try {
         await deleteClient(token, clientId);
-        const clientToMove = activeClients.find(c => c.id === clientId);
-        if (clientToMove) {
-            setActiveClients(prev => prev.filter(c => c.id !== clientId));
-            setArchivedClients(prev => [...prev, { ...clientToMove, is_deleted: true, deleted_at: new Date().toISOString() }]);
-        }
         toast({ title: "Client Archived", description: "The client has been moved to the archive." });
+        refetchData();
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error archiving client', description: error.message || 'An unexpected error occurred.' });
     } finally {
@@ -120,12 +120,8 @@ export default function ClientsPage() {
       }
       try {
           await restoreClient(token, clientId);
-          const clientToMove = archivedClients.find(c => c.id === clientId);
-          if (clientToMove) {
-              setArchivedClients(prev => prev.filter(c => c.id !== clientId));
-              setActiveClients(prev => [...prev, { ...clientToMove, is_deleted: false, deleted_at: null }]);
-          }
           toast({ title: "Client Restored", description: "The client has been successfully restored." });
+          refetchData();
       } catch (error: any) {
           toast({ variant: 'destructive', title: 'Error restoring client', description: error.message || 'An unexpected error occurred.' });
       }
@@ -138,8 +134,8 @@ export default function ClientsPage() {
       }
       try {
           await forceDeleteClient(token, clientId);
-          setArchivedClients(prev => prev.filter(c => c.id !== clientId));
           toast({ title: "Client Deleted", description: "The client has been permanently deleted." });
+          refetchData();
       } catch (error: any) {
           toast({ variant: 'destructive', title: 'Error deleting client', description: error.message || 'An unexpected error occurred.' });
       } finally {
