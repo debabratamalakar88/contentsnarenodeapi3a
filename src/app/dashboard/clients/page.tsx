@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,7 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers } from "lucide-react";
 
 const clients = [
   {
@@ -74,7 +73,7 @@ const clients = [
 ];
 
 export default function ClientsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
@@ -92,12 +91,12 @@ export default function ClientsPage() {
                 </TabsTrigger>
             </TabsList>
             <div className="ml-auto flex items-center gap-2 mb-2">
-                <Button variant="outline">IMPORT</Button>
+                <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">IMPORT</Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/5 hover:text-primary">
                             <ViewIcon className="h-4 w-4" />
-                            <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
+                            <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -118,40 +117,43 @@ export default function ClientsPage() {
               {viewMode === 'grid' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {clients.map((client) => (
-                        <Card key={client.email} className="bg-card shadow-sm hover:shadow-md transition-shadow">
-                            <CardHeader className="flex-row items-center justify-between p-4">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                        <Card key={client.email} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
+                                        <MoreHorizontal className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>View Client</DropdownMenuItem>
+                                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem>Archive</DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <CardContent className="flex flex-col items-center text-center p-6 pt-8">
+                                <Avatar className="h-16 w-16 mb-4">
+                                    <AvatarFallback className="bg-green-100 text-green-800 font-bold text-xl">
                                         {client.initials}
                                     </AvatarFallback>
                                 </Avatar>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                            <MoreHorizontal className="h-5 w-5" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>View Client</DropdownMenuItem>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem>Archive</DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </CardHeader>
-                            <CardContent className="px-4 pb-4">
-                                <p className="font-semibold text-base">{client.name}</p>
-                                <p className="text-sm text-muted-foreground">{client.company}</p>
-                                <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                                <p className="font-semibold text-lg">{client.name}</p>
+                                <p className="text-sm text-muted-foreground mt-2">{client.company}</p>
+                                <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
                                     <p>{client.email}</p>
                                     <p>{client.phone}</p>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
-                     <DialogTrigger asChild>
-                        <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow min-h-[220px] cursor-pointer border-dashed hover:border-primary">
-                                <p className="text-primary font-semibold">Add a client...</p>
+                    <DialogTrigger asChild>
+                        <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
+                            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                                <Layers className="h-8 w-8 text-slate-400" />
+                            </div>
+                            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200">
+                                ADD NEW CLIENT
+                            </Button>
                         </Card>
                     </DialogTrigger>
                 </div>
