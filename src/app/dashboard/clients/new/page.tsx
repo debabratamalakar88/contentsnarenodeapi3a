@@ -13,7 +13,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
 export default function NewClientPage() {
-    const [companies, setCompanies] = useState<string[]>(["ACME Inc..."]);
+    const [companies, setCompanies] = useState<string[]>([]);
     const [companyInput, setCompanyInput] = useState("");
     const [isCompanyAlertVisible, setCompanyAlertVisible] = useState(true);
 
