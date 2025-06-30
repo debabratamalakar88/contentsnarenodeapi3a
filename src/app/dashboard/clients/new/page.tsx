@@ -1,6 +1,7 @@
 
 'use client'
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,8 +10,29 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ChevronLeft, Info, User, X } from "lucide-react"
 import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
 
 export default function NewClientPage() {
+    const [companies, setCompanies] = useState<string[]>(["ACME Inc..."]);
+    const [companyInput, setCompanyInput] = useState("");
+    const [isCompanyAlertVisible, setCompanyAlertVisible] = useState(true);
+
+    const handleCompanyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && companyInput.trim()) {
+            e.preventDefault();
+            const newCompany = companyInput.trim();
+            if (!companies.includes(newCompany)) {
+                setCompanies([...companies, newCompany]);
+            }
+            setCompanyInput("");
+        }
+    };
+
+    const removeCompany = (companyToRemove: string) => {
+        setCompanies(companies.filter(company => company !== companyToRemove));
+    };
+
+
     return (
         <div className="flex flex-col h-full bg-white">
             <header className="sticky top-0 bg-white z-10">
@@ -51,20 +73,40 @@ export default function NewClientPage() {
                             <Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label>
                             <Input id="emailAddress" type="email" placeholder="Contact email address..." className="bg-gray-50 mt-1" />
                         </div>
+
                         <div>
                             <Label htmlFor="companyName" className="font-semibold text-gray-700">Company Name (optional)</Label>
-                            <Input id="companyName" defaultValue="ACME Inc..." className="bg-gray-50 mt-1" />
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                {companies.map((company, index) => (
+                                    <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">
+                                        {company}
+                                        <button onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                ))}
+                            </div>
+                            <Input
+                                id="companyName"
+                                value={companyInput}
+                                onChange={(e) => setCompanyInput(e.target.value)}
+                                onKeyDown={handleCompanyKeyDown}
+                                placeholder="Type a company name and press Enter..."
+                                className="bg-gray-50 mt-2"
+                            />
                         </div>
 
-                        <Alert className="bg-cyan-50 border-cyan-200 text-cyan-900 [&>svg]:text-cyan-600 relative p-4">
-                            <Info className="h-5 w-5" />
-                            <AlertDescription className="pr-8">
-                                Press ENTER after typing the name of a company to add multiple companies to this client.
-                            </AlertDescription>
-                            <Button variant="ghost" size="icon" className="absolute top-1.5 right-1.5 h-7 w-7 text-cyan-900 hover:bg-cyan-100">
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </Alert>
+                        {isCompanyAlertVisible && (
+                            <Alert className="bg-cyan-50 border-cyan-200 text-cyan-900 [&>svg]:text-cyan-600 relative p-4">
+                                <Info className="h-5 w-5" />
+                                <AlertDescription className="pr-8">
+                                    Press ENTER after typing the name of a company to add multiple companies to this client.
+                                </AlertDescription>
+                                <Button variant="ghost" size="icon" className="absolute top-1.5 right-1.5 h-7 w-7 text-cyan-900 hover:bg-cyan-100" onClick={() => setCompanyAlertVisible(false)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </Alert>
+                        )}
                         
                         <div>
                             <Label htmlFor="phoneNumber" className="font-semibold text-gray-700">Phone Number (optional)</Label>
