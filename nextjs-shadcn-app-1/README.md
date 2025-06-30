@@ -256,3 +256,48 @@ POST /api/reset-password
     }
   }
   ```
+
+### Create New Client
+
+- **Endpoint:** `POST /api/clients`
+- **Description:** Creates a new client.
+- **Headers**:
+  - `Authorization: Bearer <token>`
+- **Request Body:**
+| Field          | Type             | Required | Description                     |
+|----------------|------------------|----------|---------------------------------|
+| `full_name`    | String           | ✅ Yes   | The client's full name.         |
+| `email`        | String (Email)   | ✅ Yes   | The client's primary email.     |
+| `companies`    | Array of Strings | No       | List of companies associated.   |
+| `phone_number` | String           | No       | The client's phone number.      |
+| `app_language` | String           | No       | Client's preferred language.    |
+| `date_format`  | String           | No       | Client's preferred date format. |
+| `time_zone`    | String           | No       | Client's timezone.              |
+- **Success Response (201 Created):**
+  ```json
+  {
+    "client": {
+      "id": 1,
+      "full_name": "Sunder Pichai",
+      "email": "sunder@google.com",
+      "companies": ["Google", "Alphabet"],
+      "phone_number": "+91 1234567890",
+      "app_language": "english",
+      "date_format": "ddmmyyyy",
+      "time_zone": "ist",
+      "created_at": "2024-08-02T10:00:00.000000Z",
+      "updated_at": "2024-08-02T10:00:00.000000Z"
+    }
+  }
+  ```
+- **Error Response (422 Unprocessable Entity):**
+  ```json
+  {
+    "message": "The given data was invalid.",
+    "errors": {
+      "email": [
+        "The email has already been taken."
+      ]
+    }
+  }
+  ```
