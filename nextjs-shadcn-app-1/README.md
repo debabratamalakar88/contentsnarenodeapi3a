@@ -227,7 +227,7 @@ POST /api/reset-password
 
 ### Change Password
 
-- **Endpoint:** `POST /api/user/change-password`
+- **Endpoint:** `POST /api/changePassword`
 - **Description:** Updates the authenticated user's password.
 - **Headers**:
   - `Authorization: Bearer <token>`

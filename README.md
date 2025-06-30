@@ -146,7 +146,7 @@ This document outlines the API endpoints the frontend application expects for us
     ```
 
 #### 3. **Verify Email**
-- **Description**: Verifies the user's email via the signed URL from the email. This endpoint should redirect to the frontend upon success (e.g., `http://your-frontend-app/email-verified`).
+- **Description**: Verifies the user's email via the signed URL from the email. This endpoint should redirect to the frontend upon success (e.g., `${process.env.NEXT_PUBLIC_APP_FRONT_END_BASE_URL}/email-verified`).
 - **URL**: `/api/email/verify/{id}/{hash}`
 - **Method**: `GET`
 - **Middleware**: `signed`
@@ -197,7 +197,7 @@ This document outlines the API endpoints the frontend application expects for us
 
 ### Change Password
 
-- **Endpoint:** `POST /api/user/change-password`
+- **Endpoint:** `POST /api/changePassword`
 - **Description:** Updates the authenticated user's password.
 - **Headers**:
   - `Authorization: Bearer <token>`

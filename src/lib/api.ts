@@ -129,7 +129,7 @@ export async function resendVerificationEmail(token: string) {
   return handleResponse(response);
 }
 
-export async function getProfile(token: string): Promise<Profile> {
+export async function getProfile(token: string): Promise<{user: Profile}> {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: 'GET',
     headers: {
@@ -155,7 +155,7 @@ export async function updateProfile(token: string, profileData: Partial<Profile>
 }
 
 export async function changePassword(token: string, passwordData: any) {
-  const response = await fetch(`${API_BASE_URL}/api/user/change-password`, {
+  const response = await fetch(`${API_BASE_URL}/api/changePassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
