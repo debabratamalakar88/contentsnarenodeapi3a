@@ -13,6 +13,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
 export default function NewClientPage() {
+    const [fullName, setFullName] = useState("");
     const [companies, setCompanies] = useState<string[]>([]);
     const [companyInput, setCompanyInput] = useState("");
     const [isCompanyAlertVisible, setCompanyAlertVisible] = useState(true);
@@ -31,6 +32,15 @@ export default function NewClientPage() {
     const removeCompany = (companyToRemove: string) => {
         setCompanies(companies.filter(company => company !== companyToRemove));
     };
+
+    const getInitials = (name: string): string => {
+        const words = name.trim().split(' ').filter(Boolean);
+        if (words.length === 0) return '';
+        if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    
+    const initials = getInitials(fullName);
 
 
     return (
@@ -57,8 +67,10 @@ export default function NewClientPage() {
                 <div className="max-w-xl mx-auto space-y-8">
                     <div className="flex flex-col items-center gap-2">
                         <Avatar className="h-24 w-24">
-                            <AvatarFallback className="bg-gray-100 border">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M20 13.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5c0 1.93 1.57 3.5 3.5 3.5H8a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1.5c1.93 0 3.5-1.57 3.5-3.5Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                            <AvatarFallback className="bg-green-100 text-green-800 text-4xl font-bold border">
+                                {initials ? initials : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M20 13.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5c0 1.93 1.57 3.5 3.5 3.5H8a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1.5c1.93 0 3.5-1.57 3.5-3.5Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                                )}
                             </AvatarFallback>
                         </Avatar>
                         <Button variant="link" className="text-indigo-600 font-semibold">Change Image</Button>
@@ -67,7 +79,13 @@ export default function NewClientPage() {
                     <div className="space-y-6">
                         <div>
                             <Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label>
-                            <Input id="fullName" placeholder="Client full name..." className="bg-gray-50 mt-1" />
+                            <Input
+                                id="fullName"
+                                placeholder="Client full name..."
+                                className="bg-gray-50 mt-1"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                            />
                         </div>
                         <div>
                             <Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label>
