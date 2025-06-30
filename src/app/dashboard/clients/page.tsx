@@ -109,48 +109,50 @@ export default function ClientsPage() {
   const renderClientGrid = (clientList: Client[]) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => (
-        <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Client</DropdownMenuItem>
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}>Archive</DropdownMenuItem></AlertDialogTrigger>
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-           <AlertDialog>
-             <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to archive this client?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action will move the client to the archived list. You can restore them later.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleArchiveClient(client.id)}>Archive</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-              <CardContent className="flex flex-col items-center text-center p-6 pt-8">
-                <Avatar className="h-16 w-16 mb-4">
-                  <AvatarFallback className="bg-green-100 text-green-800 font-bold text-xl">
-                    {getInitials(client.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="font-semibold text-lg">{client.full_name}</p>
-                <p className="text-sm text-muted-foreground mt-2">{client.companies?.[0]}</p>
-                <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-                  <p>{client.email}</p>
-                  <p>{client.phone_number}</p>
-                </div>
-              </CardContent>
-          </AlertDialog>
-        </Card>
+        <AlertDialog key={client.id}>
+          <Card className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>View Client</DropdownMenuItem>
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Archive</DropdownMenuItem>
+                </AlertDialogTrigger>
+                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <CardContent className="flex flex-col items-center text-center p-6 pt-8">
+              <Avatar className="h-16 w-16 mb-4">
+                <AvatarFallback className="bg-green-100 text-green-800 font-bold text-xl">
+                  {getInitials(client.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <p className="font-semibold text-lg">{client.full_name}</p>
+              <p className="text-sm text-muted-foreground mt-2">{client.companies?.[0]}</p>
+              <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
+                <p>{client.email}</p>
+                <p>{client.phone_number}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to archive this client?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action will move the client to the archived list. You can restore them later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleArchiveClient(client.id)}>Archive</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ))}
       <Link href="/dashboard/clients/new">
         <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
@@ -339,4 +341,3 @@ export default function ClientsPage() {
     </div>
   );
 }
-
