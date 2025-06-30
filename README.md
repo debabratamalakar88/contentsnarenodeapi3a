@@ -236,32 +236,26 @@ This document outlines the API endpoints the frontend application expects for us
 
 #### `GET /clients`
 
-Retrieve a list of all clients.
+Retrieve a list of active clients.
 
-**Response:**
+**Response:** `200 OK` - Returns an array of client objects.
 ```json
 [
   {
     "id": 1,
     "full_name": "Sunder Pichai",
-    "email": "sunder@google.com",
-    "companies": ["Google", "Alphabet"],
-    "phone_number": "+91 1234567890",
-    "app_language": "english",
-    "date_format": "ddmmyyyy",
-    "time_zone": "ist",
-    "profile_picture": null,
-    "is_active": true,
-    "is_archived": false,
-    "is_deleted": false,
-    "created_by": 10,
-    "updated_by": 15,
-    "deleted_by": null,
-    "created_at": "2024-08-02T10:00:00Z",
-    "updated_at": "2024-08-02T10:10:00Z"
+    "email": "sunder@google.com"
   }
 ]
 ```
+
+---
+
+#### `GET /clients/archived`
+
+Retrieve a list of archived (soft-deleted) clients.
+
+**Response:** `200 OK` - Returns an array of soft-deleted client objects.
 
 ---
 
@@ -284,8 +278,7 @@ Create a new client.
 }
 ```
 
-**Response:** `201 Created`  
-Returns the created client object.
+**Response:** `201 Created` - Returns the created client object.
 
 ---
 
@@ -293,8 +286,7 @@ Returns the created client object.
 
 Retrieve a specific client by ID.
 
-**Response:** `200 OK`  
-Returns the client object or `404 Not Found` if not found.
+**Response:** `200 OK` - Returns the client object or `404 Not Found`.
 
 ---
 
@@ -302,27 +294,47 @@ Returns the client object or `404 Not Found` if not found.
 
 Update an existing client.
 
-**Request Body:**
-You may send partial or full updates.
+**Request Body:** Partial or full updates are accepted.
 ```json
 {
   "full_name": "Sundar Pichai",
-  "phone_number": "+91 9876543210",
-  "is_archived": true
+  "phone_number": "+91 9876543210"
 }
 ```
 
-**Response:** `200 OK`  
-Returns the updated client object.
+**Response:** `200 OK` - Returns the updated client object.
 
 ---
 
 #### `DELETE /clients/{id}`
 
-Soft-delete (archive) a client.  
-Also sets `deleted_by` and timestamps `deleted_at`.
+Soft-delete (archive) a client.
 
-**Response:** `200 OK`
-```json
-{ "message": "Client archived successfully." }
-```
+- **Behavior:** Sets `is_deleted = true`, populates `deleted_by`, and sets `deleted_at`.
+- **Response:** `200 OK`
+  ```json
+  { "message": "Client archived successfully." }
+  ```
+
+---
+
+#### `POST /clients/{id}/restore`
+
+Restore a soft-deleted client.
+
+- **Response:** `200 OK`
+  ```json
+  { "message": "Client restored successfully." }
+  ```
+
+---
+
+#### `DELETE /clients/{id}/force`
+
+Permanently delete a client from the database.
+
+- **Behavior:** Requires the client to be soft-deleted first.
+- **Response:** `200 OK`
+  ```json
+  { "message": "Client permanently deleted." }
+  ```

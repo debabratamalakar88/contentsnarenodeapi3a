@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2 } from "lucide-react";
-import { getClients, deleteClient, type Client } from "@/lib/api";
+import { getClients, getArchivedClients, deleteClient, restoreClient, forceDeleteClient, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useRouter } from "next/navigation";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -47,70 +48,108 @@ const getInitials = (name: string): string => {
 
 export default function ClientsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [clients, setClients] = useState<Client[]>([]);
+  const [activeClients, setActiveClients] = useState<Client[]>([]);
+  const [archivedClients, setArchivedClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+  
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
-  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [clientToPermanentlyDelete, setClientToPermanentlyDelete] = useState<Client | null>(null);
+  const [currentTab, setCurrentTab] = useState('active');
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   useEffect(() => {
-    async function fetchClients() {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError("Authentication required. Please log in.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const fetchedClients = await getClients(token);
-        setClients(fetchedClients);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch clients.');
-        toast({
-          variant: 'destructive',
-          title: 'Error fetching clients',
-          description: err.message || 'An unexpected error occurred.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    async function fetchClientsData() {
+        if (!token) {
+            setError("Authentication required. Please log in.");
+            setIsLoading(false);
+            router.push('/login');
+            return;
+        }
+        
+        setIsLoading(true);
+        try {
+            const endpoint = currentTab === 'active' ? getClients : getArchivedClients;
+            const data = await endpoint(token);
+            if (currentTab === 'active') {
+                setActiveClients(data);
+            } else {
+                setArchivedClients(data);
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch clients.');
+            toast({
+                variant: 'destructive',
+                title: 'Error fetching clients',
+                description: err.message || 'An unexpected error occurred.',
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
-    fetchClients();
-  }, [toast]);
+    fetchClientsData();
+  }, [toast, token, router, currentTab]);
 
-  const handleAction = async (clientId: number, action: 'archive' | 'delete') => {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
+  const handleArchive = async (clientId: number) => {
+    if (!token) {
         toast({ variant: 'destructive', title: 'Authentication Error' });
         return;
+    }
+    try {
+        await deleteClient(token, clientId);
+        const clientToMove = activeClients.find(c => c.id === clientId);
+        if (clientToMove) {
+            setActiveClients(prev => prev.filter(c => c.id !== clientId));
+            setArchivedClients(prev => [...prev, { ...clientToMove, is_deleted: true, deleted_at: new Date().toISOString() }]);
+        }
+        toast({ title: "Client Archived", description: "The client has been moved to the archive." });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error archiving client', description: error.message || 'An unexpected error occurred.' });
+    } finally {
+        setClientToArchive(null);
+    }
+  };
+  
+  const handleRestore = async (clientId: number) => {
+      if (!token) {
+          toast({ variant: 'destructive', title: 'Authentication Error' });
+          return;
       }
       try {
-        await deleteClient(token, clientId);
-        setClients(prevClients => prevClients.map(c => c.id === clientId ? {...c, is_archived: true} : c));
-        toast({
-          title: `Client ${action === 'archive' ? 'Archived' : 'Deleted'}`,
-          description: `The client has been moved to the archive.`,
-        });
+          await restoreClient(token, clientId);
+          const clientToMove = archivedClients.find(c => c.id === clientId);
+          if (clientToMove) {
+              setArchivedClients(prev => prev.filter(c => c.id !== clientId));
+              setActiveClients(prev => [...prev, { ...clientToMove, is_deleted: false, deleted_at: null }]);
+          }
+          toast({ title: "Client Restored", description: "The client has been successfully restored." });
       } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: `Error ${action === 'archive' ? 'archiving' : 'deleting'} client`,
-          description: error.message || 'An unexpected error occurred.',
-        });
-      } finally {
-        setClientToArchive(null);
-        setClientToDelete(null);
+          toast({ variant: 'destructive', title: 'Error restoring client', description: error.message || 'An unexpected error occurred.' });
       }
   };
 
-  const activeClients = clients.filter(c => !c.is_archived);
-  const archivedClients = clients.filter(c => c.is_archived);
+  const handleForceDelete = async (clientId: number) => {
+      if (!token) {
+          toast({ variant: 'destructive', title: 'Authentication Error' });
+          return;
+      }
+      try {
+          await forceDeleteClient(token, clientId);
+          setArchivedClients(prev => prev.filter(c => c.id !== clientId));
+          toast({ title: "Client Deleted", description: "The client has been permanently deleted." });
+      } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Error deleting client', description: error.message || 'An unexpected error occurred.' });
+      } finally {
+          setClientToPermanentlyDelete(null);
+      }
+  };
 
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
   
-  const renderClientGrid = (clientList: Client[]) => (
+  const renderClientGrid = (clientList: Client[], isArchived: boolean) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => (
           <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
@@ -121,14 +160,22 @@ export default function ClientsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setClientToDelete(client)} className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
+                {isArchived ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive focus:text-destructive">Delete Permanently</DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
             <CardContent className="flex flex-col items-center text-center p-6 pt-8">
@@ -146,20 +193,22 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
       ))}
-      <Link href="/dashboard/clients/new">
-        <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
-          <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
-            <Layers className="h-8 w-8 text-slate-400" />
-          </div>
-          <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
-            ADD NEW CLIENT
-          </Button>
-        </Card>
-      </Link>
+      {!isArchived && (
+        <Link href="/dashboard/clients/new">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
+            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+              <Layers className="h-8 w-8 text-slate-400" />
+            </div>
+            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
+              ADD NEW CLIENT
+            </Button>
+          </Card>
+        </Link>
+      )}
     </div>
   );
 
-  const renderClientList = (clientList: Client[]) => (
+  const renderClientList = (clientList: Client[], isArchived: boolean) => (
      <Card className="bg-card shadow-sm">
         <Table>
             <TableHeader>
@@ -190,25 +239,35 @@ export default function ClientsPage() {
                                         <MoreHorizontal className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem asChild>
-                                      <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                      <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setClientToDelete(client)} className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
+                                 <DropdownMenuContent align="end">
+                                  {isArchived ? (
+                                    <>
+                                      <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive focus:text-destructive">Delete Permanently</DropdownMenuItem>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <DropdownMenuItem asChild>
+                                        <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem asChild>
+                                        <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                                    </>
+                                  )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 ))}
+                {!isArchived && (
                  <TableRow>
                     <TableCell colSpan={5} className="py-4">
                         <Link href="/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link>
                     </TableCell>
                 </TableRow>
+                )}
             </TableBody>
         </Table>
     </Card>
@@ -256,7 +315,7 @@ export default function ClientsPage() {
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
-        <Tabs defaultValue="active" className="flex flex-col h-full">
+        <Tabs defaultValue="active" onValueChange={setCurrentTab} className="flex flex-col h-full">
           <div className="flex items-center p-6 pb-0 border-b bg-card">
               <TabsList className="bg-transparent p-0">
                   <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">
@@ -297,7 +356,7 @@ export default function ClientsPage() {
               <>
                 <TabsContent value="active">
                   {activeClients.length > 0 ? (
-                      viewMode === 'grid' ? renderClientGrid(activeClients) : renderClientList(activeClients)
+                      viewMode === 'grid' ? renderClientGrid(activeClients, false) : renderClientList(activeClients, false)
                   ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
                           <p className="text-lg font-semibold mb-2">No active clients yet.</p>
@@ -310,7 +369,7 @@ export default function ClientsPage() {
                 </TabsContent>
                 <TabsContent value="archived">
                     {archivedClients.length > 0 ? (
-                        viewMode === 'grid' ? renderClientGrid(archivedClients) : renderClientList(archivedClients)
+                        viewMode === 'grid' ? renderClientGrid(archivedClients, true) : renderClientList(archivedClients, true)
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
                             <p>Archived clients will be shown here.</p>
@@ -322,6 +381,7 @@ export default function ClientsPage() {
           </div>
         </Tabs>
       </div>
+
       <AlertDialog open={!!clientToArchive} onOpenChange={(open) => !open && setClientToArchive(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -332,24 +392,25 @@ export default function ClientsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => clientToArchive && handleAction(clientToArchive.id, 'archive')}>Archive</AlertDialogAction>
+            <AlertDialogAction onClick={() => clientToArchive && handleArchive(clientToArchive.id)}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+
+      <AlertDialog open={!!clientToPermanentlyDelete} onOpenChange={(open) => !open && setClientToPermanentlyDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will move the client to the archive. This action can be reversed from the 'Archived' tab. It is not a permanent deletion.
+              This action cannot be undone. This will permanently delete the client and all of their associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               className={buttonVariants({ variant: "destructive" })}
-              onClick={() => clientToDelete && handleAction(clientToDelete.id, 'delete')}>
-              Delete
+              onClick={() => clientToPermanentlyDelete && handleForceDelete(clientToPermanentlyDelete.id)}>
+              Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -48,8 +48,8 @@ export interface Client {
   time_zone: string | null;
   profile_picture: string | null;
   is_active: boolean;
-  is_archived: boolean;
   is_deleted: boolean;
+  deleted_at: string | null;
   created_by: number;
   updated_by: number | null;
   deleted_by: number | null;
@@ -202,6 +202,18 @@ export async function getClients(token: string): Promise<Client[]> {
   return handleResponse(response);
 }
 
+export async function getArchivedClients(token: string): Promise<Client[]> {
+  const response = await fetch(`${API_BASE_URL}/api/clients/archived`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
 export async function createClient(token: string, clientData: any) {
     const response = await fetch(`${API_BASE_URL}/api/clients`, {
         method: 'POST',
@@ -240,6 +252,7 @@ export async function updateClient(token: string, id: number, clientData: any) {
     return handleResponse(response);
 }
 
+// Soft-deletes (archives) a client
 export async function deleteClient(token: string, id: number) {
     const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
         method: 'DELETE',
@@ -250,4 +263,30 @@ export async function deleteClient(token: string, id: number) {
         },
     });
     return handleResponse(response);
+}
+
+// Restores a soft-deleted client
+export async function restoreClient(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/clients/${id}/restore`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+// Permanently deletes a client
+export async function forceDeleteClient(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/clients/${id}/force`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
 }
