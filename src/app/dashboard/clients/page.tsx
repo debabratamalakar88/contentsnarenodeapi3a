@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,15 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers } from "lucide-react";
@@ -78,7 +70,6 @@ export default function ClientsPage() {
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
   return (
-    <Dialog>
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <Tabs defaultValue="active" className="flex flex-col h-full">
         <div className="flex items-center p-6 pb-0 border-b bg-card">
@@ -146,16 +137,16 @@ export default function ClientsPage() {
                             </CardContent>
                         </Card>
                     ))}
-                    <DialogTrigger asChild>
+                    <Link href="/dashboard/clients/new">
                         <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
                             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
                                 <Layers className="h-8 w-8 text-slate-400" />
                             </div>
-                            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200">
+                            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
                                 ADD NEW CLIENT
                             </Button>
                         </Card>
-                    </DialogTrigger>
+                    </Link>
                 </div>
               )}
               {viewMode === 'list' && (
@@ -201,9 +192,7 @@ export default function ClientsPage() {
                             ))}
                              <TableRow>
                                 <TableCell colSpan={5} className="py-4">
-                                    <DialogTrigger asChild>
-                                        <button className="text-primary hover:underline text-sm font-medium">Add a client...</button>
-                                    </DialogTrigger>
+                                    <Link href="/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link>
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -219,43 +208,5 @@ export default function ClientsPage() {
         </div>
       </Tabs>
     </div>
-     <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
-            <DialogDescription>
-                Enter the details for the new client. Click save when you're done.
-            </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                    Name
-                </Label>
-                <Input id="name" placeholder="Acme Inc." className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="company" className="text-right">
-                    Company
-                </Label>
-                <Input id="company" placeholder="Acme Corporation" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                    Email
-                </Label>
-                <Input id="email" type="email" placeholder="contact@acme.com" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                    Phone
-                </Label>
-                <Input id="phone" type="tel" placeholder="555-0101" className="col-span-3" />
-            </div>
-        </div>
-        <DialogFooter>
-            <Button type="submit">Save Client</Button>
-        </DialogFooter>
-    </DialogContent>
-    </Dialog>
   );
 }
