@@ -159,7 +159,7 @@ export default function ClientsPage() {
                 {isArchived ? (
                   <>
                     <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive focus:text-destructive">Delete Permanently</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive">Delete Permanently</DropdownMenuItem>
                   </>
                 ) : (
                   <>
@@ -239,7 +239,7 @@ export default function ClientsPage() {
                                   {isArchived ? (
                                     <>
                                       <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive focus:text-destructive">Delete Permanently</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive">Delete Permanently</DropdownMenuItem>
                                     </>
                                   ) : (
                                     <>
