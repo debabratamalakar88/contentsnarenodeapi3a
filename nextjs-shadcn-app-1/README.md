@@ -224,3 +224,35 @@ POST /api/reset-password
     }
   }
   ```
+
+### Change Password
+
+- **Endpoint:** `POST /api/user/change-password`
+- **Description:** Updates the authenticated user's password.
+- **Headers**:
+  - `Authorization: Bearer <token>`
+- **Request Body:**
+  ```json
+  {
+    "current_password": "old_password",
+    "new_password": "new_password",
+    "new_password_confirmation": "new_password"
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "message": "Password changed successfully."
+  }
+  ```
+- **Error Response (422 Unprocessable Entity):**
+  ```json
+  {
+    "message": "The given data was invalid.",
+    "errors": {
+      "current_password": [
+        "The current password does not match."
+      ]
+    }
+  }
+  ```

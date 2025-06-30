@@ -21,10 +21,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { getProfile, updateProfile } from "@/lib/api";
+import { getProfile, updateProfile, changePassword } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -49,9 +50,21 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+const passwordFormSchema = z.object({
+  current_password: z.string().min(1, "Current password is required."),
+  new_password: z.string().min(8, "New password must be at least 8 characters."),
+  new_password_confirmation: z.string(),
+}).refine(data => data.new_password === data.new_password_confirmation, {
+  message: "New passwords do not match.",
+  path: ["new_password_confirmation"],
+});
+
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
 
@@ -79,6 +92,15 @@ export default function SettingsPage() {
     },
   });
 
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      current_password: "",
+      new_password: "",
+      new_password_confirmation: "",
+    },
+  });
+
   useEffect(() => {
     async function loadProfile() {
       const token = localStorage.getItem("authToken");
@@ -94,7 +116,6 @@ export default function SettingsPage() {
 
       try {
         const responseData = await getProfile(token);
-        // Handle potential nested data structures from the API
         const profileData = responseData.user || responseData.data || responseData;
 
         form.reset(profileData);
@@ -136,6 +157,39 @@ export default function SettingsPage() {
         toast({
             title: "Update Failed",
             description: error.message || "Could not update your profile.",
+            variant: "destructive",
+        });
+    }
+  }
+
+  async function onPasswordSubmit(data: PasswordFormValues) {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+        toast({
+            title: "Authentication Error",
+            description: "No auth token found. Please log in again.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    try {
+        await changePassword(token, data);
+        toast({
+            title: "Password Updated",
+            description: "Your password has been changed. Please log in again.",
+        });
+        
+        localStorage.removeItem('authToken');
+        router.push('/login');
+
+    } catch (error: any) {
+         const description = error.errors
+            ? Object.values(error.errors).flat().join("\n")
+            : error.message || "Could not update your password.";
+        toast({
+            title: "Update Failed",
+            description: description,
             variant: "destructive",
         });
     }
@@ -195,7 +249,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="John Doe" {...field} />
+                                                <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -273,7 +327,8 @@ export default function SettingsPage() {
                                      <FormField control={form.control} name="country_code" render={({ field }) => (<FormItem><FormLabel>Country Code</FormLabel><FormControl><Input placeholder="US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                      <FormField control={form.control} name="country_phone_code" render={({ field }) => (<FormItem><FormLabel>Phone Code</FormLabel><FormControl><Input placeholder="+1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} value={field.value ?? ''} /></FormControl><FormMessage />
+                                </FormItem>)} />
                             </div>
 
                              {/* Regional Settings */}
@@ -338,27 +393,65 @@ export default function SettingsPage() {
         </form>
     </Form>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Password</CardTitle>
-          <CardDescription>
-            Update your password here. For security, you will be logged out after changing your password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="current-password">Current Password</Label>
-            <Input id="current-password" type="password" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="new-password">New Password</Label>
-            <Input id="new-password" type="password" />
-          </div>
-        </CardContent>
-        <CardFooter className="border-t px-6 py-4">
-          <Button>Update Password</Button>
-        </CardFooter>
-      </Card>
+    <Form {...passwordForm}>
+        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
+            <Card>
+                <CardHeader>
+                <CardTitle>Password</CardTitle>
+                <CardDescription>
+                    Update your password here. For security, you will be logged out after changing your password.
+                </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <FormField
+                        control={passwordForm.control}
+                        name="current_password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Current Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={passwordForm.control}
+                        name="new_password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>New Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={passwordForm.control}
+                        name="new_password_confirmation"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Confirm New Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
+                        {passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Update Password
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
+    </Form>
 
        <Card>
         <CardHeader>

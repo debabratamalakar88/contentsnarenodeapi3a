@@ -153,3 +153,16 @@ export async function updateProfile(token: string, profileData: Partial<Profile>
   });
   return handleResponse(response);
 }
+
+export async function changePassword(token: string, passwordData: any) {
+  const response = await fetch(`${API_BASE_URL}/api/user/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(passwordData)
+  });
+  return handleResponse(response);
+}
