@@ -1,6 +1,7 @@
 
 'use client'
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,8 +21,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, Layers, ChevronDown } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, Layers, ChevronDown, List } from "lucide-react";
 
 const clients = [
   {
@@ -55,6 +64,10 @@ const clients = [
 ];
 
 export default function ClientsPage() {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <Tabs defaultValue="active" className="flex flex-col h-full">
@@ -72,14 +85,14 @@ export default function ClientsPage() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="flex items-center gap-1">
-                            <LayoutGrid className="h-4 w-4" />
-                            <span>View: Grid</span>
+                            <ViewIcon className="h-4 w-4" />
+                            <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Grid</DropdownMenuItem>
-                        <DropdownMenuItem>List</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="relative">
@@ -91,6 +104,7 @@ export default function ClientsPage() {
 
         <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
             <TabsContent value="active">
+              {viewMode === 'grid' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {clients.map((client) => (
                         <Card key={client.email} className="bg-card shadow-sm hover:shadow-md transition-shadow">
@@ -136,6 +150,56 @@ export default function ClientsPage() {
                         </div>
                     </Card>
                 </div>
+              )}
+              {viewMode === 'list' && (
+                <Card className="bg-card shadow-sm">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Client</TableHead>
+                                <TableHead className="hidden md:table-cell">Company</TableHead>
+                                <TableHead className="hidden md:table-cell">Email</TableHead>
+                                <TableHead className="hidden lg:table-cell">Phone</TableHead>
+                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {clients.map((client) => (
+                                <TableRow key={client.email}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-10 w-10">
+                                                <AvatarFallback className="bg-green-100 text-green-700 font-bold">
+                                                    {client.initials}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-semibold">{client.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell">{client.company}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{client.email}</TableCell>
+                                    <TableCell className="hidden lg:table-cell">{client.phone}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                                    <MoreHorizontal className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem>View Client</DropdownMenuItem>
+                                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem>Archive</DropdownMenuItem>
+                                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Card>
+              )}
             </TabsContent>
             <TabsContent value="archived">
                 <div className="flex items-center justify-center h-full text-muted-foreground">
