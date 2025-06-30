@@ -37,6 +37,26 @@ interface AuthResponse {
   token: string;
 }
 
+export interface Client {
+  id: number;
+  full_name: string;
+  email: string;
+  companies: string[];
+  phone_number: string | null;
+  app_language: string | null;
+  date_format: string | null;
+  time_zone: string | null;
+  profile_picture: string | null;
+  is_active: boolean;
+  is_archived: boolean;
+  is_deleted: boolean;
+  created_by: number;
+  updated_by: number | null;
+  deleted_by: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 
 async function handleResponse(response: Response) {
   if (response.status === 204 || response.headers.get('content-length') === '0') {
@@ -165,4 +185,69 @@ export async function changePassword(token: string, passwordData: any) {
     body: JSON.stringify(passwordData)
   });
   return handleResponse(response);
+}
+
+
+// Client API functions
+
+export async function getClients(token: string): Promise<Client[]> {
+  const response = await fetch(`${API_BASE_URL}/api/clients`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function createClient(token: string, clientData: any) {
+    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(clientData),
+    });
+    return handleResponse(response);
+}
+
+export async function getClient(token: string, id: number): Promise<Client> {
+    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    return handleResponse(response);
+}
+
+export async function updateClient(token: string, id: number, clientData: any) {
+    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(clientData),
+    });
+    return handleResponse(response);
+}
+
+export async function deleteClient(token: string, id: number) {
+    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    return handleResponse(response);
 }

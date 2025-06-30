@@ -227,47 +227,102 @@ This document outlines the API endpoints the frontend application expects for us
   }
   ```
 
-### Create New Client
+### 🧾 **Client Resource API Documentation**
 
-- **Endpoint:** `POST /api/clients`
-- **Description:** Creates a new client.
-- **Headers**:
-  - `Authorization: Bearer <token>`
-- **Request Body:**
-| Field          | Type             | Required | Description                     |
-|----------------|------------------|----------|---------------------------------|
-| `full_name`    | String           | ✅ Yes   | The client's full name.         |
-| `email`        | String (Email)   | ✅ Yes   | The client's primary email.     |
-| `companies`    | Array of Strings | No       | List of companies associated.   |
-| `phone_number` | String           | No       | The client's phone number.      |
-| `app_language` | String           | No       | Client's preferred language.    |
-| `date_format`  | String           | No       | Client's preferred date format. |
-| `time_zone`    | String           | No       | Client's timezone.              |
-- **Success Response (201 Created):**
-  ```json
+**Base URL:** `/api/clients`  
+**Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+---
+
+#### `GET /clients`
+
+Retrieve a list of all clients.
+
+**Response:**
+```json
+[
   {
-    "client": {
-      "id": 1,
-      "full_name": "Sunder Pichai",
-      "email": "sunder@google.com",
-      "companies": ["Google", "Alphabet"],
-      "phone_number": "+91 1234567890",
-      "app_language": "english",
-      "date_format": "ddmmyyyy",
-      "time_zone": "ist",
-      "created_at": "2024-08-02T10:00:00.000000Z",
-      "updated_at": "2024-08-02T10:00:00.000000Z"
-    }
+    "id": 1,
+    "full_name": "Sunder Pichai",
+    "email": "sunder@google.com",
+    "companies": ["Google", "Alphabet"],
+    "phone_number": "+91 1234567890",
+    "app_language": "english",
+    "date_format": "ddmmyyyy",
+    "time_zone": "ist",
+    "profile_picture": null,
+    "is_active": true,
+    "is_archived": false,
+    "is_deleted": false,
+    "created_by": 10,
+    "updated_by": 15,
+    "deleted_by": null,
+    "created_at": "2024-08-02T10:00:00Z",
+    "updated_at": "2024-08-02T10:10:00Z"
   }
-  ```
-- **Error Response (422 Unprocessable Entity):**
-  ```json
-  {
-    "message": "The given data was invalid.",
-    "errors": {
-      "email": [
-        "The email has already been taken."
-      ]
-    }
-  }
-  ```
+]
+```
+
+---
+
+#### `POST /clients`
+
+Create a new client.
+
+**Request Body:**
+```json
+{
+  "full_name": "Sunder Pichai",
+  "email": "sunder@google.com",
+  "companies": ["Google", "Alphabet"],
+  "phone_number": "+91 1234567890",
+  "app_language": "english",
+  "date_format": "ddmmyyyy",
+  "time_zone": "ist",
+  "profile_picture": "profile.jpg",
+  "is_active": true
+}
+```
+
+**Response:** `201 Created`  
+Returns the created client object.
+
+---
+
+#### `GET /clients/{id}`
+
+Retrieve a specific client by ID.
+
+**Response:** `200 OK`  
+Returns the client object or `404 Not Found` if not found.
+
+---
+
+#### `PUT /clients/{id}`
+
+Update an existing client.
+
+**Request Body:**
+You may send partial or full updates.
+```json
+{
+  "full_name": "Sundar Pichai",
+  "phone_number": "+91 9876543210",
+  "is_archived": true
+}
+```
+
+**Response:** `200 OK`  
+Returns the updated client object.
+
+---
+
+#### `DELETE /clients/{id}`
+
+Soft-delete (archive) a client.  
+Also sets `deleted_by` and timestamps `deleted_at`.
+
+**Response:** `200 OK`
+```json
+{ "message": "Client archived successfully." }
+```
