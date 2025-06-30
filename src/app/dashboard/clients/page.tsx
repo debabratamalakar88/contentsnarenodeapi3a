@@ -59,6 +59,7 @@ export default function ClientsPage() {
   const [clientToPermanentlyDelete, setClientToPermanentlyDelete] = useState<Client | null>(null);
   const [currentTab, setCurrentTab] = useState('active');
   const [dataVersion, setDataVersion] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -143,6 +144,18 @@ export default function ClientsPage() {
       }
   };
 
+  const filteredActiveClients = activeClients.filter(
+    (client) =>
+      client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredArchivedClients = archivedClients.filter(
+    (client) =>
+      client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
   
   const renderClientGrid = (clientList: Client[], isArchived: boolean) => (
@@ -159,7 +172,7 @@ export default function ClientsPage() {
                 {isArchived ? (
                   <>
                     <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive">Delete Permanently</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
                   </>
                 ) : (
                   <>
@@ -239,7 +252,7 @@ export default function ClientsPage() {
                                   {isArchived ? (
                                     <>
                                       <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="text-destructive">Delete Permanently</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
                                     </>
                                   ) : (
                                     <>
@@ -338,7 +351,12 @@ export default function ClientsPage() {
                   </DropdownMenu>
                   <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search clients..." className="pl-9" />
+                      <Input
+                        placeholder="Search clients..."
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
                   </div>
               </div>
           </div>
@@ -351,8 +369,12 @@ export default function ClientsPage() {
               ) : (
               <>
                 <TabsContent value="active">
-                  {activeClients.length > 0 ? (
-                      viewMode === 'grid' ? renderClientGrid(activeClients, false) : renderClientList(activeClients, false)
+                  {filteredActiveClients.length > 0 ? (
+                      viewMode === 'grid' ? renderClientGrid(filteredActiveClients, false) : renderClientList(filteredActiveClients, false)
+                  ) : searchQuery ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                          <p>No clients found for "{searchQuery}".</p>
+                      </div>
                   ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
                           <p className="text-lg font-semibold mb-2">No active clients yet.</p>
@@ -364,8 +386,12 @@ export default function ClientsPage() {
                   )}
                 </TabsContent>
                 <TabsContent value="archived">
-                    {archivedClients.length > 0 ? (
-                        viewMode === 'grid' ? renderClientGrid(archivedClients, true) : renderClientList(archivedClients, true)
+                    {filteredArchivedClients.length > 0 ? (
+                        viewMode === 'grid' ? renderClientGrid(filteredArchivedClients, true) : renderClientList(filteredArchivedClients, true)
+                    ) : searchQuery ? (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                            <p>No archived clients found for "{searchQuery}".</p>
+                        </div>
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
                             <p>Archived clients will be shown here.</p>
