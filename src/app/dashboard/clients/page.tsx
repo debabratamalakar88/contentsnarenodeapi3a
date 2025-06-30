@@ -180,7 +180,7 @@ export default function ClientsPage() {
             </DropdownMenu>
             <CardContent className="flex flex-col items-center text-center p-6 pt-8">
               <Avatar className="h-16 w-16 mb-4">
-                <AvatarFallback className="bg-green-100 text-green-800 font-bold text-xl">
+                <AvatarFallback className="bg-pink-100 text-pink-800 font-bold text-xl">
                   {getInitials(client.full_name)}
                 </AvatarFallback>
               </Avatar>
