@@ -29,8 +29,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, Layers, ChevronDown, List } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, PlusCircle } from "lucide-react";
 
 const clients = [
   {
@@ -82,6 +92,50 @@ export default function ClientsPage() {
             </TabsList>
             <div className="ml-auto flex items-center gap-2 mb-2">
                 <Button variant="outline">IMPORT</Button>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Client
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Add New Client</DialogTitle>
+                            <DialogDescription>
+                                Enter the details for the new client. Click save when you're done.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="name" className="text-right">
+                                    Name
+                                </Label>
+                                <Input id="name" placeholder="Acme Inc." className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="company" className="text-right">
+                                    Company
+                                </Label>
+                                <Input id="company" placeholder="Acme Corporation" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="email" className="text-right">
+                                    Email
+                                </Label>
+                                <Input id="email" type="email" placeholder="contact@acme.com" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="phone" className="text-right">
+                                    Phone
+                                </Label>
+                                <Input id="phone" type="tel" placeholder="555-0101" className="col-span-3" />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit">Save Client</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="flex items-center gap-1">
@@ -138,17 +192,6 @@ export default function ClientsPage() {
                             </CardContent>
                         </Card>
                     ))}
-
-                    <Card className="border-dashed border-2 bg-muted/20 hover:border-primary hover:bg-muted/50 transition-colors flex flex-col items-center justify-center min-h-[220px] cursor-pointer">
-                        <div className="flex flex-col items-center justify-center text-center p-6">
-                            <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center mb-4">
-                                <Layers className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                            <Button variant="ghost" className="text-primary hover:text-primary font-semibold text-sm">
-                                ADD NEW CLIENT
-                            </Button>
-                        </div>
-                    </Card>
                 </div>
               )}
               {viewMode === 'list' && (
