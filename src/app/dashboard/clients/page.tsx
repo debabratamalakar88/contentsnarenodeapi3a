@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +35,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 const getInitials = (name: string): string => {
@@ -52,6 +51,8 @@ export default function ClientsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
   useEffect(() => {
     async function fetchClients() {
@@ -79,7 +80,7 @@ export default function ClientsPage() {
     fetchClients();
   }, [toast]);
 
-  const handleArchiveClient = async (clientId: number) => {
+  const handleAction = async (clientId: number, action: 'archive' | 'delete') => {
       const token = localStorage.getItem('authToken');
       if (!token) {
         toast({ variant: 'destructive', title: 'Authentication Error' });
@@ -89,15 +90,18 @@ export default function ClientsPage() {
         await deleteClient(token, clientId);
         setClients(prevClients => prevClients.map(c => c.id === clientId ? {...c, is_archived: true} : c));
         toast({
-          title: 'Client Archived',
-          description: 'The client has been moved to the archive.',
+          title: `Client ${action === 'archive' ? 'Archived' : 'Deleted'}`,
+          description: `The client has been moved to the archive.`,
         });
       } catch (error: any) {
         toast({
           variant: 'destructive',
-          title: 'Error archiving client',
+          title: `Error ${action === 'archive' ? 'archiving' : 'deleting'} client`,
           description: error.message || 'An unexpected error occurred.',
         });
+      } finally {
+        setClientToArchive(null);
+        setClientToDelete(null);
       }
   };
 
@@ -109,8 +113,7 @@ export default function ClientsPage() {
   const renderClientGrid = (clientList: Client[]) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => (
-        <AlertDialog key={client.id}>
-          <Card className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+          <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
@@ -118,12 +121,14 @@ export default function ClientsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>View Client</DropdownMenuItem>
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Archive</DropdownMenuItem>
-                </AlertDialogTrigger>
-                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setClientToDelete(client)} className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <CardContent className="flex flex-col items-center text-center p-6 pt-8">
@@ -140,19 +145,6 @@ export default function ClientsPage() {
               </div>
             </CardContent>
           </Card>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to archive this client?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action will move the client to the archived list. You can restore them later.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleArchiveClient(client.id)}>Archive</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       ))}
       <Link href="/dashboard/clients/new">
         <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
@@ -192,7 +184,6 @@ export default function ClientsPage() {
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone_number}</TableCell>
                         <TableCell>
-                          <AlertDialog>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
@@ -200,25 +191,16 @@ export default function ClientsPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>View Client</DropdownMenuItem>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}>Archive</DropdownMenuItem></AlertDialogTrigger>
-                                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setClientToDelete(client)} className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure you want to archive this client?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action will move the client to the archived list. You can restore them later.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleArchiveClient(client.id)}>Archive</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </TableCell>
                     </TableRow>
                 ))}
@@ -272,72 +254,106 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <Tabs defaultValue="active" className="flex flex-col h-full">
-        <div className="flex items-center p-6 pb-0 border-b bg-card">
-            <TabsList className="bg-transparent p-0">
-                <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">
-                    ACTIVE
-                </TabsTrigger>
-                <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">
-                    ARCHIVED
-                </TabsTrigger>
-            </TabsList>
-            <div className="ml-auto flex items-center gap-2 mb-2">
-                <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">IMPORT</Button>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/5 hover:text-primary">
-                            <ViewIcon className="h-4 w-4" />
-                            <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search clients..." className="pl-9" />
-                </div>
-            </div>
-        </div>
+    <>
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <Tabs defaultValue="active" className="flex flex-col h-full">
+          <div className="flex items-center p-6 pb-0 border-b bg-card">
+              <TabsList className="bg-transparent p-0">
+                  <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">
+                      ACTIVE
+                  </TabsTrigger>
+                  <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">
+                      ARCHIVED
+                  </TabsTrigger>
+              </TabsList>
+              <div className="ml-auto flex items-center gap-2 mb-2">
+                  <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">IMPORT</Button>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/5 hover:text-primary">
+                              <ViewIcon className="h-4 w-4" />
+                              <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="Search clients..." className="pl-9" />
+                  </div>
+              </div>
+          </div>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
-            {isLoading ? renderLoadingSkeleton() : error ? (
-                <div className="flex items-center justify-center h-full text-destructive">
-                    <p>{error}</p>
-                </div>
-            ) : (
-            <>
-              <TabsContent value="active">
-                {activeClients.length > 0 ? (
-                    viewMode === 'grid' ? renderClientGrid(activeClients) : renderClientList(activeClients)
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
-                        <p className="text-lg font-semibold mb-2">No active clients yet.</p>
-                        <p>Get started by adding your first client.</p>
-                        <Button asChild className="mt-4">
-                            <Link href="/dashboard/clients/new">Add New Client</Link>
-                        </Button>
-                    </div>
-                )}
-              </TabsContent>
-              <TabsContent value="archived">
-                  {archivedClients.length > 0 ? (
-                      viewMode === 'grid' ? renderClientGrid(archivedClients) : renderClientList(archivedClients)
+          <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
+              {isLoading ? renderLoadingSkeleton() : error ? (
+                  <div className="flex items-center justify-center h-full text-destructive">
+                      <p>{error}</p>
+                  </div>
+              ) : (
+              <>
+                <TabsContent value="active">
+                  {activeClients.length > 0 ? (
+                      viewMode === 'grid' ? renderClientGrid(activeClients) : renderClientList(activeClients)
                   ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                          <p>Archived clients will be shown here.</p>
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                          <p className="text-lg font-semibold mb-2">No active clients yet.</p>
+                          <p>Get started by adding your first client.</p>
+                          <Button asChild className="mt-4">
+                              <Link href="/dashboard/clients/new">Add New Client</Link>
+                          </Button>
                       </div>
                   )}
-              </TabsContent>
-            </>
-            )}
-        </div>
-      </Tabs>
-    </div>
+                </TabsContent>
+                <TabsContent value="archived">
+                    {archivedClients.length > 0 ? (
+                        viewMode === 'grid' ? renderClientGrid(archivedClients) : renderClientList(archivedClients)
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                            <p>Archived clients will be shown here.</p>
+                        </div>
+                    )}
+                </TabsContent>
+              </>
+              )}
+          </div>
+        </Tabs>
+      </div>
+      <AlertDialog open={!!clientToArchive} onOpenChange={(open) => !open && setClientToArchive(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to archive this client?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will move the client to the archived list. You can restore them later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => clientToArchive && handleAction(clientToArchive.id, 'archive')}>Archive</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move the client to the archive. This action can be reversed from the 'Archived' tab. It is not a permanent deletion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => clientToDelete && handleAction(clientToDelete.id, 'delete')}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
