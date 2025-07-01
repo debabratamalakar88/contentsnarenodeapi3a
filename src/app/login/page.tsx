@@ -76,9 +76,14 @@ export default function LoginPage() {
         throw new Error("Invalid response from server.");
       }
     } catch (error: any) {
-      const description = error.errors
-        ? Object.values(error.errors).flat().join("\n")
-        : error.message || "Invalid credentials. Please try again.";
+      // Find the primary error message under common keys.
+      let description = error.message || error.error || error.detail || "Invalid credentials. Please try again.";
+      
+      // If there are specific validation errors, they take precedence.
+      if (error.errors) {
+        description = Object.values(error.errors).flat().join("\n");
+      }
+
       toast({
         variant: "destructive",
         title: "Login Failed",
