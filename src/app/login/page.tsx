@@ -76,10 +76,13 @@ export default function LoginPage() {
         throw new Error("Invalid response from server.");
       }
     } catch (error: any) {
+      const description = error.errors
+        ? Object.values(error.errors).flat().join("\n")
+        : error.message || "Invalid credentials. Please try again.";
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
+        description: description,
       });
     }
   }
