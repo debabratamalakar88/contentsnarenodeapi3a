@@ -1,3 +1,4 @@
+
 import ClientView from "./ClientView";
 
 export async function generateStaticParams() {
