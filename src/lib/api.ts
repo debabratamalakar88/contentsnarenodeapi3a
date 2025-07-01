@@ -74,18 +74,24 @@ async function handleResponse(response: Response) {
     }
     return data;
   } catch (error) {
-    console.error("API Error: Response is not valid JSON. See details below.", {
+    // This log helps the developer see the raw, non-JSON response.
+    console.error("API Error: The server returned a non-JSON response. See the response body below:", {
       status: response.status,
       statusText: response.statusText,
       body: responseText,
     });
-    
-    const errorData = {
-        message: `Backend Communication Error: The server responded with an unexpected format instead of JSON. This is often caused by a server-side error (like a 404 Not Found or 500 Internal Server Error) or a CORS policy issue. Please check your browser's Network tab for the exact response and the Console tab for any CORS errors to diagnose the backend problem.`,
-        status: response.status,
-        body: responseText
-    }
-    throw errorData;
+
+    // This is the user-facing error message that will be shown in the UI.
+    const errorMessage = `A backend communication error occurred (Status: ${response.status} ${response.statusText}). The server sent back an unexpected response, likely an HTML error page instead of JSON data.
+
+Possible causes:
+1. Is the API URL in your .env file correct and is the backend server running?
+2. Is there a CORS policy error? Check the browser Console for messages.
+3. Is there a server-side error? Check your Laravel logs.
+
+The full server response has been logged to the browser console for debugging.`;
+
+    throw { message: errorMessage, status: response.status, body: responseText };
   }
 }
 
