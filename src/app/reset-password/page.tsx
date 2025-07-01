@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import ResetPasswordForm from './ResetPasswordForm';
 
+export const dynamic = 'force-dynamic';
+
 function ResetPasswordLoading() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background">
