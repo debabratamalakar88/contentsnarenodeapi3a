@@ -74,15 +74,14 @@ async function handleResponse(response: Response) {
     }
     return data;
   } catch (error) {
-    console.error("API Error: Response is not valid JSON.", {
+    console.error("API Error: Response is not valid JSON. See details below.", {
       status: response.status,
       statusText: response.statusText,
       body: responseText,
     });
     
-    // Create a more informative error to be caught by the calling function
     const errorData = {
-        message: `Request failed with status ${response.status}. The server's response was not valid JSON. Check the browser console for more details.`,
+        message: `A backend communication error occurred. The server responded with non-JSON data, likely an HTML error page. Please check your browser's Network tab to see the full server response and diagnose the backend issue.`,
         status: response.status,
         body: responseText
     }
