@@ -81,7 +81,7 @@ async function handleResponse(response: Response) {
     });
     
     const errorData = {
-        message: `A backend communication error occurred. The server responded with non-JSON data, likely an HTML error page. Please check your browser's Network tab to see the full server response and diagnose the backend issue.`,
+        message: `Backend Communication Error: The server responded with an unexpected format instead of JSON. This is often caused by a server-side error (like a 404 Not Found or 500 Internal Server Error) or a CORS policy issue. Please check your browser's Network tab for the exact response and the Console tab for any CORS errors to diagnose the backend problem.`,
         status: response.status,
         body: responseText
     }
