@@ -59,14 +59,35 @@ export interface Client {
 
 
 async function handleResponse(response: Response) {
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    if (!response.ok) {
+      throw { message: `Request failed: ${response.status} ${response.statusText}` };
+    }
     return {};
   }
-  const data = await response.json();
-  if (!response.ok) {
-    throw data; // Throws the JSON error object from the API
+
+  const responseText = await response.text();
+  try {
+    const data = JSON.parse(responseText);
+    if (!response.ok) {
+      throw data; // Throw the parsed JSON error from the API
+    }
+    return data;
+  } catch (error) {
+    console.error("API Error: Response is not valid JSON.", {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
+    
+    // Create a more informative error to be caught by the calling function
+    const errorData = {
+        message: `Request failed with status ${response.status}. The server's response was not valid JSON. Check the browser console for more details.`,
+        status: response.status,
+        body: responseText
+    }
+    throw errorData;
   }
-  return data;
 }
 
 export async function registerUser(userData: any): Promise<{user: User; token: string}> {
