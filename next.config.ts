@@ -1,6 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  basePath: '/dev/contentsnarefull/contentsnare',
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
