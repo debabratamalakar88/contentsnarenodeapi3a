@@ -21,6 +21,10 @@ import { useToast } from "@/hooks/use-toast"
 import { getClient, updateClient } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 
+export async function generateStaticParams() {
+  return [];
+}
+
 const clientFormSchema = z.object({
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),

@@ -12,6 +12,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Mail, Phone, Building, Globe, Calendar as CalendarIcon, Clock } from "lucide-react";
 
+export async function generateStaticParams() {
+    return [];
+}
+
 const getInitials = (name: string): string => {
     if (!name) return '';
     const words = name.trim().split(' ').filter(Boolean);
