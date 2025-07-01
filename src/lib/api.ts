@@ -59,29 +59,28 @@ export interface Client {
 
 
 async function handleResponse(response: Response) {
+  // Handle cases with no content first
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     if (!response.ok) {
-      throw { message: `Request failed: ${response.status} ${response.statusText}` };
+      // e.g. a 401 response with no body
+      throw { message: `Request failed: ${response.status} ${response.statusText}`, status: response.status };
     }
     return {};
   }
 
   const responseText = await response.text();
+  let data;
+
   try {
-    const data = JSON.parse(responseText);
-    if (!response.ok) {
-      throw data; // Throw the parsed JSON error from the API
-    }
-    return data;
+    data = JSON.parse(responseText);
   } catch (error) {
-    // This log helps the developer see the raw, non-JSON response.
+    // This is the ONLY place we should be throwing the generic "non-JSON" error.
     console.error("API Error: The server returned a non-JSON response. See the response body below:", {
       status: response.status,
       statusText: response.statusText,
       body: responseText,
     });
 
-    // This is the user-facing error message that will be shown in the UI.
     const errorMessage = `A backend communication error occurred (Status: ${response.status} ${response.statusText}). The server sent back an unexpected response, likely an HTML error page instead of JSON data.
 
 Possible causes:
@@ -93,6 +92,17 @@ The full server response has been logged to the browser console for debugging.`;
 
     throw { message: errorMessage, status: response.status, body: responseText };
   }
+
+  // If we reach here, JSON parsing was successful.
+  // Now, we check if the request itself was successful.
+  if (!response.ok) {
+    // The server returned an error (like 422, 401, 500) but it was valid JSON.
+    // We throw the parsed JSON data for the calling function to handle.
+    throw data;
+  }
+
+  // If we reach here, the request was successful and the response was valid JSON.
+  return data;
 }
 
 export async function registerUser(userData: any): Promise<{user: User; token: string}> {
