@@ -74,7 +74,6 @@ async function handleResponse(response: Response) {
   try {
     data = JSON.parse(responseText);
   } catch (error) {
-    // This is the ONLY place we should be throwing the generic "non-JSON" error.
     console.error("API Error: The server returned a non-JSON response. See the response body below:", {
       status: response.status,
       statusText: response.statusText,
