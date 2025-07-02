@@ -13,7 +13,7 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <circle cx="12" cy="12" r="10" />
-      <path d="M9 16V8L15 16V8" />
+      <path d="M9 16V8L15 16M15 8v8" />
     </svg>
   );
 }
