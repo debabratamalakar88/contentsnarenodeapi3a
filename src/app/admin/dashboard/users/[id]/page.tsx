@@ -106,7 +106,7 @@ export default function UserViewPage() {
         return <div className="p-6 text-center">User not found.</div>;
     }
 
-    const isDeactivated = !!user.deleted_at;
+    const isArchived = !!user.deleted_at;
 
     return (
         <div className="p-8 space-y-8">
@@ -119,7 +119,7 @@ export default function UserViewPage() {
                     </Button>
                     <h1 className="text-xl font-semibold">User Details</h1>
                 </div>
-                {!isDeactivated && (
+                {!isArchived && (
                     <Button asChild>
                         <Link href={`/admin/dashboard/users/${user.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" /> Edit User
@@ -187,7 +187,7 @@ export default function UserViewPage() {
                             </div>
                         </div>
                          <div className="flex items-center gap-3">
-                             {isDeactivated ? (
+                             {isArchived ? (
                                 <ShieldX className="h-5 w-5 text-red-500" />
                             ) : (
                                 <ShieldCheck className="h-5 w-5 text-green-500" />
@@ -195,7 +195,7 @@ export default function UserViewPage() {
                             <div>
                                 <p className="text-sm font-medium">Account Status</p>
                                 <p className="text-sm text-muted-foreground">
-                                     {isDeactivated ? 'Deactivated' : 'Active'}
+                                     {isArchived ? 'Archived' : 'Active'}
                                 </p>
                             </div>
                         </div>
