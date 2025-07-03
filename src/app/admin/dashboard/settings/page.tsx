@@ -52,11 +52,11 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
-  password: z.string().min(8, "New password must be at least 8 characters."),
-  password_confirmation: z.string(),
-}).refine(data => data.password === data.password_confirmation, {
+  new_password: z.string().min(8, "New password must be at least 8 characters."),
+  new_password_confirmation: z.string(),
+}).refine(data => data.new_password === data.new_password_confirmation, {
   message: "New passwords do not match.",
-  path: ["password_confirmation"],
+  path: ["new_password_confirmation"],
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
@@ -97,8 +97,8 @@ export default function AdminSettingsPage() {
     resolver: zodResolver(passwordFormSchema),
     defaultValues: {
       current_password: "",
-      password: "",
-      password_confirmation: "",
+      new_password: "",
+      new_password_confirmation: "",
     },
   });
 
@@ -176,8 +176,8 @@ export default function AdminSettingsPage() {
     try {
         await changeAdminPassword(token, {
           current_password: data.current_password,
-          password: data.password,
-          password_confirmation: data.password_confirmation
+          new_password: data.new_password,
+          new_password_confirmation: data.new_password_confirmation
         });
         toast({
             title: "Password Updated",
@@ -369,7 +369,7 @@ export default function AdminSettingsPage() {
                     />
                     <FormField
                         control={passwordForm.control}
-                        name="password"
+                        name="new_password"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>New Password</FormLabel>
@@ -382,7 +382,7 @@ export default function AdminSettingsPage() {
                     />
                      <FormField
                         control={passwordForm.control}
-                        name="password_confirmation"
+                        name="new_password_confirmation"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Confirm New Password</FormLabel>
