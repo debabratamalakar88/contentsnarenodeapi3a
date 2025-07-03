@@ -38,6 +38,8 @@ export default function ClientViewPage() {
         }
 
         async function fetchClientData() {
+            setIsLoading(true);
+            setOwner(null); // Clear previous owner state
             const token = localStorage.getItem('adminAuthToken');
             if (!token) {
                 toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
