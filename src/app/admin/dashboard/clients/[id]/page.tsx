@@ -4,13 +4,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAdminClient, type Client } from "@/lib/api";
+import { getAdminClient, getAdminUser, type Client, type User } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Mail, Phone, Building, Globe, Calendar as CalendarIcon, Clock, ShieldCheck, ShieldX } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, Building, Globe, Calendar as CalendarIcon, Clock, ShieldCheck, ShieldX, User as UserIcon } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 
 const getInitials = (name: string): string => {
@@ -26,6 +26,7 @@ export default function ClientViewPage() {
     const params = useParams();
     const { toast } = useToast();
     const [client, setClient] = useState<Client | null>(null);
+    const [owner, setOwner] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const id = Number(params.id);
@@ -36,7 +37,7 @@ export default function ClientViewPage() {
             return;
         }
 
-        async function fetchClient() {
+        async function fetchClientData() {
             const token = localStorage.getItem('adminAuthToken');
             if (!token) {
                 toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
@@ -47,28 +48,34 @@ export default function ClientViewPage() {
             try {
                 const fetchedClient = await getAdminClient(token, id);
                 setClient(fetchedClient);
+                if (fetchedClient.created_by) {
+                    const fetchedOwner = await getAdminUser(token, fetchedClient.created_by);
+                    setOwner(fetchedOwner);
+                }
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
-                    title: 'Error fetching client',
+                    title: 'Error fetching client data',
                     description: err.message || 'An unexpected error occurred.',
                 });
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchClient();
+        fetchClientData();
     }, [id, router, toast]);
 
     if (isLoading) {
         return (
-            <div className="p-8 space-y-8">
-                <header className="flex items-center justify-between"><div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-6 w-48" /></div><Skeleton className="h-9 w-24" /></header>
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <div className="flex items-center gap-6"><Skeleton className="h-24 w-24 rounded-full" /><div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div></div>
-                    <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
-                    <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
-                </div>
+            <div className="flex flex-col h-full bg-background p-8">
+                <header className="sticky top-0 bg-white z-10"><div className="h-16 flex items-center justify-between px-6 border-b"><div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-6 w-48" /></div><Skeleton className="h-9 w-24" /></div></header>
+                <main className="flex-1 overflow-y-auto pt-8">
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        <div className="flex items-center gap-6"><Skeleton className="h-24 w-24 rounded-full" /><div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div></div>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
+                    </div>
+                </main>
             </div>
         )
     }
@@ -80,40 +87,46 @@ export default function ClientViewPage() {
     const isArchived = !!client.deleted_at;
 
     return (
-        <div className="p-8 space-y-8">
-            <header className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" asChild><Link href="/admin/dashboard/clients"><ArrowLeft className="h-5 w-5" /></Link></Button>
-                    <h1 className="text-xl font-semibold">Client Details</h1>
+        <div className="flex flex-col h-full bg-background">
+            <header className="sticky top-0 bg-white z-10">
+                <div className="h-16 flex items-center justify-between px-6 border-b">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" asChild><Link href="/admin/dashboard/clients"><ArrowLeft className="h-5 w-5" /></Link></Button>
+                        <h1 className="text-lg font-semibold">Client Details</h1>
+                    </div>
+                    {!isArchived && (<Button asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit Client</Link></Button>)}
                 </div>
-                {!isArchived && (
-                    <Button asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit Client</Link></Button>
-                )}
             </header>
-            <div className="max-w-4xl mx-auto space-y-8">
-                <div className="flex items-center gap-6">
-                    <Avatar className="h-24 w-24 text-4xl"><AvatarFallback>{getInitials(client.full_name)}</AvatarFallback></Avatar>
-                    <div><h2 className="text-3xl font-bold">{client.full_name}</h2><p className="text-muted-foreground">{client.email}</p></div>
-                </div>
-                
-                <Card><CardHeader><CardTitle>Contact & Account Information</CardTitle></CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex items-center gap-3"><Mail className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Email</p><p className="text-sm text-muted-foreground">{client.email}</p></div></div>
-                        <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Phone</p><p className="text-sm text-muted-foreground">{client.phone_number || 'N/A'}</p></div></div>
-                        <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Companies</p><p className="text-sm text-muted-foreground">{client.companies?.join(', ') || 'N/A'}</p></div></div>
-                        <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Client Since</p><p className="text-sm text-muted-foreground">{client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A'}</p></div></div>
-                        <div className="flex items-center gap-3">{isArchived ? <ShieldX className="h-5 w-5 text-red-500" /> : <ShieldCheck className="h-5 w-5 text-green-500" />}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
-                    </CardContent>
-                </Card>
+            <main className="flex-1 overflow-y-auto p-8">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="flex items-center gap-6">
+                        <Avatar className="h-24 w-24 text-4xl"><AvatarFallback className="bg-pink-100 text-pink-800 font-bold border">{getInitials(client.full_name)}</AvatarFallback></Avatar>
+                        <div><h2 className="text-3xl font-bold">{client.full_name}</h2><p className="text-muted-foreground">{client.email}</p></div>
+                    </div>
+                    
+                    <Card>
+                        <CardHeader><CardTitle>Contact & Account Information</CardTitle></CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex items-center gap-3"><Mail className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Email</p><p className="text-sm text-muted-foreground">{client.email}</p></div></div>
+                            <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Phone</p><p className="text-sm text-muted-foreground">{client.phone_number || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Companies</p><p className="text-sm text-muted-foreground">{client.companies?.join(', ') || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Client Since</p><p className="text-sm text-muted-foreground">{client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A'}</p></div></div>
+                             <div className="flex items-center gap-3"><UserIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Assigned User</p><p className="text-sm text-muted-foreground">{owner?.name || 'Loading...'}</p></div></div>
+                            <div className="flex items-center gap-3">{isArchived ? <ShieldX className="h-5 w-5 text-red-500" /> : <ShieldCheck className="h-5 w-5 text-green-500" />}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
+                        </CardContent>
+                    </Card>
 
-                <Card><CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Language</p><p className="text-sm text-muted-foreground">{client.app_language || 'N/A'}</p></div></div>
-                        <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Date Format</p><p className="text-sm text-muted-foreground">{client.date_format || 'N/A'}</p></div></div>
-                        <div className="flex items-center gap-3"><Clock className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Time Zone</p><p className="text-sm text-muted-foreground">{client.time_zone || 'N/A'}</p></div></div>
-                    </CardContent>
-                </Card>
-            </div>
+                    <Card>
+                        <CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex items-center gap-3"><Globe className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Language</p><p className="text-sm text-muted-foreground">{client.app_language || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Date Format</p><p className="text-sm text-muted-foreground">{client.date_format || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><Clock className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Time Zone</p><p className="text-sm text-muted-foreground">{client.time_zone || 'N/A'}</p></div></div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
         </div>
     );
 }
+
