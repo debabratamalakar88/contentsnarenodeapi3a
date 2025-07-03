@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
     } else {
       setIsChecking(false);
     }
-  }, [router]);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

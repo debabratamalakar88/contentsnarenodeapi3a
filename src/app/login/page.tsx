@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -41,7 +42,7 @@ export default function LoginPage() {
     } else {
       setIsChecking(false);
     }
-  }, [router]);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
