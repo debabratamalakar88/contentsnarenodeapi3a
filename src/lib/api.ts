@@ -36,28 +36,6 @@ export interface AdminProfile {
     id: number;
     name: string;
     email: string;
-    username: string;
-    phone: string | null;
-    profile_picture: string | null;
-    bio: string | null;
-    company: string | null;
-    address: string | null;
-    city: string | null;
-    state: string | null;
-    zip: string | null;
-    country_code: string;
-    country_name: string;
-    country_flag: string;
-    country_phone_code: string;
-    locale: string;
-    currency: string;
-    timezone: string;
-    date_format: string;
-    time_format: string;
-    language: string;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
 }
 
 interface UserAuthResponse {

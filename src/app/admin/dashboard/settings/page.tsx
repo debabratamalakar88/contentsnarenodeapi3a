@@ -138,7 +138,11 @@ export default function AdminSettingsPage() {
     }
 
     try {
-        await changeAdminPassword(token, data);
+        await changeAdminPassword(token, {
+          current_password: data.current_password,
+          password: data.password,
+          password_confirmation: data.password_confirmation
+        });
         toast({
             title: "Password Updated",
             description: "Your password has been changed. You will be logged out.",
