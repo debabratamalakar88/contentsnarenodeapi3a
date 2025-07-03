@@ -21,7 +21,7 @@ import { Logo } from "@/components/icons"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser } from "@/lib/api";
+import { adminLogin } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -54,10 +54,9 @@ export default function AdminLoginPage() {
   
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // NOTE: In a real application, you would have a separate adminLogin API endpoint.
-      const data = await loginUser(values); 
-      if (data.token && data.user) {
-        localStorage.setItem('adminAuthToken', data.token);
+      const data = await adminLogin(values); 
+      if (data.access_token) {
+        localStorage.setItem('adminAuthToken', data.access_token);
         toast({
           title: "Admin Login Successful",
           description: "Welcome back, administrator.",

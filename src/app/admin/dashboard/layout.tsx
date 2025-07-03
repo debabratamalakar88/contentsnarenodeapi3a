@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/icons"
 import { AdminNavLinks } from "./AdminNavLinks"
-import { logoutUser } from '@/lib/api';
+import { adminLogout } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminDashboardLayout({
@@ -49,7 +49,7 @@ export default function AdminDashboardLayout({
     
     try {
       if (token) {
-        await logoutUser(token);
+        await adminLogout(token);
         toast({
           title: "Success",
           description: "Logged out successfully.",

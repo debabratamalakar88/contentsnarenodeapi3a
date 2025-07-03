@@ -33,10 +33,23 @@ export interface Profile extends User {
   language?: string;
 }
 
-interface AuthResponse {
+export interface AdminProfile {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface UserAuthResponse {
   user: User;
   token: string;
 }
+
+interface AdminAuthResponse {
+    access_token: string;
+    token_type: string;
+    expires_in: number;
+}
+
 
 export interface Client {
   id: number;
@@ -60,10 +73,8 @@ export interface Client {
 
 
 async function handleResponse(response: Response) {
-  // Handle cases with no content first
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     if (!response.ok) {
-      // e.g. a 401 response with no body
       throw { message: `Request failed: ${response.status} ${response.statusText}`, status: response.status };
     }
     return {};
@@ -100,6 +111,9 @@ The full server response has been logged to the browser console for debugging.`;
   return data;
 }
 
+// ===================================
+// USER AUTHENTICATION & PROFILE
+// ===================================
 export async function registerUser(userData: any): Promise<{user: User; token: string}> {
   const response = await fetch(`${API_BASE_URL}/api/register`, {
     method: 'POST',
@@ -112,7 +126,7 @@ export async function registerUser(userData: any): Promise<{user: User; token: s
   return handleResponse(response);
 }
 
-export async function loginUser(credentials: any): Promise<AuthResponse> {
+export async function loginUser(credentials: any): Promise<UserAuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     headers: {
@@ -157,16 +171,8 @@ export async function logoutUser(token: string) {
       'Authorization': `Bearer ${token}`,
     },
   });
-
-  if (!response.ok) {
-    // Try to parse error json, but fallback if it's not there
-    const errorData = await response.json().catch(() => ({ message: 'Server error during logout' }));
-    throw errorData;
-  }
-  
   return handleResponse(response);
 }
-
 
 export async function resendVerificationEmail(token: string) {
   const response = await fetch(`${API_BASE_URL}/api/email/verification-notification`, {
@@ -219,8 +225,9 @@ export async function changePassword(token: string, passwordData: any) {
 }
 
 
-// Client API functions
-
+// ===================================
+// CLIENT API
+// ===================================
 export async function getClients(token: string): Promise<Client[]> {
   const response = await fetch(`${API_BASE_URL}/api/clients`, {
     method: 'GET',
@@ -283,7 +290,6 @@ export async function updateClient(token: string, id: number, clientData: any) {
     return handleResponse(response);
 }
 
-// Soft-deletes (archives) a client
 export async function deleteClient(token: string, id: number) {
     const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
         method: 'DELETE',
@@ -296,7 +302,6 @@ export async function deleteClient(token: string, id: number) {
     return handleResponse(response);
 }
 
-// Restores a soft-deleted client
 export async function restoreClient(token: string, id: number) {
   const response = await fetch(`${API_BASE_URL}/api/clients/${id}/restore`, {
     method: 'POST',
@@ -309,7 +314,6 @@ export async function restoreClient(token: string, id: number) {
   return handleResponse(response);
 }
 
-// Permanently deletes a client
 export async function forceDeleteClient(token: string, id: number) {
   const response = await fetch(`${API_BASE_URL}/api/clients/${id}/force`, {
     method: 'DELETE',
@@ -322,7 +326,71 @@ export async function forceDeleteClient(token: string, id: number) {
   return handleResponse(response);
 }
 
-// Admin API Functions
+// ===================================
+// ADMIN API
+// ===================================
+
+export async function adminLogin(credentials: any): Promise<AdminAuthResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(credentials),
+  });
+  return handleResponse(response);
+}
+
+export async function adminLogout(token: string) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function getAdminProfile(token: string): Promise<AdminProfile> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/updateProfile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData)
+  });
+  return handleResponse(response);
+}
+
+export async function changeAdminPassword(token: string, passwordData: any) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/changePassword`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(passwordData)
+  });
+  return handleResponse(response);
+}
 
 export async function getAdminUsers(token: string): Promise<User[]> {
   const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
