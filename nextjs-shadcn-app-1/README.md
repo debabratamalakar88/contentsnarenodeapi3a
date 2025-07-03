@@ -80,63 +80,33 @@ This document outlines the API endpoints the frontend application expects for us
   }
   ```
 
-### 🔐 `POST /api/forgot-password`
+### Forgot Password
 
-**Purpose:**  
-Sends a password reset link to the user's registered email.
-
-**Controller:** `AuthController@forgotPassword`
-
-**Request Body:**
+- **Endpoint:** `POST /api/forgot-password`
+- **Description:** Sends a password reset link to the user's registered email.
+- **Request Body:**
 | Field | Type   | Required | Description                   |
 |-------|--------|----------|-------------------------------|
 | `email` | String | ✅ Yes   | User's registered email address |
-
-**Response:**
+- **Response:**
 - `200 OK`: Email sent successfully  
 - `422 Unprocessable Entity`: Validation error (e.g. invalid email)
 
-**Example Request:**
+### Reset Password
 
-```json
-POST /api/forgot-password
-{
-  "email": "user@example.com"
-}
-```
-
----
-
-### 🔐 `POST /api/reset-password`
-
-**Purpose:**  
-Resets the user's password using the token from the email.
-
-**Controller:** `AuthController@resetPassword`
-
-**Request Body:**
+- **Endpoint:** `POST /api/reset-password`
+- **Description:** Resets the user's password using the token from the email.
+- **Request Body:**
 | Field      | Type   | Required | Description                      |
 |------------|--------|----------|----------------------------------|
 | `email`    | String | ✅ Yes   | User's email address             |
 | `token`    | String | ✅ Yes   | Token received in the reset link |
 | `password` | String | ✅ Yes   | New password                     |
 | `password_confirmation` | String | ✅ Yes | Must match `password`        |
-
-**Response:**
+- **Response:**
 - `200 OK`: Password successfully reset  
 - `422 Unprocessable Entity`: Validation failed  
 - `400 Bad Request`: Invalid token or email
-
-**Example Request:**
-
-```json
-POST /api/reset-password
-{
-  "email": "user@example.com",
-  "token": "abc123",
-  "password": "newSecurePassword!",
-  "password_confirmation": "newSecurePassword!"
-}
 
 ### Email Verification
 
@@ -266,7 +236,7 @@ POST /api/reset-password
 
 #### `GET /clients`
 
-Retrieve a list of active clients.
+Retrieve a list of active clients for the authenticated user.
 
 **Response:** `200 OK` - Returns an array of client objects.
 ```json
@@ -283,7 +253,7 @@ Retrieve a list of active clients.
 
 #### `GET /clients/archived`
 
-Retrieve a list of archived (soft-deleted) clients.
+Retrieve a list of archived (soft-deleted) clients for the authenticated user.
 
 **Response:** `200 OK` - Returns an array of soft-deleted client objects.
 
@@ -368,3 +338,86 @@ Permanently delete a client from the database.
   ```json
   { "message": "Client permanently deleted." }
   ```
+
+---
+
+## 🛡️ System Admin API Documentation
+
+This section outlines API endpoints specifically for the System Admin panel. All endpoints require an admin-level Bearer token for authorization.
+
+### Admin Login
+
+- **Endpoint:** `POST /api/login`
+- **Description:** Authenticates a system administrator. This currently uses the same endpoint as regular user login. The backend should differentiate based on user role.
+- **Request Body & Response:** Same as [User Login](#user-login).
+
+---
+
+### User Management Resource
+
+**Base URL:** `/api/users`  
+**Auth:** Requires admin Bearer token.
+
+#### `GET /users`
+
+Retrieve a list of all registered users.
+
+**Response:** `200 OK` - Returns an array of user objects.
+```json
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "email_verified_at": "2024-08-01T12:00:00.000000Z",
+    "created_at": "2024-08-01T10:00:00.000000Z"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "email_verified_at": null,
+    "created_at": "2024-08-02T11:30:00.000000Z"
+  }
+]
+```
+
+#### `GET /users/{id}`
+
+Retrieve a specific user by ID.
+
+**Response:** `200 OK` - Returns the user object or `404 Not Found`.
+
+#### `PUT /users/{id}`
+
+Update a user's details (e.g., name, status).
+
+**Request Body:**
+```json
+{
+  "name": "Johnathan Doe",
+  "is_active": false
+}
+```
+
+**Response:** `200 OK` - Returns the updated user object.
+
+#### `DELETE /users/{id}`
+
+Deactivate or soft-delete a user account.
+
+**Response:** `200 OK`
+```json
+{ "message": "User account deactivated successfully." }
+```
+
+---
+
+### Global Client Management (Admin)
+
+When an admin is authenticated, the standard Client Resource API endpoints provide access to clients across *all* user accounts.
+
+- `GET /api/clients`: Returns all active clients from all users.
+- `GET /api/clients/archived`: Returns all archived clients from all users.
+
+Refer to the [Client Resource API Documentation](#-client-resource-api-documentation) section for request/response formats. The backend is responsible for handling the authorization logic to return global data for admins.
