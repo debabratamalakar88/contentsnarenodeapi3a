@@ -33,9 +33,29 @@ export interface Profile extends User {
 }
 
 export interface AdminProfile {
-    id: number;
-    name: string;
-    email: string;
+  id: number;
+  name: string;
+  email: string;
+  username?: string;
+  phone?: string | null;
+  profile_picture?: string | null;
+  bio?: string | null;
+  company?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country_code?: string | null;
+  country_name?: string | null;
+  country_flag?: string | null;
+  country_phone_code?: string | null;
+  locale?: string | null;
+  currency?: string | null;
+  timezone?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  language?: string | null;
+  is_active?: boolean;
 }
 
 interface UserAuthResponse {
@@ -361,7 +381,8 @@ export async function getAdminProfile(token: string): Promise<AdminProfile> {
       'Authorization': `Bearer ${token}`,
     },
   });
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  return data.admin;
 }
 
 export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {

@@ -16,8 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { getAdminProfile, updateAdminProfile, changeAdminPassword } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +27,25 @@ import { useRouter } from "next/navigation";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Invalid email address."),
+  email: z.string().email(), // Email is read-only, but needs to be in schema
+  username: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
+  company: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  state: z.string().optional().nullable(),
+  zip: z.string().optional().nullable(),
+  country_code: z.string().optional().nullable(),
+  country_name: z.string().optional().nullable(),
+  country_flag: z.string().optional().nullable(),
+  country_phone_code: z.string().optional().nullable(),
+  locale: z.string().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  timezone: z.string().optional().nullable(),
+  date_format: z.string().optional().nullable(),
+  time_format: z.string().optional().nullable(),
+  language: z.string().optional().nullable(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -54,6 +72,24 @@ export default function AdminSettingsPage() {
     defaultValues: {
       name: "",
       email: "",
+      username: "",
+      phone: "",
+      bio: "",
+      company: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      country_code: "",
+      country_name: "",
+      country_flag: "",
+      country_phone_code: "",
+      locale: "",
+      currency: "",
+      timezone: "",
+      date_format: "",
+      time_format: "",
+      language: "",
     },
   });
 
@@ -189,35 +225,112 @@ export default function AdminSettingsPage() {
                                 <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-10 w-full" />
                             </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <Skeleton className="h-24 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
                         </div>
                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="admin@example.com" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <div className="space-y-8">
+                             {/* Personal Information */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input type="email" {...field} value={field.value ?? ''} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="phone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Phone</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="company"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Acme Inc." {...field} value={field.value ?? ''} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="md:col-span-2">
+                                <FormField
+                                    control={form.control}
+                                    name="bio"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bio</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''}/>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                </div>
+                            </div>
+                             {/* Address Information */}
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium">Address</h3>
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Street Address</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="123 Main St" {...field} value={field.value ?? ''} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                     <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="Anytown" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State / Province</FormLabel><FormControl><Input placeholder="CA" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip / Postal Code</FormLabel><FormControl><Input placeholder="90210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                            </div>
                         </div>
                      )}
                 </CardContent>
@@ -290,29 +403,6 @@ export default function AdminSettingsPage() {
             </Card>
         </form>
     </Form>
-
-       <Card>
-        <CardHeader>
-          <CardTitle>Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Add an additional layer of security to your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="2fa" />
-            <label
-              htmlFor="2fa"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Enable Two-Factor Authentication
-            </label>
-          </div>
-        </CardContent>
-        <CardFooter className="border-t px-6 py-4">
-            <Button>Save</Button>
-        </CardFooter>
-      </Card>
     </div>
   )
 }
