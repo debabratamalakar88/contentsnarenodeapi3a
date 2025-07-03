@@ -74,7 +74,7 @@ export default function ManageUsersPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [userToDeactivate, setUserToDeactivate] = useState<UserType | null>(null);
+  const [userToArchive, setUserToArchive] = useState<UserType | null>(null);
   const [userToRestore, setUserToRestore] = useState<UserType | null>(null);
   const [userToForceDelete, setUserToForceDelete] = useState<UserType | null>(null);
 
@@ -116,16 +116,16 @@ export default function ManageUsersPage() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDeactivate = async () => {
-    if (!token || !userToDeactivate) return;
+  const handleArchive = async () => {
+    if (!token || !userToArchive) return;
     try {
-      await softDeleteAdminUser(token, userToDeactivate.id);
-      toast({ title: "User Deactivated", description: "The user has been moved to the archive." });
+      await softDeleteAdminUser(token, userToArchive.id);
+      toast({ title: "User Archived", description: "The user has been moved to the archive." });
       refetchData();
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
-      setUserToDeactivate(null);
+      setUserToArchive(null);
     }
   };
 
@@ -158,7 +158,7 @@ export default function ManageUsersPage() {
   const viewProps = {
     users: filteredUsers,
     isLoading,
-    onDeactivate: setUserToDeactivate,
+    onArchive: setUserToArchive,
     onRestore: setUserToRestore,
     onForceDelete: setUserToForceDelete,
   };
@@ -224,17 +224,17 @@ export default function ManageUsersPage() {
         </Tabs>
       </div>
 
-      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
+      <AlertDialog open={!!userToArchive} onOpenChange={(open) => !open && setUserToArchive(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will deactivate the user's account and move it to the archive. They will not be able to log in.
+              This will archive the user's account and move it to the archive. They will not be able to log in.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeactivate}>Deactivate</AlertDialogAction>
+            <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -278,12 +278,12 @@ interface UsersViewProps {
   users: UserType[];
   isLoading: boolean;
   isArchived: boolean;
-  onDeactivate: (user: UserType) => void;
+  onArchive: (user: UserType) => void;
   onRestore: (user: UserType) => void;
   onForceDelete: (user: UserType) => void;
 }
 
-function UsersGrid({ users, isLoading, isArchived, onDeactivate, onRestore, onForceDelete }: UsersViewProps) {
+function UsersGrid({ users, isLoading, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   if (isLoading) {
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -324,10 +324,13 @@ function UsersGrid({ users, isLoading, isArchived, onDeactivate, onRestore, onFo
                 ) : (
                   <>
                     <DropdownMenuItem asChild>
+                        <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                         <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => onDeactivate(user)}>
-                      Deactivate User
+                    <DropdownMenuItem onSelect={() => onArchive(user)}>
+                      Archive User
                     </DropdownMenuItem>
                   </>
                 )}
@@ -358,7 +361,7 @@ function UsersGrid({ users, isLoading, isArchived, onDeactivate, onRestore, onFo
   )
 }
 
-function UsersTable({ users, isLoading, isArchived, onDeactivate, onRestore, onForceDelete }: UsersViewProps) {
+function UsersTable({ users, isLoading, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
     <Card>
       <CardHeader>
@@ -430,10 +433,13 @@ function UsersTable({ users, isLoading, isArchived, onDeactivate, onRestore, onF
                         ) : (
                           <>
                             <DropdownMenuItem asChild>
+                                <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
                                 <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onDeactivate(user)}>
-                              Deactivate User
+                            <DropdownMenuItem onSelect={() => onArchive(user)}>
+                              Archive User
                             </DropdownMenuItem>
                           </>
                         )}
@@ -449,5 +455,3 @@ function UsersTable({ users, isLoading, isArchived, onDeactivate, onRestore, onF
     </Card>
   )
 }
-
-    
