@@ -39,17 +39,19 @@ export default function AdminDashboardLayout({
     const adminToken = localStorage.getItem('adminAuthToken');
     const userToken = localStorage.getItem('authToken');
 
-    if (!adminToken) {
-      if (userToken) {
-        // A regular user is logged in, redirect them to their dashboard.
-        router.replace('/dashboard');
-      } else {
-        // No one is logged in, redirect to admin login.
-        router.replace('/admin/login');
-      }
-    } else {
-      // Admin is logged in.
+    if (adminToken) {
+      // Admin is logged in, allow access.
       setIsChecking(false);
+      return;
+    }
+    
+    // If there is no admin token, they should not be here.
+    if (userToken) {
+      // If a regular user is logged in, redirect them to their dashboard.
+      router.replace('/dashboard');
+    } else {
+      // If no one is logged in, redirect to admin login.
+      router.replace('/admin/login');
     }
   }, [router]);
 
