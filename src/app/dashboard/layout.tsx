@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -35,10 +36,19 @@ export default function DashboardLayout({
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      router.replace('/login');
+    const userToken = localStorage.getItem('authToken');
+    const adminToken = localStorage.getItem('adminAuthToken');
+    
+    if (!userToken) {
+      if (adminToken) {
+        // An admin is logged in, redirect them to their dashboard.
+        router.replace('/admin/dashboard');
+      } else {
+        // No one is logged in, redirect to user login.
+        router.replace('/login');
+      }
     } else {
+      // User is logged in.
       setIsChecking(false);
     }
   }, [router]);

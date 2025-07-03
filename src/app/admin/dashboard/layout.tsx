@@ -36,10 +36,19 @@ export default function AdminDashboardLayout({
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem('adminAuthToken');
-    if (!token) {
-      router.replace('/admin/login');
+    const adminToken = localStorage.getItem('adminAuthToken');
+    const userToken = localStorage.getItem('authToken');
+
+    if (!adminToken) {
+      if (userToken) {
+        // A regular user is logged in, redirect them to their dashboard.
+        router.replace('/dashboard');
+      } else {
+        // No one is logged in, redirect to admin login.
+        router.replace('/admin/login');
+      }
     } else {
+      // Admin is logged in.
       setIsChecking(false);
     }
   }, [router]);
