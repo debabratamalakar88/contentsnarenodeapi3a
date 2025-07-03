@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import { MoreHorizontal, Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -146,11 +146,18 @@ export default function ManageClientsPage() {
   return (
     <>
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Manage All Clients</h1>
-          <p className="text-muted-foreground">
-            Browse and manage clients across all user accounts.
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Manage All Clients</h1>
+            <p className="text-muted-foreground">
+              Browse and manage clients across all user accounts.
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/admin/dashboard/clients/new">
+                <PlusCircle className="mr-2 h-4 w-4"/> Add Client
+            </Link>
+          </Button>
         </div>
         <Tabs value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="mb-4">
@@ -284,8 +291,8 @@ function ClientTable({ clients, isLoading, isArchived, onArchive, onRestore, onF
                           </>
                         ) : (
                           <>
-                            <DropdownMenuItem asChild><Link href="#">View Details</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href="#">Edit Client</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}>View Details</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}>Edit Client</Link></DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onArchive(client)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                               Archive Client
                             </DropdownMenuItem>

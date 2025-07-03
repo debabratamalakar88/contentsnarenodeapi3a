@@ -407,7 +407,8 @@ export async function getAdminProfile(token: string): Promise<{admin: AdminProfi
       'Authorization': `Bearer ${token}`,
     },
   });
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  return data.admin ? data : { admin: data };
 }
 
 export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {
@@ -527,6 +528,32 @@ export async function getAdminArchivedClients(token:string): Promise<Client[]> {
         },
     });
     return handleResponse(response);
+}
+
+export async function getAdminClient(token: string, id: number): Promise<Client> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+    });
+    return handleResponse(response);
+}
+
+export async function createAdminClient(token: string, clientData: any): Promise<Client> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(clientData),
+  });
+  return handleResponse(response);
+}
+
+export async function updateAdminClient(token: string, id: number, clientData: any): Promise<Client> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(clientData),
+  });
+  return handleResponse(response);
 }
 
 export async function softDeleteAdminClient(token: string, id: number) {
