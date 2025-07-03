@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { createAdminClient, getAdminUsers, type User } from "@/lib/api"
 
 const clientFormSchema = z.object({
-  user_id: z.any().optional().transform(val => (val ? Number(val) : null)),
+  user_id: z.any().optional().transform(val => (val && val !== 'null' ? Number(val) : null)),
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),
   companies: z.array(z.string()).optional(),
@@ -166,14 +166,14 @@ export default function NewAdminClientPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <Label htmlFor="user" className="font-semibold text-gray-700">Assign to User</Label>
-                                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                        <Select onValueChange={field.onChange} value={String(field.value ?? 'null')}>
                                             <FormControl>
                                                 <SelectTrigger id="user" className="bg-gray-50 mt-1">
-                                                    <SelectValue />
+                                                    <SelectValue placeholder="Select a user" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="null">None</SelectItem>
                                                 {users.map(user => (
                                                     <SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>
                                                 ))}

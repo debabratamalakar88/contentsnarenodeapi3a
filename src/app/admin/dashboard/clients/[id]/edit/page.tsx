@@ -21,7 +21,7 @@ import { getAdminClient, updateAdminClient, getAdminUsers, type User } from "@/l
 import { Skeleton } from "@/components/ui/skeleton"
 
 const clientFormSchema = z.object({
-  user_id: z.any().optional().transform(val => (val ? Number(val) : null)),
+  user_id: z.any().optional().transform(val => (val && val !== 'null' ? Number(val) : null)),
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),
   companies: z.array(z.string()).optional(),
@@ -181,10 +181,10 @@ export default function EditAdminClientPage() {
                             <FormField control={form.control} name="user_id" render={({ field }) => (
                                 <FormItem>
                                     <Label htmlFor="user" className="font-semibold text-gray-700">Assign to User</Label>
-                                    <Select onValueChange={field.onChange} value={field.value ? String(field.value) : ""}>
-                                        <FormControl><SelectTrigger id="user" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
+                                    <Select onValueChange={field.onChange} value={String(field.value ?? 'null')}>
+                                        <FormControl><SelectTrigger id="user" className="bg-gray-50 mt-1"><SelectValue placeholder="Select a user" /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">None</SelectItem>
+                                            <SelectItem value="null">None</SelectItem>
                                             {users.map(user => (<SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>))}
                                         </SelectContent>
                                     </Select><FormMessage />
