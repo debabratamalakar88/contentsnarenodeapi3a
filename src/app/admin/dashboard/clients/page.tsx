@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, Loader2, PlusCircle } from "lucide-react";
+import { MoreHorizontal, Loader2, PlusCircle, Search, LayoutGrid, ChevronDown, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -50,6 +50,17 @@ import {
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
 
 
 export default function ManageClientsPage() {
@@ -58,6 +69,9 @@ export default function ManageClientsPage() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState("active");
   const [dataVersion, setDataVersion] = useState(0);
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToRestore, setClientToRestore] = useState<Client | null>(null);
@@ -95,6 +109,11 @@ export default function ManageClientsPage() {
 
     fetchClients();
   }, [toast, currentTab, dataVersion, token, router]);
+  
+  const filteredClients = clients.filter(client =>
+    client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleArchive = async () => {
     if (!token || !clientToArchive) return;
@@ -135,13 +154,14 @@ export default function ManageClientsPage() {
     }
   };
 
-  const clientViewProps = {
-    clients,
+  const viewProps = {
+    clients: filteredClients,
     isLoading,
     onArchive: setClientToArchive,
     onRestore: setClientToRestore,
     onForceDelete: setClientToForceDelete,
   };
+  const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
   return (
     <>
@@ -153,11 +173,35 @@ export default function ManageClientsPage() {
               Browse and manage clients across all user accounts.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/admin/dashboard/clients/new">
-                <PlusCircle className="mr-2 h-4 w-4"/> Add Client
-            </Link>
-          </Button>
+           <div className="flex items-center gap-2">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search clients..."
+                      className="pl-9"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="flex items-center gap-1">
+                            <ViewIcon className="h-4 w-4" />
+                            <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <Button asChild>
+                    <Link href="/admin/dashboard/clients/new">
+                        <PlusCircle className="mr-2 h-4 w-4"/> Add Client
+                    </Link>
+                </Button>
+            </div>
         </div>
         <Tabs value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="mb-4">
@@ -165,10 +209,16 @@ export default function ManageClientsPage() {
               <TabsTrigger value="archived">Archived</TabsTrigger>
           </TabsList>
           <TabsContent value="active">
-            <ClientTable {...clientViewProps} isArchived={false} />
+            {viewMode === 'grid' 
+                ? <ClientsGrid {...viewProps} isArchived={false} /> 
+                : <ClientsTable {...viewProps} isArchived={false} />
+            }
           </TabsContent>
           <TabsContent value="archived">
-            <ClientTable {...clientViewProps} isArchived={true} />
+             {viewMode === 'grid' 
+                ? <ClientsGrid {...viewProps} isArchived={true} /> 
+                : <ClientsTable {...viewProps} isArchived={true} />
+            }
           </TabsContent>
         </Tabs>
       </div>
@@ -223,7 +273,7 @@ export default function ManageClientsPage() {
   );
 }
 
-interface ClientTableProps {
+interface ClientViewProps {
   clients: Client[];
   isLoading: boolean;
   isArchived: boolean;
@@ -232,7 +282,74 @@ interface ClientTableProps {
   onForceDelete: (client: Client) => void;
 }
 
-function ClientTable({ clients, isLoading, isArchived, onArchive, onRestore, onForceDelete }: ClientTableProps) {
+function ClientsGrid({ clients, isLoading, isArchived, onArchive, onRestore, onForceDelete }: ClientViewProps) {
+  if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex flex-col items-center p-6 gap-3">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )
+  }
+  
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {clients.map(client => (
+        <Card key={client.id} className="relative">
+          <CardHeader className="flex flex-col items-center text-center p-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {isArchived ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => onRestore(client)}>Restore Client</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}>
+                      Delete Permanently
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}>View Details</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}>Edit Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onArchive(client)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                      Archive Client
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+             <Avatar className="h-16 w-16 mb-2">
+                <AvatarFallback>{getInitials(client.full_name)}</AvatarFallback>
+            </Avatar>
+            <CardTitle className="text-lg">{client.full_name}</CardTitle>
+            <CardDescription>{client.email}</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center p-4 pt-0">
+             <p className="text-sm text-muted-foreground truncate" title={client.companies?.join(', ')}>
+                {client.companies?.join(', ') || 'No companies'}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+function ClientsTable({ clients, isLoading, isArchived, onArchive, onRestore, onForceDelete }: ClientViewProps) {
   return (
     <Card>
       <CardHeader>
