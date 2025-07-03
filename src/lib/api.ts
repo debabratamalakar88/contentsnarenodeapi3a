@@ -528,3 +528,27 @@ export async function getAdminArchivedClients(token:string): Promise<Client[]> {
     });
     return handleResponse(response);
 }
+
+export async function softDeleteAdminClient(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
+    method: 'DELETE',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function restoreAdminClient(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}/restore`, {
+    method: 'POST',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function forceDeleteAdminClient(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}/force`, {
+    method: 'DELETE',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
