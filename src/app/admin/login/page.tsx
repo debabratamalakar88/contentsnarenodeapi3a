@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
     } else {
       setIsChecking(false);
     }
-  }, []);
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,8 +55,8 @@ export default function AdminLoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const data = await adminLogin(values); 
-      if (data.access_token) {
-        localStorage.setItem('adminAuthToken', data.access_token);
+      if (data.token) {
+        localStorage.setItem('adminAuthToken', data.token);
         toast({
           title: "Admin Login Successful",
           description: "Welcome back, administrator.",
@@ -168,3 +168,5 @@ export default function AdminLoginPage() {
     </div>
   )
 }
+
+    

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -45,9 +44,8 @@ interface UserAuthResponse {
 }
 
 interface AdminAuthResponse {
-    access_token: string;
-    token_type: string;
-    expires_in: number;
+    admin: AdminProfile;
+    token: string;
 }
 
 
@@ -427,3 +425,5 @@ export async function getAdminArchivedClients(token:string): Promise<Client[]> {
     });
     return handleResponse(response);
 }
+
+    
