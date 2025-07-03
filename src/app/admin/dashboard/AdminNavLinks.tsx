@@ -5,15 +5,12 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/dashboard/requests", label: "Requests" },
-  { href: "/dashboard/calendar", label: "Calendar" },
-  { href: "/dashboard/clients", label: "Clients" },
-  { href: "/dashboard/team", label: "Team" },
-  { href: "/dashboard/templates", label: "Templates" },
-  { href: "/dashboard/reminders", label: "Reminders" },
+  { href: "/admin/dashboard", label: "Dashboard" },
+  { href: "/admin/dashboard/users", label: "Users" },
+  { href: "/admin/dashboard/clients", label: "Clients" },
 ];
 
-export function NavLinks() {
+export function AdminNavLinks() {
   const pathname = usePathname()
   return (
     <>
