@@ -1,9 +1,10 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-interface User {
+export interface User {
   id: number;
   name: string;
   email: string;
@@ -74,12 +75,6 @@ async function handleResponse(response: Response) {
   try {
     data = JSON.parse(responseText);
   } catch (error) {
-    console.error("API Error: The server returned a non-JSON response. See the response body below:", {
-      status: response.status,
-      statusText: response.statusText,
-      body: responseText,
-    });
-
     const errorMessage = `A backend communication error occurred (Status: ${response.status} ${response.statusText}). The server sent back an unexpected response, likely an HTML error page instead of JSON data.
 
 Possible causes:
@@ -89,18 +84,19 @@ Possible causes:
 
 The full server response has been logged to the browser console for debugging.`;
 
+    console.error("API Error: The server returned a non-JSON response. See the response body below:", {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
+    
     throw { message: errorMessage, status: response.status, body: responseText };
   }
 
-  // If we reach here, JSON parsing was successful.
-  // Now, we check if the request itself was successful.
   if (!response.ok) {
-    // The server returned an error (like 422, 401, 500) but it was valid JSON.
-    // We throw the parsed JSON data for the calling function to handle.
     throw data;
   }
 
-  // If we reach here, the request was successful and the response was valid JSON.
   return data;
 }
 
@@ -324,4 +320,42 @@ export async function forceDeleteClient(token: string, id: number) {
     },
   });
   return handleResponse(response);
+}
+
+// Admin API Functions
+
+export async function getAdminUsers(token: string): Promise<User[]> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function getAdminClients(token:string): Promise<Client[]> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    return handleResponse(response);
+}
+
+export async function getAdminArchivedClients(token:string): Promise<Client[]> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/clients/archived`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    return handleResponse(response);
 }
