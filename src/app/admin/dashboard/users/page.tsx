@@ -166,61 +166,59 @@ export default function ManageUsersPage() {
 
   return (
     <>
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-            <div>
-                <h1 className="text-2xl font-bold">Manage Users</h1>
-                <p className="text-muted-foreground">
-                View, edit, and manage all registered user accounts.
-                </p>
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col h-full">
+            <div className="flex items-center p-6 pb-0 border-b bg-card">
+              <TabsList className="bg-transparent p-0">
+                  <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE</TabsTrigger>
+                  <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED</TabsTrigger>
+              </TabsList>
+              <div className="ml-auto flex items-center gap-2 mb-2">
+                  <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search users..."
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                  </div>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="flex items-center gap-1">
+                              <ViewIcon className="h-4 w-4" />
+                              <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button asChild>
+                      <Link href="/admin/dashboard/users/new">
+                          <PlusCircle className="mr-2 h-4 w-4"/> Add User
+                      </Link>
+                  </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search users..."
-                      className="pl-9"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-1">
-                            <ViewIcon className="h-4 w-4" />
-                            <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button asChild>
-                    <Link href="/admin/dashboard/users/new">
-                        <PlusCircle className="mr-2 h-4 w-4"/> Add User
-                    </Link>
-                </Button>
+            <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
+                <TabsContent value="active">
+                  {isLoading ? <LoadingSkeleton view={viewMode} /> : (
+                    viewMode === 'grid' 
+                      ? <UsersGrid {...viewProps} isArchived={false} /> 
+                      : <UsersTable {...viewProps} isArchived={false} />
+                  )}
+                </TabsContent>
+                <TabsContent value="archived">
+                    {isLoading ? <LoadingSkeleton view={viewMode} /> : (
+                      viewMode === 'grid' 
+                      ? <UsersGrid {...viewProps} isArchived={true} /> 
+                      : <UsersTable {...viewProps} isArchived={true} />
+                    )}
+                </TabsContent>
             </div>
-        </div>
-        <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="mb-4">
-                <TabsTrigger value="active">Active</TabsTrigger>
-                <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-            <TabsContent value="active">
-               {viewMode === 'grid' 
-                 ? <UsersGrid {...viewProps} isArchived={false} /> 
-                 : <UsersTable {...viewProps} isArchived={false} />
-               }
-            </TabsContent>
-            <TabsContent value="archived">
-                {viewMode === 'grid' 
-                 ? <UsersGrid {...viewProps} isArchived={true} /> 
-                 : <UsersTable {...viewProps} isArchived={true} />
-               }
-            </TabsContent>
         </Tabs>
       </div>
 
@@ -284,22 +282,14 @@ interface UsersViewProps {
 }
 
 function UsersGrid({ users, isLoading, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
-  if (isLoading) {
-      return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="flex flex-col items-center p-6 gap-3">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )
+  if (users.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        <p>{isArchived ? "No archived users found." : "No active users found."}</p>
+      </div>
+    )
   }
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {users.map(user => (
@@ -372,111 +362,129 @@ function UsersGrid({ users, isLoading, isArchived, onArchive, onRestore, onForce
   )
 }
 
-function UsersTable({ users, isLoading, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: Omit<UsersViewProps, 'isLoading'>) {
+    if (users.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-muted-foreground">
+          {isArchived ? "No archived users found." : "No active users found."}
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{isArchived ? "Archived" : "Active"} Users</CardTitle>
-        <CardDescription>
-          A list of {isArchived ? "archived" : "active"} users in the system.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Verified</TableHead>
-                <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Verified</TableHead>
+            <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
+            <TableHead>
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                {isArchived ? (
+                    <Badge variant="destructive">
+                        <ShieldAlert className="h-3 w-3 mr-1" />
+                        Archived
+                    </Badge>
+                ) : (
+                    <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                        Active
+                    </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {user.email_verified_at ? (
+                  <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Not Verified
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {isArchived 
+                  ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
+                  : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
+                }
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Toggle menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     {isArchived ? (
-                        <Badge variant="destructive">
-                            <ShieldAlert className="h-3 w-3 mr-1" />
-                            Archived
-                        </Badge>
+                      <>
+                        <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
+                          Delete Permanently
+                        </DropdownMenuItem>
+                      </>
                     ) : (
-                        <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                            <ShieldCheck className="h-3 w-3 mr-1" />
-                            Active
-                        </Badge>
+                      <>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onArchive(user)}>
+                          Archive User
+                        </DropdownMenuItem>
+                      </>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {user.email_verified_at ? (
-                      <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
-                        <XCircle className="h-3 w-3 mr-1" />
-                        Not Verified
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isArchived 
-                      ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
-                      : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
-                    }
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {isArchived ? (
-                          <>
-                            <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
-                              Delete Permanently
-                            </DropdownMenuItem>
-                          </>
-                        ) : (
-                          <>
-                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onArchive(user)}>
-                              Archive User
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </Card>
   )
 }
+
+function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
+    if (view === 'grid') {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i}><CardContent className="flex flex-col items-center p-6 gap-3"><Skeleton className="h-16 w-16 rounded-full" /><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2" /></CardContent></Card>
+          ))}
+        </div>
+      )
+    }
+    return (
+      <Card>
+        <Table>
+          <TableHeader><TableRow>{[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+          <TableBody>{[...Array(10)].map((_, i) => (<TableRow key={i}>{[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+        </Table>
+      </Card>
+    );
+}
+
+    

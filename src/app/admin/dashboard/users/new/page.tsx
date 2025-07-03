@@ -8,13 +8,13 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { createAdminUser } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, User } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required."),
@@ -49,6 +49,9 @@ export default function NewUserPage() {
       company: "",
     },
   });
+  
+  const { isSubmitting } = form.formState;
+  const fullName = form.watch("name");
 
   async function onSubmit(values: FormValues) {
     const token = localStorage.getItem("adminAuthToken");
@@ -77,49 +80,73 @@ export default function NewUserPage() {
     }
   }
 
+  const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+  }
+  
+  const initials = getInitials(fullName);
+
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Create New User</h1>
-        <p className="text-muted-foreground">Fill out the form below to add a new user to the system.</p>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>User Details</CardTitle>
-                    <CardDescription>
-                        Set the initial information and credentials for the new user.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full bg-white">
+        <header className="sticky top-0 bg-white z-10">
+          <div className="h-16 flex items-center justify-between px-6 border-b">
+              <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" asChild>
+                      <Link href="/admin/dashboard/users">
+                          <ChevronLeft className="h-5 w-5" />
+                      </Link>
+                  </Button>
+                  <h1 className="text-lg font-semibold">New User Details</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                  <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
+                      <Link href="/admin/dashboard/users">CANCEL</Link>
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      SAVE
+                  </Button>
+              </div>
+          </div>
+        </header>
+        <main className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-xl mx-auto space-y-8">
+              <div className="flex flex-col items-center gap-2">
+                  <Avatar className="h-24 w-24">
+                      <AvatarFallback className="bg-blue-100 text-blue-800 text-4xl font-bold border">
+                          {initials ? initials : (
+                              <User className="h-10 w-10 text-gray-400" />
+                          )}
+                      </AvatarFallback>
+                  </Avatar>
+                  <Button variant="link" type="button" className="text-indigo-600 font-semibold">Change Image</Button>
+              </div>
+              <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="username" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input placeholder="johndoe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="username" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input placeholder="johndoe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                     <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (Optional)</FormLabel><FormControl><Input placeholder="Acme Inc." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                     </div>
-                     <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio (Optional)</FormLabel><FormControl><Textarea placeholder="A little bit about the user..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                </CardContent>
-            </Card>
-            <div className="mt-6 flex justify-end gap-4">
-                <Button variant="outline" asChild>
-                    <Link href="/admin/dashboard/users">Cancel</Link>
-                </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create User
-                </Button>
-            </div>
-        </form>
-      </Form>
-    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (Optional)</FormLabel><FormControl><Input placeholder="Acme Inc." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                    <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio (Optional)</FormLabel><FormControl><Textarea placeholder="A little bit about the user..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              </div>
+          </div>
+        </main>
+      </form>
+    </Form>
   )
 }
+
+    

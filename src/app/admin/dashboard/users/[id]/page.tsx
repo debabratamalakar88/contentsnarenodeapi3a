@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon, ShieldCheck, ShieldX } from "lucide-react";
 import { format, parseISO } from 'date-fns';
-import { Badge } from "@/components/ui/badge";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -63,41 +62,15 @@ export default function UserViewPage() {
 
     if (isLoading) {
         return (
-            <div className="p-8 space-y-8">
-                <header className="flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                         <Skeleton className="h-9 w-9" />
-                         <Skeleton className="h-6 w-48" />
-                     </div>
-                     <Skeleton className="h-9 w-24" />
-                </header>
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <div className="flex items-center gap-6">
-                        <Skeleton className="h-24 w-24 rounded-full" />
-                        <div className="space-y-2">
-                            <Skeleton className="h-8 w-64" />
-                            <Skeleton className="h-5 w-48" />
-                        </div>
+            <div className="flex flex-col h-full bg-background">
+                <header className="sticky top-0 bg-white z-10"><div className="h-16 flex items-center justify-between px-6 border-b"><div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-6 w-48" /></div><Skeleton className="h-9 w-24" /></div></header>
+                <main className="flex-1 overflow-y-auto p-8">
+                    <div className="max-w-4xl mx-auto space-y-8">
+                        <div className="flex items-center gap-6"><Skeleton className="h-24 w-24 rounded-full" /><div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div></div>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>
                     </div>
-                    <Card>
-                        <CardHeader>
-                            <Skeleton className="h-7 w-48" />
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Skeleton className="h-6 w-full" />
-                            <Skeleton className="h-6 w-full" />
-                            <Skeleton className="h-6 w-full" />
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <Skeleton className="h-7 w-48" />
-                        </CardHeader>
-                        <CardContent>
-                            <Skeleton className="h-20 w-full" />
-                        </CardContent>
-                    </Card>
-                </div>
+                </main>
             </div>
         )
     }
@@ -109,108 +82,60 @@ export default function UserViewPage() {
     const isArchived = !!user.deleted_at;
 
     return (
-        <div className="p-8 space-y-8">
-            <header className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" asChild>
-                        <Link href="/admin/dashboard/users">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                    <h1 className="text-xl font-semibold">User Details</h1>
-                </div>
-                {!isArchived && (
-                    <Button asChild>
-                        <Link href={`/admin/dashboard/users/${user.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit User
-                        </Link>
-                    </Button>
-                )}
-            </header>
-            <div className="max-w-4xl mx-auto space-y-8">
-                <div className="flex items-center gap-6">
-                    <Avatar className="h-24 w-24 text-4xl">
-                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <h2 className="text-3xl font-bold">{user.name}</h2>
-                        <p className="text-muted-foreground">@{user.username}</p>
+        <div className="flex flex-col h-full bg-background">
+            <header className="sticky top-0 bg-white z-10">
+                <div className="h-16 flex items-center justify-between px-6 border-b">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/admin/dashboard/users">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                        <h1 className="text-lg font-semibold">User Details</h1>
                     </div>
+                    {!isArchived && (
+                        <Button asChild>
+                            <Link href={`/admin/dashboard/users/${user.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit User
+                            </Link>
+                        </Button>
+                    )}
                 </div>
-                
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Contact & Account Information</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex items-center gap-3">
-                            <Mail className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm font-medium">Email</p>
-                                <p className="text-sm text-muted-foreground">{user.email}</p>
-                            </div>
+            </header>
+            <main className="flex-1 overflow-y-auto p-8">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="flex items-center gap-6">
+                        <Avatar className="h-24 w-24 text-4xl">
+                            <AvatarFallback className="bg-blue-100 text-blue-800 font-bold border">{getInitials(user.name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h2 className="text-3xl font-bold">{user.name}</h2>
+                            <p className="text-muted-foreground">@{user.username}</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Phone className="h-5 w-5 text-muted-foreground" />
-                             <div>
-                                <p className="text-sm font-medium">Phone</p>
-                                <p className="text-sm text-muted-foreground">{user.phone || 'N/A'}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-center gap-3">
-                            <Building className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm font-medium">Company</p>
-                                <p className="text-sm text-muted-foreground">{user.company || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm font-medium">Joined On</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                             {user.email_verified_at ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                                <XCircle className="h-5 w-5 text-red-500" />
-                            )}
-                            <div>
-                                <p className="text-sm font-medium">Email Verification</p>
-                                <p className="text-sm text-muted-foreground">
-                                     {user.email_verified_at ? `Verified on ${format(parseISO(user.email_verified_at), 'PPP')}` : 'Not Verified'}
-                                </p>
-                            </div>
-                        </div>
-                         <div className="flex items-center gap-3">
-                             {isArchived ? (
-                                <ShieldX className="h-5 w-5 text-red-500" />
-                            ) : (
-                                <ShieldCheck className="h-5 w-5 text-green-500" />
-                            )}
-                            <div>
-                                <p className="text-sm font-medium">Account Status</p>
-                                <p className="text-sm text-muted-foreground">
-                                     {isArchived ? 'Archived' : 'Active'}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Contact & Account Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex items-center gap-3"><Mail className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Email</p><p className="text-sm text-muted-foreground">{user.email}</p></div></div>
+                            <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Phone</p><p className="text-sm text-muted-foreground">{user.phone || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Company</p><p className="text-sm text-muted-foreground">{user.company || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Joined On</p><p className="text-sm text-muted-foreground">{user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3">{user.email_verified_at ? (<CheckCircle className="h-5 w-5 text-green-500" />) : (<XCircle className="h-5 w-5 text-red-500" />)}<div><p className="text-sm font-medium">Email Verification</p><p className="text-sm text-muted-foreground">{user.email_verified_at ? `Verified on ${format(parseISO(user.email_verified_at), 'PPP')}` : 'Not Verified'}</p></div></div>
+                            <div className="flex items-center gap-3">{isArchived ? (<ShieldX className="h-5 w-5 text-red-500" />) : (<ShieldCheck className="h-5 w-5 text-green-500" />)}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Bio</CardTitle>
-                    </CardHeader>
-                     <CardContent>
-                        <p className="text-sm text-muted-foreground">{user.bio || 'No bio provided.'}</p>
-                    </CardContent>
-                </Card>
-            </div>
+                    <Card>
+                        <CardHeader><CardTitle>Bio</CardTitle></CardHeader>
+                        <CardContent><p className="text-sm text-muted-foreground">{user.bio || 'No bio provided.'}</p></CardContent>
+                    </Card>
+                </div>
+            </main>
         </div>
     );
 }
+
+    
