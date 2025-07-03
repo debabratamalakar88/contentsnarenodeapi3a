@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -96,9 +97,25 @@ export default function AdminDashboardLayout({
           <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-white/10">
             <HelpCircle className="h-4 w-4" />
           </Button>
-           <Button onClick={handleLogout} variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-white/10">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/admin/dashboard/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
       <main className="flex flex-1 flex-col bg-muted/40">
