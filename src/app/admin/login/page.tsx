@@ -71,6 +71,11 @@ export default function AdminLoginPage() {
       if (error.errors) {
         description = Object.values(error.errors).flat().join("\n");
       }
+      // If we received the generic communication error, simplify it for the user toast.
+      // The detailed error is still logged to the console by the `handleResponse` function.
+      else if (typeof description === 'string' && description.includes('A backend communication error')) {
+        description = "An unexpected error occurred. Please check the server connection and try again.";
+      }
 
       toast({
         variant: "destructive",

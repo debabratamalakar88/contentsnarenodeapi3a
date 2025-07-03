@@ -76,12 +76,15 @@ export default function LoginPage() {
         throw new Error("Invalid response from server.");
       }
     } catch (error: any) {
-      // Find the primary error message under common keys.
       let description = error.message || error.error || error.detail || "Invalid credentials. Please try again.";
       
-      // If there are specific validation errors, they take precedence.
       if (error.errors) {
         description = Object.values(error.errors).flat().join("\n");
+      } 
+      // If we received the generic communication error, simplify it for the user toast.
+      // The detailed error is still logged to the console by the `handleResponse` function.
+      else if (typeof description === 'string' && description.includes('A backend communication error')) {
+        description = "An unexpected error occurred. Please check the server connection and try again.";
       }
 
       toast({
