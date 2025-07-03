@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
     } else {
       setIsChecking(false);
     }
-  }, []);
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -138,7 +138,15 @@ export default function AdminLoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          href="/admin/forgot-password"
+                          className="ml-auto inline-block text-sm underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>

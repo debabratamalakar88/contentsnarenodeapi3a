@@ -372,6 +372,30 @@ export async function adminLogout(token: string) {
   return handleResponse(response);
 }
 
+export async function adminForgotPassword(emailData: any) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(emailData),
+  });
+  return handleResponse(response);
+}
+
+export async function adminResetPassword(data: any) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
 export async function getAdminProfile(token: string): Promise<AdminProfile> {
   const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
     method: 'GET',
