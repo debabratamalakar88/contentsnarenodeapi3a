@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/team", label: "Team" },
   { href: "/dashboard/templates", label: "Templates" },
   { href: "/dashboard/reminders", label: "Reminders" },
+  { href: "/dashboard/admin", label: "Admin" },
 ];
 
 export function NavLinks() {
