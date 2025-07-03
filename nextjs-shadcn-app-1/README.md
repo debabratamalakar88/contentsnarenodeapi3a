@@ -343,22 +343,22 @@ Permanently delete a client from the database.
 
 ## 🛡️ System Admin API Documentation
 
-This section outlines API endpoints specifically for the System Admin panel. All endpoints require an admin-level Bearer token for authorization.
+This section outlines API endpoints specifically for the System Admin panel. All endpoints require an admin-level Bearer token for authorization and are prefixed with `/api/admin`.
 
 ### Admin Login
 
-- **Endpoint:** `POST /api/login`
-- **Description:** Authenticates a system administrator. This currently uses the same endpoint as regular user login. The backend should differentiate based on user role.
-- **Request Body & Response:** Same as [User Login](#user-login).
+- **Endpoint:** `POST /api/admin/login`
+- **Description:** Authenticates a system administrator. The backend should differentiate based on user role to grant admin access.
+- **Request Body & Response:** Same as [User Login](#user-login), but the endpoint is different.
 
 ---
 
 ### User Management Resource
 
-**Base URL:** `/api/users`  
+**Base URL:** `/api/admin/users`  
 **Auth:** Requires admin Bearer token.
 
-#### `GET /users`
+#### `GET /api/admin/users`
 
 Retrieve a list of all registered users.
 
@@ -382,13 +382,13 @@ Retrieve a list of all registered users.
 ]
 ```
 
-#### `GET /users/{id}`
+#### `GET /api/admin/users/{id}`
 
 Retrieve a specific user by ID.
 
 **Response:** `200 OK` - Returns the user object or `404 Not Found`.
 
-#### `PUT /users/{id}`
+#### `PUT /api/admin/users/{id}`
 
 Update a user's details (e.g., name, status).
 
@@ -402,7 +402,7 @@ Update a user's details (e.g., name, status).
 
 **Response:** `200 OK` - Returns the updated user object.
 
-#### `DELETE /users/{id}`
+#### `DELETE /api/admin/users/{id}`
 
 Deactivate or soft-delete a user account.
 
@@ -415,9 +415,12 @@ Deactivate or soft-delete a user account.
 
 ### Global Client Management (Admin)
 
-When an admin is authenticated, the standard Client Resource API endpoints provide access to clients across *all* user accounts.
+**Base URL:** `/api/admin/clients`  
+**Auth:** Requires admin Bearer token.
 
-- `GET /api/clients`: Returns all active clients from all users.
-- `GET /api/clients/archived`: Returns all archived clients from all users.
+When an admin is authenticated, these endpoints provide access to clients across *all* user accounts.
 
-Refer to the [Client Resource API Documentation](#-client-resource-api-documentation) section for request/response formats. The backend is responsible for handling the authorization logic to return global data for admins.
+- `GET /api/admin/clients`: Returns all active clients from all users.
+- `GET /api/admin/clients/archived`: Returns all archived clients from all users.
+
+The request/response formats for these endpoints mirror the [Client Resource API Documentation](#-client-resource-api-documentation), but the data scope is global.
