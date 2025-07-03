@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { createAdminClient, getAdminUsers, type User } from "@/lib/api"
 
 const clientFormSchema = z.object({
-  user_id: z.coerce.number().min(1, "An assigned user is required."),
+  user_id: z.any().optional().transform(val => (val ? Number(val) : null)),
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),
   companies: z.array(z.string()).optional(),
@@ -43,6 +43,7 @@ export default function NewAdminClientPage() {
     const form = useForm<ClientFormValues>({
         resolver: zodResolver(clientFormSchema),
         defaultValues: {
+            user_id: undefined,
             full_name: "",
             email: "",
             companies: [],
@@ -165,13 +166,14 @@ export default function NewAdminClientPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <Label htmlFor="user" className="font-semibold text-gray-700">Assign to User</Label>
-                                        <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
                                             <FormControl>
                                                 <SelectTrigger id="user" className="bg-gray-50 mt-1">
-                                                    <SelectValue placeholder="Select a user to assign this client to..." />
+                                                    <SelectValue />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <SelectItem value="">None</SelectItem>
                                                 {users.map(user => (
                                                     <SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>
                                                 ))}
