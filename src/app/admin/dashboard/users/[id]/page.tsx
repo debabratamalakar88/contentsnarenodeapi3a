@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon, ShieldCheck, ShieldX } from "lucide-react";
 import { format, parseISO } from 'date-fns';
+import { Badge } from "@/components/ui/badge";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -105,6 +106,8 @@ export default function UserViewPage() {
         return <div className="p-6 text-center">User not found.</div>;
     }
 
+    const isDeactivated = !!user.deleted_at;
+
     return (
         <div className="p-8 space-y-8">
             <header className="flex items-center justify-between">
@@ -116,11 +119,13 @@ export default function UserViewPage() {
                     </Button>
                     <h1 className="text-xl font-semibold">User Details</h1>
                 </div>
-                <Button asChild>
-                    <Link href={`/admin/dashboard/users/${user.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit User
-                    </Link>
-                </Button>
+                {!isDeactivated && (
+                    <Button asChild>
+                        <Link href={`/admin/dashboard/users/${user.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit User
+                        </Link>
+                    </Button>
+                )}
             </header>
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex items-center gap-6">
@@ -178,6 +183,19 @@ export default function UserViewPage() {
                                 <p className="text-sm font-medium">Email Verification</p>
                                 <p className="text-sm text-muted-foreground">
                                      {user.email_verified_at ? `Verified on ${format(parseISO(user.email_verified_at), 'PPP')}` : 'Not Verified'}
+                                </p>
+                            </div>
+                        </div>
+                         <div className="flex items-center gap-3">
+                             {isDeactivated ? (
+                                <ShieldX className="h-5 w-5 text-red-500" />
+                            ) : (
+                                <ShieldCheck className="h-5 w-5 text-green-500" />
+                            )}
+                            <div>
+                                <p className="text-sm font-medium">Account Status</p>
+                                <p className="text-sm text-muted-foreground">
+                                     {isDeactivated ? 'Deactivated' : 'Active'}
                                 </p>
                             </div>
                         </div>
