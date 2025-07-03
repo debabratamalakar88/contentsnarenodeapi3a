@@ -288,7 +288,7 @@ function ClientsGrid({ clients, userMap, isArchived, onArchive, onRestore, onFor
             <CardContent className="flex flex-col items-center text-center p-6 pt-8">
               <Avatar className="h-16 w-16 mb-4"><AvatarFallback className="bg-pink-100 text-pink-800 font-bold text-xl">{getInitials(client.full_name)}</AvatarFallback></Avatar>
               <p className="font-semibold text-lg">{client.full_name}</p>
-              <p className="text-sm text-muted-foreground mt-1 truncate w-full" title={userMap.get(client.created_by)?.name}>{userMap.get(client.created_by)?.name || 'Unknown User'}</p>
+              <p className="text-sm text-muted-foreground mt-1 truncate w-full" title={client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown User') : 'None'}>{client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown User') : 'None'}</p>
               <div className="mt-2 space-y-0.5 text-sm text-muted-foreground"><p>{client.email}</p></div>
             </CardContent>
         </Card>
@@ -315,7 +315,7 @@ function ClientsTable({ clients, userMap, isArchived, onArchive, onRestore, onFo
             <TableRow key={client.id}>
               <TableCell className="font-medium">{client.full_name}</TableCell>
               <TableCell>{client.email}</TableCell>
-              <TableCell>{userMap.get(client.created_by)?.name || 'Unknown'}</TableCell>
+              <TableCell>{client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown') : 'None'}</TableCell>
               <TableCell>{isArchived ? (client.deleted_at ? format(parseISO(client.deleted_at), 'PPP') : 'N/A') : (client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A')}</TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -358,4 +358,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-

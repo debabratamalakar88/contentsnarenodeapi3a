@@ -111,7 +111,7 @@ export default function ClientViewPage() {
                             <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Phone</p><p className="text-sm text-muted-foreground">{client.phone_number || 'N/A'}</p></div></div>
                             <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Companies</p><p className="text-sm text-muted-foreground">{client.companies?.join(', ') || 'N/A'}</p></div></div>
                             <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Client Since</p><p className="text-sm text-muted-foreground">{client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A'}</p></div></div>
-                             <div className="flex items-center gap-3"><UserIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Assigned User</p><p className="text-sm text-muted-foreground">{owner?.name || 'Loading...'}</p></div></div>
+                             <div className="flex items-center gap-3"><UserIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Assigned User</p><p className="text-sm text-muted-foreground">{client.created_by ? (owner?.name || 'Loading...') : 'None'}</p></div></div>
                             <div className="flex items-center gap-3">{isArchived ? <ShieldX className="h-5 w-5 text-red-500" /> : <ShieldCheck className="h-5 w-5 text-green-500" />}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
                         </CardContent>
                     </Card>
@@ -129,4 +129,3 @@ export default function ClientViewPage() {
         </div>
     );
 }
-
