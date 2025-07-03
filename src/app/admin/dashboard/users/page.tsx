@@ -39,7 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, Loader2, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, Loader2, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminUsers, 
@@ -281,15 +281,7 @@ interface UsersViewProps {
   onForceDelete: (user: UserType) => void;
 }
 
-function UsersGrid({ users, isLoading, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
-  if (users.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p>{isArchived ? "No archived users found." : "No active users found."}</p>
-      </div>
-    )
-  }
-
+function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: Omit<UsersViewProps, 'isLoading'>) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {users.map(user => (
@@ -358,21 +350,23 @@ function UsersGrid({ users, isLoading, isArchived, onArchive, onRestore, onForce
           </CardContent>
         </Card>
       ))}
+      {!isArchived && (
+        <Link href="/admin/dashboard/users/new">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[260px]">
+            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+              <UserPlus className="h-8 w-8 text-slate-400" />
+            </div>
+            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
+              ADD NEW USER
+            </Button>
+          </Card>
+        </Link>
+      )}
     </div>
   )
 }
 
 function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: Omit<UsersViewProps, 'isLoading'>) {
-    if (users.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          {isArchived ? "No archived users found." : "No active users found."}
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <Card>
       <Table>
@@ -461,6 +455,29 @@ function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: 
               </TableCell>
             </TableRow>
           ))}
+          {!isArchived && (
+            <TableRow>
+              <TableCell colSpan={6} className="py-4">
+                <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
+                  Add a user...
+                </Link>
+              </TableCell>
+            </TableRow>
+          )}
+           {users.length === 0 && !isArchived && (
+            <TableRow>
+              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                No active users found.
+              </TableCell>
+            </TableRow>
+          )}
+          {users.length === 0 && isArchived && (
+            <TableRow>
+              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                No archived users found.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </Card>
@@ -486,5 +503,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-
-    
