@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -21,36 +22,69 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { MoreHorizontal, CheckCircle, XCircle, Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getAdminUsers } from "@/lib/api";
-import type { User as UserType } from "@/lib/api";
+import { 
+  getAdminUsers, 
+  getAdminArchivedUsers,
+  softDeleteAdminUser,
+  restoreAdminUser,
+  forceDeleteAdminUser,
+  type User as UserType 
+} from "@/lib/api";
 import { format, parseISO } from 'date-fns';
+import { useRouter } from "next/navigation";
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [currentTab, setCurrentTab] = useState("active");
+  const [dataVersion, setDataVersion] = useState(0);
+
+  const [userToDeactivate, setUserToDeactivate] = useState<UserType | null>(null);
+  const [userToRestore, setUserToRestore] = useState<UserType | null>(null);
+  const [userToForceDelete, setUserToForceDelete] = useState<UserType | null>(null);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
+  const router = useRouter();
+
+  const refetchData = () => setDataVersion(v => v + 1);
 
   useEffect(() => {
     async function fetchUsers() {
-      const token = localStorage.getItem("adminAuthToken");
       if (!token) {
         toast({ title: "Authentication Error", variant: "destructive" });
         setIsLoading(false);
+        router.push('/admin/login');
         return;
       }
 
+      setIsLoading(true);
       try {
-        const fetchedUsers = await getAdminUsers(token);
+        const fetchFunction = currentTab === 'active' ? getAdminUsers : getAdminArchivedUsers;
+        const fetchedUsers = await fetchFunction(token);
         setUsers(fetchedUsers);
       } catch (error: any) {
         toast({
-          title: "Failed to fetch users",
+          title: `Failed to fetch ${currentTab} users`,
           description: error.message || "Could not fetch user data.",
           variant: "destructive",
         });
@@ -60,86 +94,232 @@ export default function ManageUsersPage() {
     }
 
     fetchUsers();
-  }, [toast]);
+  }, [toast, currentTab, dataVersion, token, router]);
+  
+  const handleDeactivate = async () => {
+    if (!token || !userToDeactivate) return;
+    try {
+      await softDeleteAdminUser(token, userToDeactivate.id);
+      toast({ title: "User Deactivated", description: "The user has been moved to the archive." });
+      refetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setUserToDeactivate(null);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!token || !userToRestore) return;
+    try {
+      await restoreAdminUser(token, userToRestore.id);
+      toast({ title: "User Restored", description: "The user has been successfully restored." });
+      refetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setUserToRestore(null);
+    }
+  };
+
+  const handleForceDelete = async () => {
+    if (!token || !userToForceDelete) return;
+    try {
+      await forceDeleteAdminUser(token, userToForceDelete.id);
+      toast({ title: "User Permanently Deleted", description: "The user and their data have been removed." });
+      refetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setUserToForceDelete(null);
+    }
+  };
+
+  const userTableProps = {
+    users,
+    isLoading,
+    onDeactivate: setUserToDeactivate,
+    onRestore: setUserToRestore,
+    onForceDelete: setUserToForceDelete,
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Manage Users</h1>
-        <p className="text-muted-foreground">
-          View, edit, and manage all registered user accounts.
-        </p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>User List</CardTitle>
-          <CardDescription>
-            A list of all registered users in the system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    <>
+      <div className="p-6">
+        <div className="mb-6 flex items-center justify-between">
+            <div>
+                <h1 className="text-2xl font-bold">Manage Users</h1>
+                <p className="text-muted-foreground">
+                View, edit, and manage all registered user accounts.
+                </p>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Verified</TableHead>
-                  <TableHead>Registered</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {user.email_verified_at ? (
-                        <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
-                           <XCircle className="h-3 w-3 mr-1" />
-                          Not Verified
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit User</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                            Deactivate User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <Button asChild>
+                <Link href="/admin/dashboard/users/new">
+                    <PlusCircle className="mr-2 h-4 w-4"/> Add User
+                </Link>
+            </Button>
+        </div>
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+            <TabsList className="mb-4">
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+            <TabsContent value="active">
+                <UsersTable {...userTableProps} isArchived={false} />
+            </TabsContent>
+            <TabsContent value="archived">
+                <UsersTable {...userTableProps} isArchived={true} />
+            </TabsContent>
+        </Tabs>
+      </div>
+
+      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will deactivate the user's account and move it to the archive. They will not be able to log in.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate}>Deactivate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!userToRestore} onOpenChange={(open) => !open && setUserToRestore(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restore this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore the user's account, allowing them to log in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestore}>Restore</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={!!userToForceDelete} onOpenChange={(open) => !open && setUserToForceDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user and all their associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={handleForceDelete}>
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
+}
+
+interface UsersTableProps {
+  users: UserType[];
+  isLoading: boolean;
+  isArchived: boolean;
+  onDeactivate: (user: UserType) => void;
+  onRestore: (user: UserType) => void;
+  onForceDelete: (user: UserType) => void;
+}
+
+function UsersTable({ users, isLoading, isArchived, onDeactivate, onRestore, onForceDelete }: UsersTableProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{isArchived ? "Archived" : "Active"} Users</CardTitle>
+        <CardDescription>
+          A list of {isArchived ? "deactivated" : "active"} users in the system.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Verified</TableHead>
+                <TableHead>{isArchived ? "Deactivated" : "Registered"}</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    {user.email_verified_at ? (
+                      <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Not Verified
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isArchived 
+                      ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
+                      : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
+                    }
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {isArchived ? (
+                          <>
+                            <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
+                              Delete Permanently
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem asChild>
+                                <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDeactivate(user)}>
+                              Deactivate User
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  )
 }

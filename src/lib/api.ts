@@ -7,15 +7,17 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  username?: string;
+  phone?: string | null;
+  bio?: string | null;
+  company?: string | null;
   email_verified_at: string | null;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface Profile extends User {
-  phone?: string;
-  bio?: string;
-  company?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -396,7 +398,7 @@ export async function adminResetPassword(data: any) {
   return handleResponse(response);
 }
 
-export async function getAdminProfile(token: string): Promise<AdminProfile> {
+export async function getAdminProfile(token: string): Promise<{admin: AdminProfile}> {
   const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
     method: 'GET',
     headers: {
@@ -405,8 +407,7 @@ export async function getAdminProfile(token: string): Promise<AdminProfile> {
       'Authorization': `Bearer ${token}`,
     },
   });
-  const data = await handleResponse(response);
-  return data.admin;
+  return handleResponse(response);
 }
 
 export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {
@@ -435,18 +436,75 @@ export async function changeAdminPassword(token: string, passwordData: any) {
   return handleResponse(response);
 }
 
+// --- Admin User Management ---
 export async function getAdminUsers(token: string): Promise<User[]> {
   const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
+export async function getAdminArchivedUsers(token: string): Promise<User[]> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/archived`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function getAdminUser(token: string, id: number): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function createAdminUser(token: string, userData: any): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(userData),
+  });
+  return handleResponse(response);
+}
+
+export async function updateAdminUser(token: string, id: number, userData: any): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(userData),
+  });
+  return handleResponse(response);
+}
+
+export async function softDeleteAdminUser(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function restoreAdminUser(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/restore`, {
+    method: 'POST',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function forceDeleteAdminUser(token: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/force`, {
+    method: 'DELETE',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+
+// --- Admin Client Management ---
 export async function getAdminClients(token:string): Promise<Client[]> {
     const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
         method: 'GET',
