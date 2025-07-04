@@ -121,11 +121,16 @@ export default function ManageClientsPage() {
   }, [toast, currentTab, dataVersion, token, router]);
   
   const filteredClients = clients.filter(client => {
+    const createdBy = client.created_by;
     const matchesSearch = client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
            client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesUser = selectedUserId === 'all' || client.created_by === Number(selectedUserId);
+    const matchesUser = selectedUserId === 'all' || (createdBy !== null && createdBy === Number(selectedUserId));
     return matchesSearch && matchesUser;
   });
+
+  const selectedUserName = selectedUserId === 'all'
+    ? 'All Users'
+    : allUsers.find(u => String(u.id) === selectedUserId)?.name || 'Filter by User';
 
   const handleArchive = async () => {
     if (!token || !clientToArchive) return;
@@ -194,7 +199,7 @@ export default function ManageClientsPage() {
                   <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          <span>Filter by User</span>
+                          <span>{selectedUserName}</span>
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       </Button>
                   </DropdownMenuTrigger>
