@@ -67,7 +67,7 @@ export default function ClientViewPage() {
     }, [id, router, toast]);
 
     const getUserName = (userId: number | null) => {
-        if (userId === null) return 'None';
+        if (userId === null) return 'Admin';
         const user = allUsers.find(u => u.id === userId);
         return user ? user.name : 'Unknown User';
     }

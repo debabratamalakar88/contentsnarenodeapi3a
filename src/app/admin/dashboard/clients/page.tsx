@@ -124,13 +124,25 @@ export default function ManageClientsPage() {
     const createdBy = client.created_by;
     const matchesSearch = client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
            client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesUser = selectedUserId === 'all' || (createdBy !== null && createdBy === Number(selectedUserId));
+    
+    let matchesUser = false;
+    if (selectedUserId === 'all') {
+      matchesUser = true;
+    } else if (selectedUserId === 'admin') {
+      matchesUser = createdBy === null;
+    } else {
+      matchesUser = createdBy !== null && createdBy === Number(selectedUserId);
+    }
+
     return matchesSearch && matchesUser;
   });
 
   const selectedUserName = selectedUserId === 'all'
     ? 'All Users'
+    : selectedUserId === 'admin'
+    ? 'Admin'
     : allUsers.find(u => String(u.id) === selectedUserId)?.name || 'Filter by User';
+
 
   const handleArchive = async () => {
     if (!token || !clientToArchive) return;
@@ -206,6 +218,8 @@ export default function ManageClientsPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuRadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
                         <DropdownMenuRadioItem value="all">All Users</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
+                        <DropdownMenuSeparator />
                         {allUsers.map((user) => (
                           <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>
                         ))}
@@ -281,7 +295,7 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
   }
 
   const getUserName = (userId: number | null) => {
-    if (userId === null) return 'None';
+    if (userId === null) return 'Admin';
     const user = users.find(u => u.id === userId);
     return user ? user.name : 'Unknown User';
   }
@@ -323,7 +337,7 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
 
 function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete, users }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
    const getUserName = (userId: number | null) => {
-    if (userId === null) return 'None';
+    if (userId === null) return 'Admin';
     const user = users.find(u => u.id === userId);
     return user ? user.name : 'Unknown User';
   }
