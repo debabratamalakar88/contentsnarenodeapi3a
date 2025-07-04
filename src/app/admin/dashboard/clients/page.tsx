@@ -45,9 +45,7 @@ import {
   softDeleteAdminClient,
   restoreAdminClient,
   forceDeleteAdminClient,
-  getAdminUsers,
   type Client,
-  type User
 } from "@/lib/api";
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
@@ -55,7 +53,6 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -68,7 +65,6 @@ const getInitials = (name: string): string => {
 
 export default function ManageClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState("active");
@@ -76,7 +72,6 @@ export default function ManageClientsPage() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
-  const [userFilter, setUserFilter] = useState<string>("all");
   
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToRestore, setClientToRestore] = useState<Client | null>(null);
@@ -99,16 +94,12 @@ export default function ManageClientsPage() {
       setIsLoading(true);
       try {
         const fetchClientsFn = currentTab === 'active' ? getAdminClients : getAdminArchivedClients;
-        const [fetchedClients, fetchedUsers] = await Promise.all([
-          fetchClientsFn(token),
-          getAdminUsers(token)
-        ]);
+        const fetchedClients = await fetchClientsFn(token);
         setClients(fetchedClients);
-        setUsers(fetchedUsers);
       } catch (error: any) {
         toast({
           title: `Failed to fetch data`,
-          description: error.message || "Could not fetch client or user data.",
+          description: error.message || "Could not fetch client data.",
           variant: "destructive",
         });
       } finally {
@@ -119,13 +110,9 @@ export default function ManageClientsPage() {
     fetchData();
   }, [toast, currentTab, dataVersion, token, router]);
   
-  const userMap = new Map(users.map(user => [user.id, user]));
-
   const filteredClients = clients.filter(client => {
-    const searchMatch = client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const userMatch = userFilter === 'all' || client.created_by === parseInt(userFilter);
-    return searchMatch && userMatch;
+    return client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           client.email.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const handleArchive = async () => {
@@ -169,7 +156,6 @@ export default function ManageClientsPage() {
 
   const viewProps = {
     clients: filteredClients,
-    userMap,
     isLoading,
     onArchive: setClientToArchive,
     onRestore: setClientToRestore,
@@ -191,17 +177,6 @@ export default function ManageClientsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search clients..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
-              <Select value={userFilter} onValueChange={setUserFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by user..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
-                  {users.map(user => (
-                    <SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="flex items-center gap-1">
@@ -256,7 +231,6 @@ export default function ManageClientsPage() {
 
 interface ClientViewProps {
   clients: Client[];
-  userMap: Map<number, User>;
   isLoading: boolean;
   isArchived: boolean;
   onArchive: (client: Client) => void;
@@ -265,9 +239,9 @@ interface ClientViewProps {
   viewMode: 'grid' | 'list';
 }
 
-function ClientsGrid({ clients, userMap, isArchived, onArchive, onRestore, onForceDelete, viewMode }: ClientViewProps) {
+function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete, viewMode }: ClientViewProps) {
   if (viewMode === 'list') {
-    return <ClientsTable clients={clients} userMap={userMap} isArchived={isArchived} onArchive={onArchive} onRestore={onRestore} onForceDelete={onForceDelete} />;
+    return <ClientsTable clients={clients} isArchived={isArchived} onArchive={onArchive} onRestore={onRestore} onForceDelete={onForceDelete} />;
   }
 
   return (
@@ -288,7 +262,6 @@ function ClientsGrid({ clients, userMap, isArchived, onArchive, onRestore, onFor
             <CardContent className="flex flex-col items-center text-center p-6 pt-8">
               <Avatar className="h-16 w-16 mb-4"><AvatarFallback className="bg-pink-100 text-pink-800 font-bold text-xl">{getInitials(client.full_name)}</AvatarFallback></Avatar>
               <p className="font-semibold text-lg">{client.full_name}</p>
-              <p className="text-sm text-muted-foreground mt-1 truncate w-full" title={client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown User') : 'None'}>{client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown User') : 'None'}</p>
               <div className="mt-2 space-y-0.5 text-sm text-muted-foreground"><p>{client.email}</p></div>
             </CardContent>
         </Card>
@@ -305,17 +278,16 @@ function ClientsGrid({ clients, userMap, isArchived, onArchive, onRestore, onFor
   )
 }
 
-function ClientsTable({ clients, userMap, isArchived, onArchive, onRestore, onForceDelete }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
+function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
   return (
     <Card>
       <Table>
-        <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>Email</TableHead><TableHead>Assigned User</TableHead><TableHead>{isArchived ? "Date Archived" : "Date Created"}</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>Email</TableHead><TableHead>{isArchived ? "Date Archived" : "Date Created"}</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
         <TableBody>
           {clients.map((client) => (
             <TableRow key={client.id}>
               <TableCell className="font-medium">{client.full_name}</TableCell>
               <TableCell>{client.email}</TableCell>
-              <TableCell>{client.created_by ? (userMap.get(client.created_by)?.name || 'Unknown') : 'None'}</TableCell>
               <TableCell>{isArchived ? (client.deleted_at ? format(parseISO(client.deleted_at), 'PPP') : 'N/A') : (client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A')}</TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -332,7 +304,7 @@ function ClientsTable({ clients, userMap, isArchived, onArchive, onRestore, onFo
               </TableCell>
             </TableRow>
           ))}
-          {!isArchived && <TableRow><TableCell colSpan={5} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link></TableCell></TableRow>}
+          {!isArchived && <TableRow><TableCell colSpan={4} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link></TableCell></TableRow>}
         </TableBody>
       </Table>
     </Card>
@@ -352,8 +324,8 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
     return (
       <Card>
         <Table>
-          <TableHeader><TableRow>{[...Array(5)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-          <TableBody>{[...Array(10)].map((_, i) => (<TableRow key={i}>{[...Array(5)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+          <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+          <TableBody>{[...Array(10)].map((_, i) => (<TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
         </Table>
       </Card>
     );

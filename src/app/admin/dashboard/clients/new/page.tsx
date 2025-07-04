@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -18,10 +18,9 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { createAdminClient, getAdminUsers, type User } from "@/lib/api"
+import { createAdminClient } from "@/lib/api"
 
 const clientFormSchema = z.object({
-  user_id: z.any().optional().transform(val => (val && val !== 'null' ? Number(val) : null)),
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),
   companies: z.array(z.string()).optional(),
@@ -37,13 +36,11 @@ export default function NewAdminClientPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [companyInput, setCompanyInput] = useState("");
-    const [users, setUsers] = useState<User[]>([]);
     const [isCompanyAlertVisible, setCompanyAlertVisible] = useState(true);
 
     const form = useForm<ClientFormValues>({
         resolver: zodResolver(clientFormSchema),
         defaultValues: {
-            user_id: undefined,
             full_name: "",
             email: "",
             companies: [],
@@ -53,20 +50,6 @@ export default function NewAdminClientPage() {
             time_zone: "ist",
         }
     });
-
-    useEffect(() => {
-      async function fetchUsers() {
-        const token = localStorage.getItem('adminAuthToken');
-        if (!token) return;
-        try {
-          const fetchedUsers = await getAdminUsers(token);
-          setUsers(fetchedUsers);
-        } catch (error) {
-          toast({ variant: 'destructive', title: 'Error', description: "Could not fetch users."});
-        }
-      }
-      fetchUsers();
-    }, [toast]);
 
     const { isSubmitting } = form.formState;
 
@@ -160,29 +143,6 @@ export default function NewAdminClientPage() {
                         </div>
 
                         <div className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="user_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <Label htmlFor="user" className="font-semibold text-gray-700">Assign to User</Label>
-                                        <Select onValueChange={field.onChange} value={String(field.value ?? 'null')}>
-                                            <FormControl>
-                                                <SelectTrigger id="user" className="bg-gray-50 mt-1">
-                                                    <SelectValue placeholder="Select a user" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="null">None</SelectItem>
-                                                {users.map(user => (
-                                                    <SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                              <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label><FormControl><Input id="fullName" placeholder="Client full name..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                              <FormField control={form.control} name="email" render={({ field }) => (<FormItem><Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label><FormControl><Input id="emailAddress" type="email" placeholder="Contact email address..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
 

@@ -17,11 +17,10 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { getAdminClient, updateAdminClient, getAdminUsers, type User } from "@/lib/api"
+import { getAdminClient, updateAdminClient } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const clientFormSchema = z.object({
-  user_id: z.any().optional().transform(val => (val && val !== 'null' ? Number(val) : null)),
   full_name: z.string().min(1, "Full name is required."),
   email: z.string().email("Invalid email address."),
   companies: z.array(z.string()).optional(),
@@ -39,7 +38,6 @@ export default function EditAdminClientPage() {
     const { toast } = useToast();
     const [companyInput, setCompanyInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const [users, setUsers] = useState<User[]>([]);
 
     const id = Number(params.id);
 
@@ -59,7 +57,7 @@ export default function EditAdminClientPage() {
     useEffect(() => {
         if (!id) return;
 
-        async function fetchClientAndUsers() {
+        async function fetchClient() {
             const token = localStorage.getItem('adminAuthToken');
             if (!token) {
                 toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
@@ -68,17 +66,12 @@ export default function EditAdminClientPage() {
             }
 
             try {
-                const [clientData, usersData] = await Promise.all([
-                    getAdminClient(token, id),
-                    getAdminUsers(token)
-                ]);
-
+                const clientData = await getAdminClient(token, id);
+                
                 form.reset({
                   ...clientData,
-                  user_id: clientData.created_by, // Map created_by to user_id for the form
                   companies: clientData.companies || []
                 });
-                setUsers(usersData);
 
             } catch (err: any) {
                 toast({
@@ -90,7 +83,7 @@ export default function EditAdminClientPage() {
                 setIsLoading(false);
             }
         }
-        fetchClientAndUsers();
+        fetchClient();
     }, [id, router, toast, form]);
 
     const { isSubmitting } = form.formState;
@@ -178,18 +171,6 @@ export default function EditAdminClientPage() {
                             <Button variant="link" type="button" className="text-indigo-600 font-semibold">Change Image</Button>
                         </div>
                         <div className="space-y-6">
-                            <FormField control={form.control} name="user_id" render={({ field }) => (
-                                <FormItem>
-                                    <Label htmlFor="user" className="font-semibold text-gray-700">Assign to User</Label>
-                                    <Select onValueChange={field.onChange} value={String(field.value ?? 'null')}>
-                                        <FormControl><SelectTrigger id="user" className="bg-gray-50 mt-1"><SelectValue placeholder="Select a user" /></SelectTrigger></FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="null">None</SelectItem>
-                                            {users.map(user => (<SelectItem key={user.id} value={String(user.id)}>{user.name}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select><FormMessage />
-                                </FormItem>
-                            )}/>
                             <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label><FormControl><Input id="fullName" placeholder="Client full name..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="email" render={({ field }) => (<FormItem><Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label><FormControl><Input id="emailAddress" type="email" placeholder="Contact email address..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <div>
