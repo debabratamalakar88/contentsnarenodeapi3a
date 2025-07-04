@@ -25,6 +25,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -37,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, Loader2, PlusCircle, Search, LayoutGrid, ChevronDown, List, ArrowUpDown, Layers } from "lucide-react";
+import { MoreHorizontal, Loader2, PlusCircle, Search, LayoutGrid, ChevronDown, List, ArrowUpDown, Layers, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -45,7 +47,9 @@ import {
   softDeleteAdminClient,
   restoreAdminClient,
   forceDeleteAdminClient,
+  getAdminUsers,
   type Client,
+  type User as UserType
 } from "@/lib/api";
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
@@ -72,6 +76,8 @@ export default function ManageClientsPage() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
   
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToRestore, setClientToRestore] = useState<Client | null>(null);
@@ -94,12 +100,16 @@ export default function ManageClientsPage() {
       setIsLoading(true);
       try {
         const fetchClientsFn = currentTab === 'active' ? getAdminClients : getAdminArchivedClients;
-        const fetchedClients = await fetchClientsFn(token);
+        const [fetchedClients, fetchedUsers] = await Promise.all([
+          fetchClientsFn(token),
+          getAdminUsers(token)
+        ]);
         setClients(fetchedClients);
+        setAllUsers(fetchedUsers);
       } catch (error: any) {
         toast({
           title: `Failed to fetch data`,
-          description: error.message || "Could not fetch client data.",
+          description: error.message || "Could not fetch client or user data.",
           variant: "destructive",
         });
       } finally {
@@ -111,8 +121,10 @@ export default function ManageClientsPage() {
   }, [toast, currentTab, dataVersion, token, router]);
   
   const filteredClients = clients.filter(client => {
-    return client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
            client.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesUser = selectedUserId === 'all' || client.created_by === Number(selectedUserId);
+    return matchesSearch && matchesUser;
   });
 
   const handleArchive = async () => {
@@ -160,6 +172,7 @@ export default function ManageClientsPage() {
     onArchive: setClientToArchive,
     onRestore: setClientToRestore,
     onForceDelete: setClientToForceDelete,
+    users: allUsers,
   };
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
@@ -177,6 +190,23 @@ export default function ManageClientsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search clients..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
+               <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Filter by User</span>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
+                        <DropdownMenuRadioItem value="all">All Users</DropdownMenuRadioItem>
+                        {allUsers.map((user) => (
+                          <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>
+                        ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="flex items-center gap-1">
@@ -237,11 +267,18 @@ interface ClientViewProps {
   onRestore: (client: Client) => void;
   onForceDelete: (client: Client) => void;
   viewMode: 'grid' | 'list';
+  users: UserType[];
 }
 
-function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete, viewMode }: ClientViewProps) {
+function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete, viewMode, users }: ClientViewProps) {
   if (viewMode === 'list') {
-    return <ClientsTable clients={clients} isArchived={isArchived} onArchive={onArchive} onRestore={onRestore} onForceDelete={onForceDelete} />;
+    return <ClientsTable clients={clients} isArchived={isArchived} onArchive={onArchive} onRestore={onRestore} onForceDelete={onForceDelete} users={users} />;
+  }
+
+  const getUserName = (userId: number | null) => {
+    if (userId === null) return 'None';
+    const user = users.find(u => u.id === userId);
+    return user ? user.name : 'Unknown User';
   }
 
   return (
@@ -263,6 +300,7 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
               <Avatar className="h-16 w-16 mb-4"><AvatarFallback className="bg-pink-100 text-pink-800 font-bold text-xl">{getInitials(client.full_name)}</AvatarFallback></Avatar>
               <p className="font-semibold text-lg">{client.full_name}</p>
               <div className="mt-2 space-y-0.5 text-sm text-muted-foreground"><p>{client.email}</p></div>
+              <p className="text-xs text-muted-foreground mt-2">Created by: {getUserName(client.created_by)}</p>
             </CardContent>
         </Card>
       ))}
@@ -278,16 +316,22 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
   )
 }
 
-function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
+function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete, users }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
+   const getUserName = (userId: number | null) => {
+    if (userId === null) return 'None';
+    const user = users.find(u => u.id === userId);
+    return user ? user.name : 'Unknown User';
+  }
   return (
     <Card>
       <Table>
-        <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>Email</TableHead><TableHead>{isArchived ? "Date Archived" : "Date Created"}</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>Email</TableHead><TableHead>Created By</TableHead><TableHead>{isArchived ? "Date Archived" : "Date Created"}</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
         <TableBody>
           {clients.map((client) => (
             <TableRow key={client.id}>
               <TableCell className="font-medium">{client.full_name}</TableCell>
               <TableCell>{client.email}</TableCell>
+              <TableCell>{getUserName(client.created_by)}</TableCell>
               <TableCell>{isArchived ? (client.deleted_at ? format(parseISO(client.deleted_at), 'PPP') : 'N/A') : (client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A')}</TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -304,7 +348,7 @@ function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete
               </TableCell>
             </TableRow>
           ))}
-          {!isArchived && <TableRow><TableCell colSpan={4} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link></TableCell></TableRow>}
+          {!isArchived && <TableRow><TableCell colSpan={5} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link></TableCell></TableRow>}
         </TableBody>
       </Table>
     </Card>
@@ -324,8 +368,8 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
     return (
       <Card>
         <Table>
-          <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-          <TableBody>{[...Array(10)].map((_, i) => (<TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+          <TableHeader><TableRow>{[...Array(5)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+          <TableBody>{[...Array(10)].map((_, i) => (<TableRow key={i}>{[...Array(5)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
         </Table>
       </Card>
     );

@@ -4,13 +4,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAdminClient, type Client } from "@/lib/api";
+import { getAdminClient, getAdminUsers, type Client, type User as UserType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Mail, Phone, Building, Globe, Calendar as CalendarIcon, Clock, ShieldCheck, ShieldX } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, Building, Globe, Calendar as CalendarIcon, Clock, ShieldCheck, ShieldX, User } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 
 const getInitials = (name: string): string => {
@@ -27,6 +27,7 @@ export default function ClientViewPage() {
     const { toast } = useToast();
     const [client, setClient] = useState<Client | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [allUsers, setAllUsers] = useState<UserType[]>([]);
 
     const id = Number(params.id);
 
@@ -46,8 +47,12 @@ export default function ClientViewPage() {
             }
 
             try {
-                const fetchedClient = await getAdminClient(token, id);
+                const [fetchedClient, fetchedUsers] = await Promise.all([
+                    getAdminClient(token, id),
+                    getAdminUsers(token)
+                ]);
                 setClient(fetchedClient);
+                setAllUsers(fetchedUsers);
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
@@ -61,6 +66,12 @@ export default function ClientViewPage() {
         fetchClientData();
     }, [id, router, toast]);
 
+    const getUserName = (userId: number | null) => {
+        if (userId === null) return 'None';
+        const user = allUsers.find(u => u.id === userId);
+        return user ? user.name : 'Unknown User';
+    }
+
     if (isLoading) {
         return (
             <div className="flex flex-col h-full bg-background p-8">
@@ -68,7 +79,7 @@ export default function ClientViewPage() {
                 <main className="flex-1 overflow-y-auto pt-8">
                     <div className="max-w-4xl mx-auto space-y-8">
                         <div className="flex items-center gap-6"><Skeleton className="h-24 w-24 rounded-full" /><div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div></div>
-                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
                         <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
                     </div>
                 </main>
@@ -81,6 +92,7 @@ export default function ClientViewPage() {
     }
 
     const isArchived = !!client.deleted_at;
+    const assignedUserName = getUserName(client.created_by);
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -106,6 +118,7 @@ export default function ClientViewPage() {
                             <div className="flex items-center gap-3"><Mail className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Email</p><p className="text-sm text-muted-foreground">{client.email}</p></div></div>
                             <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Phone</p><p className="text-sm text-muted-foreground">{client.phone_number || 'N/A'}</p></div></div>
                             <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Companies</p><p className="text-sm text-muted-foreground">{client.companies?.join(', ') || 'N/A'}</p></div></div>
+                            <div className="flex items-center gap-3"><User className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Created By</p><p className="text-sm text-muted-foreground">{assignedUserName}</p></div></div>
                             <div className="flex items-center gap-3"><CalendarIcon className="h-5 w-5 text-muted-foreground" /><div><p className="text-sm font-medium">Client Since</p><p className="text-sm text-muted-foreground">{client.created_at ? format(parseISO(client.created_at), 'PPP') : 'N/A'}</p></div></div>
                             <div className="flex items-center gap-3">{isArchived ? <ShieldX className="h-5 w-5 text-red-500" /> : <ShieldCheck className="h-5 w-5 text-green-500" />}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
                         </CardContent>
