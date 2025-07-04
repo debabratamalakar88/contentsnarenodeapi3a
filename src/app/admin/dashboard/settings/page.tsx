@@ -261,7 +261,7 @@ export default function AdminSettingsPage() {
                                         <FormItem>
                                             <FormLabel>Email</FormLabel>
                                             <FormControl>
-                                                <Input type="email" {...field} value={field.value ?? ''} />
+                                                <Input type="email" {...field} value={field.value ?? ''} readOnly disabled className="bg-muted/50"/>
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

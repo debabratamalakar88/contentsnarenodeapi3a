@@ -398,7 +398,7 @@ export async function adminResetPassword(data: any) {
   return handleResponse(response);
 }
 
-export async function getAdminProfile(token: string): Promise<{admin: AdminProfile}> {
+export async function getAdminProfile(token: string): Promise<AdminProfile> {
   const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
     method: 'GET',
     headers: {
@@ -408,7 +408,7 @@ export async function getAdminProfile(token: string): Promise<{admin: AdminProfi
     },
   });
   const data = await handleResponse(response);
-  return data.admin ? data : { admin: data };
+  return data.admin || data;
 }
 
 export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {
@@ -443,7 +443,8 @@ export async function getAdminUsers(token: string): Promise<User[]> {
     method: 'GET',
     headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
   });
-  return handleResponse(response);
+  const users = await handleResponse(response);
+  return Array.isArray(users) ? users : [];
 }
 
 export async function getAdminArchivedUsers(token: string): Promise<User[]> {
@@ -451,7 +452,8 @@ export async function getAdminArchivedUsers(token: string): Promise<User[]> {
     method: 'GET',
     headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
   });
-  return handleResponse(response);
+  const users = await handleResponse(response);
+  return Array.isArray(users) ? users : [];
 }
 
 export async function getAdminUser(token: string, id: number): Promise<User> {
