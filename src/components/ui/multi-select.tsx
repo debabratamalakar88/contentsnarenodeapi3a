@@ -111,15 +111,16 @@ function MultiSelect({
                 {options.map((option) => (
                 <CommandItem
                     key={option.value}
+                    value={option.value}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                     }}
-                    onSelect={() => {
+                    onSelect={(currentValue) => {
                         onChange(
-                            selected.includes(option.value)
-                            ? selected.filter((item) => item !== option.value)
-                            : [...selected, option.value]
+                            selected.includes(currentValue)
+                            ? selected.filter((item) => item !== currentValue)
+                            : [...selected, currentValue]
                         )
                     }}
                 >
