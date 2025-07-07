@@ -1,72 +1,164 @@
 'use client'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card"
+import { useState } from "react";
+import { format } from "date-fns";
+import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, X } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { cn } from "@/lib/utils"
 
 export default function FinalizeStep() {
-    return (
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8 max-w-2xl mx-auto animate-in fade-in-50">
-            <div className="text-center">
-                <h2 className="text-2xl font-bold">Finalize & Send</h2>
-                <p className="text-muted-foreground">Assign clients, set a due date, and send your request.</p>
-            </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Assign Clients</CardTitle>
-                    <CardDescription>Select one or more clients to send this request to.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <Input placeholder="Search for clients by name or email..." />
-                   <div className="mt-4 text-sm text-muted-foreground">Assigned (1): <strong>Acme Inc.</strong> (contact@acme.com)</div>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Due Date</CardTitle>
-                    <CardDescription>Set a deadline for your clients to complete this request.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <Input type="date" className="w-full max-w-sm" />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Reminders</CardTitle>
-                    <CardDescription>Configure automatic reminders for your clients.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="reminders" defaultChecked />
-                    <label
-                      htmlFor="reminders"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Send automatic reminders
-                    </label>
-                  </div>
-                   <div className="text-sm text-muted-foreground">
-                        Reminders will be sent 3 days before the due date, on the due date, and 3 days after. You can configure this in settings.
-                    </div>
-                </CardContent>
-                 <CardFooter>
-                    <Button variant="link" className="p-0">Configure reminder schedule</Button>
-                </CardFooter>
-            </Card>
+    const [dueDate, setDueDate] = useState<Date | undefined>(new Date(2025, 6, 21));
+    const [protectWithPin, setProtectWithPin] = useState(true);
+    const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
 
-            <div className="flex flex-col items-center gap-2 mt-4">
-                <Button size="lg" className="w-full max-w-xs">Publish and Send</Button>
-                <Button variant="link" className="text-muted-foreground">Or Save As A Draft</Button>
+    return (
+        <div className="max-w-xl mx-auto animate-in fade-in-50 w-full space-y-8 py-8">
+            <div className="text-center">
+                <h2 className="text-3xl font-bold">Publish Settings</h2>
+            </div>
+            
+            <div className="space-y-6">
+                {/* Client Select */}
+                <div>
+                    <Label htmlFor="client-select" className="flex items-center gap-1.5 font-semibold text-gray-700 mb-2">
+                        Which client(s) do you want to send this request to? <HelpCircle className="w-4 h-4 text-gray-400" />
+                    </Label>
+                    <Select>
+                        <SelectTrigger id="client-select">
+                            <SelectValue placeholder="Choose a client..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="acme">Acme Inc.</SelectItem>
+                            <SelectItem value="stark">Stark Industries</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Toggles */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="enable-comments" className="flex items-center gap-2 font-medium">Enable client comments <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
+                        <Switch id="enable-comments" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="allow-no-login" className="flex items-center gap-2 font-medium">Allow access without logging in <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
+                        <Switch id="allow-no-login" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="protect-pin" className="flex items-center gap-2 font-medium">Protect with a pin code <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
+                        <Switch id="protect-pin" checked={protectWithPin} onCheckedChange={setProtectWithPin} />
+                    </div>
+                </div>
+
+                {/* PIN Info Alert */}
+                {protectWithPin && isPinInfoVisible && (
+                    <Alert className="bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600 relative p-4">
+                        <Info className="h-5 w-5" />
+                        <AlertDescription className="ml-2 pr-8">
+                            Your client will be asked to set their own pincode when they first access the request.
+                        </AlertDescription>
+                         <Button variant="ghost" size="icon" type="button" onClick={() => setIsPinInfoVisible(false)} className="absolute top-1.5 right-1.5 h-7 w-7 text-blue-900 hover:bg-blue-100">
+                             <X className="h-4 w-4" />
+                         </Button>
+                    </Alert>
+                )}
+
+                {/* Communications Schedule */}
+                <div>
+                     <Label htmlFor="comms-schedule" className="block font-semibold text-gray-700 mb-2">
+                        Select a communications schedule
+                    </Label>
+                    <Select defaultValue="none">
+                        <SelectTrigger id="comms-schedule">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">No automatic reminders</SelectItem>
+                            <SelectItem value="default">Default Schedule</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="link" className="text-pink-600 p-0 h-auto mt-2 text-sm font-medium">Show client communications</Button>
+                </div>
+                
+                {/* Send Time */}
+                 <div>
+                     <Label htmlFor="send-time" className="block font-semibold text-gray-700 mb-2">
+                        When do you want to send this request?
+                    </Label>
+                    <Select defaultValue="immediately">
+                        <SelectTrigger id="send-time">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="immediately">Immediately</SelectItem>
+                            <SelectItem value="later">Schedule for later</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Due Date */}
+                <div>
+                    <Label htmlFor="due-date" className="block font-semibold text-gray-700 mb-2">
+                        When is the request due?
+                    </Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="due-date"
+                                variant={"outline"}
+                                className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !dueDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dueDate ? format(dueDate, "dd / MM / yyyy") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={dueDate}
+                                onSelect={setDueDate}
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+
+                 {/* Warning Alert */}
+                <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertDescription className="ml-2">
+                        A request must be assigned to at least one client before it can be published.
+                    </AlertDescription>
+                </Alert>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 mt-8">
+                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled>
+                    PUBLISH & SEND
+                </Button>
+                <Button variant="link" className="text-pink-600 font-medium">
+                    or Save settings and leave the request as draft
+                </Button>
             </div>
         </div>
     )
