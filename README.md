@@ -227,6 +227,7 @@ This document outlines the API endpoints the frontend application expects for us
   }
   ```
 
+---
 ### 🧾 **Client Resource API Documentation**
 
 **Base URL:** `/api/clients`  
@@ -424,3 +425,176 @@ When an admin is authenticated, these endpoints provide access to clients across
 - `GET /api/admin/clients/archived`: Returns all archived clients from all users.
 
 The request/response formats for these endpoints mirror the [Client Resource API Documentation](#-client-resource-api-documentation), but the data scope is global.
+
+---
+
+## 📝 Request Resource API Documentation
+
+**Base URL:** `/api/requests`  
+**Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+This section outlines the API for managing the multi-step request forms.
+
+---
+
+#### `POST /requests`
+
+Create a new request form. The entire structure of the form, including pages, sections, and questions, is sent in a single `form_data` JSON object.
+
+**Request Body:**
+```json
+{
+  "title": "New Client Onboarding",
+  "description": "Please provide all necessary documents and information.",
+  "form_data": [
+    {
+      "title": "1. Personal Information",
+      "instructions": "Please enter your personal details.",
+      "sections": [
+        {
+          "title": "1.1 Basic Info",
+          "instructions": "",
+          "questions": [
+            {
+              "label": "Full Name",
+              "type": "text",
+              "instructions": "Enter your full legal name.",
+              "placeholder": "John Doe",
+              "required": true,
+              "api_id": "full_name"
+            },
+            {
+              "label": "Date of Birth",
+              "type": "date",
+              "instructions": null,
+              "placeholder": null,
+              "required": true,
+              "api_id": "date_of_birth"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "2. File Uploads",
+      "instructions": "Upload the required documents.",
+      "sections": [
+        {
+          "title": "2.1 Documents",
+          "instructions": "Upload a clear copy of your driver's license.",
+          "questions": [
+            {
+              "label": "Driver's License",
+              "type": "file",
+              "instructions": null,
+              "placeholder": null,
+              "required": true,
+              "api_id": "drivers_license"
+            },
+            {
+              "label": "Services Needed",
+              "type": "dropdown",
+              "instructions": "Select the service you are interested in.",
+              "placeholder": "Select a service...",
+              "required": true,
+              "api_id": "service_needed",
+              "options": [
+                {
+                  "label": "Bookkeeping",
+                  "value": "bookkeeping"
+                },
+                {
+                  "label": "Tax Preparation",
+                  "value": "tax_prep"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Success Response (`201 Created`):** Returns the newly created request object, including the server-generated `id`.
+
+```json
+{
+  "id": 123,
+  "title": "New Client Onboarding",
+  "description": "Please provide all necessary documents and information.",
+  "form_data": [
+    { ... }
+  ],
+  "status": "draft",
+  "created_at": "2024-08-10T12:00:00.000000Z",
+  "updated_at": "2024-08-10T12:00:00.000000Z"
+}
+```
+
+**Error Response (`422 Unprocessable Entity`):**
+```json
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "title": ["The title field is required."],
+    "form_data.0.sections.0.questions.0.label": ["The question label is required."]
+  }
+}
+```
+
+---
+
+#### `GET /requests`
+
+Retrieve a list of all requests created by the authenticated user.
+
+**Response (`200 OK`):**
+```json
+[
+  {
+    "id": 123,
+    "title": "New Client Onboarding",
+    "status": "draft",
+    "created_at": "2024-08-10T12:00:00.000000Z"
+  },
+  {
+    "id": 124,
+    "title": "Q3 Marketing Assets",
+    "status": "published",
+    "created_at": "2024-08-09T10:30:00.000000Z"
+  }
+]
+```
+
+---
+
+#### `GET /requests/{id}`
+
+Retrieve a single request by its ID.
+
+**Response (`200 OK`):** Returns the full request object, same format as the `POST` success response. Returns `404 Not Found` if the ID does not exist or does not belong to the user.
+
+---
+
+#### `PUT /requests/{id}`
+
+Update an existing request. The request body should contain the complete, updated request object.
+
+**Request Body:** Same format as the `POST` request.
+
+**Success Response (`200 OK`):** Returns the updated request object.
+
+---
+
+#### `DELETE /requests/{id}`
+
+Delete a request.
+
+**Success Response (`204 No Content` or `200 OK` with message):**
+```json
+{
+  "message": "Request deleted successfully."
+}
+```
