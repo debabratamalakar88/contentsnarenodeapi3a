@@ -64,7 +64,7 @@ function MultiSelect({
                 .filter((option) => selected.includes(option.value))
                 .map((option) => (
                   <Badge
-                    variant="secondary"
+                    variant="default"
                     key={option.value}
                     className="mr-1 mb-1"
                     onClick={(e) => {
@@ -93,7 +93,7 @@ function MultiSelect({
                         }
                       }}
                     >
-                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      <X className="h-3 w-3 text-primary-foreground/70 hover:text-primary-foreground" />
                     </span>
                   </Badge>
                 ))
