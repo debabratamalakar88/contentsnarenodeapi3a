@@ -78,6 +78,10 @@ function MultiSelect({
                       tabIndex={0}
                       aria-label={`Remove ${option.label}`}
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleUnselect(option.value);
@@ -103,9 +107,9 @@ function MultiSelect({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command className={className}>
           <CommandInput placeholder="Search..." />
-          <CommandEmpty>No item found.</CommandEmpty>
-          <CommandGroup>
-            <CommandList>
+          <CommandList>
+            <CommandEmpty>No item found.</CommandEmpty>
+            <CommandGroup>
                 {options.map((option) => (
                 <CommandItem
                     key={option.value}
@@ -121,18 +125,19 @@ function MultiSelect({
                       e.preventDefault();
                       e.stopPropagation();
                     }}
+                    className="cursor-pointer"
                 >
                     <Check
-                    className={cn(
-                        "mr-2 h-4 w-4",
-                        selected.includes(option.value) ? "opacity-100" : "opacity-0"
-                    )}
+                      className={cn(
+                          "mr-2 h-4 w-4",
+                          selected.includes(option.value) ? "opacity-100" : "opacity-0"
+                      )}
                     />
                     {option.label}
                 </CommandItem>
                 ))}
-            </CommandList>
-          </CommandGroup>
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
