@@ -122,6 +122,7 @@ function MultiSelect({
                             ? selected.filter((item) => item !== currentValue)
                             : [...selected, currentValue]
                         )
+                        setOpen(true)
                     }}
                 >
                     <Check
