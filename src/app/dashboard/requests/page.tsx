@@ -9,7 +9,8 @@ import {
     LayoutGrid, 
     Search,
     Layers,
-    List
+    List,
+    User
 } from "lucide-react"
 import { useState } from "react";
 
@@ -45,50 +46,46 @@ const requests = [
   {
     id: "REQ-001",
     title: "New Request",
-    client: { name: "(No client)", initial: "NC" },
+    client: { name: "dfdsffs", initial: "D" },
+    clientCompany: "sdfdf",
     dueDate: "21/07/2025",
-    progress: 0,
+    status: "Draft",
     approved: 0,
     complete: 0,
     toDo: 1,
-    status: "Draft",
-    ownerInitial: "A"
   },
   {
     id: "REQ-002",
-    title: "Reqq 1",
-    client: { name: "(No client)", initial: "NC" },
+    title: "Now Request",
+    client: { name: "(No Client)", initial: "" },
+    clientCompany: "",
     dueDate: "21/07/2025",
-    progress: 0,
+    status: "Draft",
     approved: 0,
     complete: 0,
     toDo: 1,
-    status: "Draft",
-    ownerInitial: "B"
   },
   {
     id: "REQ-003",
-    title: "New Request",
-    client: { name: "(No client)", initial: "NC" },
+    title: "Reqq 1",
+    client: { name: "(No Client)", initial: "" },
+    clientCompany: "",
     dueDate: "21/07/2025",
-    progress: 0,
+    status: "Draft",
     approved: 0,
     complete: 0,
     toDo: 1,
-    status: "Draft",
-    ownerInitial: "C"
   },
   {
     id: "REQ-004",
     title: "nn1",
-    client: { name: "(No client)", initial: "NC" },
+    client: { name: "(No Client)", initial: "" },
+    clientCompany: "",
     dueDate: "21/07/2025",
-    progress: 0,
+    status: "Draft",
     approved: 0,
     complete: 3,
     toDo: 3,
-    status: "Draft",
-    ownerInitial: "D"
   },
 ]
 
@@ -138,11 +135,10 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                 <p className="text-xs text-muted-foreground mb-2">Due: {request.dueDate}</p>
                 
                 <div className="relative flex-grow flex flex-col justify-center min-h-[90px]">
-                    {/* Normal view */}
                     <div className="space-y-3 transition-opacity duration-200 group-hover:opacity-0">
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{request.progress}%</span>
-                            <Progress value={request.progress} className="h-1" />
+                            <span className="text-xs text-muted-foreground">{request.toDo > 0 ? ((request.complete / (request.complete + request.toDo)) * 100).toFixed(0) : 100}%</span>
+                            <Progress value={request.toDo > 0 ? ((request.complete / (request.complete + request.toDo)) * 100) : 100} className="h-1" />
                         </div>
                         <div className="flex justify-between text-center">
                             <div>
@@ -160,7 +156,6 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                         </div>
                     </div>
                     
-                    {/* Hover view */}
                     <div className="absolute inset-0 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
                         <div className="flex flex-col gap-2 w-full px-4">
                             <Button variant="outline" size="sm" className="rounded-full">PREVIEW</Button>
@@ -172,23 +167,39 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
             <CardFooter className="p-4 pt-0 flex justify-between items-center mt-auto">
                  <Badge variant="outline" className="font-semibold">{request.status.toUpperCase()}</Badge>
                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">{request.ownerInitial}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{request.client.initial}</AvatarFallback>
                  </Avatar>
             </CardFooter>
         </Card>
     )
 }
 
-const RequestRow = ({ request }: { request: typeof requests[0] }) => (
+const RequestRow = ({ request }: { request: (typeof requests)[0] }) => (
      <TableRow>
         <TableCell className="font-medium">{request.title}</TableCell>
-        <TableCell>{request.client.name}</TableCell>
         <TableCell>
-            <Badge variant="outline">{request.status}</Badge>
+            <div className="flex items-center gap-2">
+            {request.client.name === "(No Client)" ? (
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+            ) : (
+                <Avatar className="h-6 w-6">
+                <AvatarFallback className="text-xs bg-blue-100 text-blue-800">{request.client.initial}</AvatarFallback>
+                </Avatar>
+            )}
+            <span>{request.client.name}</span>
+            </div>
         </TableCell>
+        <TableCell>{request.clientCompany}</TableCell>
         <TableCell>{request.dueDate}</TableCell>
-        <TableCell className="text-right">{request.progress}%</TableCell>
-         <TableCell>
+        <TableCell>
+            <Badge variant="outline">{request.status.toUpperCase()}</Badge>
+        </TableCell>
+        <TableCell>{request.approved}</TableCell>
+        <TableCell>{request.complete}</TableCell>
+        <TableCell>{request.toDo}</TableCell>
+        <TableCell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -205,6 +216,65 @@ const RequestRow = ({ request }: { request: typeof requests[0] }) => (
     </TableRow>
 )
 
+const RequestsTable = ({ requests }: { requests: any[] }) => {
+    return (
+        <div>
+            <div className="flex items-center gap-4 p-4 bg-background rounded-t-lg border-x border-t">
+                <Avatar className="h-10 w-10 bg-muted">
+                     <User className="h-6 w-6 text-muted-foreground" />
+                </Avatar>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold">Dev Test</p>
+                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">YOU</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">debabrata@narayanidigital.com</p>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto">
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Collapse</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            
+            <Card className="rounded-t-none">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Request Name</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Client Name</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Client Company</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Due Date</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Status</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Approved</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Completed</TableHead>
+                            <TableHead className="text-xs font-semibold text-muted-foreground uppercase">To Do</TableHead>
+                            <TableHead><span className="sr-only">Actions</span></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {requests.map((request) => (
+                           <RequestRow key={request.id} request={request} />
+                        ))}
+                        <TableRow>
+                            <TableCell colSpan={9} className="py-2">
+                                <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
+                                    Add new request...
+                                </Link>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </Card>
+        </div>
+    )
+}
+
 
 export default function RequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -219,13 +289,13 @@ export default function RequestsPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
-                                <Folder className="h-4 w-4" />
-                                Folder
+                                <User className="h-4 w-4" />
+                                Owner
                                 <ChevronDown className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem>Folder</DropdownMenuItem>
+                            <DropdownMenuItem>Owner</DropdownMenuItem>
                          </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -258,21 +328,6 @@ export default function RequestsPage() {
             </header>
 
             <main className="flex-1 p-6 overflow-y-auto">
-                <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-xl font-bold">Default Folder</h2>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                             <DropdownMenuItem>Rename</DropdownMenuItem>
-                             <DropdownMenuItem>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-
                 {viewMode === 'grid' ? (
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         {requests.map(request => (
@@ -290,32 +345,7 @@ export default function RequestsPage() {
                         </Link>
                     </div>
                 ) : (
-                    <Card>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Client</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Due Date</TableHead>
-                                    <TableHead className="text-right">Progress</TableHead>
-                                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {requests.map(request => (
-                                    <RequestRow key={request.id} request={request} />
-                                ))}
-                                <TableRow>
-                                    <TableCell colSpan={6} className="py-4">
-                                        <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
-                                            Add new request...
-                                        </Link>
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </Card>
+                    <RequestsTable requests={requests} />
                 )}
             </main>
         </div>
