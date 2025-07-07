@@ -115,7 +115,7 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
     
     return (
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
-            <CardHeader className="p-4 flex flex-row items-center justify-between">
+            <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
                 <div className="flex items-center gap-2">
                      {request.client.name === "(No Client)" ? (
                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
@@ -146,13 +146,12 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
-            <CardContent className="p-4 pt-0 flex-grow flex flex-col">
-                <h3 className="font-bold mb-1">{request.title}</h3>
-                <p className="text-xs text-muted-foreground mb-4">Due: {request.dueDate}</p>
-                
-                <div className="mt-auto relative min-h-[60px]">
-                    {/* Default state: Progress and stats */}
-                    <div className="space-y-3 transition-opacity duration-200 group-hover:opacity-0">
+            <CardContent className="p-4 pt-0 flex-grow flex flex-col relative min-h-[120px]">
+                <div className="transition-opacity duration-200 group-hover:opacity-0">
+                    <h3 className="font-bold mb-1 mt-4">{request.title}</h3>
+                    <p className="text-xs text-muted-foreground mb-4">Due: {request.dueDate}</p>
+                    
+                    <div className="space-y-3">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">{progress.toFixed(0)}%</span>
                             <Progress value={progress} className="h-1" />
@@ -172,15 +171,14 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Hover state: Buttons */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                         <Button variant="outline" size="sm" className="rounded-full px-8 bg-white">PREVIEW</Button>
-                         <Button size="sm" className="rounded-full px-8">PUBLISH</Button>
-                    </div>
+                </div>
+                {/* Hover state: Buttons */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                     <Button variant="outline" size="sm" className="rounded-full px-8 bg-white">PREVIEW</Button>
+                     <Button size="sm" className="rounded-full px-8">PUBLISH</Button>
                 </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0">
+            <CardFooter className="p-4 border-t">
                  <Badge variant="outline" className="font-semibold text-gray-600 bg-gray-100">{request.status.toUpperCase()}</Badge>
             </CardFooter>
         </Card>
