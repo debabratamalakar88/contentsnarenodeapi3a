@@ -1,12 +1,24 @@
-import { PlusCircle, MoreHorizontal } from "lucide-react"
+
+'use client'
+
+import { 
+    Users, 
+    MoreHorizontal, 
+    Folder, 
+    ChevronDown, 
+    LayoutGrid, 
+    Search,
+    Layers,
+    List
+} from "lucide-react"
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
+  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   DropdownMenu,
@@ -23,162 +35,265 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const requests = [
   {
     id: "REQ-001",
-    title: "New Client Onboarding",
-    client: "Acme Inc.",
-    status: "Published",
-    dueDate: "2024-08-15",
+    title: "New Request",
+    client: { name: "(No client)", initial: "NC" },
+    dueDate: "21/07/2025",
+    progress: 0,
+    approved: 0,
+    complete: 0,
+    toDo: 1,
+    status: "Draft",
+    ownerInitial: "A"
   },
   {
     id: "REQ-002",
-    title: "Website Content Update",
-    client: "Stark Industries",
-    status: "In Progress",
-    dueDate: "2024-08-20",
+    title: "Reqq 1",
+    client: { name: "(No client)", initial: "NC" },
+    dueDate: "21/07/2025",
+    progress: 0,
+    approved: 0,
+    complete: 0,
+    toDo: 1,
+    status: "Draft",
+    ownerInitial: "B"
   },
   {
     id: "REQ-003",
-    title: "Marketing Campaign Assets",
-    client: "Wayne Enterprises",
+    title: "New Request",
+    client: { name: "(No client)", initial: "NC" },
+    dueDate: "21/07/2025",
+    progress: 0,
+    approved: 0,
+    complete: 0,
+    toDo: 1,
     status: "Draft",
-    dueDate: "2024-09-01",
+    ownerInitial: "C"
   },
   {
     id: "REQ-004",
-    title: "Q3 Report Data",
-    client: "Cyberdyne Systems",
-    status: "Completed",
-    dueDate: "2024-07-30",
-  },
-  {
-    id: "REQ-005",
-    title: "Product Launch Info",
-    client: "Ollivanders Wand Shop",
-    status: "Published",
-    dueDate: "2024-08-10",
+    title: "nn1",
+    client: { name: "(No client)", initial: "NC" },
+    dueDate: "21/07/2025",
+    progress: 0,
+    approved: 0,
+    complete: 3,
+    toDo: 3,
+    status: "Draft",
+    ownerInitial: "D"
   },
 ]
 
-const statusVariant = {
-  Published: "secondary",
-  'In Progress': "default",
-  Draft: "outline",
-  Completed: "destructive", // Just for variety
-} as const
+const FilterButton = ({ label, value }: { label: string; value: string }) => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2 font-normal h-9">
+                {label}: <span className="font-semibold">{value}</span> <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+            <DropdownMenuItem>{value}</DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+)
+
+const RequestCard = ({ request }: { request: typeof requests[0] }) => {
+    return (
+        <Card className="bg-white hover:shadow-md transition-shadow flex flex-col">
+            <CardHeader className="p-4 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold">{request.client.name}</p>
+                        <p className="text-xs text-muted-foreground">Client</p>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                         <DropdownMenuItem>Edit</DropdownMenuItem>
+                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                         <DropdownMenuItem>Archive</DropdownMenuItem>
+                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex-grow">
+                <h3 className="font-bold text-lg mb-1">{request.title}</h3>
+                <p className="text-xs text-muted-foreground mb-2">Due: {request.dueDate}</p>
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-muted-foreground">{request.progress}%</span>
+                    <Progress value={request.progress} className="h-1" />
+                </div>
+                <div className="flex justify-between text-center">
+                    <div>
+                        <p className="font-bold">{request.approved}</p>
+                        <p className="text-xs text-muted-foreground">Approved</p>
+                    </div>
+                     <div>
+                        <p className="font-bold">{request.complete}</p>
+                        <p className="text-xs text-muted-foreground">Complete</p>
+                    </div>
+                     <div>
+                        <p className="font-bold">{request.toDo}</p>
+                        <p className="text-xs text-muted-foreground">To Do</p>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="p-4 pt-0 flex justify-between items-center mt-auto">
+                 <Badge variant="outline" className="font-semibold">{request.status.toUpperCase()}</Badge>
+                 <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">{request.ownerInitial}</AvatarFallback>
+                 </Avatar>
+            </CardFooter>
+        </Card>
+    )
+}
+
+const RequestRow = ({ request }: { request: typeof requests[0] }) => (
+     <TableRow>
+        <TableCell className="font-medium">{request.title}</TableCell>
+        <TableCell>{request.client.name}</TableCell>
+        <TableCell>
+            <Badge variant="outline">{request.status}</Badge>
+        </TableCell>
+        <TableCell>{request.dueDate}</TableCell>
+        <TableCell className="text-right">{request.progress}%</TableCell>
+         <TableCell>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuItem>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </TableCell>
+    </TableRow>
+)
+
 
 export default function RequestsPage() {
-  return (
-    <div className="p-6">
-      <Tabs defaultValue="all">
-        <div className="flex items-center">
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="published">Published</TabsTrigger>
-            <TabsTrigger value="draft">Draft</TabsTrigger>
-            <TabsTrigger value="completed" className="hidden sm:flex">
-              Completed
-            </TabsTrigger>
-          </TabsList>
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline">
-              Export
-            </Button>
-            <Button size="sm" className="h-8 gap-1" asChild>
-              <Link href="/dashboard/requests/new">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  New Request
-                </span>
-              </Link>
-            </Button>
-          </div>
-        </div>
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>Requests</CardTitle>
-              <CardDescription>
-                Manage your content requests and view their status.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="hidden w-[100px] sm:table-cell">
-                      ID
-                    </TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Status
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Due Date
-                    </TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requests.map((request) => (
-                    <TableRow key={request.id}>
-                      <TableCell className="hidden sm:table-cell font-medium">
-                        {request.id}
-                      </TableCell>
-                      <TableCell className="font-medium">{request.title}</TableCell>
-                      <TableCell>{request.client}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant={statusVariant[request.status as keyof typeof statusVariant]}>
-                          {request.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {request.dueDate}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-haspopup="true"
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+
+    return (
+        <div className="flex flex-col h-full bg-muted/40">
+            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Group By:</span>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
+                                <Folder className="h-4 w-4" />
+                                Folder
+                                <ChevronDown className="h-4 w-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>Preview</DropdownMenuItem>
-                            <DropdownMenuItem>Send Reminder</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
+                        </DropdownMenuTrigger>
+                         <DropdownMenuContent align="start">
+                            <DropdownMenuItem>Folder</DropdownMenuItem>
+                         </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+                 <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Filter By:</span>
+                    <FilterButton label="Status" value="All" />
+                    <FilterButton label="Owner" value="Anyone" />
+                    <FilterButton label="Client" value="All" />
+                </div>
+                <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-sm text-muted-foreground">View:</span>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
+                                <ViewIcon className="h-4 w-4" />
+                                {viewMode === 'grid' ? 'Grid' : 'List'}
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search requests..." className="pl-9 h-9" />
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-1 p-6 overflow-y-auto">
+                <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-xl font-bold">Default Folder</h2>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                             <DropdownMenuItem>Rename</DropdownMenuItem>
+                             <DropdownMenuItem>Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+
+                {viewMode === 'grid' ? (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                        {requests.map(request => (
+                            <RequestCard key={request.id} request={request} />
+                        ))}
+                        <Link href="/dashboard/requests/new">
+                            <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[265px] h-full text-muted-foreground">
+                                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
+                                    <Layers className="h-8 w-8 text-slate-400" />
+                                </div>
+                                <div className="text-purple-700 font-semibold bg-purple-200/80 px-4 py-2 rounded-md">
+                                    ADD NEW REQUEST
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                ) : (
+                    <Card>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Due Date</TableHead>
+                                    <TableHead className="text-right">Progress</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {requests.map(request => (
+                                    <RequestRow key={request.id} request={request} />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                )}
+            </main>
+        </div>
+    )
 }
