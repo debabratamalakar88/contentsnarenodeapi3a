@@ -194,8 +194,11 @@ const RequestRow = ({ request }: { request: typeof requests[0] }) => (
                 <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuItem>Delete</DropdownMenuItem>
+                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                <DropdownMenuItem>Archive</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
         </TableCell>
@@ -303,6 +306,13 @@ export default function RequestsPage() {
                                 {requests.map(request => (
                                     <RequestRow key={request.id} request={request} />
                                 ))}
+                                <TableRow>
+                                    <TableCell colSpan={6} className="py-4">
+                                        <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
+                                            Add new request...
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </Card>
