@@ -4,28 +4,33 @@
 import { cn } from "@/lib/utils"
 import { ChevronRight } from "lucide-react";
 
-const steps = ["Templates", "Essentials", "Builder", "Preview", "Finalize"];
-
-interface StepNavigationProps {
-    currentStep: string;
-    onStepClick: (step: string) => void;
+interface Step {
+    name: string;
+    slug: string;
 }
 
-export default function StepNavigation({ currentStep, onStepClick }: StepNavigationProps) {
-    const currentStepIndex = steps.indexOf(currentStep);
+interface StepNavigationProps {
+    steps: Step[];
+    currentStepSlug: string;
+    onStepClick: (slug: string) => void;
+    maxVisitedStepIndex: number;
+}
+
+export default function StepNavigation({ steps, currentStepSlug, onStepClick, maxVisitedStepIndex }: StepNavigationProps) {
+    const currentStepIndex = steps.findIndex(step => step.slug === currentStepSlug);
 
     return (
         <nav className="flex items-center justify-center">
             <div className="flex items-center">
                 {steps.map((step, index) => (
-                    <div key={step} className="flex items-center">
+                    <div key={step.slug} className="flex items-center">
                         <button
                             className={cn(
                                 "flex items-center gap-2 text-center",
-                                index > currentStepIndex && "cursor-not-allowed opacity-50"
+                                index > maxVisitedStepIndex && "cursor-not-allowed opacity-50"
                             )}
-                            onClick={() => onStepClick(step)}
-                            disabled={index > currentStepIndex}
+                            onClick={() => onStepClick(step.slug)}
+                            disabled={index > maxVisitedStepIndex}
                         >
                             <div
                                 className={cn(
@@ -39,7 +44,7 @@ export default function StepNavigation({ currentStep, onStepClick }: StepNavigat
                                 "text-sm font-medium",
                                 index === currentStepIndex ? "text-foreground" : "text-muted-foreground"
                                 )}
-                            >{step}</p>
+                            >{step.name}</p>
                         </button>
 
                         {index < steps.length - 1 && (
