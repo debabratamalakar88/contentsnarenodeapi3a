@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -100,18 +101,21 @@ function MultiSelect({
         <Command className={className}>
           <CommandInput placeholder="Search..." />
           <CommandEmpty>No item found.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
+          <CommandGroup>
             <CommandList>
                 {options.map((option) => (
                 <CommandItem
                     key={option.value}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                     onSelect={() => {
-                    onChange(
-                        selected.includes(option.value)
-                        ? selected.filter((item) => item !== option.value)
-                        : [...selected, option.value]
-                    )
-                    setOpen(true)
+                        onChange(
+                            selected.includes(option.value)
+                            ? selected.filter((item) => item !== option.value)
+                            : [...selected, option.value]
+                        )
                     }}
                 >
                     <Check
