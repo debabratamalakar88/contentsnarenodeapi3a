@@ -22,11 +22,23 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
+import { MultiSelect, type OptionType } from "@/components/ui/multi-select";
 
 export default function FinalizeStep() {
     const [dueDate, setDueDate] = useState<Date | undefined>(new Date(2025, 6, 21));
     const [protectWithPin, setProtectWithPin] = useState(true);
     const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
+    const [selectedClients, setSelectedClients] = useState<string[]>([]);
+
+    const mockClients: OptionType[] = [
+      { value: "acme", label: "Acme Inc." },
+      { value: "stark", label: "Stark Industries" },
+      { value: "wayne", label: "Wayne Enterprises" },
+      { value: "cyberdyne", label: "Cyberdyne Systems" },
+      { value: "ollivanders", label: "Ollivanders Wand Shop" },
+    ];
+
+    const canPublish = selectedClients.length > 0;
 
     return (
         <div className="max-w-xl mx-auto animate-in fade-in-50 w-full space-y-8 py-8">
@@ -40,15 +52,13 @@ export default function FinalizeStep() {
                     <Label htmlFor="client-select" className="flex items-center gap-1.5 font-semibold text-gray-700 mb-2">
                         Which client(s) do you want to send this request to? <HelpCircle className="w-4 h-4 text-gray-400" />
                     </Label>
-                    <Select>
-                        <SelectTrigger id="client-select">
-                            <SelectValue placeholder="Choose a client..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="acme">Acme Inc.</SelectItem>
-                            <SelectItem value="stark">Stark Industries</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <MultiSelect
+                        options={mockClients}
+                        selected={selectedClients}
+                        onChange={setSelectedClients}
+                        placeholder="Choose one or more clients..."
+                        className="w-full"
+                    />
                 </div>
 
                 {/* Toggles */}
@@ -144,16 +154,18 @@ export default function FinalizeStep() {
                 </div>
 
                  {/* Warning Alert */}
-                <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertDescription className="ml-2">
-                        A request must be assigned to at least one client before it can be published.
-                    </AlertDescription>
-                </Alert>
+                {!canPublish && (
+                    <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600">
+                        <AlertTriangle className="h-5 w-5" />
+                        <AlertDescription className="ml-2">
+                            A request must be assigned to at least one client before it can be published.
+                        </AlertDescription>
+                    </Alert>
+                )}
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-8">
-                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled>
+                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled={!canPublish}>
                     PUBLISH & SEND
                 </Button>
                 <Button variant="link" className="text-pink-600 font-medium">
