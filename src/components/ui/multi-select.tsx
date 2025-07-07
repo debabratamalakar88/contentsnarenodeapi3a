@@ -110,15 +110,16 @@ function MultiSelect({
                 <CommandItem
                     key={option.value}
                     value={option.value}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                    }}
                     onSelect={(currentValue) => {
                         onChange(
                             selected.includes(currentValue)
                             ? selected.filter((item) => item !== currentValue)
                             : [...selected, currentValue]
                         )
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                     }}
                 >
                     <Check
