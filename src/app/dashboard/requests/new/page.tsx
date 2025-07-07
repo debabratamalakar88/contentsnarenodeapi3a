@@ -105,6 +105,9 @@ export default function NewRequestPage() {
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
 
+    // New state to control if the user can proceed from the Templates step
+    const [isNextEnabled, setIsNextEnabled] = useState(false);
+
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
@@ -121,6 +124,13 @@ export default function NewRequestPage() {
             setCurrentStep(steps[currentStepIndex + 1]);
         }
     };
+    
+    // Handler to call when user proceeds from template step
+    const handleTemplateSelection = () => {
+        setIsNextEnabled(true);
+        nextStep();
+    };
+
 
     const prevStep = () => {
         if (currentStepIndex > 0) {
@@ -415,7 +425,7 @@ export default function NewRequestPage() {
 
     const renderStep = () => {
         switch (currentStep) {
-            case "Templates": return <TemplatesStep onNext={() => setCurrentStep("Essentials")} />;
+            case "Templates": return <TemplatesStep onNext={handleTemplateSelection} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
                                         pages={pages}
@@ -446,8 +456,8 @@ export default function NewRequestPage() {
                 </Button>
                 <StepNavigation currentStep={currentStep} onStepClick={setCurrentStep} />
                 <div className="ml-auto flex items-center gap-2">
-                     {currentStepIndex > 0 && currentStepIndex < steps.length - 1 && (
-                        <Button onClick={nextStep}>
+                    {currentStepIndex < steps.length - 1 && (
+                        <Button onClick={nextStep} disabled={currentStepIndex === 0 && !isNextEnabled}>
                             {steps[currentStepIndex + 1]} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}

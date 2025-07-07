@@ -1,3 +1,4 @@
+
 'use client'
 
 import { cn } from "@/lib/utils"
@@ -21,9 +22,10 @@ export default function StepNavigation({ currentStep, onStepClick }: StepNavigat
                         <button
                             className={cn(
                                 "flex items-center gap-2 text-center",
+                                index > currentStepIndex && "cursor-not-allowed opacity-50"
                             )}
                             onClick={() => onStepClick(step)}
-                            disabled={index > currentStepIndex + 1 && process.env.NODE_ENV === 'production'}
+                            disabled={index > currentStepIndex}
                         >
                             <div
                                 className={cn(
