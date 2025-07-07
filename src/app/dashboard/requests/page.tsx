@@ -163,8 +163,8 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                     {/* Hover view */}
                     <div className="absolute inset-0 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
                         <div className="flex flex-col gap-2 w-full px-4">
-                            <Button variant="outline">PREVIEW</Button>
-                            <Button className="bg-indigo-600 hover:bg-indigo-700">PUBLISH</Button>
+                            <Button variant="outline" size="sm" className="rounded-full">PREVIEW</Button>
+                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 rounded-full">PUBLISH</Button>
                         </div>
                     </div>
                 </div>
