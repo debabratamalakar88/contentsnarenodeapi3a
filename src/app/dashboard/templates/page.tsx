@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, MoreHorizontal, Filter, Search, LayoutGrid, DollarSign, Building2, Receipt, FileText } from "lucide-react";
+import { 
+    Home, MoreHorizontal, Filter, Search, LayoutGrid, DollarSign, Building2, Receipt, FileText, 
+    Book, Briefcase, Palette, GraduationCap, PartyPopper, Landmark, Shield, UserCheck, 
+    FileHeart, Target, Handshake, Mail, Users
+} from "lucide-react";
 
 // Mock Data
 const categories = [
@@ -50,73 +54,105 @@ const galleryTemplates = [
     category: "Accounting",
     categoryColor: "text-red-500",
     items: [
-      {
-        id: 'gallery-1',
-        title: "ATO Client-agent Linking",
-        description: "This template walks clients through the steps to link you as their authorised agent using myID...",
-        icon: <Building2 className="h-6 w-6 text-orange-600" />,
-        bgColor: "bg-orange-100",
-      },
-      {
-        id: 'gallery-2',
-        title: "Accounting Client Onboarding (UK)",
-        description: "Gather key financial and business Information from new accounting clients in the UK with this structured...",
-        icon: <Home className="h-6 w-6 text-orange-600" />,
-        bgColor: "bg-orange-100",
-      },
-      {
-        id: 'gallery-3',
-        title: "Accounting Client Onboarding - Business (AUS)",
-        description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...",
-        icon: <DollarSign className="h-6 w-6 text-red-600" />,
-        bgColor: "bg-red-100",
-      },
-       {
-        id: 'gallery-4',
-        title: "Accounting Client Onboarding - Business (NZ)",
-        description: "Focusing on New Zealand accountants, this form will help facilitate an easy onboarding process...",
-        icon: <Home className="h-6 w-6 text-red-600" />,
-        bgColor: "bg-red-100",
-      },
-      {
-        id: 'gallery-5',
-        title: "Accounting Client Onboarding - Individual (AUS)",
-        description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...",
-        icon: <Receipt className="h-6 w-6 text-amber-600" />,
-        bgColor: "bg-amber-100",
-      },
-      {
-        id: 'gallery-6',
-        title: "Accounting Client Onboarding - Individual (NZ)",
-        description: "Geared towards New Zealand accountants, this form will help facilitate an easy onboarding process...",
-        icon: <Home className="h-6 w-6 text-amber-600" />,
-        bgColor: "bg-amber-100",
-      },
-       {
-        id: 'gallery-7',
-        title: "Accounting Client Onboarding - Business (USA)",
-        description: "Geared towards accountants in the USA, this form will help facilitate an easy onboarding process...",
-        icon: <DollarSign className="h-6 w-6 text-red-600" />,
-        bgColor: "bg-red-100",
-      },
-      {
-        id: 'gallery-8',
-        title: "Accounting Client Onboarding - Individual (USA)",
-        description: "Geared towards accountants in the USA, this form will help facilitate an easy onboarding process...",
-        icon: <Receipt className="h-6 w-6 text-amber-600" />,
-        bgColor: "bg-amber-100",
-      },
+      { id: 'gallery-1', title: "ATO Client-agent Linking", description: "This template walks clients through the steps to link you as their authorised agent using myID...", icon: <Building2 className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-2', title: "Accounting Client Onboarding (UK)", description: "Gather key financial and business Information from new accounting clients in the UK with this structured...", icon: <Home className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-3', title: "Accounting Client Onboarding - Business (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <DollarSign className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-4', title: "Accounting Client Onboarding - Business (NZ)", description: "Focusing on New Zealand accountants, this form will help facilitate an easy onboarding process...", icon: <Home className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-5', title: "Accounting Client Onboarding - Individual (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <Receipt className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
     ],
   },
   {
     category: "Bookkeeping",
     categoryColor: "text-orange-500",
-    items: [],
+    items: [
+      { id: 'gallery-bk-1', title: "New Bookkeeping Client", description: "Onboard new bookkeeping clients and gather all necessary business and financial information.", icon: <Book className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-bk-2', title: "Monthly Bookkeeping Checklist", description: "A checklist for clients to provide all documents for their monthly bookkeeping.", icon: <FileText className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+    ],
   },
   {
     category: "Coaching/Consulting",
     categoryColor: "text-amber-500",
-    items: [],
+    items: [
+      { id: 'gallery-cc-1', title: "Coaching Intake Form", description: "A comprehensive form for new coaching or consulting clients to outline their goals.", icon: <Briefcase className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-2', title: "Consulting Agreement", description: "A standard agreement template for outlining the scope of your consulting services.", icon: <Handshake className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+    ],
+  },
+  {
+    category: "Design",
+    categoryColor: "text-cyan-500",
+    items: [
+      { id: 'gallery-ds-1', title: "Graphic Design Brief", description: "Collect project requirements, target audience, and design preferences for new design projects.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
+    ],
+  },
+  {
+    category: "Education",
+    categoryColor: "text-blue-500",
+    items: [
+      { id: 'gallery-ed-1', title: "Student Registration", description: "A standard form for new students to register for a course or program.", icon: <GraduationCap className="h-6 w-6 text-blue-600" />, bgColor: "bg-blue-100" },
+    ],
+  },
+  {
+    category: "Events",
+    categoryColor: "text-purple-500",
+    items: [
+      { id: 'gallery-ev-1', title: "Event Planning Questionnaire", description: "Gather all the details you need to plan and execute a successful event for your client.", icon: <PartyPopper className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+    ],
+  },
+  {
+    category: "Financial Planning",
+    categoryColor: "text-emerald-500",
+    items: [
+      { id: 'gallery-fp-1', title: "Financial Advisor Onboarding", description: "A detailed fact-find for new financial planning clients.", icon: <Landmark className="h-6 w-6 text-emerald-600" />, bgColor: "bg-emerald-100" },
+    ],
+  },
+  {
+    category: "General",
+    categoryColor: "text-gray-500",
+    items: [
+      { id: 'gallery-ge-1', title: "Contact Form", description: "A simple, general-purpose contact form for your clients.", icon: <Mail className="h-6 w-6 text-gray-600" />, bgColor: "bg-gray-100" },
+    ],
+  },
+  {
+    category: "Human Resources",
+    categoryColor: "text-rose-500",
+    items: [
+      { id: 'gallery-hr-1', title: "New Employee Details", description: "Collect all necessary information from new hires for HR and payroll.", icon: <Users className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+    ],
+  },
+  {
+    category: "Insurance",
+    categoryColor: "text-sky-500",
+    items: [
+      { id: 'gallery-in-1', title: "Insurance Quote Request", description: "A form for prospective clients to request an insurance quote.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+    ],
+  },
+  {
+    category: "Legal",
+    categoryColor: "text-indigo-500",
+    items: [
+      { id: 'gallery-lg-1', title: "Legal Client Intake", description: "A secure form for new legal clients to provide their case details.", icon: <FileHeart className="h-6 w-6 text-indigo-600" />, bgColor: "bg-indigo-100" },
+    ],
+  },
+  {
+    category: "Marketing",
+    categoryColor: "text-yellow-500",
+    items: [
+      { id: 'gallery-ma-1', title: "Marketing Campaign Brief", description: "Define goals, target audience, budget, and KPIs for a new marketing campaign.", icon: <Target className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+    ],
+  },
+  {
+    category: "Mortgage & Financing",
+    categoryColor: "text-lime-500",
+    items: [
+      { id: 'gallery-mf-1', title: "Mortgage Application", description: "A comprehensive form for clients to apply for a mortgage.", icon: <Home className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
+    ],
+  },
+  {
+    category: "Real Estate",
+    categoryColor: "text-green-500",
+    items: [
+      { id: 'gallery-re-1', title: "New Property Listing", description: "Collect all the details about a new property from a seller for listing.", icon: <Building2 className="h-6 w-6 text-green-600" />, bgColor: "bg-green-100" },
+    ],
   },
 ];
 
@@ -151,6 +187,15 @@ const TemplateCard = ({ template }: { template: typeof myTemplates[0] }) => (
 export default function TemplatesPage() {
     const [activeCategory, setActiveCategory] = useState("My Templates");
 
+    const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, categoryName: string, href: string) => {
+        e.preventDefault();
+        setActiveCategory(categoryName);
+        const element = document.getElementById(href.substring(1));
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-muted/40">
             <div className="flex flex-1 overflow-hidden">
@@ -162,7 +207,7 @@ export default function TemplatesPage() {
                             <li key={cat.name}>
                                 <a
                                     href={cat.href}
-                                    onClick={() => setActiveCategory(cat.name)}
+                                    onClick={(e) => handleCategoryClick(e, cat.name, cat.href)}
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors ${activeCategory === cat.name ? 'text-primary' : 'text-foreground hover:bg-muted'}`}
                                 >
                                     <span className={`h-2 w-2 rounded-full ${cat.color.replace('text-', 'bg-')}`}></span>
@@ -232,11 +277,15 @@ export default function TemplatesPage() {
                         {galleryTemplates.map((category) => (
                             <section key={category.category} id={category.category.toLowerCase().replace(/[\s&/]+/g, '-')}>
                                 <h2 className={`text-xl font-bold mb-4 ${category.categoryColor}`}>{category.category}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                    {category.items.map((template) => (
-                                        <TemplateCard key={template.id} template={template as any} />
-                                    ))}
-                                </div>
+                                {category.items.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                        {category.items.map((template) => (
+                                            <TemplateCard key={template.id} template={template as any} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground">No templates available in this category yet.</p>
+                                )}
                             </section>
                         ))}
                     </div>
