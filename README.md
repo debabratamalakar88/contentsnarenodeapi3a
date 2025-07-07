@@ -598,3 +598,50 @@ Delete a request.
   "message": "Request deleted successfully."
 }
 ```
+
+---
+
+### 💾 **Database Schema for Requests**
+
+For storing the multi-step request forms, a single `requests` table is recommended. The dynamic structure of the form (pages, sections, questions) is best stored in a `JSON` column. This approach simplifies development and aligns with the API structure.
+
+**`requests` Table SQL Definition:**
+```sql
+CREATE TABLE requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    form_data JSON NOT NULL,
+    status ENUM('draft', 'published', 'completed', 'archived') NOT NULL DEFAULT 'draft',
+    due_date DATE NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    CONSTRAINT fk_requests_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**`form_data` JSON Structure:**
+
+The `form_data` column will store an array of page objects, where each object has the following structure:
+
+- **Page Object:**
+  - `title`: String
+  - `instructions`: String (optional)
+  - `sections`: Array of Section Objects
+- **Section Object:**
+  - `title`: String
+  - `instructions`: String (optional)
+  - `questions`: Array of Question Objects
+- **Question Object:**
+  - `label`: String
+  - `type`: String (e.g., 'text', 'file', 'dropdown')
+  - `instructions`: String (optional)
+  - `placeholder`: String (optional)
+  - `required`: Boolean
+  - `api_id`: String (unique identifier for the question)
+  - `options`: Array of Option Objects (for 'dropdown', 'radio', etc.)
+- **Option Object:**
+  - `label`: String
+  - `value`: String
+```
