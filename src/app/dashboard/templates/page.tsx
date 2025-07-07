@@ -10,7 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     Home, MoreHorizontal, Filter, Search, LayoutGrid, DollarSign, Building2, Receipt, FileText, 
     Book, Briefcase, Palette, GraduationCap, PartyPopper, Landmark, Shield, UserCheck, 
-    FileHeart, Target, Handshake, Mail, Users
+    Handshake, Mail, Users, Scale, Monitor, Code, Star, MessageSquare, Utensils, Mic,
+    ThumbsUp, Video, Wrench, Link2, CalendarDays, Target
 } from "lucide-react";
 
 // Mock Data
@@ -30,6 +31,7 @@ const categories = [
   { name: "Marketing", color: "text-yellow-500", href: "#marketing" },
   { name: "Mortgage & Financing", color: "text-lime-500", href: "#mortgage-financing" },
   { name: "Real Estate", color: "text-green-500", href: "#real-estate" },
+  { name: "Web Design", color: "text-fuchsia-500", href: "#web-design" },
 ];
 
 const myTemplates = [
@@ -54,55 +56,79 @@ const galleryTemplates = [
     category: "Accounting",
     categoryColor: "text-red-500",
     items: [
-      { id: 'gallery-1', title: "ATO Client-agent Linking", description: "This template walks clients through the steps to link you as their authorised agent using myID...", icon: <Building2 className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
-      { id: 'gallery-2', title: "Accounting Client Onboarding (UK)", description: "Gather key financial and business Information from new accounting clients in the UK with this structured...", icon: <Home className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
-      { id: 'gallery-3', title: "Accounting Client Onboarding - Business (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <DollarSign className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
-      { id: 'gallery-4', title: "Accounting Client Onboarding - Business (NZ)", description: "Focusing on New Zealand accountants, this form will help facilitate an easy onboarding process...", icon: <Home className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
-      { id: 'gallery-5', title: "Accounting Client Onboarding - Individual (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <Receipt className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-ac-1', title: "ATO Client-agent Linking", description: "This template walks clients through the steps to link you as their authorised agent using myID...", icon: <Link2 className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-2', title: "Accounting Client Onboarding (UK)", description: "Gather key financial and business Information from new accounting clients in the UK with this structured...", icon: <Building2 className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-3', title: "Accounting Client Onboarding - Business (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <Building2 className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-4', title: "Accounting Client Onboarding - Business (NZ)", description: "Focusing on New Zealand accountants, this form will help facilitate an easy onboarding process...", icon: <Building2 className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-5', title: "Accounting Client Onboarding - Individual (AUS)", description: "Geared towards Australian accountants, this form will help facilitate an easy onboarding process...", icon: <UserCheck className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-6', title: "Accounting Client Onboarding - Individual (NZ)", description: "Focusing on New Zealand accountants, this form will help facilitate an easy onboarding process...", icon: <UserCheck className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-7', title: "Accounting Client Onboarding - Individual (UK)", description: "Gather key financial and business Information from new accounting clients in the UK with this structured...", icon: <UserCheck className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-8', title: "Deed of Dividend", description: "A formal document for declaring dividends to shareholders.", icon: <FileText className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-9', title: "End of Financial Year (AUS)", description: "A checklist for Australian businesses to prepare for the end of the financial year.", icon: <CalendarDays className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-10', title: "SMSF Annual Checklist", description: "A checklist for Self-Managed Super Funds to complete their annual obligations.", icon: <FileText className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-11', title: "SMSF Investment Strategy", description: "A template for creating an investment strategy for a Self-Managed Super Fund.", icon: <Target className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-12', title: "Tax Pre-appointment Checklist", description: "A checklist for clients to prepare for their tax appointment.", icon: <FileText className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
+      { id: 'gallery-ac-13', title: "Trust Distribution Resolution", description: "A formal document for recording trust distribution decisions.", icon: <FileText className="h-6 w-6 text-red-600" />, bgColor: "bg-red-100" },
     ],
   },
   {
     category: "Bookkeeping",
     categoryColor: "text-orange-500",
     items: [
-      { id: 'gallery-bk-1', title: "New Bookkeeping Client", description: "Onboard new bookkeeping clients and gather all necessary business and financial information.", icon: <Book className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
-      { id: 'gallery-bk-2', title: "Monthly Bookkeeping Checklist", description: "A checklist for clients to provide all documents for their monthly bookkeeping.", icon: <FileText className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-bk-1', title: "Bookkeeping Client Onboarding (AUS)", description: "Onboard new bookkeeping clients in Australia and gather all necessary business and financial information.", icon: <Book className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-bk-2', title: "Bookkeeping Client Onboarding (NZ)", description: "Onboard new bookkeeping clients in New Zealand and gather all necessary business and financial information.", icon: <Book className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-bk-3', title: "Bookkeeping Client Onboarding (UK)", description: "Onboard new bookkeeping clients in the UK and gather all necessary business and financial information.", icon: <Book className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
+      { id: 'gallery-bk-4', title: "Quarterly BAS Checklist", description: "A checklist for clients to provide all documents for their quarterly Business Activity Statement.", icon: <FileText className="h-6 w-6 text-orange-600" />, bgColor: "bg-orange-100" },
     ],
   },
   {
     category: "Coaching/Consulting",
     categoryColor: "text-amber-500",
     items: [
-      { id: 'gallery-cc-1', title: "Coaching Intake Form", description: "A comprehensive form for new coaching or consulting clients to outline their goals.", icon: <Briefcase className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
-      { id: 'gallery-cc-2', title: "Consulting Agreement", description: "A standard agreement template for outlining the scope of your consulting services.", icon: <Handshake className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-1', title: "Business Coaching Intake", description: "A comprehensive form for new business coaching clients to outline their goals.", icon: <Briefcase className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-2', title: "Client Testimonial Request", description: "A template for requesting testimonials from satisfied clients.", icon: <Star className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-3', title: "Consulting Intake Form", description: "A standard intake form for new consulting clients.", icon: <FileText className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-4', title: "Life Coaching Intake", description: "A form designed for life coaches to onboard new clients.", icon: <UserCheck className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
+      { id: 'gallery-cc-5', title: "Monthly Coaching Check-in", description: "A monthly check-in form for coaching clients to track progress.", icon: <CalendarDays className="h-6 w-6 text-amber-600" />, bgColor: "bg-amber-100" },
     ],
   },
   {
     category: "Design",
     categoryColor: "text-cyan-500",
     items: [
-      { id: 'gallery-ds-1', title: "Graphic Design Brief", description: "Collect project requirements, target audience, and design preferences for new design projects.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
+      { id: 'gallery-ds-1', title: "Brand Design Brief", description: "Collect project requirements for a full brand identity project.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
+      { id: 'gallery-ds-2', title: "Graphic Design Brief", description: "Collect project requirements for new graphic design projects.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
+      { id: 'gallery-ds-3', title: "Logo Design Brief", description: "A detailed brief for clients to provide their logo design requirements.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
+      { id: 'gallery-ds-4', title: "Print Design Brief", description: "A brief for clients to provide requirements for print design work.", icon: <Palette className="h-6 w-6 text-cyan-600" />, bgColor: "bg-cyan-100" },
     ],
   },
   {
     category: "Education",
     categoryColor: "text-blue-500",
     items: [
-      { id: 'gallery-ed-1', title: "Student Registration", description: "A standard form for new students to register for a course or program.", icon: <GraduationCap className="h-6 w-6 text-blue-600" />, bgColor: "bg-blue-100" },
+      { id: 'gallery-ed-1', title: "Course Feedback", description: "A form for students to provide feedback on a course.", icon: <MessageSquare className="h-6 w-6 text-blue-600" />, bgColor: "bg-blue-100" },
+      { id: 'gallery-ed-2', title: "Student Application Form", description: "A standard form for new students to apply for a course or program.", icon: <GraduationCap className="h-6 w-6 text-blue-600" />, bgColor: "bg-blue-100" },
+      { id: 'gallery-ed-3', title: "Tutor Intake", description: "A form for new tutors to provide their details and qualifications.", icon: <UserCheck className="h-6 w-6 text-blue-600" />, bgColor: "bg-blue-100" },
     ],
   },
   {
     category: "Events",
     categoryColor: "text-purple-500",
     items: [
-      { id: 'gallery-ev-1', title: "Event Planning Questionnaire", description: "Gather all the details you need to plan and execute a successful event for your client.", icon: <PartyPopper className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+      { id: 'gallery-ev-1', title: "Catering Request", description: "A form for clients to request catering services for an event.", icon: <Utensils className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+      { id: 'gallery-ev-2', title: "Event Feedback", description: "A form for event attendees to provide feedback.", icon: <MessageSquare className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+      { id: 'gallery-ev-3', title: "Event Planning", description: "Gather all the details you need to plan and execute a successful event.", icon: <PartyPopper className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+      { id: 'gallery-ev-4', title: "Speaker Information Request", description: "A form for event speakers to provide their details.", icon: <Mic className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
+      { id: 'gallery-ev-5', title: "Venue Booking Request", description: "A form for clients to request a venue booking.", icon: <Building2 className="h-6 w-6 text-purple-600" />, bgColor: "bg-purple-100" },
     ],
   },
   {
     category: "Financial Planning",
     categoryColor: "text-emerald-500",
     items: [
-      { id: 'gallery-fp-1', title: "Financial Advisor Onboarding", description: "A detailed fact-find for new financial planning clients.", icon: <Landmark className="h-6 w-6 text-emerald-600" />, bgColor: "bg-emerald-100" },
+      { id: 'gallery-fp-1', title: "Financial Planning Client Onboarding (AUS)", description: "A detailed fact-find for new financial planning clients in Australia.", icon: <Landmark className="h-6 w-6 text-emerald-600" />, bgColor: "bg-emerald-100" },
+      { id: 'gallery-fp-2', title: "Financial Planning Client Onboarding (NZ)", description: "A detailed fact-find for new financial planning clients in New Zealand.", icon: <Landmark className="h-6 w-6 text-emerald-600" />, bgColor: "bg-emerald-100" },
+      { id: 'gallery-fp-3', title: "Financial Planning Client Onboarding (UK)", description: "A detailed fact-find for new financial planning clients in the UK.", icon: <Landmark className="h-6 w-6 text-emerald-600" />, bgColor: "bg-emerald-100" },
     ],
   },
   {
@@ -110,51 +136,82 @@ const galleryTemplates = [
     categoryColor: "text-gray-500",
     items: [
       { id: 'gallery-ge-1', title: "Contact Form", description: "A simple, general-purpose contact form for your clients.", icon: <Mail className="h-6 w-6 text-gray-600" />, bgColor: "bg-gray-100" },
+      { id: 'gallery-ge-2', title: "Detailed Contact Form", description: "A more detailed contact form for gathering more information from clients.", icon: <Mail className="h-6 w-6 text-gray-600" />, bgColor: "bg-gray-100" },
     ],
   },
   {
     category: "Human Resources",
     categoryColor: "text-rose-500",
     items: [
-      { id: 'gallery-hr-1', title: "New Employee Details", description: "Collect all necessary information from new hires for HR and payroll.", icon: <Users className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-1', title: "Employee Expense Claim", description: "A form for employees to claim expenses.", icon: <DollarSign className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-2', title: "Employee Offboarding", description: "A checklist for offboarding employees.", icon: <Users className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-3', title: "Employee Onboarding", description: "Collect all necessary information from new hires for HR and payroll.", icon: <Users className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-4', title: "Job Application", description: "A standard job application form for prospective employees.", icon: <Briefcase className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-5', title: "Performance Review", description: "A form for conducting employee performance reviews.", icon: <Star className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
+      { id: 'gallery-hr-6', title: "Reference Check", description: "A form for conducting reference checks on job applicants.", icon: <UserCheck className="h-6 w-6 text-rose-600" />, bgColor: "bg-rose-100" },
     ],
   },
   {
     category: "Insurance",
     categoryColor: "text-sky-500",
     items: [
-      { id: 'gallery-in-1', title: "Insurance Quote Request", description: "A form for prospective clients to request an insurance quote.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+      { id: 'gallery-in-1', title: "Insurance Claim", description: "A form for clients to make an insurance claim.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+      { id: 'gallery-in-2', title: "Insurance Fact Find (AUS)", description: "A fact-find form for insurance clients in Australia.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+      { id: 'gallery-in-3', title: "Insurance Fact Find (NZ)", description: "A fact-find form for insurance clients in New Zealand.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+      { id: 'gallery-in-4', title: "Insurance Fact Find (UK)", description: "A fact-find form for insurance clients in the UK.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
+      { id: 'gallery-in-5', title: "Insurance Quote Request", description: "A form for prospective clients to request an insurance quote.", icon: <Shield className="h-6 w-6 text-sky-600" />, bgColor: "bg-sky-100" },
     ],
   },
   {
     category: "Legal",
     categoryColor: "text-indigo-500",
     items: [
-      { id: 'gallery-lg-1', title: "Legal Client Intake", description: "A secure form for new legal clients to provide their case details.", icon: <FileHeart className="h-6 w-6 text-indigo-600" />, bgColor: "bg-indigo-100" },
+      { id: 'gallery-lg-1', title: "Client Intake Form", description: "A secure form for new legal clients to provide their case details.", icon: <Scale className="h-6 w-6 text-indigo-600" />, bgColor: "bg-indigo-100" },
     ],
   },
   {
     category: "Marketing",
     categoryColor: "text-yellow-500",
     items: [
-      { id: 'gallery-ma-1', title: "Marketing Campaign Brief", description: "Define goals, target audience, budget, and KPIs for a new marketing campaign.", icon: <Target className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-1', title: "Case Study", description: "A template for creating a case study on a successful project.", icon: <Book className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-2', title: "Content Marketing Brief", description: "A brief for clients to provide their content marketing requirements.", icon: <FileText className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-3', title: "Marketing Campaign Brief", description: "Define goals, target audience, budget, and KPIs for a new marketing campaign.", icon: <Target className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-4', title: "Podcast Guest Intake", description: "A form for podcast guests to provide their details.", icon: <Mic className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-5', title: "Social Media Marketing Brief", description: "A brief for clients to provide their social media marketing requirements.", icon: <ThumbsUp className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
+      { id: 'gallery-ma-6', title: "Video Marketing Brief", description: "A brief for clients to provide their video marketing requirements.", icon: <Video className="h-6 w-6 text-yellow-600" />, bgColor: "bg-yellow-100" },
     ],
   },
   {
     category: "Mortgage & Financing",
     categoryColor: "text-lime-500",
     items: [
-      { id: 'gallery-mf-1', title: "Mortgage Application", description: "A comprehensive form for clients to apply for a mortgage.", icon: <Home className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
+      { id: 'gallery-mf-1', title: "Loan Application", description: "A standard loan application form.", icon: <DollarSign className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
+      { id: 'gallery-mf-2', title: "Mortgage Application (AUS)", description: "A comprehensive form for clients in Australia to apply for a mortgage.", icon: <Home className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
+      { id: 'gallery-mf-3', title: "Mortgage Application (NZ)", description: "A comprehensive form for clients in New Zealand to apply for a mortgage.", icon: <Home className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
+      { id: 'gallery-mf-4', title: "Mortgage Application (UK)", description: "A comprehensive form for clients in the UK to apply for a mortgage.", icon: <Home className="h-6 w-6 text-lime-600" />, bgColor: "bg-lime-100" },
     ],
   },
   {
     category: "Real Estate",
     categoryColor: "text-green-500",
     items: [
-      { id: 'gallery-re-1', title: "New Property Listing", description: "Collect all the details about a new property from a seller for listing.", icon: <Building2 className="h-6 w-6 text-green-600" />, bgColor: "bg-green-100" },
+      { id: 'gallery-re-1', title: "Property Maintenance Request", description: "A form for tenants to request maintenance on a property.", icon: <Wrench className="h-6 w-6 text-green-600" />, bgColor: "bg-green-100" },
+      { id: 'gallery-re-2', title: "Rental Application", description: "A standard rental application form for prospective tenants.", icon: <Home className="h-6 w-6 text-green-600" />, bgColor: "bg-green-100" },
+      { id: 'gallery-re-3', title: "Seller's Disclosure", description: "A form for sellers to disclose information about their property.", icon: <FileText className="h-6 w-6 text-green-600" />, bgColor: "bg-green-100" },
+    ],
+  },
+  {
+    category: "Web Design",
+    categoryColor: "text-fuchsia-500",
+    items: [
+      { id: 'gallery-wd-1', title: "Website Content Collection", description: "A form for clients to provide content for their website.", icon: <FileText className="h-6 w-6 text-fuchsia-600" />, bgColor: "bg-fuchsia-100" },
+      { id: 'gallery-wd-2', title: "Website Design Brief", description: "Collect project requirements, target audience, and design preferences for new website projects.", icon: <Monitor className="h-6 w-6 text-fuchsia-600" />, bgColor: "bg-fuchsia-100" },
+      { id: 'gallery-wd-3', title: "Website Design Feedback", description: "A form for clients to provide feedback on a website design.", icon: <MessageSquare className="h-6 w-6 text-fuchsia-600" />, bgColor: "bg-fuchsia-100" },
+      { id: 'gallery-wd-4', title: "Website Maintenance Request", description: "A form for clients to request maintenance on their website.", icon: <Wrench className="h-6 w-6 text-fuchsia-600" />, bgColor: "bg-fuchsia-100" },
     ],
   },
 ];
+
 
 
 const TemplateCard = ({ template }: { template: typeof myTemplates[0] }) => (
