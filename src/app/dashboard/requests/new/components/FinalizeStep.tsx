@@ -1,8 +1,10 @@
+
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, X } from "lucide-react"
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -23,20 +25,49 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { MultiSelect, type OptionType } from "@/components/ui/multi-select";
+import { getClients } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FinalizeStep() {
     const [dueDate, setDueDate] = useState<Date | undefined>(new Date(2025, 6, 21));
     const [protectWithPin, setProtectWithPin] = useState(true);
     const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
+
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const [clients, setClients] = useState<OptionType[]>([]);
+    const [isLoadingClients, setIsLoadingClients] = useState(true);
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
-    const mockClients: OptionType[] = [
-      { value: "acme", label: "Acme Inc." },
-      { value: "stark", label: "Stark Industries" },
-      { value: "wayne", label: "Wayne Enterprises" },
-      { value: "cyberdyne", label: "Cyberdyne Systems" },
-      { value: "ollivanders", label: "Ollivanders Wand Shop" },
-    ];
+    useEffect(() => {
+        async function fetchClientsData() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+                router.push('/login');
+                return;
+            }
+
+            try {
+                const fetchedClients = await getClients(token);
+                const clientOptions = fetchedClients.map(client => ({
+                    label: client.full_name,
+                    value: String(client.id)
+                }));
+                setClients(clientOptions);
+            } catch (err: any) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error fetching clients',
+                    description: err.message || 'An unexpected error occurred.',
+                });
+            } finally {
+                setIsLoadingClients(false);
+            }
+        }
+        fetchClientsData();
+    }, [router, toast]);
 
     const canPublish = selectedClients.length > 0;
 
@@ -53,10 +84,10 @@ export default function FinalizeStep() {
                         Which client(s) do you want to send this request to? <HelpCircle className="w-4 h-4 text-gray-400" />
                     </Label>
                     <MultiSelect
-                        options={mockClients}
+                        options={clients}
                         selected={selectedClients}
                         onChange={setSelectedClients}
-                        placeholder="Choose one or more clients..."
+                        placeholder={isLoadingClients ? "Loading clients..." : "Choose one or more clients..."}
                         className="w-full"
                     />
                 </div>
