@@ -107,7 +107,7 @@ const FilterButton = ({ label, value }: { label: string; value: string }) => (
 
 const RequestCard = ({ request }: { request: typeof requests[0] }) => {
     return (
-        <Card className="bg-white hover:shadow-md transition-shadow flex flex-col">
+        <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
             <CardHeader className="p-4 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
@@ -133,25 +133,39 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
-            <CardContent className="p-4 pt-0 flex-grow">
+            <CardContent className="p-4 pt-0 flex-grow flex flex-col">
                 <h3 className="font-bold text-lg mb-1">{request.title}</h3>
                 <p className="text-xs text-muted-foreground mb-2">Due: {request.dueDate}</p>
-                <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs text-muted-foreground">{request.progress}%</span>
-                    <Progress value={request.progress} className="h-1" />
-                </div>
-                <div className="flex justify-between text-center">
-                    <div>
-                        <p className="font-bold">{request.approved}</p>
-                        <p className="text-xs text-muted-foreground">Approved</p>
+                
+                <div className="relative flex-grow flex flex-col justify-center min-h-[90px]">
+                    {/* Normal view */}
+                    <div className="space-y-3 transition-opacity duration-200 group-hover:opacity-0">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{request.progress}%</span>
+                            <Progress value={request.progress} className="h-1" />
+                        </div>
+                        <div className="flex justify-between text-center">
+                            <div>
+                                <p className="font-bold">{request.approved}</p>
+                                <p className="text-xs text-muted-foreground">Approved</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">{request.complete}</p>
+                                <p className="text-xs text-muted-foreground">Complete</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">{request.toDo}</p>
+                                <p className="text-xs text-muted-foreground">To Do</p>
+                            </div>
+                        </div>
                     </div>
-                     <div>
-                        <p className="font-bold">{request.complete}</p>
-                        <p className="text-xs text-muted-foreground">Complete</p>
-                    </div>
-                     <div>
-                        <p className="font-bold">{request.toDo}</p>
-                        <p className="text-xs text-muted-foreground">To Do</p>
+                    
+                    {/* Hover view */}
+                    <div className="absolute inset-0 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+                        <div className="flex flex-col gap-2 w-full px-4">
+                            <Button variant="outline">PREVIEW</Button>
+                            <Button className="bg-indigo-600 hover:bg-indigo-700">PUBLISH</Button>
+                        </div>
                     </div>
                 </div>
             </CardContent>
