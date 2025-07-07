@@ -108,6 +108,16 @@ const galleryTemplates = [
       },
     ],
   },
+  {
+    category: "Bookkeeping",
+    categoryColor: "text-orange-500",
+    items: [],
+  },
+  {
+    category: "Coaching/Consulting",
+    categoryColor: "text-amber-500",
+    items: [],
+  },
 ];
 
 
@@ -152,7 +162,7 @@ export default function TemplatesPage() {
                             <li key={cat.name}>
                                 <a
                                     href={cat.href}
-                                    onClick={(e) => { e.preventDefault(); setActiveCategory(cat.name); }}
+                                    onClick={() => setActiveCategory(cat.name)}
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors ${activeCategory === cat.name ? 'text-primary' : 'text-foreground hover:bg-muted'}`}
                                 >
                                     <span className={`h-2 w-2 rounded-full ${cat.color.replace('text-', 'bg-')}`}></span>
@@ -164,7 +174,7 @@ export default function TemplatesPage() {
                 </aside>
                 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto scroll-smooth">
                     {/* Header */}
                      <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                         <div className="flex items-center justify-end gap-2">
@@ -220,7 +230,7 @@ export default function TemplatesPage() {
 
                         {/* Gallery Templates */}
                         {galleryTemplates.map((category) => (
-                            <section key={category.category} id={category.category.toLowerCase().replace(/[\s&]+/g, '-')}>
+                            <section key={category.category} id={category.category.toLowerCase().replace(/[\s&/]+/g, '-')}>
                                 <h2 className={`text-xl font-bold mb-4 ${category.categoryColor}`}>{category.category}</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                     {category.items.map((template) => (
