@@ -67,6 +67,10 @@ function MultiSelect({
                     variant="secondary"
                     key={option.value}
                     className="mr-1 mb-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUnselect(option.value);
+                    }}
                   >
                     {option.label}
                     <span
@@ -74,21 +78,15 @@ function MultiSelect({
                       tabIndex={0}
                       aria-label={`Remove ${option.label}`}
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnselect(option.value);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
                           e.stopPropagation();
-                          handleUnselect(option.value)
+                          handleUnselect(option.value);
                         }
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                      }}
-                      onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleUnselect(option.value)
                       }}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
@@ -114,7 +112,6 @@ function MultiSelect({
                     value={option.value}
                     onMouseDown={(e) => {
                       e.preventDefault();
-                      e.stopPropagation();
                     }}
                     onSelect={(currentValue) => {
                         onChange(
@@ -122,7 +119,6 @@ function MultiSelect({
                             ? selected.filter((item) => item !== currentValue)
                             : [...selected, currentValue]
                         )
-                        setOpen(true)
                     }}
                 >
                     <Check
