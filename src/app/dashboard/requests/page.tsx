@@ -4,7 +4,6 @@
 import { 
     Users, 
     MoreHorizontal, 
-    Folder, 
     ChevronDown, 
     LayoutGrid, 
     Search,
@@ -151,24 +150,33 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                 <h3 className="font-bold mb-1">{request.title}</h3>
                 <p className="text-xs text-muted-foreground mb-4">Due: {request.dueDate}</p>
                 
-                <div className="space-y-3 mt-auto">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{progress.toFixed(0)}%</span>
-                        <Progress value={progress} className="h-1" />
+                <div className="mt-auto relative min-h-[60px]">
+                    {/* Default state: Progress and stats */}
+                    <div className="space-y-3 transition-opacity duration-200 group-hover:opacity-0">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{progress.toFixed(0)}%</span>
+                            <Progress value={progress} className="h-1" />
+                        </div>
+                        <div className="flex justify-between text-center">
+                            <div>
+                                <p className="font-bold">{request.approved}</p>
+                                <p className="text-xs text-muted-foreground">Approved</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">{request.complete}</p>
+                                <p className="text-xs text-muted-foreground">Complete</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">{request.toDo}</p>
+                                <p className="text-xs text-muted-foreground">To Do</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex justify-between text-center">
-                        <div>
-                            <p className="font-bold">{request.approved}</p>
-                            <p className="text-xs text-muted-foreground">Approved</p>
-                        </div>
-                        <div>
-                            <p className="font-bold">{request.complete}</p>
-                            <p className="text-xs text-muted-foreground">Complete</p>
-                        </div>
-                        <div>
-                            <p className="font-bold">{request.toDo}</p>
-                            <p className="text-xs text-muted-foreground">To Do</p>
-                        </div>
+
+                    {/* Hover state: Buttons */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                         <Button variant="outline" size="sm" className="rounded-full px-8 bg-white">PREVIEW</Button>
+                         <Button size="sm" className="rounded-full px-8">PUBLISH</Button>
                     </div>
                 </div>
             </CardContent>
@@ -317,7 +325,7 @@ const RequestsGrid = ({ owner }: { owner: typeof ownerData }) => {
                         <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
                             <Layers className="h-8 w-8 text-slate-400" />
                         </div>
-                        <Button variant="ghost" className="text-violet-700 font-semibold bg-violet-200/80 hover:bg-violet-200 px-4 py-2 rounded-lg">
+                        <Button variant="ghost" className="text-primary font-semibold bg-primary/20 hover:bg-primary/30 px-4 py-2 rounded-lg">
                             ADD NEW REQUEST
                         </Button>
                     </div>
