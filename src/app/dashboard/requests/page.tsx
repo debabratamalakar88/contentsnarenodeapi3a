@@ -10,7 +10,8 @@ import {
     Search,
     Layers,
     List,
-    User
+    User,
+    Mail
 } from "lucide-react"
 import { useState } from "react";
 
@@ -56,7 +57,7 @@ const requests = [
   },
   {
     id: "REQ-002",
-    title: "Now Request",
+    title: "New Request",
     client: { name: "(No Client)", initial: "" },
     clientCompany: "",
     dueDate: "21/07/2025",
@@ -89,6 +90,13 @@ const requests = [
   },
 ]
 
+const ownerData = {
+    name: "Dev Test",
+    email: "debabrata@narayanidigital.com",
+    avatarInitial: "DT",
+    requests: requests
+}
+
 const FilterButton = ({ label, value }: { label: string; value: string }) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -103,13 +111,22 @@ const FilterButton = ({ label, value }: { label: string; value: string }) => (
 )
 
 const RequestCard = ({ request }: { request: typeof requests[0] }) => {
+    const totalTasks = request.complete + request.toDo;
+    const progress = totalTasks > 0 ? (request.complete / totalTasks) * 100 : 0;
+    
     return (
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
             <CardHeader className="p-4 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                     {request.client.name === "(No Client)" ? (
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                            <Users className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                     ) : (
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs bg-blue-100 text-blue-800">{request.client.initial}</AvatarFallback>
+                        </Avatar>
+                     )}
                     <div>
                         <p className="text-sm font-semibold">{request.client.name}</p>
                         <p className="text-xs text-muted-foreground">Client</p>
@@ -131,44 +148,32 @@ const RequestCard = ({ request }: { request: typeof requests[0] }) => {
                 </DropdownMenu>
             </CardHeader>
             <CardContent className="p-4 pt-0 flex-grow flex flex-col">
-                <h3 className="font-bold text-lg mb-1">{request.title}</h3>
-                <p className="text-xs text-muted-foreground mb-2">Due: {request.dueDate}</p>
+                <h3 className="font-bold mb-1">{request.title}</h3>
+                <p className="text-xs text-muted-foreground mb-4">Due: {request.dueDate}</p>
                 
-                <div className="relative flex-grow flex flex-col justify-center min-h-[90px]">
-                    <div className="space-y-3 transition-opacity duration-200 group-hover:opacity-0">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{request.toDo > 0 ? ((request.complete / (request.complete + request.toDo)) * 100).toFixed(0) : 100}%</span>
-                            <Progress value={request.toDo > 0 ? ((request.complete / (request.complete + request.toDo)) * 100) : 100} className="h-1" />
-                        </div>
-                        <div className="flex justify-between text-center">
-                            <div>
-                                <p className="font-bold">{request.approved}</p>
-                                <p className="text-xs text-muted-foreground">Approved</p>
-                            </div>
-                            <div>
-                                <p className="font-bold">{request.complete}</p>
-                                <p className="text-xs text-muted-foreground">Complete</p>
-                            </div>
-                            <div>
-                                <p className="font-bold">{request.toDo}</p>
-                                <p className="text-xs text-muted-foreground">To Do</p>
-                            </div>
-                        </div>
+                <div className="space-y-3 mt-auto">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{progress.toFixed(0)}%</span>
+                        <Progress value={progress} className="h-1" />
                     </div>
-                    
-                    <div className="absolute inset-0 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-                        <div className="flex flex-col gap-2 w-full px-4">
-                            <Button variant="outline" size="sm" className="rounded-full">PREVIEW</Button>
-                            <Button size="sm" className="rounded-full">PUBLISH</Button>
+                    <div className="flex justify-between text-center">
+                        <div>
+                            <p className="font-bold">{request.approved}</p>
+                            <p className="text-xs text-muted-foreground">Approved</p>
+                        </div>
+                        <div>
+                            <p className="font-bold">{request.complete}</p>
+                            <p className="text-xs text-muted-foreground">Complete</p>
+                        </div>
+                        <div>
+                            <p className="font-bold">{request.toDo}</p>
+                            <p className="text-xs text-muted-foreground">To Do</p>
                         </div>
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-between items-center mt-auto">
-                 <Badge variant="outline" className="font-semibold">{request.status.toUpperCase()}</Badge>
-                 <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">{request.client.initial}</AvatarFallback>
-                 </Avatar>
+            <CardFooter className="p-4 pt-0">
+                 <Badge variant="outline" className="font-semibold text-gray-600 bg-gray-100">{request.status.toUpperCase()}</Badge>
             </CardFooter>
         </Card>
     )
@@ -221,7 +226,7 @@ const RequestsTable = ({ requests }: { requests: any[] }) => {
         <div>
             <div className="flex items-center gap-4 p-4 bg-background rounded-t-lg border-x border-t">
                 <Avatar className="h-10 w-10 bg-muted">
-                     <User className="h-6 w-6 text-muted-foreground" />
+                     <AvatarFallback><User className="h-6 w-6 text-muted-foreground" /></AvatarFallback>
                 </Avatar>
                 <div>
                     <div className="flex items-center gap-2">
@@ -271,6 +276,53 @@ const RequestsTable = ({ requests }: { requests: any[] }) => {
                     </TableBody>
                 </Table>
             </Card>
+        </div>
+    )
+}
+
+const RequestsGrid = ({ owner }: { owner: typeof ownerData }) => {
+    return (
+        <div>
+             <div className="flex items-center gap-4 p-4">
+                <Avatar className="h-10 w-10 bg-muted">
+                     <AvatarFallback><User className="h-6 w-6 text-muted-foreground" /></AvatarFallback>
+                </Avatar>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold">{owner.name}</p>
+                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">YOU</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        <span>{owner.email}</span>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto">
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Collapse</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {owner.requests.map(request => (
+                    <RequestCard key={request.id} request={request} />
+                ))}
+                <Link href="/dashboard/requests/new">
+                    <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[290px] h-full text-muted-foreground">
+                        <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
+                            <Layers className="h-8 w-8 text-slate-400" />
+                        </div>
+                        <Button variant="ghost" className="text-violet-700 font-semibold bg-violet-200/80 hover:bg-violet-200 px-4 py-2 rounded-lg">
+                            ADD NEW REQUEST
+                        </Button>
+                    </div>
+                </Link>
+            </div>
         </div>
     )
 }
@@ -329,21 +381,7 @@ export default function RequestsPage() {
 
             <main className="flex-1 p-6 overflow-y-auto">
                 {viewMode === 'grid' ? (
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                        {requests.map(request => (
-                            <RequestCard key={request.id} request={request} />
-                        ))}
-                        <Link href="/dashboard/requests/new">
-                            <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[265px] h-full text-muted-foreground">
-                                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                                    <Layers className="h-8 w-8 text-slate-400" />
-                                </div>
-                                <div className="text-purple-700 font-semibold bg-purple-200/80 px-4 py-2 rounded-md">
-                                    ADD NEW REQUEST
-                                </div>
-                            </div>
-                        </Link>
-                    </div>
+                     <RequestsGrid owner={ownerData} />
                 ) : (
                     <RequestsTable requests={requests} />
                 )}
