@@ -506,7 +506,7 @@ export default function NewRequestWizardPage() {
                 <div className="ml-auto flex items-center gap-2">
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={currentStepIndex === 0 && !canProceedFromTemplates}>
-                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                            {currentStep === 'Essentials' ? 'Save & Continue' : steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}
                 </div>
