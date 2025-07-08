@@ -423,7 +423,7 @@ export default function EditRequestWizardPage() {
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save &amp; Continue <ChevronRight className="h-4 w-4 ml-1" />
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                     )}
                 </div>
