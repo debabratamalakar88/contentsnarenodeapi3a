@@ -85,6 +85,66 @@ const renderQuestionInput = (question: Question) => {
                 ))}
                 </RadioGroup>
             )
+        case 'formatted-text':
+             return <div className="p-3 border rounded-md bg-muted text-sm text-muted-foreground italic">Formatted Text Preview</div>;
+        case 'image-upload':
+             return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
+        case 'address':
+             return <Textarea id={`preview-${question.id}`} placeholder="123 Main St, Anytown, USA" name={question.apiId} />;
+        case 'number':
+             return <Input type="number" id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />;
+        case 'currency':
+             return (
+                 <div className="relative max-w-[240px]">
+                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
+                     <Input type="number" id={`preview-${question.id}`} placeholder="100.00" name={question.apiId} className="pl-7" />
+                 </div>
+             );
+        case 'country':
+             return <Input type="text" id={`preview-${question.id}`} placeholder="United States" name={question.apiId} />;
+        case 'date-range':
+             return (
+                 <div className="flex items-center gap-2">
+                     <Input type="date" id={`preview-${question.id}-start`} name={`${question.apiId}_start`} />
+                     <span>to</span>
+                     <Input type="date" id={`preview-${question.id}-end`} name={`${question.apiId}_end`} />
+                 </div>
+             );
+        case 'image-choice':
+            return (
+                <div className="flex gap-4 flex-wrap">
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 border p-2 rounded-md">
+                            <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
+                                <span className="text-xs text-muted-foreground">Image</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value={opt.value} id={`preview-${question.id}-${i}`} />
+                                <label htmlFor={`preview-${question.id}-${i}`} className="text-sm font-medium">{opt.label}</label>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        case 'table':
+             return <p className="p-3 border rounded-md bg-muted text-sm text-muted-foreground italic">[Table Preview]</p>;
+        case 'signature':
+             return <div className="w-full h-24 border-dashed border-2 rounded-md flex items-center justify-center text-muted-foreground">Signature Area</div>;
+        case 'task-list':
+            return (
+                <div className="space-y-2">
+                {(question.options || [{label: 'Sample Task', value: 'task1'}]).map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                        <Checkbox id={`preview-${question.id}-${i}`} />
+                        <label htmlFor={`preview-${question.id}-${i}`}>{opt.label}</label>
+                    </div>
+                ))}
+                </div>
+            );
+        case 'identity-verification':
+            return <Button variant="outline">Verify Identity</Button>;
+        case 'abn-acn':
+            return <Input type="text" id={`preview-${question.id}`} placeholder="Enter ABN/ACN" name={question.apiId} />;
         case 'icon-selector':
             return (
                 <Button variant="outline">
