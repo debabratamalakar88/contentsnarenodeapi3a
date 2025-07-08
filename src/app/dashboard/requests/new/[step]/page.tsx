@@ -10,7 +10,7 @@ import BuilderStep from '../components/BuilderStep';
 import PreviewStep from '../components/PreviewStep';
 import FinalizeStep from '../components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import { createRequest, updateRequest } from "@/lib/api";
 
 
 // Type definitions for the entire wizard
@@ -121,10 +122,12 @@ export default function NewRequestWizardPage() {
     const [requestDescription, setRequestDescription] = useState("Please provide all the necessary documents and information to get you set up in our system.");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
+    const [requestId, setRequestId] = useState<number | null>(null);
+    const [startedFromScratch, setStartedFromScratch] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // State to track wizard progress
     const [maxVisitedStepIndex, setMaxVisitedStepIndex] = useState(currentStepIndex);
-    const [canProceedFromTemplates, setCanProceedFromTemplates] = useState(false);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -142,18 +145,72 @@ export default function NewRequestWizardPage() {
         }
     }, [currentStepIndex, maxVisitedStepIndex]);
 
-     useEffect(() => {
-        // Persist progress when navigating back and forth
-        if (maxVisitedStepIndex > 0) {
-            setCanProceedFromTemplates(true);
+    const handleProceedFromTemplates = (isFromScratch: boolean) => {
+        setStartedFromScratch(isFromScratch);
+        if (maxVisitedStepIndex < 1) {
+            setMaxVisitedStepIndex(1);
         }
-    }, [maxVisitedStepIndex]);
+        router.push('/dashboard/requests/new/essentials');
+    };
 
+    const nextStep = async () => {
+        if (currentStepIndex >= steps.length - 1) return;
 
-    const nextStep = () => {
-        if (currentStepIndex < steps.length - 1) {
-            const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/dashboard/requests/new/${nextStepSlug}`);
+        // Save logic for Essentials step and beyond
+        if (currentStepIndex >= 1) {
+             if (currentStepIndex === 1 && !requestTitle.trim()) {
+                toast({
+                    title: "Request Title Required",
+                    description: "Please provide a title for your request.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            setIsSubmitting(true);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+                setIsSubmitting(false);
+                return;
+            }
+            
+            try {
+                const payload = {
+                    title: requestTitle,
+                    description: requestDescription,
+                    form_data: pages,
+                    status: 'draft' as const,
+                    started_from_scratch: startedFromScratch,
+                };
+
+                if (requestId) {
+                    await updateRequest(token, requestId, payload);
+                    toast({ title: "Request draft updated" });
+                } else {
+                    const newRequest = await createRequest(token, payload);
+                    setRequestId(newRequest.id);
+                    toast({ title: "Request draft created" });
+                }
+
+                // Proceed to next step on success
+                const nextStepSlug = steps[currentStepIndex + 1].slug;
+                router.push(`/dashboard/requests/new/${nextStepSlug}`);
+
+            } catch (error: any) {
+                const description = error.errors
+                    ? Object.values(error.errors).flat().join("\n")
+                    : error.message || "An unexpected error occurred.";
+                toast({
+                    title: "Save Failed",
+                    description,
+                    variant: "destructive",
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
+        } else {
+            // For Templates step, navigation is handled by onProceed
         }
     };
     
@@ -164,14 +221,6 @@ export default function NewRequestWizardPage() {
         } else {
             router.push('/dashboard/requests');
         }
-    };
-
-    const handleTemplateSelection = () => {
-        setCanProceedFromTemplates(true);
-        if (maxVisitedStepIndex < 1) {
-          setMaxVisitedStepIndex(1);
-        }
-        router.push('/dashboard/requests/new/essentials');
     };
 
     const handleStepClick = (slug: string) => {
@@ -468,7 +517,7 @@ export default function NewRequestWizardPage() {
 
     const renderStep = () => {
         switch (currentStep) {
-            case "Templates": return <TemplatesStep onNext={handleTemplateSelection} />;
+            case "Templates": return <TemplatesStep onProceed={handleProceedFromTemplates} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
                                         pages={pages}
@@ -505,7 +554,8 @@ export default function NewRequestWizardPage() {
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {currentStepIndex < steps.length - 1 && (
-                        <Button onClick={nextStep} disabled={currentStepIndex === 0 && !canProceedFromTemplates}>
+                        <Button onClick={nextStep} disabled={isSubmitting || (currentStepIndex === 0)}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {currentStep === 'Essentials' ? 'Save & Continue' : (
                                 <>
                                     {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />

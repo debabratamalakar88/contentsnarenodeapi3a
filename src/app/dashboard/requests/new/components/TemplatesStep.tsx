@@ -250,10 +250,10 @@ const TemplateCard = ({ template, onSelect }: { template: typeof myTemplates[0];
 );
 
 interface TemplatesStepProps {
-    onNext: () => void;
+    onProceed: (isFromScratch: boolean) => void;
 }
 
-export default function TemplatesStep({ onNext }: TemplatesStepProps) {
+export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [activeCategory, setActiveCategory] = useState("My Templates");
     const mainRef = useRef<HTMLDivElement>(null);
 
@@ -292,7 +292,7 @@ export default function TemplatesStep({ onNext }: TemplatesStepProps) {
                     ))}
                 </ul>
                 <div className="mt-auto pt-4">
-                  <Button variant="outline" className="w-full" onClick={onNext}>
+                  <Button variant="outline" className="w-full" onClick={() => onProceed(true)}>
                       Start From Scratch
                   </Button>
                 </div>
@@ -303,7 +303,7 @@ export default function TemplatesStep({ onNext }: TemplatesStepProps) {
                 {/* Header */}
                  <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                     <div className="flex items-center gap-4">
-                        <Button className="bg-primary hover:bg-primary/90" onClick={onNext}>
+                        <Button className="bg-primary hover:bg-primary/90" onClick={() => onProceed(true)}>
                             START FROM SCRATCH
                         </Button>
                         <div className="relative flex-1">
@@ -319,7 +319,7 @@ export default function TemplatesStep({ onNext }: TemplatesStepProps) {
                         <h2 className="text-xl font-bold mb-4">My Templates</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                             {myTemplates.map((template) => (
-                                <TemplateCard key={template.id} template={template} onSelect={onNext} />
+                                <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false)} />
                             ))}
                         </div>
                     </section>
@@ -329,7 +329,7 @@ export default function TemplatesStep({ onNext }: TemplatesStepProps) {
                             <h2 className={`text-xl font-bold mb-4 ${category.categoryColor}`}>{category.category}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                 {category.items.map((template) => (
-                                    <TemplateCard key={template.id} template={template as any} onSelect={onNext} />
+                                    <TemplateCard key={template.id} template={template as any} onSelect={() => onProceed(false)} />
                                 ))}
                             </div>
                         </section>
