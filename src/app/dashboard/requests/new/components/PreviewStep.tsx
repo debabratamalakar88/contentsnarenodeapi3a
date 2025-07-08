@@ -71,51 +71,56 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         const selection = window.getSelection();
 
         if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
-            alert("Please select the text you want to link.");
+            alert("Please select the text you want to link first.");
             return;
         }
 
-        const range = selection.getRangeAt(0).cloneRange();
+        const savedRange = selection.getRangeAt(0).cloneRange();
         const url = window.prompt("Enter the URL:", "https://");
 
         if (url) {
             editorRef.current?.focus();
-            const currentSelection = window.getSelection();
-            if(currentSelection){
-                currentSelection.removeAllRanges();
-                currentSelection.addRange(range);
-            }
-            document.execCommand('createLink', false, url);
-            updateToolbarState();
-            updateContent();
+            setTimeout(() => {
+                const currentSelection = window.getSelection();
+                if (currentSelection) {
+                    currentSelection.removeAllRanges();
+                    currentSelection.addRange(savedRange);
+                    document.execCommand('createLink', false, url);
+                }
+                updateToolbarState();
+                updateContent();
+            }, 0);
         }
     };
     
     const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         let selection = window.getSelection();
-        let range: Range | null = null;
+        let savedRange: Range | null = null;
 
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            range = selection.getRangeAt(0).cloneRange();
+            savedRange = selection.getRangeAt(0).cloneRange();
         } else if (editorRef.current) {
             editorRef.current.focus();
-            range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
+            savedRange = document.createRange();
+            savedRange.selectNodeContents(editorRef.current);
+            savedRange.collapse(false);
         }
 
         const emoji = window.prompt("Enter an emoji to insert:");
 
-        if (emoji && range) {
-            const currentSelection = window.getSelection();
-            if (currentSelection) {
-                currentSelection.removeAllRanges();
-                currentSelection.addRange(range);
-            }
-            document.execCommand('insertText', false, emoji);
-            updateToolbarState();
-            updateContent();
+        if (emoji && savedRange) {
+            editorRef.current?.focus();
+            setTimeout(() => {
+                const currentSelection = window.getSelection();
+                if (currentSelection) {
+                    currentSelection.removeAllRanges();
+                    currentSelection.addRange(savedRange!);
+                    document.execCommand('insertText', false, emoji);
+                }
+                updateToolbarState();
+                updateContent();
+            }, 0);
         }
     };
 
