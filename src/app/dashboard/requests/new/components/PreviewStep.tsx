@@ -472,7 +472,7 @@ const renderQuestionInput = (question: Question) => {
                 </div>
             );
         case 'button':
-            return <Button variant={question.buttonVariant || 'default'}>{question.label}</Button>;
+            return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'}>{question.label}</Button>;
         default:
             return null
     }

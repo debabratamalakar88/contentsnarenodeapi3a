@@ -46,6 +46,7 @@ export interface Question {
   defaultValue?: string;
   apiId?: string;
   buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  buttonType?: 'button' | 'submit';
 }
 export interface Section {
   id: number;
@@ -446,6 +447,7 @@ export default function NewRequestWizardPage() {
                             };
                             if (type === 'button') {
                                 newQuestion.buttonVariant = 'default';
+                                newQuestion.buttonType = 'button';
                             }
                             return { ...section, questions: [...section.questions, newQuestion] };
                         }
@@ -751,24 +753,41 @@ export default function NewRequestWizardPage() {
                                 </div>
                             )}
                             {tempQuestion.type === 'button' && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="buttonVariant">Button Style</Label>
-                                    <Select
-                                        value={tempQuestion.buttonVariant || 'default'}
-                                        onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
-                                    >
-                                        <SelectTrigger id="buttonVariant">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="default">Default</SelectItem>
-                                            <SelectItem value="destructive">Destructive</SelectItem>
-                                            <SelectItem value="outline">Outline</SelectItem>
-                                            <SelectItem value="secondary">Secondary</SelectItem>
-                                            <SelectItem value="ghost">Ghost</SelectItem>
-                                            <SelectItem value="link">Link</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="buttonVariant">Button Style</Label>
+                                        <Select
+                                            value={tempQuestion.buttonVariant || 'default'}
+                                            onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
+                                        >
+                                            <SelectTrigger id="buttonVariant">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="default">Default</SelectItem>
+                                                <SelectItem value="destructive">Destructive</SelectItem>
+                                                <SelectItem value="outline">Outline</SelectItem>
+                                                <SelectItem value="secondary">Secondary</SelectItem>
+                                                <SelectItem value="ghost">Ghost</SelectItem>
+                                                <SelectItem value="link">Link</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="buttonType">Button Type</Label>
+                                        <Select
+                                            value={tempQuestion.buttonType || 'button'}
+                                            onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}
+                                        >
+                                            <SelectTrigger id="buttonType">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="button">Button</SelectItem>
+                                                <SelectItem value="submit">Submit</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
                             )}
 
@@ -795,4 +814,3 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
-
