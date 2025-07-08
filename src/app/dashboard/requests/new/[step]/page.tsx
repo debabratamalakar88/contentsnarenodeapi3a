@@ -525,6 +525,25 @@ export default function NewRequestWizardPage() {
         }));
     };
 
+    const reorderQuestions = (pageId: number, sectionId: number, startIndex: number, endIndex: number) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const pageIndex = newPages.findIndex(p => p.id === pageId);
+            if (pageIndex === -1) return prevPages;
+
+            const sectionIndex = newPages[pageIndex].sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return prevPages;
+            
+            const newQuestions = Array.from(newPages[pageIndex].sections[sectionIndex].questions);
+            const [removed] = newQuestions.splice(startIndex, 1);
+            newQuestions.splice(endIndex, 0, removed);
+            
+            newPages[pageIndex].sections[sectionIndex].questions = newQuestions;
+            
+            return newPages;
+        });
+    };
+
     const handleTempQuestionChange = (field: keyof Question, value: any) => {
         if (tempQuestion) {
             const newTempQuestion = { ...tempQuestion, [field]: value };
@@ -594,6 +613,7 @@ export default function NewRequestWizardPage() {
                                         setActivePageId={setActivePageId}
                                         duplicatePage={duplicatePage}
                                         deletePage={deletePage}
+                                        reorderQuestions={reorderQuestions}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;

@@ -607,7 +607,7 @@ const PreviewStep = ({ title, description, pages }: PreviewStepProps) => {
                                                 <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
                                                 {section.questions.map(question => (
                                                     <div key={question.id} className="grid gap-2 mb-4">
-                                                        {question.type !== 'formatted-text' && question.type !== 'button' && (
+                                                        {question.type !== 'button' && (
                                                             <Label htmlFor={`preview-${question.id}`}>
                                                                 {question.label}
                                                                 {question.required && <span className="text-destructive"> *</span>}
@@ -915,6 +915,25 @@ export default function EditRequestWizardPage() {
         setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, questions: section.questions.filter(q => q.id !== questionId) } : section) } : page));
     };
 
+    const reorderQuestions = (pageId: number, sectionId: number, startIndex: number, endIndex: number) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const pageIndex = newPages.findIndex(p => p.id === pageId);
+            if (pageIndex === -1) return prevPages;
+
+            const sectionIndex = newPages[pageIndex].sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return prevPages;
+            
+            const newQuestions = Array.from(newPages[pageIndex].sections[sectionIndex].questions);
+            const [removed] = newQuestions.splice(startIndex, 1);
+            newQuestions.splice(endIndex, 0, removed);
+            
+            newPages[pageIndex].sections[sectionIndex].questions = newQuestions;
+            
+            return newPages;
+        });
+    };
+
     const handleTempQuestionChange = (field: keyof Question, value: any) => {
         if (tempQuestion) {
             const newTempQuestion = { ...tempQuestion, [field]: value };
@@ -970,7 +989,7 @@ export default function EditRequestWizardPage() {
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}
-                                        duplicatePage={duplicatePage} deletePage={deletePage}
+                                        duplicatePage={duplicatePage} deletePage={deletePage} reorderQuestions={reorderQuestions}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep />;
