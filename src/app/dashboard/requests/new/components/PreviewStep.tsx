@@ -86,10 +86,7 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             )
         case 'formatted-text':
-             return <div
-                className="text-sm"
-                dangerouslySetInnerHTML={{ __html: question.defaultValue || '<p class="text-sm text-muted-foreground italic">No content provided.</p>' }}
-            />;
+             return <Textarea id={`preview-${question.id}`} placeholder="Enter rich text content here..." name={question.apiId} className="min-h-[200px]" />;
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':
