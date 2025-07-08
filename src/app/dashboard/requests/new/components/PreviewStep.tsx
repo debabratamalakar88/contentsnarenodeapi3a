@@ -40,6 +40,10 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const [isUnderline, setIsUnderline] = React.useState(false);
     const [isUl, setIsUl] = React.useState(false);
     const [isOl, setIsOl] = React.useState(false);
+    const [isLeftAligned, setIsLeftAligned] = React.useState(true);
+    const [isCenterAligned, setIsCenterAligned] = React.useState(false);
+    const [isRightAligned, setIsRightAligned] = React.useState(false);
+    const [isJustifyAligned, setIsJustifyAligned] = React.useState(false);
 
     const [emojiPickerOpen, setEmojiPickerOpen] = React.useState(false);
     const [savedRange, setSavedRange] = React.useState<Range | null>(null);
@@ -51,6 +55,15 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             setIsUnderline(document.queryCommandState('underline'));
             setIsUl(document.queryCommandState('insertUnorderedList'));
             setIsOl(document.queryCommandState('insertOrderedList'));
+            
+            const center = document.queryCommandState('justifyCenter');
+            const right = document.queryCommandState('justifyRight');
+            const justify = document.queryCommandState('justifyFull');
+
+            setIsCenterAligned(center);
+            setIsRightAligned(right);
+            setIsJustifyAligned(justify);
+            setIsLeftAligned(!center && !right && !justify);
         }
     }, []);
 
@@ -79,31 +92,30 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         const selection = window.getSelection();
-        let savedRangeInstance: Range | null = null;
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            savedRangeInstance = selection.getRangeAt(0).cloneRange();
+            setSavedRange(selection.getRangeAt(0).cloneRange());
         }
 
         const url = window.prompt("Enter the URL:", "https://");
 
         if (url) {
             editorRef.current?.focus();
-            setTimeout(() => {
-                if (savedRangeInstance) {
-                    const currentSelection = window.getSelection();
-                    if (currentSelection) {
-                        currentSelection.removeAllRanges();
-                        currentSelection.addRange(savedRangeInstance);
-                    }
+            if(savedRange) {
+                const currentSelection = window.getSelection();
+                if (currentSelection) {
+                    currentSelection.removeAllRanges();
+                    currentSelection.addRange(savedRange);
                 }
-                document.execCommand('createLink', false, url);
-                updateToolbarState();
-                updateContent();
-            }, 0);
+            }
+            document.execCommand('createLink', false, url);
+            setSavedRange(null);
+            updateToolbarState();
+            updateContent();
         }
     };
     
     const handleEmojiButtonMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
             setSavedRange(selection.getRangeAt(0).cloneRange());
@@ -196,16 +208,16 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant={isUl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
           <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
+          <Button variant={isLeftAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
+          <Button variant={isCenterAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
+          <Button variant={isRightAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
+          <Button variant={isJustifyAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
           <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
               <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonMouseDown}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonMouseDown} onClick={() => setEmojiPickerOpen(o => !o)}>
                       <Smile className="h-4 w-4" />
                   </Button>
               </PopoverTrigger>
