@@ -69,52 +69,53 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         const selection = window.getSelection();
-        let range: Range | null = null;
-        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-             range = selection.getRangeAt(0).cloneRange();
+
+        if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
+            alert("Please select the text you want to link.");
+            return;
         }
 
-        const url = window.prompt("Enter the URL:");
+        const range = selection.getRangeAt(0).cloneRange();
+        const url = window.prompt("Enter the URL:", "https://");
+
         if (url) {
             editorRef.current?.focus();
-            if (range && selection) {
-                selection.removeAllRanges();
-                selection.addRange(range);
+            const currentSelection = window.getSelection();
+            if(currentSelection){
+                currentSelection.removeAllRanges();
+                currentSelection.addRange(range);
             }
             document.execCommand('createLink', false, url);
-            updateContent();
             updateToolbarState();
+            updateContent();
         }
     };
     
     const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        const selection = window.getSelection();
-        
+        let selection = window.getSelection();
         let range: Range | null = null;
-        
+
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-             range = selection.getRangeAt(0).cloneRange();
+            range = selection.getRangeAt(0).cloneRange();
+        } else if (editorRef.current) {
+            editorRef.current.focus();
+            range = document.createRange();
+            range.selectNodeContents(editorRef.current);
+            range.collapse(false);
         }
 
         const emoji = window.prompt("Enter an emoji to insert:");
-        if (emoji) {
-            editorRef.current?.focus();
-            if (range && selection) {
-                selection.removeAllRanges();
-                selection.addRange(range);
-            } else if (editorRef.current && selection) {
-                // If there was no selection, move to the end
-                const newRange = document.createRange();
-                newRange.selectNodeContents(editorRef.current);
-                newRange.collapse(false);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
-            }
 
+        if (emoji && range) {
+            const currentSelection = window.getSelection();
+            if (currentSelection) {
+                currentSelection.removeAllRanges();
+                currentSelection.addRange(range);
+            }
             document.execCommand('insertText', false, emoji);
-            updateContent();
             updateToolbarState();
+            updateContent();
         }
     };
 
@@ -128,7 +129,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           editor.innerHTML = question.defaultValue || '';
         }
         updateContent();
-    }, []);
+    }, [question.defaultValue, updateContent]);
 
 
     React.useEffect(() => {
