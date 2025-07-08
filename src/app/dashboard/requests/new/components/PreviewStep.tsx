@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { Page, Question } from "../page"
+import type { Page, Question } from "../[step]/page"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
@@ -86,7 +86,10 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             )
         case 'formatted-text':
-             return <div className="p-3 border rounded-md bg-muted text-sm text-muted-foreground italic">Formatted Text Preview</div>;
+             return <div 
+                className="p-3 border rounded-md bg-muted/50" 
+                dangerouslySetInnerHTML={{ __html: question.defaultValue || '<p class="text-sm text-muted-foreground italic">No content provided.</p>' }}
+            />;
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':

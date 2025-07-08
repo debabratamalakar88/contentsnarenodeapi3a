@@ -714,6 +714,18 @@ export default function NewRequestWizardPage() {
                                     <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
+                            {tempQuestion.type === 'formatted-text' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="content">Content</Label>
+                                    <Textarea 
+                                        id="content" 
+                                        value={tempQuestion.defaultValue || ''} 
+                                        onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} 
+                                        placeholder="Enter your formatted text content here. You can use basic HTML for styling."
+                                        className="min-h-[120px]"
+                                    />
+                                </div>
+                            )}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="defaultValue">Default Value</Label>

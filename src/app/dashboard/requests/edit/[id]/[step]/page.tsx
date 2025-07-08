@@ -237,8 +237,10 @@ export default function EditRequestWizardPage() {
     };
 
     const handleStepClick = (slug: string) => {
-        if (slug === 'templates') return; // Do not navigate to templates in edit mode
-        router.push(`/dashboard/requests/edit/${id}/${slug}`);
+        const targetIndex = steps.findIndex(s => s.slug === slug);
+        if (targetIndex > 0 && targetIndex <= maxVisitedStepIndex) {
+          router.push(`/dashboard/requests/edit/${id}/${slug}`);
+        }
     };
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
@@ -568,6 +570,18 @@ export default function EditRequestWizardPage() {
                                 <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Placeholder</Label>
                                     <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
+                                </div>
+                            )}
+                             {tempQuestion.type === 'formatted-text' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="content">Content</Label>
+                                    <Textarea 
+                                        id="content" 
+                                        value={tempQuestion.defaultValue || ''} 
+                                        onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} 
+                                        placeholder="Enter your formatted text content here. You can use basic HTML for styling."
+                                        className="min-h-[120px]"
+                                    />
                                 </div>
                             )}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
