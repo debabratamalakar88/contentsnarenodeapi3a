@@ -80,8 +80,8 @@ const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
     if (!enabled) {
         return null;
     }
-    // Explicitly provide a boolean for isDropDisabled to prevent invariant error
-    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={false}>{children}</Droppable>;
+    // Explicitly provide a boolean for all optional boolean props to prevent invariant error
+    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={false} ignoreContainerClipping={props.ignoreContainerClipping ?? false}>{children}</Droppable>;
 };
 
 const steps = [
