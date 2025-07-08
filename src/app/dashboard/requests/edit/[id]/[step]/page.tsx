@@ -26,6 +26,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import EmojiPicker from "emoji-picker-react";
 
 
 // Type definitions for the entire wizard
@@ -145,6 +147,9 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const [isBold, setIsBold] = React.useState(false);
     const [isItalic, setIsItalic] = React.useState(false);
     const [isUnderline, setIsUnderline] = React.useState(false);
+    
+    const [emojiPickerOpen, setEmojiPickerOpen] = React.useState(false);
+    const [savedRange, setSavedRange] = React.useState<Range | null>(null);
 
     const updateToolbarState = React.useCallback(() => {
         if (editorRef.current) {
@@ -179,58 +184,60 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         const selection = window.getSelection();
-
-        if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
-            alert("Please select the text you want to link first.");
-            return;
+        let savedRangeInstance: Range | null = null;
+        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
+            savedRangeInstance = selection.getRangeAt(0).cloneRange();
         }
 
-        const savedRange = selection.getRangeAt(0).cloneRange();
         const url = window.prompt("Enter the URL:", "https://");
 
         if (url) {
             editorRef.current?.focus();
+            // Use a timeout to ensure focus has returned before restoring selection
             setTimeout(() => {
-                const currentSelection = window.getSelection();
-                if (currentSelection) {
-                    currentSelection.removeAllRanges();
-                    currentSelection.addRange(savedRange);
-                    document.execCommand('createLink', false, url);
+                if (savedRangeInstance) {
+                    const currentSelection = window.getSelection();
+                    if (currentSelection) {
+                        currentSelection.removeAllRanges();
+                        currentSelection.addRange(savedRangeInstance);
+                    }
                 }
+                document.execCommand('createLink', false, url);
                 updateToolbarState();
                 updateContent();
             }, 0);
         }
     };
     
-    const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleEmojiButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        let selection = window.getSelection();
-        let savedRange: Range | null = null;
-
+        const selection = window.getSelection();
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            savedRange = selection.getRangeAt(0).cloneRange();
+            setSavedRange(selection.getRangeAt(0).cloneRange());
         } else if (editorRef.current) {
             editorRef.current.focus();
-            savedRange = document.createRange();
-            savedRange.selectNodeContents(editorRef.current);
-            savedRange.collapse(false);
+            const range = document.createRange();
+            range.selectNodeContents(editorRef.current);
+            range.collapse(false);
+            setSavedRange(range);
         }
+        setEmojiPickerOpen(prev => !prev);
+    };
 
-        const emoji = window.prompt("Enter an emoji to insert:");
-
-        if (emoji && savedRange) {
-            editorRef.current?.focus();
-            setTimeout(() => {
-                const currentSelection = window.getSelection();
-                if (currentSelection) {
-                    currentSelection.removeAllRanges();
-                    currentSelection.addRange(savedRange!);
-                    document.execCommand('insertText', false, emoji);
+    const onEmojiClick = (emojiObject: { emoji: string }) => {
+        if (editorRef.current) {
+            editorRef.current.focus();
+            if (savedRange) {
+                const selection = window.getSelection();
+                if (selection) {
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
                 }
-                updateToolbarState();
-                updateContent();
-            }, 0);
+            }
+            document.execCommand('insertText', false, emojiObject.emoji);
+            setEmojiPickerOpen(false);
+            updateContent();
+            setSavedRange(null);
         }
     };
 
@@ -304,7 +311,16 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmoji}><Smile className="h-4 w-4" /></Button>
+          <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
+              <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonClick}>
+                      <Smile className="h-4 w-4" />
+                  </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-0">
+                  <EmojiPicker onEmojiClick={onEmojiClick} />
+              </PopoverContent>
+          </Popover>
         </div>
         <div className="relative">
              {isPlaceholderVisible && (
