@@ -15,62 +15,93 @@ interface AddressAutocompleteInputProps {
 
 const libraries: ('places')[] = ['places'];
 
-export function AddressAutocompleteInput({ id, name, placeholder, defaultValue }: AddressAutocompleteInputProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-    libraries,
-  })
+// Component with the hook, to be rendered conditionally by the main component.
+function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {apiKey: string}) {
+    const { id, name, placeholder, defaultValue, apiKey } = props;
 
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  const [address, setAddress] = useState(defaultValue || '');
+    const { isLoaded, loadError } = useJsApiLoader({
+        googleMapsApiKey: apiKey,
+        libraries,
+    })
 
-  useEffect(() => {
-    setAddress(defaultValue || '')
-  }, [defaultValue])
+    const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+    const [address, setAddress] = useState(defaultValue || '');
 
-  const onLoad = (ac: google.maps.places.Autocomplete) => {
-    setAutocomplete(ac);
-  };
+    useEffect(() => {
+        setAddress(defaultValue || '')
+    }, [defaultValue])
 
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      setAddress(place.formatted_address || '');
+    const onLoad = (ac: google.maps.places.Autocomplete) => {
+        setAutocomplete(ac);
+    };
+
+    const onPlaceChanged = () => {
+        if (autocomplete !== null) {
+            const placeResult = autocomplete.getPlace();
+            if (placeResult?.formatted_address) {
+                setAddress(placeResult.formatted_address);
+            }
+        }
+    };
+    
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setAddress(e.target.value);
     }
-  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAddress(e.target.value);
+    if (loadError) {
+        console.error("Error loading Google Maps API. Falling back to text input.", loadError);
+        return (
+            <Input
+                id={id}
+                name={name}
+                type="text"
+                placeholder={placeholder || "Enter an address..."}
+                defaultValue={defaultValue}
+            />
+        )
+    }
+
+    if (!isLoaded) {
+        return <Skeleton className="h-10 w-full" />
+    }
+
+    return (
+        <Autocomplete
+            onLoad={onLoad}
+            onPlaceChanged={onPlaceChanged}
+            options={{
+                types: ['address'],
+            }}
+        >
+            <Input
+                id={id}
+                name={name}
+                type="text"
+                placeholder={placeholder || "Start typing an address..."}
+                value={address}
+                onChange={handleInputChange}
+            />
+        </Autocomplete>
+    )
+}
+
+// Main exported component
+export function AddressAutocompleteInput(props: AddressAutocompleteInputProps) {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey) {
+      // If no API key, render a normal text input.
+      return (
+          <Input
+              id={props.id}
+              name={props.name}
+              type="text"
+              placeholder={props.placeholder || "Enter an address..."}
+              defaultValue={props.defaultValue}
+          />
+      );
   }
 
-  if (loadError) {
-    return <Input id={id} name={name} value="Error loading Google Maps" disabled />
-  }
-
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-      return <Input id={id} name={name} value="Google Maps API key is missing" placeholder="Address field disabled" disabled />
-  }
-
-  if (!isLoaded) {
-    return <Skeleton className="h-10 w-full" />
-  }
-
-  return (
-    <Autocomplete
-      onLoad={onLoad}
-      onPlaceChanged={onPlaceChanged}
-      options={{
-        types: ['address'],
-      }}
-    >
-      <Input
-        id={id}
-        name={name}
-        type="text"
-        placeholder={placeholder || "Start typing an address..."}
-        value={address}
-        onChange={handleInputChange}
-      />
-    </Autocomplete>
-  )
+  // We have an API key, so we render the component that uses the hook.
+  return <AddressAutocompleteWithApiKey {...props} apiKey={apiKey} />;
 }
