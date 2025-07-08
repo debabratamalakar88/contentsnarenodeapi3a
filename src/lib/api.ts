@@ -91,6 +91,33 @@ export interface Client {
   updated_at: string;
 }
 
+export interface Request {
+  id: number;
+  title: string;
+  description: string;
+  request_code: string;
+  form_code: string;
+  form_data: any;
+  client_id: number[];
+  status: 'draft' | 'published' | 'completed' | 'archived';
+  allow_comments: boolean;
+  send_option: 'immediately' | 'later';
+  scheduled_at?: string | null;
+  communication_mode: string;
+  started_from_scratch: boolean;
+  due_date: string | null;
+  user_id: number;
+  created_by: number;
+  updated_by?: number | null;
+}
+
+export interface PaginatedRequests {
+    current_page: number;
+    data: Request[];
+    last_page: number;
+    total: number;
+}
+
 
 async function handleResponse(response: Response) {
   if (response.status === 204 || response.headers.get("content-length") === "0") {
@@ -578,6 +605,107 @@ export async function forceDeleteAdminClient(token: string, id: number) {
   const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}/force`, {
     method: 'DELETE',
     headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+// ===================================
+// REQUEST API
+// ===================================
+export async function getRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
+  const response = await fetch(`${API_BASE_URL}/api/requests?page=${page}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function createRequest(token: string, requestData: any): Promise<Request> {
+  const response = await fetch(`${API_BASE_URL}/api/requests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(requestData),
+  });
+  return handleResponse(response);
+}
+
+export async function getRequest(token: string, id: number): Promise<Request> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function updateRequest(token: string, id: number, requestData: Partial<Request>): Promise<Request> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(requestData),
+  });
+  return handleResponse(response);
+}
+
+export async function softDeleteRequest(token: string, id: number): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function forceDeleteRequest(token: string, id: number): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/force`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function restoreRequest(token: string, id: number): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/restore`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function archiveRequest(token: string, id: number): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/archive`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
   });
   return handleResponse(response);
 }
