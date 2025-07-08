@@ -25,6 +25,7 @@ import { createRequest, updateRequest } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
+import { IconSelector } from "@/components/ui/icon-selector";
 
 
 // Type definitions for the entire wizard

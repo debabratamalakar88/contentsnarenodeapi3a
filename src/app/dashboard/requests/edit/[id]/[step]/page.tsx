@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from "@/components/ui/address-autocomplete-input";
 import { countries } from "@/lib/countries";
+import { IconSelector } from "@/components/ui/icon-selector";
 
 
 // Type definitions for the entire wizard
@@ -557,12 +558,7 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             );
         case 'icon-selector':
-            return (
-                <Button variant="outline">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Select an Icon
-                </Button>
-            );
+            return <IconSelector name={question.apiId} defaultValue={question.defaultValue} />;
         case 'color-picker':
             return (
                 <div className="flex items-center gap-2">
