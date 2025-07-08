@@ -192,7 +192,7 @@ export default function NewRequestWizardPage() {
                 } else {
                     const newRequest = await createRequest(token, payload);
                     toast({ title: "Request draft created" });
-                    router.push(`/dashboard/requests/edit/${newRequest.id}/builder`);
+                    router.push(`/dashboard/requests/edit/${newRequest.request_code}/builder`);
                     return;
                 }
 

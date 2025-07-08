@@ -83,7 +83,8 @@ export default function EditRequestWizardPage() {
     const params = useParams();
     const { toast } = useToast();
     
-    const id = Number(Array.isArray(params.id) ? params.id[0] : params.id);
+    // The `params.id` here will actually be the `request_code` string
+    const identifier = Array.isArray(params.id) ? params.id[0] : params.id;
     const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'templates');
 
     const currentStepIndex = useMemo(() => {
@@ -97,7 +98,7 @@ export default function EditRequestWizardPage() {
     const [requestDescription, setRequestDescription] = useState("");
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
-    const [requestId, setRequestId] = useState<number | null>(id);
+    const [requestId, setRequestId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -115,7 +116,7 @@ export default function EditRequestWizardPage() {
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
-        if (!token || !id) {
+        if (!token || !identifier) {
             toast({ title: "Error", description: "Invalid request or not logged in.", variant: "destructive" });
             router.push('/dashboard/requests');
             return;
@@ -123,7 +124,7 @@ export default function EditRequestWizardPage() {
 
         async function fetchRequestData() {
             try {
-                const data = await getRequest(token, id);
+                const data = await getRequest(token, identifier);
                 setRequestId(data.id);
                 setRequestTitle(data.title);
                 setRequestDescription(data.description);
@@ -140,7 +141,7 @@ export default function EditRequestWizardPage() {
         }
 
         fetchRequestData();
-    }, [id, router, toast]);
+    }, [identifier, router, toast]);
 
     const nextStep = async () => {
         if (currentStepIndex >= steps.length - 1) return;
@@ -164,7 +165,7 @@ export default function EditRequestWizardPage() {
             toast({ title: "Request draft updated" });
 
             const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/dashboard/requests/edit/${id}/${nextStepSlug}`);
+            router.push(`/dashboard/requests/edit/${identifier}/${nextStepSlug}`);
 
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -177,14 +178,14 @@ export default function EditRequestWizardPage() {
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/dashboard/requests/edit/${id}/${prevStepSlug}`);
+            router.push(`/dashboard/requests/edit/${identifier}/${prevStepSlug}`);
         } else {
             router.push('/dashboard/requests');
         }
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/dashboard/requests/edit/${id}/${slug}`);
+        router.push(`/dashboard/requests/edit/${identifier}/${slug}`);
     };
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {

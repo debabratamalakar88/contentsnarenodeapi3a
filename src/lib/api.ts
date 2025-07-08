@@ -637,8 +637,8 @@ export async function createRequest(token: string, requestData: any): Promise<Re
   return handleResponse(response);
 }
 
-export async function getRequest(token: string, id: number): Promise<Request> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+export async function getRequest(token: string, identifier: number | string): Promise<Request> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${identifier}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
