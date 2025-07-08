@@ -385,6 +385,42 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     );
 };
 
+const DateRangePicker = ({ question }: { question: Question }) => {
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+
+    const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newStartDate = e.target.value;
+        setStartDate(newStartDate);
+        // if new start date is after end date, clear end date
+        if (endDate && newStartDate > endDate) {
+            setEndDate('');
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            <Input
+                type="date"
+                id={`preview-${question.id}-start`}
+                name={`${question.apiId}_start`}
+                value={startDate}
+                onChange={handleStartDateChange}
+            />
+            <span>to</span>
+            <Input
+                type="date"
+                id={`preview-${question.id}-end`}
+                name={`${question.apiId}_end`}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                disabled={!startDate}
+            />
+        </div>
+    );
+};
+
 const renderQuestionInput = (question: Question) => {
     switch(question.type) {
         case 'text':
@@ -462,13 +498,7 @@ const renderQuestionInput = (question: Question) => {
         case 'country':
              return <Input type="text" id={`preview-${question.id}`} placeholder="United States" name={question.apiId} />;
         case 'date-range':
-             return (
-                 <div className="flex items-center gap-2">
-                     <Input type="date" id={`preview-${question.id}-start`} name={`${question.apiId}_start`} />
-                     <span>to</span>
-                     <Input type="date" id={`preview-${question.id}-end`} name={`${question.apiId}_end`} />
-                 </div>
-             );
+             return <DateRangePicker question={question} />;
         case 'image-choice':
             return (
                 <div className="flex gap-4 flex-wrap">
