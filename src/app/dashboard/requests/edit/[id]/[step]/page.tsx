@@ -1,7 +1,7 @@
 
 
 'use client'
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '../../../new/components/StepNavigation';
