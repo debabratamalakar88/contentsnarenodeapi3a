@@ -31,12 +31,35 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const [content, setContent] = React.useState(question.defaultValue || '');
     const [wordCount, setWordCount] = React.useState(0);
     const editorRef = React.useRef<HTMLDivElement>(null);
+    
+    const [isBold, setIsBold] = React.useState(false);
+    const [isItalic, setIsItalic] = React.useState(false);
+    const [isUnderline, setIsUnderline] = React.useState(false);
+
+    const updateToolbarState = React.useCallback(() => {
+        if (editorRef.current) {
+            setIsBold(document.queryCommandState('bold'));
+            setIsItalic(document.queryCommandState('italic'));
+            setIsUnderline(document.queryCommandState('underline'));
+        }
+    }, []);
+
+    const updateContent = React.useCallback(() => {
+        if (editorRef.current) {
+            const newContent = editorRef.current.innerHTML;
+            const textContent = editorRef.current.innerText || "";
+            setContent(newContent);
+            const words = textContent.trim().split(/\s+/).filter(Boolean);
+            setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
+        }
+    }, []);
 
     const execCmd = (command: string, value?: string) => {
         if (editorRef.current) {
             editorRef.current.focus();
             document.execCommand(command, false, value);
             updateContent();
+            updateToolbarState(); // Update state after command
         }
     };
 
@@ -65,25 +88,41 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         execCmd('formatBlock', value);
     };
 
-    const updateContent = () => {
-        if (editorRef.current) {
-            const newContent = editorRef.current.innerHTML;
-            const textContent = editorRef.current.innerText || "";
-            setContent(newContent);
-            const words = textContent.trim().split(/\s+/).filter(Boolean);
-            setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
-        }
-    };
-    
     React.useEffect(() => {
         if (editorRef.current && question.defaultValue && editorRef.current.innerHTML !== question.defaultValue) {
             editorRef.current.innerHTML = question.defaultValue;
             updateContent();
-        } else {
+        } else if (editorRef.current?.innerHTML === '') {
              updateContent();
         }
-    }, [question.defaultValue]);
+    }, [question.defaultValue, updateContent]);
 
+    React.useEffect(() => {
+        const editor = editorRef.current;
+        const handleSelectionChange = () => {
+            if (document.activeElement === editor) {
+                updateToolbarState();
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChange);
+        if (editor) {
+            editor.addEventListener('focus', updateToolbarState);
+        }
+
+        return () => {
+            document.removeEventListener('selectionchange', handleSelectionChange);
+            if (editor) {
+                editor.removeEventListener('focus', updateToolbarState);
+            }
+        };
+    }, [updateToolbarState]);
+
+    const handleInput = () => {
+        updateContent();
+        updateToolbarState();
+    }
+    
     const isPlaceholderVisible = content === '' || content === '<br>';
   
     return (
@@ -101,9 +140,9 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
               </SelectContent>
           </Select>
           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
+          <Button variant={isBold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
+          <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
+          <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
@@ -125,7 +164,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
               contentEditable
               suppressContentEditableWarning
               className="min-h-[200px] w-full resize-y overflow-auto p-3 text-sm ring-offset-background focus-visible:outline-none"
-              onInput={updateContent}
+              onInput={handleInput}
             />
         </div>
         <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
