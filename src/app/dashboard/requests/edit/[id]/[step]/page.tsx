@@ -3,6 +3,7 @@
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { DragDropContext, Droppable, Draggable, type DropResult, type DroppableProps } from "react-beautiful-dnd";
 
 import StepNavigation from '../../../new/components/StepNavigation';
 import EssentialsStep from '../../../new/components/EssentialsStep';

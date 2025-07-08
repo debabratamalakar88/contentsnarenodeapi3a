@@ -35,7 +35,8 @@ const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
     if (!enabled) {
         return null;
     }
-    return <Droppable {...props}>{children}</Droppable>;
+    // Explicitly provide a boolean for isDropDisabled to prevent invariant error
+    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false}>{children}</Droppable>;
 };
 
 interface BuilderStepProps {
@@ -331,7 +332,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                         {(provided) => (
                                             <div {...provided.droppableProps} ref={provided.innerRef}>
                                                 {section.questions.map((question, index) => (
-                                                    <Draggable key={`question-${question.id}`} draggableId={`question-${question.id}`} index={index}>
+                                                    <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
                                                         {(provided) => (
                                                             <div
                                                                 ref={provided.innerRef}
