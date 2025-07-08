@@ -29,7 +29,6 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from "@/components/ui/address-autocomplete-input";
-import { Link as LinkIcon } from 'lucide-react';
 import { countries } from "@/lib/countries";
 
 
@@ -340,7 +339,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant={isRightAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
           <Button variant={isJustifyAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><Link2 className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
           <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
               <PopoverTrigger asChild>
@@ -507,7 +506,10 @@ const renderQuestionInput = (question: Question) => {
                     <SelectContent>
                         {countries.map((country) => (
                             <SelectItem key={country.code} value={country.code}>
-                                {country.name}
+                                <div className="flex items-center gap-2">
+                                  <span>{country.flag}</span>
+                                  <span>{country.name}</span>
+                                </div>
                             </SelectItem>
                         ))}
                     </SelectContent>
