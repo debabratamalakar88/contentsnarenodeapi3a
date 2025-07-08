@@ -27,6 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
+import { AddressAutocompleteInput } from "@/components/ui/address-autocomplete-input";
 
 
 // Type definitions for the entire wizard
@@ -448,7 +449,7 @@ const renderQuestionInput = (question: Question) => {
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':
-             return <Textarea id={`preview-${question.id}`} placeholder="123 Main St, Anytown, USA" name={question.apiId} />;
+             return <AddressAutocompleteInput id={`preview-${question.id}`} placeholder="123 Main St, Anytown, USA" name={question.apiId} defaultValue={question.defaultValue} />;
         case 'number':
              return <Input type="number" id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />;
         case 'currency':

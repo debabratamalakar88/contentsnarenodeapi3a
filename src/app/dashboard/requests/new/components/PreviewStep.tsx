@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
+import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 
 
 interface PreviewStepProps {
@@ -340,7 +341,7 @@ const renderQuestionInput = (question: Question) => {
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':
-             return <Textarea id={`preview-${question.id}`} placeholder="123 Main St, Anytown, USA" name={question.apiId} />;
+             return <AddressAutocompleteInput id={`preview-${question.id}`} placeholder="123 Main St, Anytown, USA" name={question.apiId} defaultValue={question.defaultValue} />;
         case 'number':
              return <Input type="number" id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />;
         case 'currency':
