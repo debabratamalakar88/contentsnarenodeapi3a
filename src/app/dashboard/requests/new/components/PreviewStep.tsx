@@ -18,7 +18,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { Page, Question } from "../[step]/page"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
-import { Sparkles, Bold, Italic, Underline, List, ListOrdered } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile } from 'lucide-react';
 
 interface PreviewStepProps {
     title: string;
@@ -28,59 +29,100 @@ interface PreviewStepProps {
 
 const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const [content, setContent] = React.useState(question.defaultValue || '');
+    const [wordCount, setWordCount] = React.useState(0);
     const editorRef = React.useRef<HTMLDivElement>(null);
-  
+
     const execCmd = (command: string, value?: string) => {
-      if (editorRef.current) {
-        editorRef.current.focus();
-        document.execCommand(command, false, value);
-        // Manually trigger onInput for state update since execCommand doesn't
-        setContent(editorRef.current.innerHTML);
-      }
-    };
-  
-    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
-      e.preventDefault();
-      execCmd(command);
-    };
-  
-    const handleHeadingChange = (value: string) => {
-      execCmd('formatBlock', value === 'p' ? '<div>' : `<${value}>`);
+        if (editorRef.current) {
+            editorRef.current.focus();
+            document.execCommand(command, false, value);
+            updateContent();
+        }
     };
 
+    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
+        e.preventDefault();
+        execCmd(command);
+    };
+
+    const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        const url = window.prompt("Enter the URL:");
+        if (url) {
+            execCmd('createLink', url);
+        }
+    };
+
+    const handleHeadingChange = (value: string) => {
+        execCmd('formatBlock', value);
+    };
+
+    const updateContent = () => {
+        if (editorRef.current) {
+            const newContent = editorRef.current.innerHTML;
+            const textContent = editorRef.current.innerText || "";
+            setContent(newContent);
+            const words = textContent.trim().split(/\s+/).filter(Boolean);
+            setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
+        }
+    };
+    
     React.useEffect(() => {
         if (editorRef.current && question.defaultValue && editorRef.current.innerHTML !== question.defaultValue) {
             editorRef.current.innerHTML = question.defaultValue;
+            updateContent();
+        } else {
+            updateContent();
         }
     }, [question.defaultValue]);
+
+    const isPlaceholderVisible = content === '' || content === '<br>';
   
     return (
       <div className="rounded-md border border-input bg-background">
         <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
           <Select onValueChange={handleHeadingChange} defaultValue="p">
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[120px] h-8 text-sm focus:ring-0 focus:ring-offset-0 border-none shadow-none">
                   <SelectValue placeholder="Style" />
               </SelectTrigger>
               <SelectContent>
-                  <SelectItem value="p">Paragraph</SelectItem>
+                  <SelectItem value="p">Normal</SelectItem>
                   <SelectItem value="h1">Heading 1</SelectItem>
                   <SelectItem value="h2">Heading 2</SelectItem>
                   <SelectItem value="h3">Heading 3</SelectItem>
               </SelectContent>
           </Select>
+          <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
+          <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
+          <Separator orientation="vertical" className="h-5 mx-1" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
+          <Separator orientation="vertical" className="h-5 mx-1" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8"><Smile className="h-4 w-4" /></Button>
         </div>
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          className="min-h-[200px] p-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-b-md"
-          onInput={(e) => setContent(e.currentTarget.innerHTML)}
-        />
+        <div className="relative">
+             {isPlaceholderVisible && (
+                 <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
+            )}
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              className="min-h-[200px] w-full resize-y overflow-auto p-3 text-sm ring-offset-background focus-visible:outline-none"
+              onInput={updateContent}
+            />
+        </div>
+        <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
+            <span>Words: {wordCount}</span>
+        </div>
         <textarea name={question.apiId} value={content} className="hidden" readOnly />
       </div>
     );
