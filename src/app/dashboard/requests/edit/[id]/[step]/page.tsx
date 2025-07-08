@@ -34,7 +34,7 @@ import { IconSelector } from "@/components/ui/icon-selector";
 
 
 // Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'icon-selector' | 'color-picker' | 'button';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -115,7 +115,6 @@ const questionCategories: {
             { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
             { type: 'radio', label: 'Single Choice', icon: CircleDot },
             { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
-            { type: 'image-choice', label: 'Image Choice', icon: GalleryVertical },
         ],
     },
     {
@@ -541,22 +540,6 @@ const renderQuestionInput = (question: Question) => {
             );
         case 'date-range':
              return <DateRangePicker question={question} />;
-        case 'image-choice':
-            return (
-                <RadioGroup name={question.apiId} defaultValue={question.defaultValue} className="flex gap-4 flex-wrap">
-                    {question.options?.map((opt, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 border p-2 rounded-md">
-                            <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
-                                <span className="text-xs text-muted-foreground">Image</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={opt.value} id={`preview-${question.id}-${i}`} />
-                                <label htmlFor={`preview-${question.id}-${i}`} className="text-sm font-medium">{opt.label}</label>
-                            </div>
-                        </div>
-                    ))}
-                </RadioGroup>
-            );
         case 'icon-selector':
             return <IconSelector name={question.apiId} defaultValue={question.defaultValue} />;
         case 'color-picker':
@@ -880,7 +863,7 @@ export default function EditRequestWizardPage() {
                 const baseLabel = fieldConfig.label;
                 const newQuestion: Question = {
                     id: Date.now(), type: type, label: baseLabel, instructions: "", placeholder: "",
-                    options: (type === 'radio' || type === 'dropdown' || type === 'image-choice' || type === 'checkbox') ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] : undefined,
+                    options: (type === 'radio' || type === 'dropdown' || type === 'checkbox') ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] : undefined,
                     required: false, apiId: slugify(`${baseLabel}_${Date.now()}`),
                 };
                 if (type === 'button') {
@@ -1111,7 +1094,7 @@ export default function EditRequestWizardPage() {
                                     <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
                                 </div>
                             )}
-                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'image-choice' || tempQuestion.type === 'checkbox') && (
+                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
                                 <div className="grid gap-4">
                                     <Label>Options</Label>
                                     <div className="space-y-3">

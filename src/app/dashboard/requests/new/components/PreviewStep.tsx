@@ -441,22 +441,6 @@ const renderQuestionInput = (question: Question) => {
             );
         case 'date-range':
              return <DateRangePicker question={question} />;
-        case 'image-choice':
-            return (
-                <RadioGroup name={question.apiId} defaultValue={question.defaultValue} className="flex gap-4 flex-wrap">
-                    {question.options?.map((opt, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 border p-2 rounded-md">
-                            <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
-                                <span className="text-xs text-muted-foreground">Image</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={opt.value} id={`preview-${question.id}-${i}`} />
-                                <label htmlFor={`preview-${question.id}-${i}`} className="text-sm font-medium">{opt.label}</label>
-                            </div>
-                        </div>
-                    ))}
-                </RadioGroup>
-            );
         case 'icon-selector':
             return (
                 <Button variant="outline">

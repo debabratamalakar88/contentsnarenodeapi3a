@@ -29,7 +29,7 @@ import { IconSelector } from "@/components/ui/icon-selector";
 
 
 // Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'icon-selector' | 'color-picker' | 'button';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -137,7 +137,6 @@ const questionCategories: {
             { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
             { type: 'radio', label: 'Single Choice', icon: CircleDot },
             { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
-            { type: 'image-choice', label: 'Image Choice', icon: GalleryVertical },
         ],
     },
     {
@@ -440,7 +439,7 @@ export default function NewRequestWizardPage() {
                                 label: baseLabel,
                                 instructions: "",
                                 placeholder: "",
-                                options: (type === 'radio' || type === 'dropdown' || type === 'image-choice' || type === 'checkbox') 
+                                options: (type === 'radio' || type === 'dropdown' || type === 'checkbox') 
                                     ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] 
                                     : undefined,
                                 required: false,
@@ -728,7 +727,7 @@ export default function NewRequestWizardPage() {
                                 </div>
                             )}
                             
-                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'image-choice' || tempQuestion.type === 'checkbox') && (
+                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
                                 <div className="grid gap-4">
                                     <Label>Options</Label>
                                     <div className="space-y-3">
