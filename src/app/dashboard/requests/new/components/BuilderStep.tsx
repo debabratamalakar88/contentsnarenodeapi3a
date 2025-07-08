@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState } from 'react'
@@ -36,7 +37,7 @@ const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
         return null;
     }
     // Explicitly provide a boolean for isDropDisabled to prevent invariant error
-    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false}>{children}</Droppable>;
+    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={false}>{children}</Droppable>;
 };
 
 interface BuilderStepProps {

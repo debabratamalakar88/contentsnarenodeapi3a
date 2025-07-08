@@ -68,6 +68,22 @@ export interface Page {
   sections: Section[];
 }
 
+const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
+    const [enabled, setEnabled] = React.useState(false);
+    React.useEffect(() => {
+        const animation = requestAnimationFrame(() => setEnabled(true));
+        return () => {
+            cancelAnimationFrame(animation);
+            setEnabled(false);
+        };
+    }, []);
+    if (!enabled) {
+        return null;
+    }
+    // Explicitly provide a boolean for isDropDisabled to prevent invariant error
+    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={false}>{children}</Droppable>;
+};
+
 const steps = [
     { name: "Templates", slug: "templates" },
     { name: "Essentials", slug: "essentials" },
