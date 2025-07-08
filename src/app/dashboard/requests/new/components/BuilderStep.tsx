@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil,
-  Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2
+  Type, Pilcrow, FileUp, CheckSquare, MenuSquare, CalendarClock, Mail, Phone, Link2, CircleDot,
+  PenSquare, ImageUp, MapPin, Hash, DollarSign, Globe, CalendarRange, GalleryVertical, 
+  Table as TableIcon, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick
 } from "lucide-react"
 
 import type { Page, Question, QuestionType, Section } from "../page"
@@ -47,21 +49,39 @@ interface PagesSidebarProps {
   addSection: (pageId: number) => void;
 }
 
+const questionTypeToIcon: Record<QuestionType, React.ElementType> = {
+    'text': Type,
+    'textarea': Pilcrow,
+    'file': FileUp,
+    'checkbox': CheckSquare,
+    'dropdown': MenuSquare,
+    'date': CalendarClock,
+    'email': Mail,
+    'tel': Phone,
+    'url': Link2,
+    'radio': CircleDot,
+    'formatted-text': PenSquare,
+    'image-upload': ImageUp,
+    'address': MapPin,
+    'number': Hash,
+    'currency': DollarSign,
+    'country': Globe,
+    'date-range': CalendarRange,
+    'image-choice': GalleryVertical,
+    'table': TableIcon,
+    'signature': PenTool,
+    'task-list': ListChecks,
+    'identity-verification': BadgeCheck,
+    'abn-acn': Briefcase,
+    'icon-selector': Sparkles,
+    'color-picker': Pipette,
+    'button': MousePointerClick,
+};
+
 const QuestionIcon = ({ type }: { type: QuestionType }) => {
     const iconProps = { className: "h-4 w-4 text-primary" };
-    switch (type) {
-        case 'text': return <Type {...iconProps} />;
-        case 'textarea': return <Pilcrow {...iconProps} />;
-        case 'checkbox': return <CheckSquare {...iconProps} />;
-        case 'dropdown': return <ChevronDown {...iconProps} />;
-        case 'radio': return <ListOrdered {...iconProps} />;
-        case 'file': return <UploadCloud {...iconProps} />;
-        case 'date': return <CalendarDays {...iconProps} />;
-        case 'email': return <AtSign {...iconProps} />;
-        case 'tel': return <Phone {...iconProps} />;
-        case 'url': return <Link2 {...iconProps} />;
-        default: return <Type {...iconProps} />;
-    }
+    const IconComponent = questionTypeToIcon[type] || Type;
+    return <IconComponent {...iconProps} />;
 }
 
 const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicatePage, deletePage, addSection }: PagesSidebarProps) => {
