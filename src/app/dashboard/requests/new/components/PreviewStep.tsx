@@ -71,17 +71,18 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
-            return;
+        let range: Range | null = null;
+        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
+             range = selection.getRangeAt(0).cloneRange();
         }
-        
-        const range = selection.getRangeAt(0).cloneRange();
 
         const url = window.prompt("Enter the URL:");
         if (url) {
             editorRef.current?.focus();
-            selection.removeAllRanges();
-            selection.addRange(range);
+            if (range && selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
             document.execCommand('createLink', false, url);
             updateContent();
             updateToolbarState();
@@ -198,7 +199,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              className="min-h-[200px] w-full resize-y overflow-auto p-3 text-sm ring-offset-background focus-visible:outline-none"
+              className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
               onInput={handleInput}
             />
         </div>
