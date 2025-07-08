@@ -86,8 +86,8 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             )
         case 'formatted-text':
-             return <div 
-                className="p-3 border rounded-md bg-muted/50" 
+             return <div
+                className="text-sm"
                 dangerouslySetInnerHTML={{ __html: question.defaultValue || '<p class="text-sm text-muted-foreground italic">No content provided.</p>' }}
             />;
         case 'image-upload':
@@ -221,10 +221,12 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                                                 <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
                                                 {section.questions.map(question => (
                                                     <div key={question.id} className="grid gap-2 mb-4">
-                                                        <Label htmlFor={`preview-${question.id}`}>
-                                                          {question.label}
-                                                          {question.required && <span className="text-destructive"> *</span>}
-                                                        </Label>
+                                                        {question.type !== 'formatted-text' && (
+                                                            <Label htmlFor={`preview-${question.id}`}>
+                                                                {question.label}
+                                                                {question.required && <span className="text-destructive"> *</span>}
+                                                            </Label>
+                                                        )}
                                                         {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
                                                         {renderQuestionInput(question)}
                                                     </div>
