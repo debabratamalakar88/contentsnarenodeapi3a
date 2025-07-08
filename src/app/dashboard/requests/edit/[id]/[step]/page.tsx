@@ -56,6 +56,7 @@ export interface Page {
 }
 
 const steps = [
+    { name: "Templates", slug: "templates" },
     { name: "Essentials", slug: "essentials" },
     { name: "Builder", slug: "builder" },
     { name: "Preview", slug: "preview" },
@@ -82,11 +83,11 @@ export default function EditRequestWizardPage() {
     const { toast } = useToast();
     
     const id = Number(params.id);
-    const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'templates');
+    const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'essentials');
 
     const currentStepIndex = useMemo(() => {
         const index = steps.findIndex(s => s.slug === stepSlug);
-        return index === -1 ? 0 : index;
+        return index === -1 ? 1 : index; // Default to essentials index
     }, [stepSlug]);
     const currentStep = steps[currentStepIndex]?.name;
     
@@ -173,15 +174,16 @@ export default function EditRequestWizardPage() {
     };
     
     const handleBack = () => {
-        if (currentStepIndex > 0) {
+        if (currentStepIndex > 1) { // If on builder or later, go back one step
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/dashboard/requests/edit/${id}/${prevStepSlug}`);
-        } else {
+        } else { // If on essentials, go back to requests list
             router.push('/dashboard/requests');
         }
     };
 
     const handleStepClick = (slug: string) => {
+        if (slug === 'templates') return; // Do not navigate to templates in edit mode
         router.push(`/dashboard/requests/edit/${id}/${slug}`);
     };
 
@@ -410,7 +412,13 @@ export default function EditRequestWizardPage() {
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <StepNavigation steps={steps} currentStepSlug={stepSlug} onStepClick={handleStepClick} maxVisitedStepIndex={maxVisitedStepIndex} />
+                <StepNavigation
+                    steps={steps}
+                    currentStepSlug={stepSlug}
+                    onStepClick={handleStepClick}
+                    maxVisitedStepIndex={maxVisitedStepIndex}
+                    disabledSteps={['templates']}
+                />
                 <div className="ml-auto flex items-center gap-2">
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
