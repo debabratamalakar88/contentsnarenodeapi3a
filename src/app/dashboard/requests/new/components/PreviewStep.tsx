@@ -1,6 +1,7 @@
+
 'use client'
 
-import { Button } from "@/components/ui/button"
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -14,7 +15,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { Page, Question, Section } from "../page"
+import type { Page, Question } from "../page"
+import { cn } from "@/lib/utils"
 
 interface PreviewStepProps {
     title: string;
@@ -31,7 +33,6 @@ const renderQuestionInput = (question: Question) => {
         case 'file':
             return <Input id={`preview-${question.id}`} type="file" name={question.apiId} />
         case 'checkbox':
-            // Assuming single checkbox for now as per current data structure
             return (
                 <div className="flex items-center space-x-2 pt-2">
                     <Checkbox id={`preview-${question.id}`} name={question.apiId} value={question.options?.[0].value} />
@@ -87,39 +88,77 @@ const renderQuestionInput = (question: Question) => {
     }
 }
 
-export default function PreviewStep({ title, description, pages }: PreviewStepProps) {    
+const PreviewSidebar = ({ pages, activePageId, setActivePageId }: { pages: Page[], activePageId: number | null, setActivePageId: (id: number) => void }) => {
     return (
-        <div className="max-w-3xl mx-auto animate-in fade-in-50 py-8 px-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>{title}</CardTitle>
-                    <CardDescription>{description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                    {pages.map(page => (
-                        <div key={page.id}>
-                            <h3 className="text-xl font-semibold border-b pb-2 mb-4">{page.title}</h3>
-                            <div className="space-y-6">
-                                {page.sections.map(section => (
-                                    <div key={section.id}>
-                                        <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
-                                        {section.questions.map(question => (
-                                            <div key={question.id} className="grid gap-2 mb-4">
-                                                <Label htmlFor={`preview-${question.id}`}>
-                                                  {question.label}
-                                                  {question.required && <span className="text-destructive"> *</span>}
-                                                </Label>
-                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                {renderQuestionInput(question)}
+        <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
+            <div className="p-4 border-b">
+                <h2 className="font-semibold text-sm">PAGES</h2>
+            </div>
+            <div className="flex-grow p-2 space-y-1 overflow-y-auto">
+                {pages.map(page => (
+                    <div key={page.id}>
+                         <button
+                            onClick={() => setActivePageId(page.id)}
+                            className={cn(
+                                "w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold",
+                                activePageId === page.id
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-accent/50"
+                              )}
+                          >
+                            <span className="truncate">{page.title}</span>
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </aside>
+    )
+}
+
+export default function PreviewStep({ title, description, pages }: PreviewStepProps) {    
+    const [activePageId, setActivePageId] = useState<number | null>(pages[0]?.id || null);
+
+    const activePage = pages.find(p => p.id === activePageId);
+
+    return (
+        <div className="flex h-full bg-background animate-in fade-in-50">
+            <PreviewSidebar pages={pages} activePageId={activePageId} setActivePageId={setActivePageId} />
+            <main className="flex-1 p-6 overflow-y-auto">
+                <div className="max-w-3xl mx-auto">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{title}</CardTitle>
+                            <CardDescription>{description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-8">
+                            {activePage ? (
+                                <div key={activePage.id}>
+                                    <h3 className="text-xl font-semibold border-b pb-2 mb-4">{activePage.title}</h3>
+                                    <div className="space-y-6">
+                                        {activePage.sections.map(section => (
+                                            <div key={section.id}>
+                                                <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
+                                                {section.questions.map(question => (
+                                                    <div key={question.id} className="grid gap-2 mb-4">
+                                                        <Label htmlFor={`preview-${question.id}`}>
+                                                          {question.label}
+                                                          {question.required && <span className="text-destructive"> *</span>}
+                                                        </Label>
+                                                        {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                        {renderQuestionInput(question)}
+                                                    </div>
+                                                ))}
                                             </div>
                                         ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+                                </div>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-10">No pages found in this request.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
         </div>
     )
 }

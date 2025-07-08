@@ -566,7 +566,7 @@ export default function NewRequestWizardPage() {
                 </div>
             </div>
             
-            <div className={cn("flex-grow", (currentStep === 'Builder' || currentStep === 'Templates') ? "" : "p-6 flex justify-center items-center")}>
+            <div className={cn("flex-grow", (currentStep === 'Builder' || currentStep === 'Templates' || currentStep === 'Preview') ? "" : "p-6 flex justify-center items-start")}>
                 {renderStep()}
             </div>
 
