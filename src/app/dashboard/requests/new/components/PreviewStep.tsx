@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { Page, Question } from "../[step]/page"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Bold, Italic, Underline, List, ListOrdered } from 'lucide-react';
 
 interface PreviewStepProps {
     title: string;
@@ -86,7 +86,23 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             )
         case 'formatted-text':
-             return <Textarea id={`preview-${question.id}`} placeholder="Enter rich text content here..." name={question.apiId} className="min-h-[200px]" />;
+             return (
+                <div className="rounded-md border border-input bg-background">
+                    <div className="p-2 border-b flex items-center gap-1 text-muted-foreground">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Italic className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Underline className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><List className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><ListOrdered className="h-4 w-4" /></Button>
+                    </div>
+                    <Textarea 
+                        id={`preview-${question.id}`} 
+                        placeholder="Enter rich text content here..." 
+                        name={question.apiId} 
+                        className="min-h-[200px] border-0 rounded-t-none focus-visible:ring-0 focus-visible:ring-offset-0" 
+                    />
+                </div>
+             );
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':
