@@ -120,16 +120,24 @@ export interface PaginatedRequests {
 
 
 async function handleResponse(response: Response) {
-  if (response.status === 204 || response.headers.get("content-length") === "0") {
-    if (!response.ok) {
-      throw { message: `Request failed: ${response.status} ${response.statusText}`, status: response.status };
-    }
+  // A 204 No Content response has no body, so we return an empty object.
+  if (response.status === 204) {
     return {};
   }
-
+  
   const responseText = await response.text();
-  let data;
+  
+  // If the response text is empty, we can also return an empty object if the status is OK.
+  if (!responseText) {
+    if (response.ok) {
+      return {};
+    } else {
+      // If not ok and empty, throw a generic error.
+      throw { message: `Request failed with status ${response.status}: ${response.statusText}`, status: response.status };
+    }
+  }
 
+  let data;
   try {
     data = JSON.parse(responseText);
   } catch (error) {
