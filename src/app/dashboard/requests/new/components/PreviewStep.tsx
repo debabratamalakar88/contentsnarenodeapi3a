@@ -70,17 +70,37 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
 
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+        editorRef.current?.focus();
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+
         const url = window.prompt("Enter the URL:");
         if (url) {
-            execCmd('createLink', url);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('createLink', false, url);
+            updateContent();
+            updateToolbarState();
         }
     };
     
     const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+        editorRef.current?.focus();
+        const selection = window.getSelection();
+        if (!selection) return;
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
         const emoji = window.prompt("Enter an emoji to insert:");
         if (emoji) {
-            execCmd('insertText', emoji);
+            if(range) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            document.execCommand('insertText', false, emoji);
+            updateContent();
+            updateToolbarState();
         }
     };
 
