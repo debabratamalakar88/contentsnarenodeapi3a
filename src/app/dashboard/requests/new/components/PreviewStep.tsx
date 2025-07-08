@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -25,6 +25,61 @@ interface PreviewStepProps {
     description: string;
     pages: Page[];
 }
+
+const RichTextEditorPreview = ({ question }: { question: Question }) => {
+    const [content, setContent] = React.useState(question.defaultValue || '');
+    const editorRef = React.useRef<HTMLDivElement>(null);
+  
+    const execCmd = (command: string, value?: string) => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        document.execCommand(command, false, value);
+        // Manually trigger onInput for state update since execCommand doesn't
+        setContent(editorRef.current.innerHTML);
+      }
+    };
+  
+    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
+      e.preventDefault();
+      execCmd(command);
+    };
+  
+    const handleHeadingChange = (value: string) => {
+      execCmd('formatBlock', value === 'p' ? '<div>' : `<${value}>`);
+    };
+  
+    return (
+      <div className="rounded-md border border-input bg-background">
+        <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
+          <Select onValueChange={handleHeadingChange} defaultValue="p">
+              <SelectTrigger className="w-[120px] h-8 text-xs">
+                  <SelectValue placeholder="Style" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="p">Paragraph</SelectItem>
+                  <SelectItem value="h1">Heading 1</SelectItem>
+                  <SelectItem value="h2">Heading 2</SelectItem>
+                  <SelectItem value="h3">Heading 3</SelectItem>
+              </SelectContent>
+          </Select>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
+        </div>
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          className="min-h-[200px] p-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-b-md"
+          onInput={(e) => setContent(e.currentTarget.innerHTML)}
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+        <textarea name={question.apiId} value={content} className="hidden" readOnly />
+      </div>
+    );
+};
 
 const renderQuestionInput = (question: Question) => {
     switch(question.type) {
@@ -86,23 +141,7 @@ const renderQuestionInput = (question: Question) => {
                 </RadioGroup>
             )
         case 'formatted-text':
-             return (
-                <div className="rounded-md border border-input bg-background">
-                    <div className="p-2 border-b flex items-center gap-1 text-muted-foreground">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Bold className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Italic className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><Underline className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><List className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled><ListOrdered className="h-4 w-4" /></Button>
-                    </div>
-                    <Textarea 
-                        id={`preview-${question.id}`} 
-                        placeholder="Enter rich text content here..." 
-                        name={question.apiId} 
-                        className="min-h-[200px] border-0 rounded-t-none focus-visible:ring-0 focus-visible:ring-offset-0" 
-                    />
-                </div>
-             );
+             return <RichTextEditorPreview question={question} />;
         case 'image-upload':
              return <Input id={`preview-${question.id}`} type="file" name={question.apiId} accept="image/*" multiple />;
         case 'address':
