@@ -530,7 +530,7 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                                                 <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
                                                 {section.questions.map(question => (
                                                     <div key={question.id} className="grid gap-2 mb-4">
-                                                        {question.type !== 'formatted-text' && (
+                                                        {question.type !== 'formatted-text' && question.type !== 'button' && (
                                                             <Label htmlFor={`preview-${question.id}`}>
                                                                 {question.label}
                                                                 {question.required && <span className="text-destructive"> *</span>}
