@@ -52,6 +52,14 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             execCmd('createLink', url);
         }
     };
+    
+    const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        const emoji = window.prompt("Enter an emoji to insert:");
+        if (emoji) {
+            execCmd('insertText', emoji);
+        }
+    };
 
     const handleHeadingChange = (value: string) => {
         execCmd('formatBlock', value);
@@ -72,7 +80,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             editorRef.current.innerHTML = question.defaultValue;
             updateContent();
         } else {
-            updateContent();
+             updateContent();
         }
     }, [question.defaultValue]);
 
@@ -106,7 +114,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8"><Smile className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmoji}><Smile className="h-4 w-4" /></Button>
         </div>
         <div className="relative">
              {isPlaceholderVisible && (
