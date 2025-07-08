@@ -457,25 +457,6 @@ const renderQuestionInput = (question: Question) => {
                     ))}
                 </RadioGroup>
             );
-        case 'table':
-             return <p className="p-3 border rounded-md bg-muted text-sm text-muted-foreground italic">[Table Preview]</p>;
-        case 'signature':
-             return <div className="w-full h-24 border-dashed border-2 rounded-md flex items-center justify-center text-muted-foreground">Signature Area</div>;
-        case 'task-list':
-            return (
-                <div className="space-y-2">
-                {(question.options || [{label: 'Sample Task', value: 'task1'}]).map((opt, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                        <Checkbox id={`preview-${question.id}-${i}`} />
-                        <label htmlFor={`preview-${question.id}-${i}`}>{opt.label}</label>
-                    </div>
-                ))}
-                </div>
-            );
-        case 'identity-verification':
-            return <Button variant="outline">Verify Identity</Button>;
-        case 'abn-acn':
-            return <Input type="text" id={`preview-${question.id}`} placeholder="Enter ABN/ACN" name={question.apiId} />;
         case 'icon-selector':
             return (
                 <Button variant="outline">

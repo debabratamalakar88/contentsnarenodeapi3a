@@ -28,7 +28,7 @@ import { countries } from "@/lib/countries";
 
 
 // Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'table' | 'signature' | 'task-list' | 'identity-verification' | 'abn-acn' | 'icon-selector' | 'color-picker' | 'button';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -136,16 +136,6 @@ const questionCategories: {
             { type: 'radio', label: 'Single Choice', icon: CircleDot },
             { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
             { type: 'image-choice', label: 'Image Choice', icon: GalleryVertical },
-        ],
-    },
-    {
-        name: "Special Fields",
-        fields: [
-            { type: 'table', label: 'Table', icon: Table },
-            { type: 'signature', label: 'Signature', icon: PenTool },
-            { type: 'task-list', label: 'Task List', icon: ListChecks },
-            { type: 'identity-verification', label: 'Identity Verification', icon: BadgeCheck },
-            { type: 'abn-acn', label: 'Australian ABN/ACN', icon: Briefcase, isNew: true, isHighlighted: true },
         ],
     },
     {
@@ -805,3 +795,4 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
+

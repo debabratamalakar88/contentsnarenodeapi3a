@@ -33,7 +33,7 @@ import { countries } from "@/lib/countries";
 
 
 // Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'table' | 'signature' | 'task-list' | 'identity-verification' | 'abn-acn' | 'icon-selector' | 'color-picker' | 'button';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -114,16 +114,6 @@ const questionCategories: {
             { type: 'radio', label: 'Single Choice', icon: CircleDot },
             { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
             { type: 'image-choice', label: 'Image Choice', icon: GalleryVertical },
-        ],
-    },
-    {
-        name: "Special Fields",
-        fields: [
-            { type: 'table', label: 'Table', icon: Table },
-            { type: 'signature', label: 'Signature', icon: PenTool },
-            { type: 'task-list', label: 'Task List', icon: ListChecks },
-            { type: 'identity-verification', label: 'Identity Verification', icon: BadgeCheck },
-            { type: 'abn-acn', label: 'Australian ABN/ACN', icon: Briefcase, isNew: true, isHighlighted: true },
         ],
     },
     {
@@ -565,25 +555,6 @@ const renderQuestionInput = (question: Question) => {
                     ))}
                 </RadioGroup>
             );
-        case 'table':
-             return <p className="p-3 border rounded-md bg-muted text-sm text-muted-foreground italic">[Table Preview]</p>;
-        case 'signature':
-             return <div className="w-full h-24 border-dashed border-2 rounded-md flex items-center justify-center text-muted-foreground">Signature Area</div>;
-        case 'task-list':
-            return (
-                <div className="space-y-2">
-                {(question.options || [{label: 'Sample Task', value: 'task1'}]).map((opt, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                        <Checkbox id={`preview-${question.id}-${i}`} />
-                        <label htmlFor={`preview-${question.id}-${i}`}>{opt.label}</label>
-                    </div>
-                ))}
-                </div>
-            );
-        case 'identity-verification':
-            return <Button variant="outline">Verify Identity</Button>;
-        case 'abn-acn':
-            return <Input type="text" id={`preview-${question.id}`} placeholder="Enter ABN/ACN" name={question.apiId} />;
         case 'icon-selector':
             return (
                 <Button variant="outline">
@@ -1207,3 +1178,4 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
+
