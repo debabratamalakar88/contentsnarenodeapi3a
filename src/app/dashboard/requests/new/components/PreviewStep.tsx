@@ -47,6 +47,12 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleHeadingChange = (value: string) => {
       execCmd('formatBlock', value === 'p' ? '<div>' : `<${value}>`);
     };
+
+    React.useEffect(() => {
+        if (editorRef.current && question.defaultValue && editorRef.current.innerHTML !== question.defaultValue) {
+            editorRef.current.innerHTML = question.defaultValue;
+        }
+    }, [question.defaultValue]);
   
     return (
       <div className="rounded-md border border-input bg-background">
@@ -74,7 +80,6 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           suppressContentEditableWarning
           className="min-h-[200px] p-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-b-md"
           onInput={(e) => setContent(e.currentTarget.innerHTML)}
-          dangerouslySetInnerHTML={{ __html: content }}
         />
         <textarea name={question.apiId} value={content} className="hidden" readOnly />
       </div>
