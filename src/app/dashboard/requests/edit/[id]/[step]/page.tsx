@@ -193,7 +193,6 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
 
         if (url) {
             editorRef.current?.focus();
-            // Use a timeout to ensure focus has returned before restoring selection
             setTimeout(() => {
                 if (savedRangeInstance) {
                     const currentSelection = window.getSelection();
@@ -209,8 +208,8 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         }
     };
     
-    const handleEmojiButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
+    const handleEmojiButtonMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Just save the range. Don't prevent default. Let the click happen.
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
             setSavedRange(selection.getRangeAt(0).cloneRange());
@@ -221,7 +220,6 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             range.collapse(false);
             setSavedRange(range);
         }
-        setEmojiPickerOpen(prev => !prev);
     };
 
     const onEmojiClick = (emojiObject: { emoji: string }) => {
@@ -313,7 +311,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
           <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
               <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonClick}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonMouseDown}>
                       <Smile className="h-4 w-4" />
                   </Button>
               </PopoverTrigger>
