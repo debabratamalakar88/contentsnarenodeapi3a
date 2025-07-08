@@ -56,7 +56,6 @@ export interface Page {
 }
 
 const steps = [
-    { name: "Templates", slug: "templates" },
     { name: "Essentials", slug: "essentials" },
     { name: "Builder", slug: "builder" },
     { name: "Preview", slug: "preview" },
@@ -404,10 +403,6 @@ export default function EditRequestWizardPage() {
             default: return <div>Step not found. Please navigate using the steps above.</div>;
         }
     };
-
-    if (currentStepIndex === 0) { // Templates step is part of the 'new' flow only.
-        return <div>Invalid step for editing. Please <Link href="/dashboard/requests" className="underline">go back to requests</Link>.</div>
-    }
 
     return (
         <div className="flex flex-col h-full bg-background">
