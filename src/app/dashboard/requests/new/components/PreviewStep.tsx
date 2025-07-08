@@ -70,13 +70,16 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
 
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        editorRef.current?.focus();
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return;
-        const range = selection.getRangeAt(0);
+        if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
+            return;
+        }
+        
+        const range = selection.getRangeAt(0).cloneRange();
 
         const url = window.prompt("Enter the URL:");
         if (url) {
+            editorRef.current?.focus();
             selection.removeAllRanges();
             selection.addRange(range);
             document.execCommand('createLink', false, url);
@@ -87,17 +90,29 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     
     const handleEmoji = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        editorRef.current?.focus();
         const selection = window.getSelection();
-        if (!selection) return;
-        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        
+        let range: Range | null = null;
+        
+        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
+             range = selection.getRangeAt(0).cloneRange();
+        }
 
         const emoji = window.prompt("Enter an emoji to insert:");
         if (emoji) {
-            if(range) {
+            editorRef.current?.focus();
+            if (range && selection) {
                 selection.removeAllRanges();
                 selection.addRange(range);
+            } else if (editorRef.current && selection) {
+                // If there was no selection, move to the end
+                const newRange = document.createRange();
+                newRange.selectNodeContents(editorRef.current);
+                newRange.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
             }
+
             document.execCommand('insertText', false, emoji);
             updateContent();
             updateToolbarState();
