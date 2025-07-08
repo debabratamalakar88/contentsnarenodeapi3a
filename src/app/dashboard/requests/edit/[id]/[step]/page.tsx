@@ -1,6 +1,6 @@
 
 'use client'
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '../../../new/components/StepNavigation';
@@ -8,7 +8,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '../../../new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Link as LinkIcon, Code } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -140,23 +140,26 @@ interface PreviewStepProps {
 }
 
 const RichTextEditorPreview = ({ question }: { question: Question }) => {
-    const editorRef = React.useRef<HTMLDivElement>(null);
-    const [wordCount, setWordCount] = React.useState(0);
-    
-    const [isBold, setIsBold] = React.useState(false);
-    const [isItalic, setIsItalic] = React.useState(false);
-    const [isUnderline, setIsUnderline] = React.useState(false);
-    const [isUl, setIsUl] = React.useState(false);
-    const [isOl, setIsOl] = React.useState(false);
-    const [isLeftAligned, setIsLeftAligned] = React.useState(true);
-    const [isCenterAligned, setIsCenterAligned] = React.useState(false);
-    const [isRightAligned, setIsRightAligned] = React.useState(false);
-    const [isJustifyAligned, setIsJustifyAligned] = React.useState(false);
-    
-    const [emojiPickerOpen, setEmojiPickerOpen] = React.useState(false);
-    const [savedRange, setSavedRange] = React.useState<Range | null>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
+    const [wordCount, setWordCount] = useState(0);
 
-    const updateToolbarState = React.useCallback(() => {
+    const [isBold, setIsBold] = useState(false);
+    const [isItalic, setIsItalic] = useState(false);
+    const [isUnderline, setIsUnderline] = useState(false);
+    const [isUl, setIsUl] = useState(false);
+    const [isOl, setIsOl] = useState(false);
+    const [isLeftAligned, setIsLeftAligned] = useState(true);
+    const [isCenterAligned, setIsCenterAligned] = useState(false);
+    const [isRightAligned, setIsRightAligned] = useState(false);
+    const [isJustifyAligned, setIsJustifyAligned] = useState(false);
+    
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+    const [savedRange, setSavedRange] = useState<Range | null>(null);
+
+    const [viewMode, setViewMode] = useState<'editor' | 'html'>('editor');
+    const [htmlContent, setHtmlContent] = useState(question.defaultValue || '');
+
+    const updateToolbarState = useCallback(() => {
         if (editorRef.current) {
             setIsBold(document.queryCommandState('bold'));
             setIsItalic(document.queryCommandState('italic'));
@@ -175,7 +178,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         }
     }, []);
 
-    const updateContent = React.useCallback(() => {
+    const updateWordCount = useCallback(() => {
         if (editorRef.current) {
             const textContent = editorRef.current.innerText || "";
             const words = textContent.trim().split(/\s+/).filter(Boolean);
@@ -187,8 +190,9 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         if (editorRef.current) {
             editorRef.current.focus();
             document.execCommand(command, false, value);
-            updateContent();
             updateToolbarState();
+            setHtmlContent(editorRef.current.innerHTML);
+            updateWordCount();
         }
     };
 
@@ -200,25 +204,26 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         const selection = window.getSelection();
+        let rangeToSave: Range | null = null;
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            setSavedRange(selection.getRangeAt(0).cloneRange());
+            rangeToSave = selection.getRangeAt(0).cloneRange();
         }
 
         const url = window.prompt("Enter the URL:", "https://");
 
         if (url) {
             editorRef.current?.focus();
-            if(savedRange) {
+            if(rangeToSave) {
                 const currentSelection = window.getSelection();
                 if (currentSelection) {
                     currentSelection.removeAllRanges();
-                    currentSelection.addRange(savedRange);
+                    currentSelection.addRange(rangeToSave);
                 }
             }
             document.execCommand('createLink', false, url);
-            setSavedRange(null);
             updateToolbarState();
-            updateContent();
+            setHtmlContent(editorRef.current!.innerHTML);
+            updateWordCount();
         }
     };
     
@@ -248,25 +253,40 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             }
             document.execCommand('insertText', false, emojiObject.emoji);
             setEmojiPickerOpen(false);
-            updateContent();
+            setHtmlContent(editorRef.current.innerHTML);
+            updateWordCount();
             setSavedRange(null);
         }
     };
-
+    
     const handleHeadingChange = (value: string) => {
         execCmd('formatBlock', value);
     };
 
-    React.useEffect(() => {
-        const editor = editorRef.current;
-        if (editor) {
-          editor.innerHTML = question.defaultValue || '';
+    const handleInput = () => {
+        if (editorRef.current) {
+            setHtmlContent(editorRef.current.innerHTML);
+            updateToolbarState();
+            updateWordCount();
         }
-        updateContent();
-    }, [question.defaultValue, updateContent]);
+    }
 
+    const toggleViewMode = () => {
+        setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
+    };
 
-    React.useEffect(() => {
+    useEffect(() => {
+        if (viewMode === 'editor' && editorRef.current) {
+            if (editorRef.current.innerHTML !== htmlContent) {
+                editorRef.current.innerHTML = htmlContent;
+            }
+            updateWordCount();
+            updateToolbarState();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [viewMode]); 
+    
+    useEffect(() => {
         const editor = editorRef.current;
         const handleSelectionChange = () => {
             if (document.activeElement === editor) {
@@ -286,14 +306,9 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             }
         };
     }, [updateToolbarState]);
-
-    const handleInput = () => {
-        updateContent();
-        updateToolbarState();
-    }
     
-    const isPlaceholderVisible = !editorRef.current?.textContent;
-  
+    const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
+
     return (
       <div className="rounded-md border border-input bg-background">
         <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
@@ -333,23 +348,38 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
                   <EmojiPicker onEmojiClick={onEmojiClick} />
               </PopoverContent>
           </Popover>
+           <Separator orientation="vertical" className="h-5 mx-1" />
+          <Button variant={viewMode === 'html' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={toggleViewMode} title="Toggle HTML View">
+              <Code className="h-4 w-4" />
+          </Button>
         </div>
-        <div className="relative">
-             {isPlaceholderVisible && (
-                 <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
-            )}
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
-              onInput={handleInput}
+        
+        {viewMode === 'editor' ? (
+            <div className="relative">
+                 {isPlaceholderVisible && (
+                     <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
+                )}
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
+                  onInput={handleInput}
+                />
+            </div>
+        ) : (
+            <textarea
+                value={htmlContent}
+                onChange={(e) => setHtmlContent(e.target.value)}
+                className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
+                placeholder="Enter HTML here..."
             />
-        </div>
+        )}
+
         <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
             <span>Words: {wordCount}</span>
         </div>
-        <textarea name={question.apiId} value={editorRef.current?.innerHTML || ''} className="hidden" readOnly />
+        <textarea name={question.apiId} value={htmlContent} className="hidden" readOnly />
       </div>
     );
 };
