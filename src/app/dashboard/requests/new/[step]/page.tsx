@@ -520,6 +520,7 @@ export default function NewRequestWizardPage() {
             case "Templates": return <TemplatesStep onProceed={handleProceedFromTemplates} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
+                                        requestTitle={requestTitle}
                                         pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}

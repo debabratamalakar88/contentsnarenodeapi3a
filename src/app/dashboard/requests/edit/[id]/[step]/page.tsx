@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '../../../new/components/StepNavigation';
-import TemplatesStep from '../../../new/components/TemplatesStep';
 import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '../../../new/components/BuilderStep';
 import PreviewStep from '../../../new/components/PreviewStep';
@@ -392,7 +391,8 @@ export default function EditRequestWizardPage() {
         
         switch (currentStep) {
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
-            case "Builder": return <BuilderStep 
+            case "Builder": return <BuilderStep
+                                        requestTitle={requestTitle}
                                         pages={pages} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}

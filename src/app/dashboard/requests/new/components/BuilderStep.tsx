@@ -21,6 +21,7 @@ import type { Page, Question, QuestionType, Section } from "../page"
 import { cn } from "@/lib/utils"
 
 interface BuilderStepProps {
+  requestTitle: string;
   pages: Page[];
   addPage: () => void;
   addSection: (pageId: number) => void;
@@ -137,7 +138,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
     )
 }
 
-export default function BuilderStep({ pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage }: BuilderStepProps) {
+export default function BuilderStep({ requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
@@ -202,7 +203,7 @@ export default function BuilderStep({ pages, addPage, addSection, onAddFieldClic
         <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex flex-col">
-                    <Input className="text-2xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0" defaultValue="New Request" />
+                    <h1 className="text-2xl font-bold h-auto">{requestTitle}</h1>
                      <div className="flex items-center">
                         <Button variant="ghost" className="text-muted-foreground p-1 h-auto">
                             <Folder className="h-4 w-4 mr-2" /> Default Folder <ChevronDown className="h-4 w-4 ml-1" />
