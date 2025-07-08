@@ -10,7 +10,7 @@ import BuilderStep from '../components/BuilderStep';
 import PreviewStep from '../components/PreviewStep';
 import FinalizeStep from '../components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -21,10 +21,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { createRequest, updateRequest } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 
 
 // Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'image-choice' | 'table' | 'signature' | 'task-list' | 'identity-verification' | 'abn-acn' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -90,17 +91,67 @@ const steps = [
     { name: "Finalize", slug: "finalize" }
 ];
 
-const questionTypes: { type: QuestionType; label: string; icon: React.ElementType }[] = [
-    { type: 'text', label: 'Single Line Text', icon: Type },
-    { type: 'textarea', label: 'Multi-line Text', icon: Pilcrow },
-    { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
-    { type: 'dropdown', label: 'Dropdown', icon: ChevronDownIcon },
-    { type: 'radio', label: 'Radio Group', icon: ListOrdered },
-    { type: 'file', label: 'File Upload', icon: UploadCloud },
-    { type: 'date', label: 'Date', icon: CalendarDays },
-    { type: 'email', label: 'Email', icon: AtSign },
-    { type: 'tel', label: 'Phone Number', icon: Phone },
-    { type: 'url', label: 'Website/URL', icon: Link2 },
+const questionCategories: {
+    name: string;
+    fields: {
+        type: QuestionType;
+        label: string;
+        icon: React.ElementType;
+        isNew?: boolean;
+        isHighlighted?: boolean;
+    }[];
+}[] = [
+    {
+        name: "Common Fields",
+        fields: [
+            { type: 'text', label: 'Single Line Text', icon: Type },
+            { type: 'textarea', label: 'Multiline Text', icon: Pilcrow },
+            { type: 'formatted-text', label: 'Formatted Text', icon: PenSquare },
+            { type: 'image-upload', label: 'Image(s) Upload', icon: ImageUp },
+            { type: 'file', label: 'File(s) Upload', icon: FileUp },
+        ],
+    },
+    {
+        name: "Validation Fields",
+        fields: [
+            { type: 'email', label: 'Email', icon: Mail },
+            { type: 'address', label: 'Address', icon: MapPin },
+            { type: 'url', label: 'URL', icon: Link2 },
+            { type: 'number', label: 'Number', icon: Hash },
+            { type: 'tel', label: 'Phone', icon: Phone },
+            { type: 'currency', label: 'Currency', icon: DollarSign },
+            { type: 'country', label: 'Country', icon: Globe, isNew: true, isHighlighted: true },
+            { type: 'date', label: 'Date/Time', icon: CalendarClock },
+            { type: 'date-range', label: 'Date Range', icon: CalendarRange },
+        ],
+    },
+    {
+        name: "Selection Fields",
+        fields: [
+            { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
+            { type: 'radio', label: 'Single Choice', icon: CircleDot },
+            { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
+            { type: 'image-choice', label: 'Image Choice', icon: GalleryVertical },
+        ],
+    },
+    {
+        name: "Special Fields",
+        fields: [
+            { type: 'table', label: 'Table', icon: Table },
+            { type: 'signature', label: 'Signature', icon: PenTool },
+            { type: 'task-list', label: 'Task List', icon: ListChecks },
+            { type: 'identity-verification', label: 'Identity Verification', icon: BadgeCheck },
+            { type: 'abn-acn', label: 'Australian ABN/ACN', icon: Briefcase, isNew: true, isHighlighted: true },
+        ],
+    },
+    {
+        name: "UI Fields",
+        fields: [
+            { type: 'icon-selector', label: 'Icon Selector', icon: Sparkles },
+            { type: 'color-picker', label: 'Color Picker', icon: Pipette },
+            { type: 'button', label: 'Button', icon: MousePointerClick },
+        ],
+    },
 ];
 
 
@@ -132,6 +183,7 @@ export default function NewRequestWizardPage() {
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
     
     // Question Settings Dialog State
     const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
@@ -368,6 +420,7 @@ export default function NewRequestWizardPage() {
 
     const handleAddFieldClick = (pageId: number, sectionId: number) => {
         setCurrentLocation({ pageId, sectionId });
+        setSearchTerm("");
         setQuestionTypeDialogOpen(true);
     };
     
@@ -383,7 +436,8 @@ export default function NewRequestWizardPage() {
                     ...page,
                     sections: page.sections.map(section => {
                         if (section.id === sectionId) {
-                             const baseLabel = `New ${type.charAt(0).toUpperCase() + type.slice(1)} Field`;
+                            const fieldConfig = questionCategories.flatMap(c => c.fields).find(f => f.type === type) || { label: 'New Field' };
+                            const baseLabel = fieldConfig.label;
                             const newQuestion: Question = {
                                 id: Date.now(),
                                 type: type,
@@ -514,6 +568,13 @@ export default function NewRequestWizardPage() {
         }
     };
 
+    const filteredCategories = questionCategories.map(category => ({
+        ...category,
+        fields: category.fields.filter(field =>
+            field.label.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+    })).filter(category => category.fields.length > 0);
+
 
     const renderStep = () => {
         switch (currentStep) {
@@ -572,22 +633,46 @@ export default function NewRequestWizardPage() {
             </div>
 
             <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle>Choose a Field Type</DialogTitle>
-                        <DialogDescription>Select the type of field you want to add to your request.</DialogDescription>
+                        <DialogTitle>Select a field type</DialogTitle>
                     </DialogHeader>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
-                        {questionTypes.map((qType) => (
-                            <button
-                                key={qType.type}
-                                onClick={() => addQuestion(qType.type)}
-                                className="flex flex-col items-center justify-center gap-2 p-4 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center"
-                            >
-                                <qType.icon className="h-6 w-6 text-muted-foreground" />
-                                <span className="text-sm font-medium">{qType.label}</span>
-                            </button>
+                    <div className="relative my-4">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search for a field type..."
+                            className="pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                        {filteredCategories.map(category => (
+                            <div key={category.name}>
+                                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {category.fields.map((field) => (
+                                        <button
+                                            key={field.type}
+                                            onClick={() => addQuestion(field.type)}
+                                            className={cn(
+                                                "relative flex flex-col items-center justify-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center h-24",
+                                                field.isHighlighted && "border-primary ring-1 ring-primary"
+                                            )}
+                                        >
+                                            {field.isNew && (
+                                                <Badge className="absolute top-1 right-1 bg-primary text-primary-foreground px-1.5 py-0.5 text-xs h-auto">NEW</Badge>
+                                            )}
+                                            <field.icon className="h-5 w-5 text-muted-foreground" />
+                                            <span className="text-xs font-medium leading-tight">{field.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
+                        {filteredCategories.length === 0 && (
+                            <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
