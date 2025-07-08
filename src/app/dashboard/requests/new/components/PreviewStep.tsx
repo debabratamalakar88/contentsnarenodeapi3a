@@ -314,6 +314,40 @@ const DateRangePicker = ({ question }: { question: Question }) => {
     );
 };
 
+const CurrencyInput = ({ question }: { question: Question }) => {
+    const defaultCountry = countries.find(c => c.code === 'US' && c.currency) || countries.find(c => c.currency);
+    const [selectedCountryCode, setSelectedCountryCode] = useState<string>(defaultCountry?.code || '');
+
+    const selectedCountry = countries.find(c => c.code === selectedCountryCode);
+
+    return (
+        <div className="flex items-center gap-0 max-w-xs">
+            <Select onValueChange={setSelectedCountryCode} defaultValue={selectedCountryCode}>
+                <SelectTrigger className="w-[90px] rounded-r-none border-r-0">
+                    <SelectValue>
+                        {selectedCountry ? <div className="flex items-center gap-2 truncate"><span className="text-lg">{selectedCountry.flag}</span> <span className="text-xs text-muted-foreground">{selectedCountry.currency}</span></div> : '...'}
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                    {countries.filter(c => c.currency && c.symbol).map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                            <div className="flex items-center gap-3">
+                                <span className="text-lg">{country.flag}</span>
+                                <span className="font-medium">{country.name}</span>
+                                <span className="text-muted-foreground ml-auto">{country.currency} ({country.symbol})</span>
+                            </div>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <div className="relative flex-1">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">{selectedCountry?.symbol}</span>
+                <Input type="number" id={`preview-${question.id}`} placeholder="100.00" name={question.apiId} className="pl-8 rounded-l-none" />
+            </div>
+        </div>
+    );
+};
+
 const renderQuestionInput = (question: Question) => {
     switch(question.type) {
         case 'text':
@@ -382,12 +416,7 @@ const renderQuestionInput = (question: Question) => {
         case 'number':
              return <Input type="number" id={`preview-${question.id}`} placeholder={question.placeholder} defaultValue={question.defaultValue} name={question.apiId} />;
         case 'currency':
-             return (
-                 <div className="relative max-w-[240px]">
-                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                     <Input type="number" id={`preview-${question.id}`} placeholder="100.00" name={question.apiId} className="pl-7" />
-                 </div>
-             );
+             return <CurrencyInput question={question} />;
         case 'country':
             return (
                 <Select name={question.apiId} defaultValue={question.defaultValue}>
