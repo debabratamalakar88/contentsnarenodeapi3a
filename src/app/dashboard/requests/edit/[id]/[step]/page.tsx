@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getRequest, updateRequest } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 // Type definitions for the entire wizard
@@ -42,6 +43,7 @@ export interface Question {
   required?: boolean;
   defaultValue?: string;
   apiId?: string;
+  buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 export interface Section {
   id: number;
@@ -359,6 +361,9 @@ export default function EditRequestWizardPage() {
                     options: (type === 'radio' || type === 'dropdown' || type === 'image-choice') ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] : (type === 'checkbox' ? [{ label: 'Accept terms', value: 'accepted'}] : undefined),
                     required: false, apiId: slugify(`${baseLabel}_${Date.now()}`),
                 };
+                if (type === 'button') {
+                    newQuestion.buttonVariant = 'default';
+                }
                 return { ...section, questions: [...section.questions, newQuestion] };
             }
             return section;
@@ -590,6 +595,27 @@ export default function EditRequestWizardPage() {
                                         ))}
                                     </div>
                                     <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
+                                </div>
+                            )}
+                             {tempQuestion.type === 'button' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="buttonVariant">Button Style</Label>
+                                    <Select
+                                        value={tempQuestion.buttonVariant || 'default'}
+                                        onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
+                                    >
+                                        <SelectTrigger id="buttonVariant">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="default">Default</SelectItem>
+                                            <SelectItem value="destructive">Destructive</SelectItem>
+                                            <SelectItem value="outline">Outline</SelectItem>
+                                            <SelectItem value="secondary">Secondary</SelectItem>
+                                            <SelectItem value="ghost">Ghost</SelectItem>
+                                            <SelectItem value="link">Link</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             )}
                              <Accordion type="single" collapsible className="w-full">

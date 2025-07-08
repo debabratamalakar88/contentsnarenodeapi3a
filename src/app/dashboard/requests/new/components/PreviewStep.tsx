@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { Page, Question } from "../page"
 import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 interface PreviewStepProps {
     title: string;
@@ -83,6 +85,22 @@ const renderQuestionInput = (question: Question) => {
                 ))}
                 </RadioGroup>
             )
+        case 'icon-selector':
+            return (
+                <Button variant="outline">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Select an Icon
+                </Button>
+            );
+        case 'color-picker':
+            return (
+                <div className="flex items-center gap-2">
+                    <Input type="color" id={`preview-${question.id}`} className="w-12 h-10 p-1" defaultValue={question.defaultValue || '#000000'} />
+                    <Input type="text" placeholder="#000000" defaultValue={question.defaultValue || '#000000'} className="max-w-[150px]" readOnly/>
+                </div>
+            );
+        case 'button':
+            return <Button variant={question.buttonVariant || 'default'}>{question.label}</Button>;
         default:
             return null
     }
