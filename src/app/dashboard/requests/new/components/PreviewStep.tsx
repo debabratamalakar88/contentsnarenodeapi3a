@@ -358,14 +358,18 @@ const renderQuestionInput = (question: Question) => {
             return <Input id={`preview-${question.id}`} type="file" name={question.apiId} />
         case 'checkbox':
             return (
-                <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id={`preview-${question.id}`} name={question.apiId} value={question.options?.[0].value} />
-                    <label
-                        htmlFor={`preview-${question.id}`}
-                        className="text-sm font-medium leading-none"
-                    >
-                        {question.options?.[0].label || 'Sample option'}
-                    </label>
+                <div className="space-y-2 pt-2">
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <Checkbox id={`preview-${question.id}-${i}`} name={`${question.apiId}[]`} value={opt.value} />
+                            <label
+                                htmlFor={`preview-${question.id}-${i}`}
+                                className="text-sm font-medium leading-none"
+                            >
+                                {opt.label}
+                            </label>
+                        </div>
+                    ))}
                 </div>
             )
         case 'dropdown':

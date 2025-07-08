@@ -448,9 +448,9 @@ export default function NewRequestWizardPage() {
                                 label: baseLabel,
                                 instructions: "",
                                 placeholder: "",
-                                options: (type === 'radio' || type === 'dropdown' || type === 'image-choice') 
+                                options: (type === 'radio' || type === 'dropdown' || type === 'image-choice' || type === 'checkbox') 
                                     ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] 
-                                    : (type === 'checkbox' ? [{ label: 'Accept terms', value: 'accepted'}] : undefined),
+                                    : undefined,
                                 required: false,
                                 apiId: slugify(`${baseLabel}_${Date.now()}`),
                             };
@@ -735,7 +735,7 @@ export default function NewRequestWizardPage() {
                                 </div>
                             )}
                             
-                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'image-choice') && (
+                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'image-choice' || tempQuestion.type === 'checkbox') && (
                                 <div className="grid gap-4">
                                     <Label>Options</Label>
                                     <div className="space-y-3">
