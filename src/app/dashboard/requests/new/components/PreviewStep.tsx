@@ -38,6 +38,8 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const [isBold, setIsBold] = React.useState(false);
     const [isItalic, setIsItalic] = React.useState(false);
     const [isUnderline, setIsUnderline] = React.useState(false);
+    const [isUl, setIsUl] = React.useState(false);
+    const [isOl, setIsOl] = React.useState(false);
 
     const [emojiPickerOpen, setEmojiPickerOpen] = React.useState(false);
     const [savedRange, setSavedRange] = React.useState<Range | null>(null);
@@ -47,6 +49,8 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
             setIsBold(document.queryCommandState('bold'));
             setIsItalic(document.queryCommandState('italic'));
             setIsUnderline(document.queryCommandState('underline'));
+            setIsUl(document.queryCommandState('insertUnorderedList'));
+            setIsOl(document.queryCommandState('insertOrderedList'));
         }
     }, []);
 
@@ -100,7 +104,6 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     };
     
     const handleEmojiButtonMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-        // Just save the range. Don't prevent default. Let the click happen.
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
             setSavedRange(selection.getRangeAt(0).cloneRange());
@@ -190,8 +193,8 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
           <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
+          <Button variant={isUl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
+          <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
