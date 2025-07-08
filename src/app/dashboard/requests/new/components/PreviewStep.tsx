@@ -28,9 +28,8 @@ interface PreviewStepProps {
 }
 
 const RichTextEditorPreview = ({ question }: { question: Question }) => {
-    const [content, setContent] = React.useState(question.defaultValue || '');
-    const [wordCount, setWordCount] = React.useState(0);
     const editorRef = React.useRef<HTMLDivElement>(null);
+    const [wordCount, setWordCount] = React.useState(0);
     
     const [isBold, setIsBold] = React.useState(false);
     const [isItalic, setIsItalic] = React.useState(false);
@@ -46,9 +45,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
 
     const updateContent = React.useCallback(() => {
         if (editorRef.current) {
-            const newContent = editorRef.current.innerHTML;
             const textContent = editorRef.current.innerText || "";
-            setContent(newContent);
             const words = textContent.trim().split(/\s+/).filter(Boolean);
             setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
         }
@@ -127,11 +124,10 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     React.useEffect(() => {
         if (editorRef.current && question.defaultValue && editorRef.current.innerHTML !== question.defaultValue) {
             editorRef.current.innerHTML = question.defaultValue;
-            updateContent();
-        } else if (editorRef.current?.innerHTML === '') {
-             updateContent();
         }
+        updateContent();
     }, [question.defaultValue, updateContent]);
+
 
     React.useEffect(() => {
         const editor = editorRef.current;
@@ -159,7 +155,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         updateToolbarState();
     }
     
-    const isPlaceholderVisible = content === '' || content === '<br>';
+    const isPlaceholderVisible = !editorRef.current?.textContent;
   
     return (
       <div className="rounded-md border border-input bg-background">
@@ -206,7 +202,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
         <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
             <span>Words: {wordCount}</span>
         </div>
-        <textarea name={question.apiId} value={content} className="hidden" readOnly />
+        <textarea name={question.apiId} value={editorRef.current?.innerHTML || ''} className="hidden" readOnly />
       </div>
     );
 };
