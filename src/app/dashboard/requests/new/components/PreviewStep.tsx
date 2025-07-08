@@ -20,7 +20,7 @@ import type { Page, Question } from "../[step]/page"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, LinkOff } from 'lucide-react';
+import { Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off } from 'lucide-react';
 
 interface PreviewStepProps {
     title: string;
@@ -123,11 +123,12 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
     };
 
     React.useEffect(() => {
-        if (editorRef.current && question.defaultValue && editorRef.current.innerHTML !== question.defaultValue) {
-            editorRef.current.innerHTML = question.defaultValue;
+        const editor = editorRef.current;
+        if (editor) {
+          editor.innerHTML = question.defaultValue || '';
         }
         updateContent();
-    }, [question.defaultValue, updateContent]);
+    }, []);
 
 
     React.useEffect(() => {
@@ -186,7 +187,7 @@ const RichTextEditorPreview = ({ question }: { question: Question }) => {
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LinkIcon className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><LinkOff className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmoji}><Smile className="h-4 w-4" /></Button>
         </div>
         <div className="relative">
