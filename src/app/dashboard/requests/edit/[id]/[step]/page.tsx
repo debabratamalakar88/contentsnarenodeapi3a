@@ -1,4 +1,5 @@
 
+
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '../../../new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Link as LinkIcon, Code } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -28,6 +29,8 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from "@/components/ui/address-autocomplete-input";
+import { Link as LinkIcon } from 'lucide-react';
+import { countries } from "@/lib/countries";
 
 
 // Type definitions for the entire wizard
@@ -496,7 +499,20 @@ const renderQuestionInput = (question: Question) => {
                  </div>
              );
         case 'country':
-             return <Input type="text" id={`preview-${question.id}`} placeholder="United States" name={question.apiId} />;
+            return (
+                <Select name={question.apiId} defaultValue={question.defaultValue}>
+                    <SelectTrigger id={`preview-${question.id}`}>
+                        <SelectValue placeholder={question.placeholder || "Select a country"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {countries.map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                                {country.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            );
         case 'date-range':
              return <DateRangePicker question={question} />;
         case 'image-choice':

@@ -24,6 +24,7 @@ import { Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignC
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
+import { countries } from '@/lib/countries';
 
 
 interface PreviewStepProps {
@@ -388,7 +389,20 @@ const renderQuestionInput = (question: Question) => {
                  </div>
              );
         case 'country':
-             return <Input type="text" id={`preview-${question.id}`} placeholder="United States" name={question.apiId} />;
+            return (
+                <Select name={question.apiId} defaultValue={question.defaultValue}>
+                    <SelectTrigger id={`preview-${question.id}`}>
+                        <SelectValue placeholder={question.placeholder || "Select a country"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {countries.map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                                {country.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            );
         case 'date-range':
              return <DateRangePicker question={question} />;
         case 'image-choice':
