@@ -1,8 +1,9 @@
+
 'use client'
 
 import * as React from 'react'
 import {
-  Accessibility, AlarmClock, Anchor, AppWindow, Award, Axe, Badge, BaggageClaim, Banana, BarChart, Beaker, Bell, Bike, Binary, Book, Bookmark, Bot, Box, Briefcase, Brush, Bug, Building, Bus, Calendar, Camera, Car, Cat, Check, ChevronDown, Circle, Cloud, Code, Cog, Command, Compass, Contact, Cookie, Copy, CreditCard, Crown, Database, Delete, Diamond, Dog, DollarSign, Download, Droplet, Edit, Eye, File, Film, Filter, Flag, Flame, Folder, Frame, Gamepad2, Gem, Gift, GitBranch, Github, Globe, Grid, Hammer, Hand, HardDrive, Hash, Heading, Heart, HelpCircle, Home, Image, Inbox, Info, Key, Keyboard, Lamp, Laptop, Layers, Layout, Leaf, LifeBuoy, Lightbulb, Link, List, Lock, LogIn, LogOut, Mail, MapPin, Menu, MessageCircle, Mic, Monitor, Moon, MoreHorizontal, MousePointer, Move, Music, Package, Palette, Paperclip, Pause, Pen, Phone, PieChart, Pin, Play, Plus, Printer, Puzzle, Quote, RectangleHorizontal, RefreshCw, Rocket, Save, Scale, Scissors, ScreenShare, Search, Send, Settings, Share2, Shield, ShoppingBag, ShoppingCart, Signal, Smile, Sparkles, Speaker, Star, Sun, Table, Tag, Target, Terminal, ThumbsDown, ThumbsUp, ToggleLeft, ToggleRight, Tool, Trash2, TrendingUp, Truck, Tv, Type, Umbrella, Underline, Unlock, Upload, User, UserPlus, Users, Video, Voicemail, Volume2, Wallet, Watch, Wifi, Wind, Wrench, X, Youtube, Zap, ZoomIn, ZoomOut,
+  Accessibility, AlarmClock, Anchor, AppWindow, Award, Axe, Badge, BaggageClaim, Banana, BarChart, Beaker, Bell, Bike, Binary, Book, Bookmark, Bot, Box, Briefcase, Brush, Bug, Building, Bus, Calendar, Camera, Car, Cat, Check, ChevronDown, Circle, Cloud, Code, Cog, Command, Compass, Contact, Cookie, Copy, CreditCard, Crown, Database, Delete, Diamond, Dog, DollarSign, Download, Droplet, Edit, Eye, File, Film, Filter, Flag, Flame, Folder, Frame, Gamepad2, Gem, Gift, GitBranch, Github, Globe, Grid, Hammer, Hand, HardDrive, Hash, Heading, Heart, HelpCircle, Home, Image, Inbox, Info, Key, Keyboard, Lamp, Laptop, Layers, Layout, Leaf, LifeBuoy, Lightbulb, Link, List, Lock, LogIn, LogOut, Mail, MapPin, Menu, MessageCircle, Mic, Monitor, Moon, MoreHorizontal, MousePointer, Move, Music, Package, Palette, Paperclip, Pause, Pen, Phone, PieChart, Pin, Play, Plus, Printer, Puzzle, Quote, RectangleHorizontal, RefreshCw, Rocket, Save, Scale, Scissors, ScreenShare, Search, Send, Settings, Share2, Shield, ShoppingBag, ShoppingCart, Signal, Smile, Sparkles, Speaker, Star, Sun, Table, Tag, Target, Terminal, ThumbsDown, ThumbsUp, ToggleLeft, ToggleRight, Trash2, TrendingUp, Truck, Tv, Type, Umbrella, Underline, Unlock, Upload, User, UserPlus, Users, Video, Voicemail, Volume2, Wallet, Watch, Wifi, Wind, Wrench, X, Youtube, Zap, ZoomIn, ZoomOut,
   type LucideIcon
 } from 'lucide-react'
 
@@ -13,7 +14,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import {
-  Command,
+  Command as CommandComponent,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -30,8 +31,7 @@ export const iconList: { name: string; icon: LucideIcon }[] = [
     { name: 'Briefcase', icon: Briefcase }, { name: 'Brush', icon: Brush }, { name: 'Bug', icon: Bug }, { name: 'Building', icon: Building },
     { name: 'Bus', icon: Bus }, { name: 'Calendar', icon: Calendar }, { name: 'Camera', icon: Camera }, { name: 'Car', icon: Car },
     { name: 'Cat', icon: Cat }, { name: 'Check', icon: Check }, { name: 'ChevronDown', icon: ChevronDown }, { name: 'Circle', icon: Circle },
-    { name: 'Cloud', icon: Cloud }, { name: 'Code', icon: Code }, { name: 'Cog', icon: Cog }, { name: 'Command', icon: Command },
-    { name: 'Compass', icon: Compass }, { name: 'Contact', icon: Contact }, { name: 'Cookie', icon: Cookie }, { name: 'Copy', icon: Copy },
+    { name: 'Cloud', icon: Cloud }, { name: 'Code', icon: Code }, { name: 'Cog', icon: Cog }, { name: 'Command', icon: Command }, { name: 'Compass', icon: Compass }, { name: 'Contact', icon: Contact }, { name: 'Cookie', icon: Cookie }, { name: 'Copy', icon: Copy },
     { name: 'CreditCard', icon: CreditCard }, { name: 'Crown', icon: Crown }, { name: 'Database', icon: Database },
     { name: 'Delete', icon: Delete }, { name: 'Diamond', icon: Diamond }, { name: 'Dog', icon: Dog }, { name: 'DollarSign', icon: DollarSign },
     { name: 'Download', icon: Download }, { name: 'Droplet', icon: Droplet }, { name: 'Edit', icon: Edit }, { name: 'Eye', icon: Eye },
@@ -59,13 +59,13 @@ export const iconList: { name: string; icon: LucideIcon }[] = [
     { name: 'Star', icon: Star }, { name: 'Sun', icon: Sun }, { name: 'Table', icon: Table }, { name: 'Tag', icon: Tag },
     { name: 'Target', icon: Target }, { name: 'Terminal', icon: Terminal }, { name: 'ThumbsDown', icon: ThumbsDown },
     { name: 'ThumbsUp', icon: ThumbsUp }, { name: 'ToggleLeft', icon: ToggleLeft }, { name: 'ToggleRight', icon: ToggleRight },
-    { name: 'Tool', icon: Tool }, { name: 'Trash2', icon: Trash2 }, { name: 'TrendingUp', icon: TrendingUp }, { name: 'Truck', icon: Truck },
+    { name: 'Trash2', icon: Trash2 }, { name: 'TrendingUp', icon: TrendingUp }, { name: 'Truck', icon: Truck },
     { name: 'Tv', icon: Tv }, { name: 'Type', icon: Type }, { name: 'Umbrella', icon: Umbrella }, { name: 'Underline', icon: Underline },
     { name: 'Unlock', icon: Unlock }, { name: 'Upload', icon: Upload }, { name: 'User', icon: User }, { name: 'UserPlus', icon: UserPlus },
-    { name: 'Users', icon: Users }, { name: 'Video', icon: Video }, { name: 'Voicemail', icon: Voicemail }, { name: 'Volume2', icon: Volume2 },
-    { name: 'Wallet', icon: Wallet }, { name: 'Watch', icon: Watch }, { name: 'Wifi', icon: Wifi }, { name: 'Wind', icon: Wind },
-    { name: 'Wrench', icon: Wrench }, { name: 'X', icon: X }, { name: 'Youtube', icon: Youtube }, { name: 'Zap', icon: Zap },
-    { name: 'ZoomIn', icon: ZoomIn }, { name: 'ZoomOut', icon: ZoomOut }
+    { name: 'Users', icon: Users }, { name: 'Video', icon: Video }, { name: 'Voicemail', icon: Volume2 }, { name: 'Wallet', icon: Wallet },
+    { name: 'Watch', icon: Watch }, { name: 'Wifi', icon: Wifi }, { name: 'Wind', icon: Wind }, { name: 'Wrench', icon: Wrench },
+    { name: 'X', icon: X }, { name: 'Youtube', icon: Youtube }, { name: 'Zap', icon: Zap }, { name: 'ZoomIn', icon: ZoomIn },
+    { name: 'ZoomOut', icon: ZoomOut }
 ];
 
 interface IconSelectorProps {
@@ -92,7 +92,7 @@ export function IconSelector({ name, defaultValue }: IconSelectorProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">
-        <Command>
+        <CommandComponent>
           <CommandInput placeholder="Search icons..." />
           <CommandList>
             <CommandEmpty>No icon found.</CommandEmpty>
@@ -114,7 +114,7 @@ export function IconSelector({ name, defaultValue }: IconSelectorProps) {
               </div>
             </CommandGroup>
           </CommandList>
-        </Command>
+        </CommandComponent>
       </PopoverContent>
       <input type="hidden" name={name} value={value} />
     </Popover>
