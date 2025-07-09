@@ -98,7 +98,7 @@ export interface Request {
   request_code: string;
   form_code: string;
   form_data: any;
-  client_id: number[];
+  client_id: number[] | null;
   status: 'draft' | 'published' | 'completed' | 'archived';
   allow_comments: boolean;
   send_option: 'immediately' | 'later';
