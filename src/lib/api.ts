@@ -667,6 +667,20 @@ export async function getRequests(token: string, page: number = 1): Promise<Pagi
   return handleResponse(response);
 }
 
+export async function getArchivedRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
+  // Assuming this endpoint exists based on other resource patterns
+  const response = await fetch(`${API_BASE_URL}/api/requests/archived?page=${page}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+
 export async function getSharedRequest(requestCode: string): Promise<Request> {
   const response = await fetch(`${API_BASE_URL}/api/requests/share/${requestCode}`, {
     method: 'GET',
@@ -762,4 +776,35 @@ export async function archiveRequest(token: string, id: number): Promise<{ messa
     },
   });
   return handleResponse(response);
+}
+
+export async function duplicateRequest(token: string, id: number): Promise<Request> {
+  // 1. Fetch the original request
+  const originalRequest = await getRequest(token, id);
+
+  // 2. Prepare the new request data for creation
+  const { 
+    id: oldId, 
+    request_code, 
+    form_code,
+    user_id,
+    created_by,
+    updated_by,
+    ...restOfData 
+  } = originalRequest;
+
+  const newRequestData = {
+    ...restOfData,
+    title: `(Copy) ${originalRequest.title}`,
+    status: 'draft' as const,
+    client_id: null,
+    due_date: null,
+    scheduled_at: null,
+    allow_comments: true,
+    send_option: 'immediately' as const,
+    communication_mode: 'none'
+  };
+  
+  // 3. Create the new request using the existing create endpoint
+  return createRequest(token, newRequestData);
 }

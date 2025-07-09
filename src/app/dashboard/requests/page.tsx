@@ -10,8 +10,11 @@ import {
     Layers,
     List,
     User,
-    Mail,
-    PlusCircle
+    PlusCircle,
+    Copy,
+    Archive as ArchiveIcon,
+    ArchiveRestore,
+    Trash2
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from 'date-fns';
@@ -29,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -44,9 +48,30 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRequests, getClients, type Request, type Client } from "@/lib/api";
+import { 
+  getRequests, 
+  getClients, 
+  getArchivedRequests,
+  archiveRequest,
+  restoreRequest,
+  forceDeleteRequest,
+  duplicateRequest,
+  type Request, 
+  type Client 
+} from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const FilterButton = ({ label, value }: { label: string; value: string }) => (
@@ -70,7 +95,17 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<number, string> }) => {
+interface RequestCardProps {
+    request: Request;
+    clientMap: Map<number, string>;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
+    isArchived: boolean;
+}
+
+const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestCardProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     
@@ -100,13 +135,20 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                         {request.status === 'published' && (
-                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                         {isArchived ? (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                            </>
+                         ) : (
+                            <>
+                                {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>}
+                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                            </>
                          )}
-                         <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
-                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                         <DropdownMenuItem>Archive</DropdownMenuItem>
-                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
@@ -136,9 +178,7 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                     variant="outline" 
                     className={cn(
                         "capitalize font-semibold", 
-                        request.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border-green-200' 
-                            : 'text-gray-600 bg-gray-100'
+                        request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
                     )}
                  >
                     {request.status}
@@ -148,7 +188,17 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
     )
 }
 
-const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<number, string> }) => {
+interface RequestRowProps {
+    request: Request;
+    clientMap: Map<number, string>;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
+    isArchived: boolean;
+}
+
+const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestRowProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     
@@ -174,7 +224,7 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
             <Badge 
                 variant="outline"
                 className={cn(
-                    "capitalize",
+                    "capitalize font-semibold", 
                     request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
                 )}
             >
@@ -188,13 +238,20 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                {request.status === 'published' ? (
-                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
-                <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                <DropdownMenuItem>Archive</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isArchived ? (
+                    <>
+                        <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                    </>
+                 ) : (
+                    <>
+                        {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>}
+                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                    </>
+                 )}
               </DropdownMenuContent>
             </DropdownMenu>
         </TableCell>
@@ -202,7 +259,7 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
     )
 }
 
-const RequestsTable = ({ requests, clientMap }: { requests: Request[], clientMap: Map<number, string> }) => {
+const RequestsTable = ({ requests, clientMap, ...props }: Omit<RequestRowProps, 'request' | 'clientMap'> & { requests: Request[], clientMap: Map<number, string> }) => {
     return (
         <Card>
             <Table>
@@ -217,37 +274,41 @@ const RequestsTable = ({ requests, clientMap }: { requests: Request[], clientMap
                 </TableHeader>
                 <TableBody>
                     {requests.map((request) => (
-                       <RequestRow key={request.id} request={request} clientMap={clientMap} />
+                       <RequestRow key={request.id} request={request} clientMap={clientMap} {...props} />
                     ))}
-                    <TableRow>
-                        <TableCell colSpan={5} className="py-2">
-                            <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
-                                Add new request...
-                            </Link>
-                        </TableCell>
-                    </TableRow>
+                    {!props.isArchived && (
+                        <TableRow>
+                            <TableCell colSpan={5} className="py-2">
+                                <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
+                                    Add new request...
+                                </Link>
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
         </Card>
     )
 }
 
-const RequestsGrid = ({ requests, clientMap }: { requests: Request[], clientMap: Map<number, string> }) => {
+const RequestsGrid = ({ requests, clientMap, ...props }: Omit<RequestCardProps, 'request' | 'clientMap'> & { requests: Request[], clientMap: Map<number, string> }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {requests.map(request => (
-                <RequestCard key={request.id} request={request} clientMap={clientMap}/>
+                <RequestCard key={request.id} request={request} clientMap={clientMap} {...props} />
             ))}
-            <Link href="/dashboard/requests/new">
-                <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[290px] h-full text-muted-foreground">
-                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                        <Layers className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <Button variant="ghost" className="text-primary font-semibold bg-primary/20 hover:bg-primary/30 px-4 py-2 rounded-lg">
-                        ADD NEW REQUEST
-                    </Button>
-                </div>
-            </Link>
+            {!props.isArchived && (
+              <Link href="/dashboard/requests/new">
+                  <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[290px] h-full text-muted-foreground">
+                      <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
+                          <Layers className="h-8 w-8 text-slate-400" />
+                      </div>
+                      <Button variant="ghost" className="text-primary font-semibold bg-primary/20 hover:bg-primary/30 px-4 py-2 rounded-lg">
+                          ADD NEW REQUEST
+                      </Button>
+                  </div>
+              </Link>
+            )}
         </div>
     )
 }
@@ -255,12 +316,22 @@ const RequestsGrid = ({ requests, clientMap }: { requests: Request[], clientMap:
 
 export default function RequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [requests, setRequests] = useState<Request[]>([]);
+    const [activeRequests, setActiveRequests] = useState<Request[]>([]);
+    const [archivedRequests, setArchivedRequests] = useState<Request[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+
+    const [currentTab, setCurrentTab] = useState('active');
+    const [dataVersion, setDataVersion] = useState(0);
+
+    const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
+    const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
+    const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+
+    const refetchData = () => setDataVersion(v => v + 1);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -271,13 +342,21 @@ export default function RequestsPage() {
 
         async function loadData() {
             setIsLoading(true);
+            setError(null);
             try {
-                const [requestsResponse, clientsResponse] = await Promise.all([
-                    getRequests(token),
-                    getClients(token)
-                ]);
-                setRequests(requestsResponse.data || []);
-                setClients(clientsResponse || []);
+                // Fetch clients only once
+                if (clients.length === 0) {
+                    const clientsResponse = await getClients(token);
+                    setClients(clientsResponse || []);
+                }
+                
+                if (currentTab === 'active') {
+                    const requestsResponse = await getRequests(token);
+                    setActiveRequests(requestsResponse.data || []);
+                } else {
+                    const requestsResponse = await getArchivedRequests(token);
+                    setArchivedRequests(requestsResponse.data || []);
+                }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
                 toast({
@@ -290,19 +369,66 @@ export default function RequestsPage() {
             }
         }
         loadData();
-    }, [router, toast]);
+    }, [router, toast, currentTab, dataVersion, clients.length]);
     
-    const sortedRequests = useMemo(() => {
-      if (!requests) return [];
-      return [...requests].sort((a, b) => {
-          if (!a.created_at || !b.created_at) return 0;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-    }, [requests]);
-
     const clientMap = new Map(clients.map(c => [c.id, c.full_name]));
-
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+
+    const handleDuplicate = async (requestId: number) => {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        toast({ title: 'Duplicating request...', description: 'Please wait.'});
+        try {
+            await duplicateRequest(token, requestId);
+            toast({ title: 'Success', description: 'Request duplicated successfully. You can find the copy in your drafts.' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error duplicating request', description: err.message });
+        }
+    };
+    
+    const handleArchive = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToArchive) return;
+        try {
+            await archiveRequest(token, requestToArchive.id);
+            toast({ title: 'Request archived' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
+        } finally {
+            setRequestToArchive(null);
+        }
+    };
+
+    const handleRestore = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToRestore) return;
+        try {
+            await restoreRequest(token, requestToRestore.id);
+            toast({ title: 'Request restored' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error restoring request', description: err.message });
+        } finally {
+            setRequestToRestore(null);
+        }
+    };
+
+    const handleForceDelete = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToForceDelete) return;
+        try {
+            await forceDeleteRequest(token, requestToForceDelete.id);
+            toast({ title: 'Request permanently deleted' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
+        } finally {
+            setRequestToForceDelete(null);
+        }
+    };
+
 
     const renderLoadingSkeleton = () => (
         viewMode === 'grid' ? (
@@ -321,80 +447,110 @@ export default function RequestsPage() {
         )
     );
 
-    const renderContent = () => {
+    const renderContent = (requests: Request[], isArchivedTab: boolean) => {
         if (isLoading) {
             return renderLoadingSkeleton();
         }
         if (error) {
             return <div className="text-center text-destructive py-10">{error}</div>;
         }
-        if (sortedRequests.length === 0) {
+        if (requests.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-10 bg-background rounded-lg border-2 border-dashed">
-                    <h3 className="text-2xl font-bold tracking-tight mb-2">No requests found</h3>
-                    <p className="text-sm mb-4">Get started by creating your first content request.</p>
-                    <Button asChild>
-                        <Link href="/dashboard/requests/new"><PlusCircle className="mr-2 h-4 w-4"/>Create Request</Link>
-                    </Button>
+                    <h3 className="text-2xl font-bold tracking-tight mb-2">
+                        {isArchivedTab ? "No archived requests" : "No active requests"}
+                    </h3>
+                    <p className="text-sm mb-4">
+                        {isArchivedTab ? "Your archived requests will appear here." : "Get started by creating your first content request."}
+                    </p>
+                    {!isArchivedTab && (
+                        <Button asChild>
+                            <Link href="/dashboard/requests/new"><PlusCircle className="mr-2 h-4 w-4"/>Create Request</Link>
+                        </Button>
+                    )}
                 </div>
             );
         }
+        const viewProps = {
+            requests,
+            clientMap,
+            onDuplicate: handleDuplicate,
+            onArchive: setRequestToArchive,
+            onRestore: setRequestToRestore,
+            onForceDelete: setRequestToForceDelete,
+            isArchived: isArchivedTab,
+        };
         return viewMode === 'grid' ? (
-            <RequestsGrid requests={sortedRequests} clientMap={clientMap} />
+            <RequestsGrid {...viewProps} />
         ) : (
-            <RequestsTable requests={sortedRequests} clientMap={clientMap} />
+            <RequestsTable {...viewProps} />
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-muted/40">
-            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
-                <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Group By:</span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
-                                <User className="h-4 w-4" />
-                                Owner
-                                <ChevronDown className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                         <DropdownMenuContent align="start">
-                            <DropdownMenuItem>Owner</DropdownMenuItem>
-                         </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                 <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Filter By:</span>
-                    <FilterButton label="Status" value="All" />
-                    <FilterButton label="Owner" value="Anyone" />
-                    <FilterButton label="Client" value="All" />
-                </div>
-                <div className="flex items-center gap-2 ml-auto">
-                    <span className="text-sm text-muted-foreground">View:</span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
-                                <ViewIcon className="h-4 w-4" />
-                                {viewMode === 'grid' ? 'Grid' : 'List'}
-                                <ChevronDown className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search requests..." className="pl-9 h-9" />
+        <>
+            <div className="flex flex-col h-full bg-muted/40">
+                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
+                        <TabsList>
+                            <TabsTrigger value="active">Active</TabsTrigger>
+                            <TabsTrigger value="archived">Archived</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <span className="text-sm text-muted-foreground">View:</span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
+                                    <ViewIcon className="h-4 w-4" />
+                                    {viewMode === 'grid' ? 'Grid' : 'List'}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search requests..." className="pl-9 h-9" />
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderContent()}
-            </main>
-        </div>
+                <main className="flex-1 p-6 overflow-y-auto">
+                     <Tabs value={currentTab} onValueChange={setCurrentTab}>
+                        <TabsContent value="active">
+                            {renderContent(activeRequests, false)}
+                        </TabsContent>
+                        <TabsContent value="archived">
+                            {renderContent(archivedRequests, true)}
+                        </TabsContent>
+                    </Tabs>
+                </main>
+            </div>
+            
+            <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            <AlertDialog open={!!requestToRestore} onOpenChange={(open) => !open && setRequestToRestore(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Restore Request?</AlertDialogTitle><AlertDialogDescription>This will move the request back to your active list.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRestore}>Restore</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Delete Permanently?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. All data for this request will be permanently deleted.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleForceDelete}>Delete</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }
