@@ -77,6 +77,14 @@ export default function Dashboard() {
     return new Map(clients.map(c => [c.id, c.full_name]));
   }, [clients]);
 
+  const sortedRequests = useMemo(() => {
+    if (!requests) return [];
+    return [...requests].sort((a, b) => {
+        if (!a.created_at || !b.created_at) return 0;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [requests]);
+
   if (isLoading) {
     return (
       <div className="p-6 flex flex-col gap-6">
@@ -229,7 +237,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.slice(0, 5).map((request) => {
+                {sortedRequests.slice(0, 5).map((request) => {
                    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
                    return (
                     <TableRow key={request.id}>
