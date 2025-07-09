@@ -254,7 +254,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
             addSection={addSection}
         />
         
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-6 overflow-y-scroll">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex flex-col">
