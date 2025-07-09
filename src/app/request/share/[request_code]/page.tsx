@@ -555,7 +555,7 @@ export default function SharedRequestPage() {
     return (
         <div className="min-h-screen bg-muted flex flex-col">
             <header className="w-full p-4 flex-shrink-0 bg-background border-b">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                <div className="max-w-7xl mx-auto flex justify-center items-center">
                     <Logo className="h-8 w-8 text-primary" />
                 </div>
             </header>
