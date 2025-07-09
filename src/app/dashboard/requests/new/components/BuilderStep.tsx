@@ -312,7 +312,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                         <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                     </div>
                                     
-                                    <Droppable droppableId={`section-${section.id}`} isDropDisabled={false}>
+                                    <Droppable droppableId={`section-${section.id}`} isDropDisabled={false} isCombineEnabled={false}>
                                         {(provided) => (
                                             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                                                 {section.questions.map((question, index) => (
