@@ -70,7 +70,7 @@ const getInitials = (name: string): string => {
 }
 
 const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<number, string> }) => {
-    const clientName = request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     
     return (
@@ -127,7 +127,7 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
 }
 
 const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<number, string> }) => {
-    const clientName = request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     
     return (
@@ -357,5 +357,3 @@ export default function RequestsPage() {
         </div>
     )
 }
-
-    
