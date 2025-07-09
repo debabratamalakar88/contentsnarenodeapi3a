@@ -1,15 +1,14 @@
 
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { getRequest, type Request, type Question } from '@/lib/api';
+import { getRequest, getClients, type Request, type Question, type Client, type Page } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -24,6 +23,18 @@ import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-i
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
 import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
 
 const RichTextEditorPreview = ({ question }: { question: Question }) => {
     const editorRef = useRef<HTMLDivElement>(null);
@@ -422,11 +433,47 @@ const renderQuestionInput = (question: Question) => {
     }
 }
 
-const ViewSidebar = ({ pages, activePageId, setActivePageId }: { pages: Request['form_data'], activePageId: number | null, setActivePageId: (id: number) => void }) => {
+interface ViewSidebarProps {
+  request: Request;
+  assignedClients: Client[];
+  pages: Page[];
+  activePageId: number | null;
+  setActivePageId: (id: number) => void;
+}
+
+const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActivePageId }: ViewSidebarProps) => {
     return (
-        <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
-            <div className="p-4 border-b"><h2 className="font-semibold text-sm">PAGES</h2></div>
+        <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
+            <div className="p-4 border-b">
+                <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
+                {request.due_date && (
+                    <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
+                        <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                        Due: {format(parseISO(request.due_date), 'PPP')}
+                    </div>
+                )}
+            </div>
+            {assignedClients.length > 0 && (
+                <div className="p-4 border-b">
+                    <h3 className="font-semibold text-xs mb-2 uppercase text-muted-foreground">Clients</h3>
+                    <div className="space-y-2">
+                        {assignedClients.map(client => (
+                            <div key={client.id} className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="text-sm font-semibold">{client.full_name}</p>
+                                    <p className="text-xs text-muted-foreground">{client.email}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             <div className="flex-grow p-2 space-y-1 overflow-y-auto">
+                <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
                 {pages.map(page => (
                     <button
                         key={page.id}
@@ -449,6 +496,7 @@ export default function ViewRequestPage() {
     const id = Number(params.id);
 
     const [request, setRequest] = useState<Request | null>(null);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -459,23 +507,34 @@ export default function ViewRequestPage() {
         const token = localStorage.getItem('authToken');
         if (!token) { router.push('/login'); return; }
 
-        async function fetchRequest() {
+        async function fetchRequestData() {
             try {
-                const data = await getRequest(token, id);
-                setRequest(data);
-                if (data.form_data?.length > 0) {
-                    setActivePageId(data.form_data[0].id);
+                const [requestData, clientsData] = await Promise.all([
+                    getRequest(token!, id),
+                    getClients(token!)
+                ]);
+
+                setRequest(requestData);
+                setClients(clientsData || []);
+
+                if (requestData.form_data?.length > 0) {
+                    setActivePageId(requestData.form_data[0].id);
                 }
             } catch (err: any) {
-                const message = err.message || 'Failed to load request.';
+                const message = err.message || 'Failed to load request data.';
                 setError(message);
                 toast({ variant: 'destructive', title: 'Error', description: message });
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchRequest();
+        fetchRequestData();
     }, [id, router, toast]);
+
+    const assignedClients = useMemo(() => {
+        if (!request?.client_id || !clients) return [];
+        return clients.filter(c => request.client_id!.includes(c.id));
+    }, [request, clients]);
 
     const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -502,7 +561,7 @@ export default function ViewRequestPage() {
     if (error) {
         return (
             <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-muted/40 p-4 text-center">
-                <Card className="w-full max-w-md"><CardHeader><CardTitle className="text-destructive">Request Not Found</CardTitle><CardDescription>{error}</CardDescription></CardHeader><CardContent><Button asChild><Link href="/dashboard/requests">Back to Requests</Link></Button></CardContent></Card>
+                <Card className="w-full max-w-md"><CardHeader><CardTitle className="text-destructive">Request Not Found</CardTitle><CardDescription>{error}</CardDescription></CardHeader><CardContent><Button asChild><a href="/dashboard/requests">Back to Requests</a></Button></CardContent></Card>
             </div>
         );
     }
@@ -516,12 +575,12 @@ export default function ViewRequestPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/40">
             <header className="flex items-center gap-4 px-6 py-3 border-b bg-background sticky top-0 z-10">
-                <Button variant="outline" size="icon" asChild><Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link></Button>
+                <Button variant="outline" size="icon" asChild><a href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></a></Button>
                 <div><h1 className="text-lg font-semibold">{request.title}</h1></div>
             </header>
             
             <div className="flex flex-1 overflow-hidden">
-                <ViewSidebar pages={request.form_data} activePageId={activePageId} setActivePageId={setActivePageId} />
+                <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageId={activePageId} setActivePageId={setActivePageId} />
                 <main className="flex-1 p-6 overflow-y-auto">
                     <form className="max-w-3xl mx-auto" onSubmit={handleFormSubmit}>
                         {activePage ? (
