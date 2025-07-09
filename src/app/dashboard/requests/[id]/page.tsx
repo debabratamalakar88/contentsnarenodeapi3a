@@ -1,14 +1,14 @@
 
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, type Request, type Question, type Client, type Page } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -437,22 +437,14 @@ interface ViewSidebarProps {
   request: Request;
   assignedClients: Client[];
   pages: Page[];
-  activePageId: number | null;
-  setActivePageId: (id: number) => void;
+  activePageIndex: number;
+  setActivePageIndex: (id: number) => void;
+  publicUrl: string;
 }
 
-const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActivePageId }: ViewSidebarProps) => {
+const ViewSidebar = ({ request, assignedClients, pages, activePageIndex, setActivePageIndex, publicUrl }: ViewSidebarProps) => {
     const { toast } = useToast();
     const [copied, setCopied] = useState(false);
-    const [publicUrl, setPublicUrl] = useState('');
-
-    useEffect(() => {
-        if (request?.status === 'published' && request.request_code) {
-            setPublicUrl(`${window.location.origin}/request/share/${request.request_code}`);
-        } else {
-            setPublicUrl('');
-        }
-    }, [request]);
 
     const handleCopy = () => {
         if (!publicUrl) return;
@@ -464,62 +456,64 @@ const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActiveP
     
     return (
         <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
-            <div className="p-4 border-b">
-                <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
-                {request.due_date && (
-                    <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
-                        <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-                        Due: {format(parseISO(request.due_date), 'PPP')}
-                    </div>
-                )}
-                 {request.status === 'published' && request.request_code && publicUrl && (
-                    <div className="mt-4">
-                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                             <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
-                                <a
-                                    href={publicUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="truncate hover:underline"
-                                    title={publicUrl}
-                                >
-                                    {publicUrl}
-                                </a>
+            <div className="flex-shrink-0">
+                <div className="p-4 border-b">
+                    <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
+                    {request.due_date && (
+                        <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
+                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                            Due: {format(parseISO(request.due_date), 'PPP')}
+                        </div>
+                    )}
+                     {request.status === 'published' && request.request_code && publicUrl && (
+                        <div className="mt-4">
+                            <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
+                            <div className="flex items-center gap-1 mt-1">
+                                <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
+                                    <a
+                                        href={publicUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="truncate hover:underline"
+                                        title={publicUrl}
+                                    >
+                                        {publicUrl}
+                                    </a>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
+                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                                </Button>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
-                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
-                            </Button>
+                        </div>
+                    )}
+                </div>
+                {assignedClients.length > 0 && (
+                    <div className="p-4 border-b">
+                        <h3 className="font-semibold text-xs mb-2 uppercase text-muted-foreground">Clients</h3>
+                        <div className="space-y-2">
+                            {assignedClients.map(client => (
+                                <div key={client.id} className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="text-sm font-semibold">{client.full_name}</p>
+                                        <p className="text-xs text-muted-foreground">{client.email}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
             </div>
-            {assignedClients.length > 0 && (
-                <div className="p-4 border-b">
-                    <h3 className="font-semibold text-xs mb-2 uppercase text-muted-foreground">Clients</h3>
-                    <div className="space-y-2">
-                        {assignedClients.map(client => (
-                            <div key={client.id} className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="text-sm font-semibold">{client.full_name}</p>
-                                    <p className="text-xs text-muted-foreground">{client.email}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-            <div className="flex-grow p-2 space-y-1 overflow-y-auto">
+            <div className="flex-1 p-2 space-y-1 overflow-y-auto">
                 <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
-                {pages.map(page => (
+                {pages.map((page, index) => (
                     <button
                         key={page.id}
-                        onClick={() => setActivePageId(page.id)}
-                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageId === page.id ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
+                        onClick={() => setActivePageIndex(index)}
+                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageIndex === index ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
                     >
                         <span className="truncate">{page.title}</span>
                     </button>
@@ -541,7 +535,7 @@ export default function ViewRequestPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [activePageId, setActivePageId] = useState<number | null>(null);
+    const [activePageIndex, setActivePageIndex] = useState(0);
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -557,10 +551,6 @@ export default function ViewRequestPage() {
 
                 setRequest(requestData);
                 setClients(clientsData || []);
-
-                if (requestData.form_data?.length > 0) {
-                    setActivePageId(requestData.form_data[0].id);
-                }
             } catch (err: any) {
                 const message = err.message || 'Failed to load request data.';
                 setError(message);
@@ -588,6 +578,18 @@ export default function ViewRequestPage() {
         setIsSubmitting(false);
     };
 
+    const handleNextPage = () => {
+        if (request && activePageIndex < request.form_data.length - 1) {
+            setActivePageIndex(prev => prev + 1);
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (activePageIndex > 0) {
+            setActivePageIndex(prev => prev - 1);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="p-6 h-full flex flex-col">
@@ -607,29 +609,31 @@ export default function ViewRequestPage() {
         );
     }
 
-    if (!request || !request.form_data) {
+    if (!request || !request.form_data || request.form_data.length === 0) {
         return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
     }
 
-    const activePage = request.form_data.find(p => p.id === activePageId);
+    const activePage = request.form_data[activePageIndex];
+    const isLastPage = activePageIndex === request.form_data.length - 1;
+    const publicUrl = request?.status === 'published' && request.request_code ? `${window.location.origin}/request/share/${request.request_code}` : '';
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/40">
-            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background sticky top-0 z-10">
+            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-shrink-0">
                 <Button variant="outline" size="icon" asChild><a href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></a></Button>
             </header>
             
-            <div className="flex flex-1 overflow-hidden">
-                <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageId={activePageId} setActivePageId={setActivePageId} />
-                <main className="flex-1 p-6 overflow-y-auto">
-                    <form className="max-w-3xl mx-auto" onSubmit={handleFormSubmit}>
+            <div className="flex flex-1 overflow-y-hidden">
+                <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl} />
+                <main className="flex-1 overflow-y-auto">
+                    <form className="max-w-3xl mx-auto p-6" onSubmit={handleFormSubmit}>
                         {activePage ? (
                             <Card>
                                 <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
                                 <CardContent className="space-y-8">
                                     {activePage.sections.map(section => (
                                         <div key={section.id}>
-                                            <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
+                                            <h4 className="text-lg font-semibold">{section.title}</h4>
                                             {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
                                             {section.questions.map(question => (
                                                 <div key={question.id} className="grid gap-2 mb-4">
@@ -641,11 +645,20 @@ export default function ViewRequestPage() {
                                         </div>
                                     ))}
                                 </CardContent>
-                                <CardFooter>
-                                    <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Submit Page
+                                <CardFooter className="flex justify-between border-t pt-6">
+                                    <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" /> Previous
                                     </Button>
+                                    {isLastPage ? (
+                                        <Button type="submit" disabled={isSubmitting}>
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Submit
+                                        </Button>
+                                    ) : (
+                                        <Button type="button" onClick={handleNextPage}>
+                                            Next <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </CardFooter>
                             </Card>
                         ) : (
