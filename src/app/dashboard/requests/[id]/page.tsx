@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -442,6 +442,17 @@ interface ViewSidebarProps {
 }
 
 const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActivePageId }: ViewSidebarProps) => {
+    const { toast } = useToast();
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        const publicUrl = `${window.location.origin}/request/share/${request.request_code}`;
+        navigator.clipboard.writeText(publicUrl);
+        setCopied(true);
+        toast({ title: "Copied to clipboard!", description: "The public URL has been copied." });
+        setTimeout(() => setCopied(false), 2000);
+    };
+    
     return (
         <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
             <div className="p-4 border-b">
@@ -451,6 +462,21 @@ const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActiveP
                     <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
                         <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
                         Due: {format(parseISO(request.due_date), 'PPP')}
+                    </div>
+                )}
+                 {request.status === 'published' && request.request_code && (
+                    <div className="mt-4">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                            <Input
+                                readOnly
+                                value={`/request/share/${request.request_code}`}
+                                className="h-8 text-xs truncate bg-muted/50"
+                            />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -551,7 +577,7 @@ export default function ViewRequestPage() {
         return (
             <div className="p-6 h-full flex flex-col">
                 <header className="flex items-center justify-between mb-6 pb-4 border-b">
-                    <div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-7 w-48" /></div>
+                    <div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /></div>
                 </header>
                 <div className="flex flex-1"><Skeleton className="w-64" /><div className="flex-1 p-6"><Skeleton className="h-full w-full" /></div></div>
             </div>
