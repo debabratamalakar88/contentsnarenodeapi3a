@@ -493,19 +493,15 @@ export default function NewRequestWizardPage() {
 
     const reorderQuestions = (pageId: number, sectionId: number, startIndex: number, endIndex: number) => {
         setPages(prevPages => {
-            const newPages = [...prevPages];
-            const pageIndex = newPages.findIndex(p => p.id === pageId);
-            if (pageIndex === -1) return prevPages;
-
-            const sectionIndex = newPages[pageIndex].sections.findIndex(s => s.id === sectionId);
-            if (sectionIndex === -1) return prevPages;
-            
-            const newQuestions = Array.from(newPages[pageIndex].sections[sectionIndex].questions);
-            const [removed] = newQuestions.splice(startIndex, 1);
-            newQuestions.splice(endIndex, 0, removed);
-            
-            newPages[pageIndex].sections[sectionIndex].questions = newQuestions;
-            
+            const newPages: Page[] = JSON.parse(JSON.stringify(prevPages));
+            const page = newPages.find(p => p.id === pageId);
+            if (page) {
+                const section = page.sections.find(s => s.id === sectionId);
+                if (section) {
+                    const [removed] = section.questions.splice(startIndex, 1);
+                    section.questions.splice(endIndex, 0, removed);
+                }
+            }
             return newPages;
         });
     };
