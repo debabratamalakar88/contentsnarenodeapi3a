@@ -1,14 +1,14 @@
 
 'use client'
 
-import {
-  Activity,
-  ArrowUpRight,
-  ClipboardList,
-  Users,
-  FileText,
-  PlusCircle,
-  User,
+import { 
+    Activity,
+    ArrowUpRight,
+    ClipboardList,
+    Users,
+    FileText,
+    PlusCircle,
+    User,
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
@@ -35,6 +35,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { getRequests, getClients, type Request, type Client } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 
 export default function Dashboard() {
@@ -252,7 +253,15 @@ export default function Dashboard() {
                         {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
+                        <Badge 
+                            variant="outline" 
+                            className={cn(
+                                "capitalize font-semibold", 
+                                request.status === 'published' 
+                                    ? 'bg-green-100 text-green-800 border-green-200' 
+                                    : 'text-gray-600 bg-gray-100'
+                            )}
+                         >
                           {request.status}
                         </Badge>
                       </TableCell>
