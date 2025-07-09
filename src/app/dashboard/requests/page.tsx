@@ -328,6 +328,7 @@ export default function RequestsPage() {
 
     const [currentTab, setCurrentTab] = useState('active');
     const [dataVersion, setDataVersion] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
@@ -375,7 +376,7 @@ export default function RequestsPage() {
         loadData();
     }, [router, toast, currentTab, dataVersion, clients.length]);
     
-    const clientMap = new Map(clients.map(c => [c.id, c.full_name]));
+    const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
     const handleDuplicate = async (requestId: number) => {
@@ -433,6 +434,26 @@ export default function RequestsPage() {
         }
     };
 
+    const filteredActiveRequests = useMemo(() => activeRequests.filter(request => {
+      const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        request.title.toLowerCase().includes(searchLower) ||
+        (request.description && request.description.toLowerCase().includes(searchLower)) ||
+        clientNames.includes(searchLower)
+      );
+    }), [activeRequests, searchQuery, clientMap]);
+
+    const filteredArchivedRequests = useMemo(() => archivedRequests.filter(request => {
+      const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        request.title.toLowerCase().includes(searchLower) ||
+        (request.description && request.description.toLowerCase().includes(searchLower)) ||
+        clientNames.includes(searchLower)
+      );
+    }), [archivedRequests, searchQuery, clientMap]);
+
 
     const renderLoadingSkeleton = () => (
         viewMode === 'grid' ? (
@@ -459,15 +480,27 @@ export default function RequestsPage() {
             return <div className="text-center text-destructive py-10">{error}</div>;
         }
         if (requests.length === 0) {
+            const message = isArchivedTab 
+                ? "No archived requests" 
+                : searchQuery
+                ? `No requests found for "${searchQuery}"`
+                : "No active requests";
+            
+            const description = isArchivedTab
+                ? "Your archived requests will appear here."
+                : searchQuery
+                ? "Try a different search term."
+                : "Get started by creating your first content request.";
+
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-10 bg-background rounded-lg border-2 border-dashed">
                     <h3 className="text-2xl font-bold tracking-tight mb-2">
-                        {isArchivedTab ? "No archived requests" : "No active requests"}
+                        {message}
                     </h3>
                     <p className="text-sm mb-4">
-                        {isArchivedTab ? "Your archived requests will appear here." : "Get started by creating your first content request."}
+                       {description}
                     </p>
-                    {!isArchivedTab && (
+                    {!isArchivedTab && !searchQuery && (
                         <Button asChild>
                             <Link href="/dashboard/requests/new"><PlusCircle className="mr-2 h-4 w-4"/>Create Request</Link>
                         </Button>
@@ -518,18 +551,23 @@ export default function RequestsPage() {
                         </DropdownMenu>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search requests..." className="pl-9 h-9" />
+                            <Input 
+                                placeholder="Search requests..." 
+                                className="pl-9 h-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
                 </header>
 
                 <main className="flex-1 p-6 overflow-y-auto">
                      <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                        <TabsContent value="active">
-                            {renderContent(activeRequests, false)}
+                        <TabsContent value="active" className="mt-0">
+                            {renderContent(filteredActiveRequests, false)}
                         </TabsContent>
-                        <TabsContent value="archived">
-                            {renderContent(archivedRequests, true)}
+                        <TabsContent value="archived" className="mt-0">
+                            {renderContent(filteredArchivedRequests, true)}
                         </TabsContent>
                     </Tabs>
                 </main>
