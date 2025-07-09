@@ -9,34 +9,81 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Edit, Type, CheckSquare, ListOrdered, FileUp, CalendarDays, Mail, Phone, Link2, Sparkles, Palette, MousePointerClick, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, ImageUp, PenSquare } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
-const getQuestionIcon = (type: Question['type']) => {
-    const icons: { [key: string]: React.ElementType } = {
-        'text': Type,
-        'textarea': PenSquare,
-        'file': FileUp,
-        'checkbox': CheckSquare,
-        'dropdown': MenuSquare,
-        'date': CalendarClock,
-        'email': Mail,
-        'tel': Phone,
-        'url': Link2,
-        'radio': CircleDot,
-        'formatted-text': Type,
-        'image-upload': ImageUp,
-        'address': MapPin,
-        'number': Hash,
-        'currency': DollarSign,
-        'country': Globe,
-        'date-range': CalendarRange,
-        'icon-selector': Sparkles,
-        'color-picker': Palette,
-        'button': MousePointerClick,
+const renderQuestionView = (question: Question) => {
+    const commonClasses = "p-2 border rounded-md bg-muted/50 text-muted-foreground text-sm flex items-center";
+
+    const questionContent = () => {
+        switch (question.type) {
+            case 'text':
+            case 'email':
+            case 'tel':
+            case 'url':
+            case 'number':
+            case 'currency':
+                return <div className={cn(commonClasses, "h-10")}>{question.placeholder || `User will enter ${question.type} here...`}</div>;
+            
+            case 'textarea':
+                return <div className={cn(commonClasses, "min-h-[80px] items-start")}>{question.placeholder || 'User will enter text here...'}</div>;
+            
+            case 'file':
+            case 'image-upload':
+                return <div className={cn(commonClasses, "h-10")}>File upload area</div>;
+
+            case 'date':
+            case 'date-range':
+                return <div className={cn(commonClasses, "h-10")}>Date selector</div>
+
+            case 'checkbox':
+            case 'radio':
+            case 'dropdown':
+                 return (
+                    <div className="space-y-2 pt-2">
+                        {question.options?.map((opt, i) => (
+                            <Badge key={i} variant="secondary" className="mr-2">{opt.label}</Badge>
+                        ))}
+                    </div>
+                )
+            
+            case 'formatted-text':
+                return <div className="prose-preview p-2 border rounded-md" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
+
+            case 'button':
+                return <Button type="button" variant={question.buttonVariant || 'default'} disabled>{question.label}</Button>;
+
+            case 'address':
+                return <div className={cn(commonClasses, "h-10")}>{question.placeholder || 'User will enter an address...'}</div>
+
+            case 'country':
+                return <div className={cn(commonClasses, "h-10")}>Country selector</div>
+
+            case 'icon-selector':
+                return <div className={cn(commonClasses, "h-10")}>Icon selector</div>
+
+            case 'color-picker':
+                return <div className={cn(commonClasses, "h-10")}>Color picker</div>
+
+            default:
+                return <div className={cn(commonClasses, "h-10 text-destructive")}>Unknown question type</div>;
+        }
     };
-    return icons[type] || Type;
+
+    return (
+        <div className="grid gap-2 mb-4">
+            {question.type !== 'button' && question.type !== 'formatted-text' && (
+                <Label>
+                    {question.label}
+                    {question.required && <span className="text-destructive"> *</span>}
+                </Label>
+            )}
+            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+            {questionContent()}
+        </div>
+    );
 };
 
 
@@ -90,7 +137,6 @@ export default function ViewRequestPage() {
                             <Skeleton className="h-4 w-32 mt-2" />
                         </div>
                     </div>
-                    <Skeleton className="h-9 w-32" />
                 </header>
                  <div className="flex-grow overflow-y-auto">
                     <div className="max-w-4xl mx-auto space-y-8">
@@ -125,8 +171,8 @@ export default function ViewRequestPage() {
     }
 
     return (
-        <div className="p-6 h-full flex flex-col">
-            <header className="flex items-center justify-between mb-6 pb-4 border-b">
+        <div className="p-6 h-full flex flex-col bg-muted/40">
+            <header className="flex items-center justify-between mb-6 pb-4 border-b bg-muted/40 sticky top-0">
                 <div className="flex items-center gap-4">
                      <Button variant="outline" size="icon" asChild>
                         <Link href="/dashboard/requests">
@@ -138,11 +184,6 @@ export default function ViewRequestPage() {
                         <p className="text-muted-foreground">Viewing request details</p>
                     </div>
                 </div>
-                 <Button asChild>
-                    <Link href={`/dashboard/requests/edit/${request.id}/builder`}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit Request
-                    </Link>
-                </Button>
             </header>
             
             <div className="flex-grow overflow-y-auto">
@@ -167,29 +208,11 @@ export default function ViewRequestPage() {
                                         <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
                                         {section.instructions && <p className="text-sm text-muted-foreground mb-4">{section.instructions}</p>}
                                         <div className="space-y-4">
-                                            {section.questions.map(question => {
-                                                const Icon = getQuestionIcon(question.type);
-                                                return (
-                                                    <div key={question.id} className="flex items-start gap-4 p-3 border rounded-md bg-muted/50">
-                                                        <Icon className="h-5 w-5 mt-1 text-muted-foreground" />
-                                                        <div className="flex-1">
-                                                            <p className="font-medium">
-                                                                {question.label}
-                                                                {question.required && <span className="text-destructive"> *</span>}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground capitalize">{question.type.replace(/-/g, ' ')}</p>
-                                                            {question.instructions && <p className="text-xs text-muted-foreground mt-1">{question.instructions}</p>}
-                                                            {(question.type === 'radio' || question.type === 'dropdown' || question.type === 'checkbox') && (
-                                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                                    {question.options?.map((opt, i) => (
-                                                                        <Badge key={i} variant="secondary">{opt.label}</Badge>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
+                                            {section.questions.map(question => (
+                                               <div key={question.id}>
+                                                    {renderQuestionView(question)}
+                                               </div>
+                                            ))}
                                         </div>
                                     </div>
                                 ))}
@@ -201,3 +224,4 @@ export default function ViewRequestPage() {
         </div>
     );
 }
+
