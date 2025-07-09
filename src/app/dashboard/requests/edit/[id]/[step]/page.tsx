@@ -191,14 +191,18 @@ export default function EditRequestWizardPage() {
         description: requestDescription,
         form_data: pages,
         ...settings,
-        status,
+        status: initialRequestData?.status === 'published' ? 'published' : status,
       };
     
       try {
         await updateRequest(token, id, payload);
+        const successMessage = initialRequestData?.status === 'published' 
+            ? 'Request settings have been updated.'
+            : `Request has been successfully ${status === 'published' ? 'published and sent' : 'saved as a draft'}.`
+        
         toast({
           title: "Success",
-          description: `Request has been successfully ${status === 'published' ? 'published and sent' : 'saved as a draft'}.`,
+          description: successMessage,
         });
         router.push('/dashboard/requests');
         router.refresh();
@@ -483,6 +487,8 @@ export default function EditRequestWizardPage() {
         ),
     })).filter(category => category.fields.length > 0);
 
+    const isFinalizeStep = currentStepIndex === steps.length - 1;
+
     const renderStep = () => {
         if (isLoading) {
             return (
@@ -531,6 +537,11 @@ export default function EditRequestWizardPage() {
                     disabledSteps={['templates']}
                 />
                 <div className="ml-auto flex items-center gap-2">
+                    {isFinalizeStep && (
+                        <Button variant="outline" asChild>
+                            <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
+                        </Button>
+                    )}
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

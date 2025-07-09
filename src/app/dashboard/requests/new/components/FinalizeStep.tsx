@@ -2,9 +2,9 @@
 
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
-import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, X } from "lucide-react"
+import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, Mail, Phone, PlusCircle, X } from "lucide-react"
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
@@ -26,14 +26,24 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { MultiSelect, type OptionType } from "@/components/ui/multi-select";
-import { getClients, type Request } from "@/lib/api";
+import { getClients, type Request, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface FinalizeStepProps {
   initialData: Request | null;
   onPublish: (settings: any) => void;
   onSaveDraft: (settings: any) => void;
   isSubmitting: boolean;
+}
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
 export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSubmitting }: FinalizeStepProps) {
@@ -44,7 +54,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     const [dueDate, setDueDate] = useState<Date | undefined>();
     const [protectWithPin, setProtectWithPin] = useState(true);
     const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
-    const [clients, setClients] = useState<OptionType[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoadingClients, setIsLoadingClients] = useState(true);
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
     const [allowComments, setAllowComments] = useState(true);
@@ -52,6 +62,8 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     const [sendOption, setSendOption] = useState<'immediately' | 'later'>('immediately');
     const [communicationMode, setCommunicationMode] = useState('none');
     const [scheduledAt, setScheduledAt] = useState<Date | undefined>();
+
+    const isPublished = initialData?.status === 'published';
 
     // Fetch clients on mount
     useEffect(() => {
@@ -65,11 +77,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
 
             try {
                 const fetchedClients = await getClients(token);
-                const clientOptions = fetchedClients.map(client => ({
-                    label: client.full_name,
-                    value: String(client.id)
-                }));
-                setClients(clientOptions);
+                setClients(fetchedClients);
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
@@ -110,14 +118,70 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
         };
     };
 
-    const handlePublish = () => {
-        if (!canPublish) return;
+    const handleMainAction = () => {
+        if (!canPublish && !isPublished) return;
         onPublish(gatherSettings());
     };
 
     const handleSaveDraft = () => {
         onSaveDraft(gatherSettings());
     };
+    
+    const clientOptions = clients.map(client => ({
+        label: client.full_name,
+        value: String(client.id)
+    }));
+      
+    const selectedClientDetails = useMemo(() => {
+        return selectedClients.map(clientId => {
+            return clients.find(c => String(c.id) === clientId);
+        }).filter((c): c is Client => c !== undefined);
+    }, [selectedClients, clients]);
+
+    const ClientSelector = () => {
+      if (isPublished) {
+        return (
+          <div>
+            <div className="space-y-2 mb-2">
+              {selectedClientDetails.map(client => (
+                <Card key={client.id} className="flex items-center gap-3 p-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-green-100 text-green-800 text-sm font-bold border">
+                        {getInitials(client.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-grow">
+                    <p className="font-semibold text-sm">{client.full_name}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      {client.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" /><span>{client.email}</span></div>}
+                      {client.phone_number && <div className="flex items-center gap-1"><Phone className="h-3 w-3" /><span>{client.phone_number}</span></div>}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <MultiSelect
+              options={clientOptions.filter(opt => !selectedClients.includes(opt.value))}
+              selected={[]}
+              onChange={(newSelection) => setSelectedClients([...selectedClients, ...newSelection])}
+              placeholder="+ Add Another Client"
+              className="w-full"
+            />
+          </div>
+        )
+      } else {
+        return (
+          <MultiSelect
+            options={clientOptions}
+            selected={selectedClients}
+            onChange={setSelectedClients}
+            placeholder={isLoadingClients ? "Loading clients..." : "Choose one or more clients..."}
+            className="w-full"
+          />
+        )
+      }
+    }
+
 
     return (
         <div className="max-w-xl mx-auto animate-in fade-in-50 w-full space-y-8 py-8">
@@ -130,13 +194,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                     <Label htmlFor="client-select" className="flex items-center gap-1.5 font-semibold text-gray-700 mb-2">
                         Which client(s) do you want to send this request to? <HelpCircle className="w-4 h-4 text-gray-400" />
                     </Label>
-                    <MultiSelect
-                        options={clients}
-                        selected={selectedClients}
-                        onChange={setSelectedClients}
-                        placeholder={isLoadingClients ? "Loading clients..." : "Choose one or more clients..."}
-                        className="w-full"
-                    />
+                    <ClientSelector />
                 </div>
 
                 <div className="space-y-4">
@@ -230,7 +288,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                             <Button
                                 id="due-date"
                                 variant={"outline"}
-                                className={cn("w-[280px] justify-start text-left font-normal", !dueDate && "text-muted-foreground")}
+                                className={cn("w-full justify-start text-left font-normal", !dueDate && "text-muted-foreground")}
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {dueDate ? format(dueDate, "dd / MM / yyyy") : <span>Pick a date</span>}
@@ -247,7 +305,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                     </Popover>
                 </div>
 
-                {!canPublish && (
+                {!isPublished && !canPublish && (
                     <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600">
                         <AlertTriangle className="h-5 w-5" />
                         <AlertDescription className="ml-2">
@@ -258,13 +316,15 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-8">
-                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handlePublish}>
+                <Button size="lg" className="w-full max-w-xs bg-purple-600 text-white hover:bg-purple-700 font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handleMainAction}>
                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    PUBLISH & SEND
+                     {isPublished ? 'UPDATE SETTINGS' : 'PUBLISH & SEND'}
                 </Button>
-                <Button variant="link" className="text-pink-600 font-medium" disabled={isSubmitting} onClick={handleSaveDraft}>
-                    or Save settings and leave the request as draft
-                </Button>
+                {!isPublished && (
+                    <Button variant="link" className="text-pink-600 font-medium" disabled={isSubmitting} onClick={handleSaveDraft}>
+                        or Save settings and leave the request as draft
+                    </Button>
+                )}
             </div>
         </div>
     )
