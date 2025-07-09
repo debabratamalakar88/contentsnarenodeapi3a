@@ -99,7 +99,9 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                         <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
+                         {request.status === 'published' && (
+                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
+                         )}
                          <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
                          <DropdownMenuItem>Duplicate</DropdownMenuItem>
                          <DropdownMenuItem>Archive</DropdownMenuItem>
@@ -167,7 +169,9 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
+                {request.status === 'published' && (
+                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
                 <DropdownMenuItem>Duplicate</DropdownMenuItem>
                 <DropdownMenuItem>Archive</DropdownMenuItem>
