@@ -195,7 +195,7 @@ export default function EditRequestWizardPage() {
                 const data = await getRequest(token, requestId);
                 setRequestTitle(data.title);
                 setRequestDescription(data.description);
-                setPages(data.form_data);
+                setPages(data.form_data || []);
                 if (data.form_data?.length > 0) {
                     setActivePageId(data.form_data[0].id);
                 }
