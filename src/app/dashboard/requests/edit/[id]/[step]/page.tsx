@@ -3,7 +3,7 @@
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { DragDropContext, Droppable, Draggable, type DropResult, type DroppableProps } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd";
 
 import StepNavigation from '../../../new/components/StepNavigation';
 import EssentialsStep from '../../../new/components/EssentialsStep';
@@ -29,27 +29,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
-import { AddressAutocompleteInput } from "@/components/ui/address-autocomplete-input";
-import { countries } from "@/lib/countries";
-import { IconSelector } from "@/components/ui/icon-selector";
+import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
+import { countries } from '@/lib/countries';
+import { IconSelector } from '@/components/ui/icon-selector';
 import PreviewStep from "../../../new/components/PreviewStep";
 
-
-const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
-    const [enabled, setEnabled] = React.useState(false);
-    React.useEffect(() => {
-        const animation = requestAnimationFrame(() => setEnabled(true));
-        return () => {
-            cancelAnimationFrame(animation);
-            setEnabled(false);
-        };
-    }, []);
-    if (!enabled) {
-        return null;
-    }
-    // Explicitly provide a boolean for all optional boolean props to prevent invariant error
-    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={props.isCombineEnabled ?? false} ignoreContainerClipping={props.ignoreContainerClipping ?? false}>{children}</Droppable>;
-};
 
 const steps = [
     { name: "Templates", slug: "templates" },
@@ -551,7 +535,7 @@ export default function EditRequestWizardPage() {
                 </div>
             </div>
             
-            <div className={cn("flex-grow", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
+            <div className={cn("flex-grow overflow-y-scroll", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
                 {renderStep()}
             </div>
 

@@ -3,7 +3,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { DragDropContext, Droppable, Draggable, type DropResult, type DroppableProps } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,22 +23,6 @@ import {
 
 import type { Page, Question, QuestionType, Section } from "@/lib/api"
 import { cn } from "@/lib/utils"
-
-const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
-    const [enabled, setEnabled] = React.useState(false);
-    React.useEffect(() => {
-        const animation = requestAnimationFrame(() => setEnabled(true));
-        return () => {
-            cancelAnimationFrame(animation);
-            setEnabled(false);
-        };
-    }, []);
-    if (!enabled) {
-        return null;
-    }
-    // Explicitly provide a boolean for all optional boolean props to prevent invariant error
-    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={props.isCombineEnabled ?? false} ignoreContainerClipping={props.ignoreContainerClipping ?? false}>{children}</Droppable>;
-};
 
 interface BuilderStepProps {
   requestTitle: string;
@@ -329,16 +313,16 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                         <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                     </div>
                                     
-                                    <StrictModeDroppable droppableId={`section-${section.id}`}>
+                                    <Droppable droppableId={`section-${section.id}`}>
                                         {(provided) => (
-                                            <div {...provided.droppableProps} ref={provided.innerRef}>
+                                            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                                                 {section.questions.map((question, index) => (
                                                     <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
                                                         {(provided) => (
                                                             <div
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
-                                                                className="bg-white border rounded-lg mb-4"
+                                                                className="bg-white border rounded-lg"
                                                             >
                                                                 <div className="p-3 flex items-center justify-between border-b">
                                                                     <div className="flex items-center gap-2">
@@ -385,7 +369,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                                 {provided.placeholder}
                                             </div>
                                         )}
-                                    </StrictModeDroppable>
+                                    </Droppable>
 
                                     <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)}>Add a Field</Button>
                                 </div>
