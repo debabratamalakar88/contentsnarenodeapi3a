@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Draggable, type DropResult } from "react-beautiful-dnd";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,6 +22,7 @@ import {
 
 import type { Page, Question, QuestionType, Section } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { StrictModeDroppable } from './StrictModeDroppable';
 
 interface BuilderStepProps {
   requestTitle: string;
@@ -312,7 +313,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                         <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                     </div>
                                     
-                                    <Droppable droppableId={`section-${section.id}`} isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
+                                    <StrictModeDroppable droppableId={`section-${section.id}`}>
                                         {(provided) => (
                                             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                                                 {section.questions.map((question, index) => (
@@ -368,7 +369,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                                 {provided.placeholder}
                                             </div>
                                         )}
-                                    </Droppable>
+                                    </StrictModeDroppable>
 
                                     <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)}>Add a Field</Button>
                                 </div>
