@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail } from 'lucide-react';
+import { ArrowLeft, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -576,7 +576,6 @@ export default function ViewRequestPage() {
         <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/40">
             <header className="flex items-center gap-4 px-6 py-3 border-b bg-background sticky top-0 z-10">
                 <Button variant="outline" size="icon" asChild><a href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></a></Button>
-                <div><h1 className="text-lg font-semibold">{request.title}</h1></div>
             </header>
             
             <div className="flex flex-1 overflow-hidden">
