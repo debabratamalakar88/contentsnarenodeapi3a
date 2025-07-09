@@ -618,12 +618,12 @@ export default function ViewRequestPage() {
     const publicUrl = request?.status === 'published' && request.request_code ? `${window.location.origin}/request/share/${request.request_code}` : '';
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] bg-muted/40">
+        <div className="flex flex-1 flex-col bg-muted/40 overflow-hidden">
             <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-shrink-0">
                 <Button variant="outline" size="icon" asChild><a href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></a></Button>
             </header>
             
-            <div className="flex flex-1 overflow-y-hidden">
+            <div className="flex flex-1 overflow-hidden">
                 <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl} />
                 <main className="flex-1 overflow-y-auto">
                     <form className="max-w-3xl mx-auto p-6" onSubmit={handleFormSubmit}>
