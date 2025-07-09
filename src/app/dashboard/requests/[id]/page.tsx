@@ -9,10 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const renderQuestionView = (question: Question) => {
     const commonClasses = "p-2 border rounded-md bg-muted/50 text-muted-foreground text-sm flex items-center";
