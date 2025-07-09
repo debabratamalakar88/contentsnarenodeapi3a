@@ -144,6 +144,8 @@ export interface Request {
   user_id: number;
   created_by: number;
   updated_by?: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PaginatedRequests {

@@ -14,7 +14,9 @@ import {
     Copy,
     Archive as ArchiveIcon,
     ArchiveRestore,
-    Trash2
+    Trash2,
+    Eye,
+    PenSquare
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from 'date-fns';
@@ -143,8 +145,8 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                             </>
                          ) : (
                             <>
-                                {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>}
-                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
+                                {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                             </>
@@ -246,8 +248,8 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                     </>
                  ) : (
                     <>
-                        {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>}
-                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
+                        {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                     </>
@@ -352,10 +354,12 @@ export default function RequestsPage() {
                 
                 if (currentTab === 'active') {
                     const requestsResponse = await getRequests(token);
-                    setActiveRequests(requestsResponse.data || []);
+                    const sortedRequests = (requestsResponse.data || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    setActiveRequests(sortedRequests);
                 } else {
                     const requestsResponse = await getArchivedRequests(token);
-                    setArchivedRequests(requestsResponse.data || []);
+                    const sortedArchivedRequests = (requestsResponse.data || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    setArchivedRequests(sortedArchivedRequests);
                 }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
