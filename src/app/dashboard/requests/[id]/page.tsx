@@ -444,9 +444,18 @@ interface ViewSidebarProps {
 const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActivePageId }: ViewSidebarProps) => {
     const { toast } = useToast();
     const [copied, setCopied] = useState(false);
+    const [publicUrl, setPublicUrl] = useState('');
+
+    useEffect(() => {
+        if (request?.status === 'published' && request.request_code) {
+            setPublicUrl(`${window.location.origin}/request/share/${request.request_code}`);
+        } else {
+            setPublicUrl('');
+        }
+    }, [request]);
 
     const handleCopy = () => {
-        const publicUrl = `${window.location.origin}/request/share/${request.request_code}`;
+        if (!publicUrl) return;
         navigator.clipboard.writeText(publicUrl);
         setCopied(true);
         toast({ title: "Copied to clipboard!", description: "The public URL has been copied." });
@@ -464,15 +473,21 @@ const ViewSidebar = ({ request, assignedClients, pages, activePageId, setActiveP
                         Due: {format(parseISO(request.due_date), 'PPP')}
                     </div>
                 )}
-                 {request.status === 'published' && request.request_code && (
+                 {request.status === 'published' && request.request_code && publicUrl && (
                     <div className="mt-4">
                         <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
                         <div className="flex items-center gap-1 mt-1">
-                            <Input
-                                readOnly
-                                value={`/request/share/${request.request_code}`}
-                                className="h-8 text-xs truncate bg-muted/50"
-                            />
+                             <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
+                                <a
+                                    href={publicUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate hover:underline"
+                                    title={publicUrl}
+                                >
+                                    {publicUrl}
+                                </a>
+                            </div>
                             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
                                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
                             </Button>
