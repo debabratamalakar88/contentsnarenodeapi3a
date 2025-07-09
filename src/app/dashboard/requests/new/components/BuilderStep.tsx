@@ -238,8 +238,8 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
             addSection={addSection}
         />
         
-        <main className="flex-1 p-6 overflow-y-scroll">
-            <div className="max-w-4xl mx-auto">
+        <main className="flex-1 overflow-y-scroll">
+            <div className="max-w-4xl mx-auto p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex flex-col">
                         <h1 className="text-2xl font-bold h-auto">{requestTitle}</h1>
@@ -313,7 +313,12 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                         <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                                     </div>
                                     
-                                    <StrictModeDroppable droppableId={`section-${section.id}`}>
+                                    <StrictModeDroppable
+                                        droppableId={`section-${section.id}`}
+                                        isDropDisabled={false}
+                                        isCombineEnabled={false}
+                                        ignoreContainerClipping={false}
+                                    >
                                         {(provided) => (
                                             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                                                 {section.questions.map((question, index) => (
