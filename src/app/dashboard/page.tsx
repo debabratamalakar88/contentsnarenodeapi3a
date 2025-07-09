@@ -8,6 +8,7 @@ import {
   Users,
   FileText,
   PlusCircle,
+  User,
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
@@ -31,19 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { getRequests, getClients, type Request, type Client } from "@/lib/api"
-
-
-const getInitials = (name: string): string => {
-    if (!name) return '';
-    const words = name.trim().split(' ').filter(Boolean);
-    if (words.length === 0) return '';
-    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
-}
 
 
 export default function Dashboard() {
@@ -231,14 +222,10 @@ export default function Dashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="hidden xl:table-cell">
-                    Request
-                  </TableHead>
-                  <TableHead className="hidden xl:table-cell">
-                    Status
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">Due Date</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Request Name</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Client Name</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Due Date</TableHead>
+                  <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,27 +233,20 @@ export default function Dashboard() {
                    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
                    return (
                     <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.title}</TableCell>
                       <TableCell>
-                         <div className="flex items-center gap-3">
-                           <Avatar className="h-8 w-8">
-                                <AvatarFallback>{getInitials(clientName)}</AvatarFallback>
-                           </Avatar>
-                           <div>
-                            <div className="font-medium">{clientName}</div>
-                            {/* You can add client email here if available */}
-                           </div>
-                         </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <User className="h-4 w-4" />
+                            <span>{clientName}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell">
-                        {request.title}
+                      <TableCell className="text-muted-foreground">
+                        {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell">
-                        <Badge className="text-xs capitalize" variant="outline">
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
                           {request.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}
                       </TableCell>
                     </TableRow>
                    )
