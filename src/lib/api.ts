@@ -768,18 +768,6 @@ export async function restoreRequest(token: string, id: number): Promise<{ messa
   return handleResponse(response);
 }
 
-export async function archiveRequest(token: string, id: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/archive`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
-}
-
 export async function duplicateRequest(token: string, id: number): Promise<Request> {
   // 1. Fetch the original request
   const originalRequest = await getRequest(token, id);

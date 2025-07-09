@@ -54,7 +54,7 @@ import {
   getRequests, 
   getClients, 
   getArchivedRequests,
-  archiveRequest,
+  softDeleteRequest,
   restoreRequest,
   forceDeleteRequest,
   duplicateRequest,
@@ -395,7 +395,7 @@ export default function RequestsPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToArchive) return;
         try {
-            await archiveRequest(token, requestToArchive.id);
+            await softDeleteRequest(token, requestToArchive.id);
             toast({ title: 'Request archived' });
             refetchData();
         } catch (err: any) {
