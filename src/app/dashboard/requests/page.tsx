@@ -115,8 +115,16 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                     <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
                 </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                     <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
-                     <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                     {request.status === 'published' ? (
+                        <Button size="sm" className="rounded-full px-8" asChild>
+                            <Link href={`/request/share/${request.request_code}`}>VIEW REQUEST</Link>
+                        </Button>
+                     ) : (
+                        <>
+                            <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                            <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                        </>
+                     )}
                 </div>
             </CardContent>
             <CardFooter className="p-4 border-t">
