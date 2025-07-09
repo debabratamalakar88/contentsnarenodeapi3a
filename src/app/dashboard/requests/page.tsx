@@ -99,6 +99,7 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                         <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
                          <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
                          <DropdownMenuItem>Duplicate</DropdownMenuItem>
                          <DropdownMenuItem>Archive</DropdownMenuItem>
@@ -117,7 +118,7 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                 <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                      {request.status === 'published' ? (
                         <Button size="sm" className="rounded-full px-8" asChild>
-                            <Link href={`/request/share/${request.request_code}`}>VIEW REQUEST</Link>
+                            <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                         </Button>
                      ) : (
                         <>
@@ -166,6 +167,7 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
                 <DropdownMenuItem>Duplicate</DropdownMenuItem>
                 <DropdownMenuItem>Archive</DropdownMenuItem>
