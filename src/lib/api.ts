@@ -772,29 +772,14 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
   // 1. Fetch the original request
   const originalRequest = await getRequest(token, id);
 
-  // 2. Prepare the new request data for creation
-  const { 
-    id: oldId, 
-    request_code, 
-    form_code,
-    user_id,
-    created_by,
-    updated_by,
-    ...restOfData 
-  } = originalRequest;
-
+  // 2. Prepare the new request data for creation, adhering to the create endpoint's expected payload.
   const newRequestData = {
-    ...restOfData,
-    title: `(Copy) ${originalRequest.title}`,
-    status: 'draft' as const,
-    client_id: null,
-    due_date: null,
-    scheduled_at: null,
-    allow_comments: true,
-    send_option: 'immediately' as const,
-    communication_mode: 'none'
+    title: `(Copy) ${originalRequest.title}`.substring(0, 255), // Truncate to prevent DB errors
+    description: originalRequest.description,
+    form_data: originalRequest.form_data,
   };
   
-  // 3. Create the new request using the existing create endpoint
+  // 3. Create the new request using the existing create endpoint.
+  // The backend will set the status to 'draft' and generate new IDs.
   return createRequest(token, newRequestData);
 }
