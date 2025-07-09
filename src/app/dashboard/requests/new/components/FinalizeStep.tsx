@@ -1,9 +1,10 @@
 
+
 'use client'
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, X } from "lucide-react"
+import { format, parseISO } from "date-fns";
+import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, X } from "lucide-react"
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
@@ -25,21 +26,34 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { MultiSelect, type OptionType } from "@/components/ui/multi-select";
-import { getClients } from "@/lib/api";
+import { getClients, type Request } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
-export default function FinalizeStep() {
-    const [dueDate, setDueDate] = useState<Date | undefined>(new Date(2025, 6, 21));
-    const [protectWithPin, setProtectWithPin] = useState(true);
-    const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
+interface FinalizeStepProps {
+  initialData: Request | null;
+  onPublish: (settings: any) => void;
+  onSaveDraft: (settings: any) => void;
+  isSubmitting: boolean;
+}
 
+export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSubmitting }: FinalizeStepProps) {
     const { toast } = useToast();
     const router = useRouter();
 
+    // Component state
+    const [dueDate, setDueDate] = useState<Date | undefined>();
+    const [protectWithPin, setProtectWithPin] = useState(true);
+    const [isPinInfoVisible, setIsPinInfoVisible] = useState(true);
     const [clients, setClients] = useState<OptionType[]>([]);
     const [isLoadingClients, setIsLoadingClients] = useState(true);
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
+    const [allowComments, setAllowComments] = useState(true);
+    const [allowNoLogin, setAllowNoLogin] = useState(true);
+    const [sendOption, setSendOption] = useState<'immediately' | 'later'>('immediately');
+    const [communicationMode, setCommunicationMode] = useState('none');
+    const [scheduledAt, setScheduledAt] = useState<Date | undefined>();
 
+    // Fetch clients on mount
     useEffect(() => {
         async function fetchClientsData() {
             const token = localStorage.getItem('authToken');
@@ -68,8 +82,42 @@ export default function FinalizeStep() {
         }
         fetchClientsData();
     }, [router, toast]);
+    
+    // Populate state from initial data when it's loaded
+    useEffect(() => {
+        if (initialData) {
+            setDueDate(initialData.due_date ? parseISO(initialData.due_date) : undefined);
+            setSelectedClients(initialData.client_id?.map(String) || []);
+            setAllowComments(initialData.allow_comments);
+            setSendOption(initialData.send_option);
+            setCommunicationMode(initialData.communication_mode);
+            setScheduledAt(initialData.scheduled_at ? parseISO(initialData.scheduled_at) : undefined);
+            // Note: `protectWithPin` and `allowNoLogin` are not in the current Request type.
+            // They are managed as UI state but not saved.
+        }
+    }, [initialData]);
 
     const canPublish = selectedClients.length > 0;
+    
+    const gatherSettings = () => {
+        return {
+            client_id: selectedClients.map(Number),
+            due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
+            allow_comments: allowComments,
+            send_option: sendOption,
+            communication_mode: communicationMode,
+            scheduled_at: sendOption === 'later' && scheduledAt ? format(scheduledAt, "yyyy-MM-dd'T'HH:mm:ss") : null,
+        };
+    };
+
+    const handlePublish = () => {
+        if (!canPublish) return;
+        onPublish(gatherSettings());
+    };
+
+    const handleSaveDraft = () => {
+        onSaveDraft(gatherSettings());
+    };
 
     return (
         <div className="max-w-xl mx-auto animate-in fade-in-50 w-full space-y-8 py-8">
@@ -78,7 +126,6 @@ export default function FinalizeStep() {
             </div>
             
             <div className="space-y-6">
-                {/* Client Select */}
                 <div>
                     <Label htmlFor="client-select" className="flex items-center gap-1.5 font-semibold text-gray-700 mb-2">
                         Which client(s) do you want to send this request to? <HelpCircle className="w-4 h-4 text-gray-400" />
@@ -92,15 +139,14 @@ export default function FinalizeStep() {
                     />
                 </div>
 
-                {/* Toggles */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="enable-comments" className="flex items-center gap-2 font-medium">Enable client comments <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
-                        <Switch id="enable-comments" defaultChecked />
+                        <Switch id="enable-comments" checked={allowComments} onCheckedChange={setAllowComments} />
                     </div>
                     <div className="flex items-center justify-between">
                         <Label htmlFor="allow-no-login" className="flex items-center gap-2 font-medium">Allow access without logging in <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
-                        <Switch id="allow-no-login" defaultChecked />
+                        <Switch id="allow-no-login" checked={allowNoLogin} onCheckedChange={setAllowNoLogin} />
                     </div>
                     <div className="flex items-center justify-between">
                         <Label htmlFor="protect-pin" className="flex items-center gap-2 font-medium">Protect with a pin code <HelpCircle className="w-4 h-4 text-gray-400" /></Label>
@@ -108,7 +154,6 @@ export default function FinalizeStep() {
                     </div>
                 </div>
 
-                {/* PIN Info Alert */}
                 {protectWithPin && isPinInfoVisible && (
                     <Alert className="bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600 relative p-4">
                         <Info className="h-5 w-5" />
@@ -121,12 +166,11 @@ export default function FinalizeStep() {
                     </Alert>
                 )}
 
-                {/* Communications Schedule */}
                 <div>
                      <Label htmlFor="comms-schedule" className="block font-semibold text-gray-700 mb-2">
                         Select a communications schedule
                     </Label>
-                    <Select defaultValue="none">
+                    <Select value={communicationMode} onValueChange={setCommunicationMode}>
                         <SelectTrigger id="comms-schedule">
                             <SelectValue />
                         </SelectTrigger>
@@ -138,12 +182,11 @@ export default function FinalizeStep() {
                     <Button variant="link" className="text-pink-600 p-0 h-auto mt-2 text-sm font-medium">Show client communications</Button>
                 </div>
                 
-                {/* Send Time */}
                  <div>
                      <Label htmlFor="send-time" className="block font-semibold text-gray-700 mb-2">
                         When do you want to send this request?
                     </Label>
-                    <Select defaultValue="immediately">
+                    <Select value={sendOption} onValueChange={(value) => setSendOption(value as 'immediately' | 'later')}>
                         <SelectTrigger id="send-time">
                             <SelectValue />
                         </SelectTrigger>
@@ -153,8 +196,31 @@ export default function FinalizeStep() {
                         </SelectContent>
                     </Select>
                 </div>
+                
+                {sendOption === 'later' && (
+                    <div className="animate-in fade-in-50">
+                        <Label htmlFor="schedule-date" className="block font-semibold text-gray-700 mb-2">
+                            Schedule Date & Time
+                        </Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    id="schedule-date"
+                                    variant={"outline"}
+                                    className={cn("w-[280px] justify-start text-left font-normal", !scheduledAt && "text-muted-foreground")}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {scheduledAt ? format(scheduledAt, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={scheduledAt} onSelect={setScheduledAt} initialFocus />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                )}
 
-                {/* Due Date */}
+
                 <div>
                     <Label htmlFor="due-date" className="block font-semibold text-gray-700 mb-2">
                         When is the request due?
@@ -164,10 +230,7 @@ export default function FinalizeStep() {
                             <Button
                                 id="due-date"
                                 variant={"outline"}
-                                className={cn(
-                                "w-[280px] justify-start text-left font-normal",
-                                !dueDate && "text-muted-foreground"
-                                )}
+                                className={cn("w-[280px] justify-start text-left font-normal", !dueDate && "text-muted-foreground")}
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {dueDate ? format(dueDate, "dd / MM / yyyy") : <span>Pick a date</span>}
@@ -184,7 +247,6 @@ export default function FinalizeStep() {
                     </Popover>
                 </div>
 
-                 {/* Warning Alert */}
                 {!canPublish && (
                     <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900 [&>svg]:text-red-600">
                         <AlertTriangle className="h-5 w-5" />
@@ -196,10 +258,11 @@ export default function FinalizeStep() {
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-8">
-                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled={!canPublish}>
+                <Button size="lg" className="w-full max-w-xs bg-purple-200 text-purple-800 hover:bg-purple-300 font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handlePublish}>
+                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     PUBLISH & SEND
                 </Button>
-                <Button variant="link" className="text-pink-600 font-medium">
+                <Button variant="link" className="text-pink-600 font-medium" disabled={isSubmitting} onClick={handleSaveDraft}>
                     or Save settings and leave the request as draft
                 </Button>
             </div>
