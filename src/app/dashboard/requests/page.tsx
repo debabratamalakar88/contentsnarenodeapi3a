@@ -13,7 +13,7 @@ import {
     Mail,
     PlusCircle
 } from "lucide-react"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
 
@@ -258,6 +258,14 @@ export default function RequestsPage() {
         }
         loadData();
     }, [router, toast]);
+    
+    const sortedRequests = useMemo(() => {
+      if (!requests) return [];
+      return [...requests].sort((a, b) => {
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }, [requests]);
 
     const clientMap = new Map(clients.map(c => [c.id, c.full_name]));
 
@@ -287,7 +295,7 @@ export default function RequestsPage() {
         if (error) {
             return <div className="text-center text-destructive py-10">{error}</div>;
         }
-        if (requests.length === 0) {
+        if (sortedRequests.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-10 bg-background rounded-lg border-2 border-dashed">
                     <h3 className="text-2xl font-bold tracking-tight mb-2">No requests found</h3>
@@ -299,9 +307,9 @@ export default function RequestsPage() {
             );
         }
         return viewMode === 'grid' ? (
-            <RequestsGrid requests={requests} clientMap={clientMap} />
+            <RequestsGrid requests={sortedRequests} clientMap={clientMap} />
         ) : (
-            <RequestsTable requests={requests} clientMap={clientMap} />
+            <RequestsTable requests={sortedRequests} clientMap={clientMap} />
         );
     }
 
