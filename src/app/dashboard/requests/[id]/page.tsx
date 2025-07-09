@@ -18,73 +18,58 @@ import { cn } from '@/lib/utils';
 const renderQuestionView = (question: Question) => {
     const commonClasses = "p-2 border rounded-md bg-muted/50 text-muted-foreground text-sm flex items-center";
 
-    const questionContent = () => {
-        switch (question.type) {
-            case 'text':
-            case 'email':
-            case 'tel':
-            case 'url':
-            case 'number':
-            case 'currency':
-                return <div className={cn(commonClasses, "h-10")}>{question.placeholder || `User will enter ${question.type} here...`}</div>;
-            
-            case 'textarea':
-                return <div className={cn(commonClasses, "min-h-[80px] items-start")}>{question.placeholder || 'User will enter text here...'}</div>;
-            
-            case 'file':
-            case 'image-upload':
-                return <div className={cn(commonClasses, "h-10")}>File upload area</div>;
+    switch (question.type) {
+        case 'text':
+        case 'email':
+        case 'tel':
+        case 'url':
+        case 'number':
+        case 'currency':
+            return <div className={cn(commonClasses, "h-10")}>{question.placeholder || `User will enter ${question.type} here...`}</div>;
+        
+        case 'textarea':
+            return <div className={cn(commonClasses, "min-h-[80px] items-start")}>{question.placeholder || 'User will enter text here...'}</div>;
+        
+        case 'file':
+        case 'image-upload':
+            return <div className={cn(commonClasses, "h-10")}>File upload area</div>;
 
-            case 'date':
-            case 'date-range':
-                return <div className={cn(commonClasses, "h-10")}>Date selector</div>
+        case 'date':
+        case 'date-range':
+            return <div className={cn(commonClasses, "h-10")}>Date selector</div>
 
-            case 'checkbox':
-            case 'radio':
-            case 'dropdown':
-                 return (
-                    <div className="space-y-2 pt-2">
-                        {question.options?.map((opt, i) => (
-                            <Badge key={i} variant="secondary" className="mr-2">{opt.label}</Badge>
-                        ))}
-                    </div>
-                )
-            
-            case 'formatted-text':
-                return <div className="prose-preview p-2 border rounded-md" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
+        case 'checkbox':
+        case 'radio':
+        case 'dropdown':
+             return (
+                <div className="space-y-2 pt-2">
+                    {question.options?.map((opt, i) => (
+                        <Badge key={i} variant="secondary" className="mr-2">{opt.label}</Badge>
+                    ))}
+                </div>
+            )
+        
+        case 'formatted-text':
+            return <div className="prose-preview p-2 border rounded-md" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
 
-            case 'button':
-                return <Button type="button" variant={question.buttonVariant || 'default'} disabled>{question.label}</Button>;
+        case 'button':
+            return <Button type="button" variant={question.buttonVariant || 'default'} disabled>{question.label}</Button>;
 
-            case 'address':
-                return <div className={cn(commonClasses, "h-10")}>{question.placeholder || 'User will enter an address...'}</div>
+        case 'address':
+            return <div className={cn(commonClasses, "h-10")}>{question.placeholder || 'User will enter an address...'}</div>
 
-            case 'country':
-                return <div className={cn(commonClasses, "h-10")}>Country selector</div>
+        case 'country':
+            return <div className={cn(commonClasses, "h-10")}>Country selector</div>
 
-            case 'icon-selector':
-                return <div className={cn(commonClasses, "h-10")}>Icon selector</div>
+        case 'icon-selector':
+            return <div className={cn(commonClasses, "h-10")}>Icon selector</div>
 
-            case 'color-picker':
-                return <div className={cn(commonClasses, "h-10")}>Color picker</div>
+        case 'color-picker':
+            return <div className={cn(commonClasses, "h-10")}>Color picker</div>
 
-            default:
-                return <div className={cn(commonClasses, "h-10 text-destructive")}>Unknown question type</div>;
-        }
-    };
-
-    return (
-        <div className="grid gap-2 mb-4">
-            {question.type !== 'button' && question.type !== 'formatted-text' && (
-                <Label>
-                    {question.label}
-                    {question.required && <span className="text-destructive"> *</span>}
-                </Label>
-            )}
-            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-            {questionContent()}
-        </div>
-    );
+        default:
+            return <div className={cn(commonClasses, "h-10 text-destructive")}>Unknown question type</div>;
+    }
 };
 
 
@@ -141,8 +126,7 @@ export default function ViewRequestPage() {
                 </header>
                  <div className="flex-grow overflow-y-auto">
                     <div className="max-w-4xl mx-auto space-y-8">
-                        <Skeleton className="h-24 w-full" />
-                        <Skeleton className="h-64 w-full" />
+                        <Skeleton className="h-96 w-full" />
                     </div>
                 </div>
             </div>
@@ -172,57 +156,57 @@ export default function ViewRequestPage() {
     }
 
     return (
-        <div className="p-6 h-full flex flex-col bg-muted/40">
-            <header className="flex items-center justify-between mb-6 pb-4 border-b bg-muted/40 sticky top-0">
-                <div className="flex items-center gap-4">
-                     <Button variant="outline" size="icon" asChild>
-                        <Link href="/dashboard/requests">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold">{request.title}</h1>
-                        <p className="text-muted-foreground">Viewing request details</p>
-                    </div>
+        <div className="flex flex-col h-full bg-muted/40">
+            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background sticky top-0 z-10">
+                <Button variant="outline" size="icon" asChild>
+                    <Link href="/dashboard/requests">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Link>
+                </Button>
+                <div>
+                    <h1 className="text-lg font-semibold">{request.title}</h1>
+                    <p className="text-sm text-muted-foreground">Viewing request details</p>
                 </div>
             </header>
             
-            <div className="flex-grow overflow-y-auto">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <Card className="bg-background">
+            <main className="flex-1 p-6 overflow-y-auto">
+                <div className="max-w-3xl mx-auto">
+                    <Card>
                         <CardHeader>
                             <CardTitle>{request.title}</CardTitle>
                             <CardDescription>{request.description}</CardDescription>
                         </CardHeader>
-                    </Card>
-
-                    {request.form_data?.map(page => (
-                        <Card key={page.id} className="bg-background">
-                            <CardHeader>
-                                <CardTitle className="text-xl">{page.title}</CardTitle>
-                                {page.instructions && <CardDescription>{page.instructions}</CardDescription>}
-                            </CardHeader>
-                            <CardContent>
-                                {page.sections.map((section, sectionIndex) => (
-                                    <div key={section.id}>
-                                        {sectionIndex > 0 && <Separator className="my-6" />}
-                                        <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
-                                        {section.instructions && <p className="text-sm text-muted-foreground mb-4">{section.instructions}</p>}
-                                        <div className="space-y-4">
-                                            {section.questions.map(question => (
-                                               <div key={question.id}>
-                                                    {renderQuestionView(question)}
-                                               </div>
-                                            ))}
-                                        </div>
+                        <CardContent className="space-y-8">
+                            {request.form_data?.map(page => (
+                                <div key={page.id}>
+                                    <h3 className="text-xl font-semibold border-b pb-2 mb-4">{page.title}</h3>
+                                    {page.instructions && <p className="text-sm text-muted-foreground mb-6">{page.instructions}</p>}
+                                    <div className="space-y-6">
+                                        {page.sections.map(section => (
+                                            <div key={section.id}>
+                                                <h4 className="text-lg font-semibold mb-2">{section.title}</h4>
+                                                {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
+                                                {section.questions.map(question => (
+                                                    <div key={question.id} className="grid gap-2 mb-4">
+                                                        {question.type !== 'button' && question.type !== 'formatted-text' && (
+                                                            <Label>
+                                                                {question.label}
+                                                                {question.required && <span className="text-destructive"> *</span>}
+                                                            </Label>
+                                                        )}
+                                                        {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                        {renderQuestionView(question)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    ))}
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
-
