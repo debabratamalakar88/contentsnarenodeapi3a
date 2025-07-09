@@ -91,13 +91,48 @@ export interface Client {
   updated_at: string;
 }
 
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
+
+export interface QuestionOption {
+  label: string;
+  value: string;
+}
+
+export interface Question {
+  id: number;
+  label:string;
+  type: QuestionType;
+  instructions?: string;
+  placeholder?: string;
+  options?: QuestionOption[];
+  required?: boolean;
+  defaultValue?: string;
+  apiId?: string;
+  buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  buttonType?: 'button' | 'submit';
+}
+
+export interface Section {
+  id: number;
+  title: string;
+  instructions?: string;
+  questions: Question[];
+}
+
+export interface Page {
+  id: number;
+  title: string;
+  instructions?: string;
+  sections: Section[];
+}
+
 export interface Request {
   id: number;
   title: string;
   description: string;
   request_code: string;
   form_code: string;
-  form_data: any;
+  form_data: Page[];
   client_id: number[] | null;
   status: 'draft' | 'published' | 'completed' | 'archived';
   allow_comments: boolean;
@@ -627,6 +662,17 @@ export async function getRequests(token: string, page: number = 1): Promise<Pagi
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function getSharedRequest(requestCode: string): Promise<Request> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/share/${requestCode}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
   });
   return handleResponse(response);

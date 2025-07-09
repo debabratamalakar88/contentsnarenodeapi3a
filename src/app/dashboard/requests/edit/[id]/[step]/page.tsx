@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getRequest, updateRequest, type Request } from "@/lib/api";
+import { getRequest, updateRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,40 +34,6 @@ import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import PreviewStep from "../../../new/components/PreviewStep";
 
-
-// Type definitions for the entire wizard
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
-
-export interface QuestionOption {
-  label: string;
-  value: string;
-}
-
-export interface Question {
-  id: number;
-  label:string;
-  type: QuestionType;
-  instructions?: string;
-  placeholder?: string;
-  options?: QuestionOption[];
-  required?: boolean;
-  defaultValue?: string;
-  apiId?: string;
-  buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  buttonType?: 'button' | 'submit';
-}
-export interface Section {
-  id: number;
-  title: string;
-  instructions?: string;
-  questions: Question[];
-}
-export interface Page {
-  id: number;
-  title: string;
-  instructions?: string;
-  sections: Section[];
-}
 
 const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
     const [enabled, setEnabled] = React.useState(false);
@@ -532,7 +498,7 @@ export default function EditRequestWizardPage() {
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep
                                         requestTitle={requestTitle}
-                                        pages={pages} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
+                                        pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}

@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { Page, Question } from "../[step]/page"
+import type { Page, Question } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';

@@ -21,7 +21,7 @@ import {
   Table as TableIcon, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick
 } from "lucide-react"
 
-import type { Page, Question, QuestionType, Section } from "../[step]/page"
+import type { Page, Question, QuestionType, Section } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
@@ -37,7 +37,7 @@ const StrictModeDroppable = ({ children, ...props }: DroppableProps) => {
         return null;
     }
     // Explicitly provide a boolean for all optional boolean props to prevent invariant error
-    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={false} ignoreContainerClipping={props.ignoreContainerClipping ?? false}>{children}</Droppable>;
+    return <Droppable {...props} isDropDisabled={props.isDropDisabled ?? false} isCombineEnabled={props.isCombineEnabled ?? false} ignoreContainerClipping={props.ignoreContainerClipping ?? false}>{children}</Droppable>;
 };
 
 interface BuilderStepProps {
