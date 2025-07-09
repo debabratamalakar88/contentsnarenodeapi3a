@@ -331,7 +331,7 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
                                     
                                     <StrictModeDroppable droppableId={`section-${section.id}`}>
                                         {(provided) => (
-                                            <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
+                                            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                                                 {section.questions.map((question, index) => (
                                                     <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
                                                         {(provided) => (
