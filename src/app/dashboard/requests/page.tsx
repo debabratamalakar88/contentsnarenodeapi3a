@@ -46,6 +46,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRequests, getClients, type Request, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 
 const FilterButton = ({ label, value }: { label: string; value: string }) => (
@@ -131,7 +132,17 @@ const RequestCard = ({ request, clientMap }: { request: Request, clientMap: Map<
                 </div>
             </CardContent>
             <CardFooter className="p-4 border-t">
-                 <Badge variant="outline" className="font-semibold text-gray-600 bg-gray-100 capitalize">{request.status}</Badge>
+                 <Badge 
+                    variant="outline" 
+                    className={cn(
+                        "capitalize font-semibold", 
+                        request.status === 'published' 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : 'text-gray-600 bg-gray-100'
+                    )}
+                 >
+                    {request.status}
+                </Badge>
             </CardFooter>
         </Card>
     )
@@ -160,7 +171,15 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
         </TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
-            <Badge variant="outline" className="capitalize">{request.status}</Badge>
+            <Badge 
+                variant="outline"
+                className={cn(
+                    "capitalize",
+                    request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
+                )}
+            >
+                {request.status}
+            </Badge>
         </TableCell>
         <TableCell>
             <DropdownMenu>
@@ -169,9 +188,9 @@ const RequestRow = ({ request, clientMap }: { request: Request, clientMap: Map<n
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                {request.status === 'published' && (
+                {request.status === 'published' ? (
                     <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}>View Details</Link></DropdownMenuItem>
-                )}
+                ) : null}
                 <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}>Edit</Link></DropdownMenuItem>
                 <DropdownMenuItem>Duplicate</DropdownMenuItem>
                 <DropdownMenuItem>Archive</DropdownMenuItem>
