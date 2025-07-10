@@ -23,17 +23,18 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
 
-const renderQuestionInput = (question: Question, savedValue: any) => {
+const renderQuestionInput = (question: Question, savedValue: any, error?: string) => {
     const questionId = `q-${question.id}`;
     const questionName = question.apiId || questionId;
+    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "";
 
     switch(question.type) {
         case 'text':
-            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'textarea':
-            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'file':
-            return <Input id={questionId} name={questionName} type="file" required={question.required} />;
+            return <Input id={questionId} name={questionName} type="file" required={question.required} className={inputClassName} />;
         case 'checkbox':
             return (
                 <div className="space-y-2 pt-2">
@@ -48,18 +49,18 @@ const renderQuestionInput = (question: Question, savedValue: any) => {
         case 'dropdown':
             return (
                 <Select name={questionName} defaultValue={savedValue ?? question.defaultValue} required={question.required}>
-                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
+                    <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
             );
         case 'date':
-            return <Input id={questionId} name={questionName} type="date" defaultValue={savedValue ?? question.defaultValue} required={question.required} className="max-w-[240px]" />;
+            return <Input id={questionId} name={questionName} type="date" defaultValue={savedValue ?? question.defaultValue} required={question.required} className={cn("max-w-[240px]", inputClassName)} />;
         case 'email':
-            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'tel':
-            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'url':
-            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'radio':
             return (
                 <RadioGroup name={questionName} defaultValue={savedValue ?? question.defaultValue}>
@@ -74,26 +75,26 @@ const renderQuestionInput = (question: Question, savedValue: any) => {
         case 'formatted-text':
              return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         case 'image-upload':
-             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple />;
+             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
         case 'address':
              return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} />;
         case 'number':
-             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'currency':
-            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" defaultValue={savedValue ?? question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
         case 'country':
             return (
                 <Select name={questionName} defaultValue={savedValue ?? question.defaultValue} required={question.required}>
-                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
+                    <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
                     <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
                 </Select>
             );
         case 'date-range':
              return (
                 <div className="flex items-center gap-2">
-                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" defaultValue={savedValue ? savedValue.start : ''} />
+                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" defaultValue={savedValue ? savedValue.start : ''} className={inputClassName} />
                      <span>to</span>
-                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" defaultValue={savedValue ? savedValue.end : ''} />
+                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" defaultValue={savedValue ? savedValue.end : ''} className={inputClassName} />
                 </div>
              );
         case 'icon-selector':
@@ -165,6 +166,7 @@ export default function SharedRequestPage() {
     const [submissionCode, setSubmissionCode] = useState<string | null>(null);
     const [savedData, setSavedData] = useState<any>({});
     const [isComplete, setIsComplete] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     
     const formRef = React.useRef<HTMLFormElement>(null);
     
@@ -181,7 +183,6 @@ export default function SharedRequestPage() {
 
                 const storedSubmissionCode = localStorage.getItem(storageKey);
                 if (storedSubmissionCode) {
-                    // An submission is in progress, fetch its data
                     setSubmissionCode(storedSubmissionCode);
                     try {
                         const submissionData = await getSubmission(storedSubmissionCode);
@@ -190,8 +191,6 @@ export default function SharedRequestPage() {
                             setIsComplete(true);
                         }
                     } catch (submissionError) {
-                        // The saved submission code might be invalid or expired.
-                        // Clear it and start fresh.
                         console.warn("Could not fetch submission, starting new one.", submissionError);
                         localStorage.removeItem(storageKey);
                         setSubmissionCode(null);
@@ -228,8 +227,61 @@ export default function SharedRequestPage() {
         return data;
     };
 
+    const validatePage = (page: Page): boolean => {
+        const errors: { [key: string]: string } = {};
+        const formData = getFormData();
+        let isValid = true;
+    
+        for (const section of page.sections) {
+            for (const question of section.questions) {
+                const fieldName = question.apiId || `q-${question.id}`;
+                const value = formData[fieldName];
+    
+                if (question.required) {
+                    if (question.type === 'checkbox') {
+                        if (!value || value.length === 0) {
+                            isValid = false;
+                            errors[fieldName] = "Please select at least one option.";
+                        }
+                    } else if (!value || String(value).trim() === '') {
+                        isValid = false;
+                        errors[fieldName] = "This field is required.";
+                    }
+                }
+    
+                if (value && String(value).trim() !== '') {
+                    if (question.type === 'email' && !/\S+@\S+\.\S+/.test(String(value))) {
+                        isValid = false;
+                        errors[fieldName] = "Please enter a valid email address.";
+                    }
+                    if (question.type === 'url' && !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(String(value))) {
+                        isValid = false;
+                        errors[fieldName] = "Please enter a valid URL.";
+                    }
+                    if (question.type === 'tel' && !/^\+?[0-9\s-()]+$/.test(String(value))) {
+                         isValid = false;
+                         errors[fieldName] = "Please enter a valid phone number.";
+                    }
+                }
+            }
+        }
+    
+        setValidationErrors(errors);
+        if (!isValid) {
+            toast({
+                title: "Validation Error",
+                description: "Please fill out all required fields correctly.",
+                variant: "destructive",
+            });
+        }
+        return isValid;
+    };
+
     const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        const currentPage = request?.form_data[activePageIndex];
+        if (!currentPage || !validatePage(currentPage)) return;
+
         setIsSubmitting(true);
         const stepData = getFormData();
         
@@ -254,6 +306,9 @@ export default function SharedRequestPage() {
     };
 
     const handleStepChange = async (newIndex: number) => {
+        const currentPage = request?.form_data[activePageIndex];
+        if (!currentPage || !validatePage(currentPage)) return;
+
         const currentData = getFormData();
         setIsSubmitting(true);
 
@@ -276,6 +331,7 @@ export default function SharedRequestPage() {
                 [`step_${activePageIndex + 1}`]: currentData
              };
              setSavedData(newSavedData);
+             setValidationErrors({});
              setActivePageIndex(newIndex);
 
         } catch(err: any) {
@@ -338,7 +394,7 @@ export default function SharedRequestPage() {
             <div className="flex flex-1 overflow-hidden">
                 <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
                 <main className="flex-1 overflow-y-auto">
-                    <form ref={formRef} onSubmit={handleFormSubmit}>
+                    <form ref={formRef} onSubmit={handleFormSubmit} noValidate>
                         <div className="max-w-3xl mx-auto p-6">
                             {currentPage ? (
                                 <Card>
@@ -351,13 +407,18 @@ export default function SharedRequestPage() {
                                             <div key={section.id}>
                                                 <h4 className="text-lg font-semibold border-b pb-2 mb-6">{section.title}</h4>
                                                 <div className="space-y-6">
-                                                    {section.questions.map(question => (
-                                                        <div key={question.id} className="grid gap-2">
-                                                            {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
-                                                            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                            {renderQuestionInput(question, currentSavedData[question.apiId || `q-${question.id}`])}
-                                                        </div>
-                                                    ))}
+                                                    {section.questions.map(question => {
+                                                        const fieldName = question.apiId || `q-${question.id}`;
+                                                        const fieldError = validationErrors[fieldName];
+                                                        return (
+                                                            <div key={question.id} className="grid gap-2">
+                                                                {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
+                                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                                {renderQuestionInput(question, currentSavedData[fieldName], fieldError)}
+                                                                {fieldError && <p className="text-sm font-medium text-destructive">{fieldError}</p>}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         ))}
