@@ -174,17 +174,28 @@ export default function SharedRequestPage() {
         const storageKey = `submission_code_${requestCode}`;
 
         async function fetchInitialData() {
+            setIsLoading(true);
             try {
                 const requestData = await getSharedRequest(requestCode);
                 setRequest(requestData);
 
                 const storedSubmissionCode = localStorage.getItem(storageKey);
                 if (storedSubmissionCode) {
+                    // An submission is in progress, fetch its data
                     setSubmissionCode(storedSubmissionCode);
-                    const submissionData = await getSubmission(storedSubmissionCode);
-                    setSavedData(submissionData.form_data || {});
-                    if (submissionData.status === 'completed') {
-                        setIsComplete(true);
+                    try {
+                        const submissionData = await getSubmission(storedSubmissionCode);
+                        setSavedData(submissionData.form_data || {});
+                        if (submissionData.status === 'completed') {
+                            setIsComplete(true);
+                        }
+                    } catch (submissionError) {
+                        // The saved submission code might be invalid or expired.
+                        // Clear it and start fresh.
+                        console.warn("Could not fetch submission, starting new one.", submissionError);
+                        localStorage.removeItem(storageKey);
+                        setSubmissionCode(null);
+                        setSavedData({});
                     }
                 }
             } catch (err: any) {
@@ -231,7 +242,6 @@ export default function SharedRequestPage() {
                 localStorage.removeItem(`submission_code_${requestCode}`);
             } else {
                 const response = await startSubmission(requestCode, stepData);
-                setSubmissionCode(response.submission_code);
                 await submitRequest(response.submission_code, {});
                 toast({ title: "Success", description: "Your submission has been completed." });
                 setIsComplete(true);
@@ -244,22 +254,30 @@ export default function SharedRequestPage() {
     };
 
     const handleStepChange = async (newIndex: number) => {
-        const isNavigatingForward = newIndex > activePageIndex;
         const currentData = getFormData();
         setIsSubmitting(true);
 
         try {
-            if (!submissionCode) {
+            let currentSubmissionCode = submissionCode;
+
+            if (!currentSubmissionCode) {
                 const response = await startSubmission(requestCode, currentData);
-                setSubmissionCode(response.submission_code);
-                localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
+                currentSubmissionCode = response.submission_code;
+                setSubmissionCode(currentSubmissionCode);
+                localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
             } else {
-                 await saveStep(submissionCode, activePageIndex + 1, currentData);
+                 await saveStep(currentSubmissionCode, activePageIndex + 1, currentData);
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
             }
-             setSavedData(prev => ({...prev, [`step_${activePageIndex + 1}`]: currentData}));
+            
+             const newSavedData = {
+                ...savedData,
+                [`step_${activePageIndex + 1}`]: currentData
+             };
+             setSavedData(newSavedData);
              setActivePageIndex(newIndex);
+
         } catch(err: any) {
             toast({ title: "Error Saving Progress", description: err.message || "Could not save your data.", variant: "destructive" });
         } finally {
