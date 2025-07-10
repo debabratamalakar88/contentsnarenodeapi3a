@@ -243,7 +243,8 @@ export default function SharedRequestPage() {
                 if (question.required) {
                     let isMissing = false;
                     if (question.type === 'checkbox') {
-                        if (!value || (Array.isArray(value) && value.length === 0)) {
+                        // For checkboxes, check if the key exists at all in the form data
+                        if (!formData.has(fieldName+'[]')) {
                             isMissing = true;
                         }
                     } else if (value === undefined || value === null || String(value).trim() === '') {
@@ -291,21 +292,26 @@ export default function SharedRequestPage() {
         if (!currentPage || !validatePage(currentPage)) return;
 
         setIsSubmitting(true);
-        const stepData = getFormData();
+        const currentData = getFormData();
         
         try {
-            if (submissionCode) {
-                await saveStep(submissionCode, activePageIndex + 1, stepData);
-                await submitRequest(submissionCode, {});
-                toast({ title: "Success", description: "Your submission has been completed." });
-                setIsComplete(true);
-                localStorage.removeItem(`submission_code_${requestCode}`);
+            let currentSubmissionCode = submissionCode;
+            // If it's the first step, start a submission. Otherwise, save the step.
+            if (!currentSubmissionCode) {
+                const response = await startSubmission(requestCode, currentData);
+                currentSubmissionCode = response.submission_code;
+                setSubmissionCode(currentSubmissionCode);
+                localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             } else {
-                const response = await startSubmission(requestCode, stepData);
-                await submitRequest(response.submission_code, {});
-                toast({ title: "Success", description: "Your submission has been completed." });
-                setIsComplete(true);
+                await saveStep(currentSubmissionCode, activePageIndex + 1, currentData);
             }
+
+            // Now, submit the request
+            await submitRequest(currentSubmissionCode, {});
+            toast({ title: "Success", description: "Your submission has been completed." });
+            setIsComplete(true);
+            localStorage.removeItem(`submission_code_${requestCode}`);
+
         } catch(err: any) {
             toast({ title: "Submission Error", description: err.message || "An unknown error occurred.", variant: "destructive"});
         } finally {
@@ -458,4 +464,5 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
 
