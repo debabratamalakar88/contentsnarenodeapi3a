@@ -172,12 +172,13 @@ export default function SharedRequestPage() {
         if (!requestCode) return;
         
         const storageKey = `submission_code_${requestCode}`;
-        const storedSubmissionCode = localStorage.getItem(storageKey);
 
-        async function fetchRequest() {
+        async function fetchInitialData() {
             try {
-                const data = await getSharedRequest(requestCode);
-                setRequest(data);
+                const requestData = await getSharedRequest(requestCode);
+                setRequest(requestData);
+
+                const storedSubmissionCode = localStorage.getItem(storageKey);
                 if (storedSubmissionCode) {
                     setSubmissionCode(storedSubmissionCode);
                     const submissionData = await getSubmission(storedSubmissionCode);
@@ -195,7 +196,7 @@ export default function SharedRequestPage() {
             }
         }
         
-        fetchRequest();
+        fetchInitialData();
     }, [requestCode, toast]);
     
     const getFormData = () => {
@@ -229,7 +230,11 @@ export default function SharedRequestPage() {
                 setIsComplete(true);
                 localStorage.removeItem(`submission_code_${requestCode}`);
             } else {
-                toast({ title: "Error", description: "Submission could not be completed.", variant: "destructive"});
+                const response = await startSubmission(requestCode, stepData);
+                setSubmissionCode(response.submission_code);
+                await submitRequest(response.submission_code, {});
+                toast({ title: "Success", description: "Your submission has been completed." });
+                setIsComplete(true);
             }
         } catch(err: any) {
             toast({ title: "Submission Error", description: err.message || "An unknown error occurred.", variant: "destructive"});
@@ -245,12 +250,10 @@ export default function SharedRequestPage() {
 
         try {
             if (!submissionCode) {
-                if (Object.keys(currentData).length > 0) {
-                    const response = await startSubmission(requestCode, currentData);
-                    setSubmissionCode(response.submission_code);
-                    localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
-                    toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
-                }
+                const response = await startSubmission(requestCode, currentData);
+                setSubmissionCode(response.submission_code);
+                localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
+                toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
             } else {
                  await saveStep(submissionCode, activePageIndex + 1, currentData);
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
