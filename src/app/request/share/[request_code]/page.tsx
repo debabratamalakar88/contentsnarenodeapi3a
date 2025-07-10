@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -210,51 +209,67 @@ export default function SharedRequestPage() {
         fetchInitialData();
     }, [requestCode, toast]);
     
-    const getFormData = () => {
+    const getStructuredFormData = (page: Page) => {
         if (!formRef.current) return {};
         const formData = new FormData(formRef.current);
-        const data: { [key: string]: any } = {};
-        formData.forEach((value, key) => {
-            if (key.endsWith('[]')) {
-                const cleanKey = key.slice(0, -2);
-                if (!data[cleanKey]) {
-                    data[cleanKey] = [];
+        const structuredData: any = {
+            page_title: page.title,
+            sections: []
+        };
+    
+        page.sections.forEach(section => {
+            const sectionData: any = {
+                section_title: section.title,
+                questions: {}
+            };
+    
+            section.questions.forEach(question => {
+                const fieldName = question.apiId || `q-${question.id}`;
+                
+                if (question.type === 'checkbox') {
+                    const values = formData.getAll(`${fieldName}[]`);
+                    if (values.length > 0) {
+                        sectionData.questions[fieldName] = values;
+                    }
+                } else {
+                    const value = formData.get(fieldName);
+                    if (value !== null && value !== undefined) {
+                        sectionData.questions[fieldName] = value;
+                    }
                 }
-                data[cleanKey].push(value);
-            } else {
-                data[key] = value;
-            }
+            });
+            structuredData.sections.push(sectionData);
         });
-        return data;
+    
+        return structuredData;
     };
-
+    
     const validatePage = (page: Page): boolean => {
         const errors: { [key: string]: string } = {};
-        const formData = getFormData();
+        const formData = new FormData(formRef.current!);
         let isValid = true;
     
-        for (const section of page.sections) {
-            for (const question of section.questions) {
-                if (question.type === 'button' || question.type === 'formatted-text') continue;
-
+        page.sections.forEach(section => {
+            section.questions.forEach(question => {
+                if (question.type === 'button' || question.type === 'formatted-text') return;
                 const fieldName = question.apiId || `q-${question.id}`;
-                const value = formData[fieldName];
-    
+                const isCheckbox = question.type === 'checkbox';
+                const inputName = isCheckbox ? `${fieldName}[]` : fieldName;
+                const value = formData.get(inputName);
+                const allValues = formData.getAll(inputName);
+
                 if (question.required) {
                     let isMissing = false;
-                    if (question.type === 'checkbox') {
-                        // For checkboxes, check if the key exists at all in the form data
-                        if (!formData.has(fieldName+'[]')) {
-                            isMissing = true;
-                        }
-                    } else if (value === undefined || value === null || String(value).trim() === '') {
+                    if (isCheckbox) {
+                        if (allValues.length === 0) isMissing = true;
+                    } else if (value === null || String(value).trim() === '') {
                         isMissing = true;
                     }
 
                     if (isMissing) {
                         isValid = false;
                         errors[fieldName] = "This field is required.";
-                        continue; 
+                        return; // continue to next question
                     }
                 }
     
@@ -272,8 +287,8 @@ export default function SharedRequestPage() {
                          errors[fieldName] = "Please enter a valid phone number.";
                     }
                 }
-            }
-        }
+            });
+        });
     
         setValidationErrors(errors);
         if (!isValid) {
@@ -292,21 +307,19 @@ export default function SharedRequestPage() {
         if (!currentPage || !validatePage(currentPage)) return;
 
         setIsSubmitting(true);
-        const currentData = getFormData();
+        const currentData = getStructuredFormData(currentPage);
         
         try {
             let currentSubmissionCode = submissionCode;
-            // If it's the first step, start a submission. Otherwise, save the step.
             if (!currentSubmissionCode) {
-                const response = await startSubmission(requestCode, currentData);
-                currentSubmissionCode = response.submission_code;
-                setSubmissionCode(currentSubmissionCode);
-                localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
+                 const response = await startSubmission(requestCode, currentData);
+                 currentSubmissionCode = response.submission_code;
+                 setSubmissionCode(currentSubmissionCode);
+                 localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             } else {
                 await saveStep(currentSubmissionCode, activePageIndex + 1, currentData);
             }
 
-            // Now, submit the request
             await submitRequest(currentSubmissionCode, {});
             toast({ title: "Success", description: "Your submission has been completed." });
             setIsComplete(true);
@@ -323,7 +336,7 @@ export default function SharedRequestPage() {
         const currentPage = request?.form_data[activePageIndex];
         if (!currentPage || !validatePage(currentPage)) return;
 
-        const currentData = getFormData();
+        const currentData = getStructuredFormData(currentPage);
         setIsSubmitting(true);
 
         try {
@@ -396,6 +409,9 @@ export default function SharedRequestPage() {
     
     const currentPage = request.form_data[activePageIndex];
     const isLastPage = activePageIndex === request.form_data.length - 1;
+    
+    // This logic to get saved values for fields needs to be improved
+    // For now, it might not work perfectly with the new structured data.
     const currentSavedData = savedData[`step_${activePageIndex + 1}`] || {};
 
     return (
@@ -428,7 +444,7 @@ export default function SharedRequestPage() {
                                                             <div key={question.id} className="grid gap-2">
                                                                 {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
                                                                 {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                                {renderQuestionInput(question, currentSavedData[fieldName], fieldError)}
+                                                                {renderQuestionInput(question, null, fieldError)}
                                                                 {fieldError && <p className="text-sm font-medium text-destructive">{fieldError}</p>}
                                                             </div>
                                                         );
@@ -464,5 +480,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-
-
