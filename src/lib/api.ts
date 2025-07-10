@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -782,4 +783,54 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
   // 3. Create the new request using the existing create endpoint.
   // The backend will set the status to 'draft' and generate new IDs.
   return createRequest(token, newRequestData);
+}
+
+// ===================================
+// REQUEST SUBMISSION API
+// ===================================
+
+export async function startRequestSubmission(requestCode: string): Promise<{ submission_code: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${requestCode}/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
+  return handleResponse(response);
+}
+
+export async function saveSubmissionStep(submissionCode: string, step: string | number, data: any): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/step/${step}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function finalizeSubmission(submissionCode: string, data?: any): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/submit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: data ? JSON.stringify(data) : undefined,
+  });
+  return handleResponse(response);
+}
+
+export async function getSubmissionData(submissionCode: string): Promise<{ form_data: Record<string, any>; status: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
+  return handleResponse(response);
 }
