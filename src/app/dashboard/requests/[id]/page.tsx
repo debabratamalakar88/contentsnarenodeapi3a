@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect, useMemo, type FormEvent } from 'react';
@@ -633,7 +634,7 @@ export default function ViewRequestPage() {
                                 <CardContent className="space-y-8">
                                     {activePage.sections.map(section => (
                                         <div key={section.id}>
-                                            <h4 className="text-lg font-semibold">{section.title}</h4>
+                                            <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
                                             {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
                                             {section.questions.map(question => (
                                                 <div key={question.id} className="grid gap-2 mb-4">
