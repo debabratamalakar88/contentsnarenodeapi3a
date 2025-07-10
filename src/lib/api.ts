@@ -784,3 +784,42 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
   // The backend will set the status to 'draft' and generate new IDs.
   return createRequest(token, newRequestData);
 }
+
+// ===================================
+// REQUEST SUBMISSION API
+// ===================================
+
+export async function startSubmission(requestCode: string, data: any): Promise<{ message: string, submission_code: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${requestCode}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+}
+
+export async function saveStep(submissionCode: string, step: number | string, data: any): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/step/${step}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+}
+
+export async function submitRequest(submissionCode: string, data: any): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+}
+
+export async function getSubmission(submissionCode: string): Promise<{ form_data: any, status: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    });
+    return handleResponse(response);
+}
