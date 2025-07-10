@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -234,18 +235,25 @@ export default function SharedRequestPage() {
     
         for (const section of page.sections) {
             for (const question of section.questions) {
+                if (question.type === 'button' || question.type === 'formatted-text') continue;
+
                 const fieldName = question.apiId || `q-${question.id}`;
                 const value = formData[fieldName];
     
                 if (question.required) {
+                    let isMissing = false;
                     if (question.type === 'checkbox') {
-                        if (!value || value.length === 0) {
-                            isValid = false;
-                            errors[fieldName] = "Please select at least one option.";
+                        if (!value || (Array.isArray(value) && value.length === 0)) {
+                            isMissing = true;
                         }
-                    } else if (!value || String(value).trim() === '') {
+                    } else if (value === undefined || value === null || String(value).trim() === '') {
+                        isMissing = true;
+                    }
+
+                    if (isMissing) {
                         isValid = false;
                         errors[fieldName] = "This field is required.";
+                        continue; 
                     }
                 }
     
@@ -450,3 +458,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
