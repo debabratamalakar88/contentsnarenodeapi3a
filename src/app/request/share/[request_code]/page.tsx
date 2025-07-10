@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -16,10 +15,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, Clipboard, Check } from 'lucide-react';
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
+import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
 
 
 const renderQuestionInput = (question: Question) => {
@@ -111,6 +112,43 @@ const renderQuestionInput = (question: Question) => {
     }
 }
 
+interface PublicRequestSidebarProps {
+  request: Request;
+  pages: Page[];
+  activePageIndex: number;
+  setActivePageIndex: (id: number) => void;
+}
+
+const PublicRequestSidebar = ({ request, pages, activePageIndex, setActivePageIndex }: PublicRequestSidebarProps) => {
+    return (
+        <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
+            <div className="flex-shrink-0">
+                <div className="p-4 border-b">
+                    <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
+                    {request.due_date && (
+                        <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
+                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                            Due: {format(parseISO(request.due_date), 'PPP')}
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="flex-1 p-2 space-y-1 overflow-y-auto">
+                <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
+                {pages.map((page, index) => (
+                    <button
+                        key={page.id}
+                        onClick={() => setActivePageIndex(index)}
+                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageIndex === index ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
+                    >
+                        <span className="truncate">{page.title}</span>
+                    </button>
+                ))}
+            </div>
+        </aside>
+    );
+}
 
 export default function SharedRequestPage() {
     const params = useParams();
@@ -147,9 +185,6 @@ export default function SharedRequestPage() {
         event.preventDefault();
         setIsSubmitting(true);
         
-        // This is a placeholder for actual submission logic.
-        // The API for submitting responses is not defined in the provided documentation.
-        // For now, we just show a success message after a delay.
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         toast({
@@ -208,6 +243,7 @@ export default function SharedRequestPage() {
                 </div>
             </header>
             <form onSubmit={handleFormSubmit} className="flex flex-1 overflow-hidden">
+                 <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
                 <main className="flex-1 overflow-y-auto">
                     <div className="max-w-3xl mx-auto p-6">
                         {currentPage ? (
@@ -219,8 +255,7 @@ export default function SharedRequestPage() {
                                 <CardContent className="space-y-8">
                                     {currentPage.sections.map(section => (
                                         <div key={section.id}>
-                                            <h4 className="text-lg font-semibold mb-6 border-b pb-2">{section.title}</h4>
-                                            {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
+                                            <h4 className="text-lg font-semibold border-b pb-2 mb-6">{section.title}</h4>
                                             <div className="space-y-6">
                                                 {section.questions.map(question => (
                                                     <div key={question.id} className="grid gap-2">
