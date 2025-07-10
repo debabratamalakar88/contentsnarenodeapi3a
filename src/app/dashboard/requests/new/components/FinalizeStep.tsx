@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
-import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, Mail, Phone, PlusCircle, X } from "lucide-react"
+import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, Mail, Phone, PlusCircle, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
@@ -137,6 +137,10 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             return clients.find(c => String(c.id) === clientId);
         }).filter((c): c is Client => c !== undefined);
     }, [selectedClients, clients]);
+    
+    const handleRemoveClient = (clientId: number) => {
+        setSelectedClients(prev => prev.filter(id => id !== String(clientId)));
+    }
 
     const ClientSelector = () => {
       if (isPublished) {
@@ -157,6 +161,11 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                       {client.phone_number && <div className="flex items-center gap-1"><Phone className="h-3 w-3" /><span>{client.phone_number}</span></div>}
                     </div>
                   </div>
+                   {selectedClientDetails.length > 1 && (
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveClient(client.id)}>
+                        <Trash2 className="h-4 w-4" />
+                     </Button>
+                   )}
                 </Card>
               ))}
             </div>
