@@ -70,6 +70,16 @@ const renderAnswer = (question: Question, answer: any) => {
 
         case 'file':
         case 'image-upload':
+            const files = Array.isArray(answer) ? answer : [answer];
+            return (
+                <div className="space-y-2">
+                    {files.map((fileUrl, index) => (
+                        <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all block">
+                            {fileUrl.split('/').pop()}
+                        </a>
+                    ))}
+                </div>
+            )
         case 'url':
             if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
                 return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
@@ -153,20 +163,26 @@ export default function SubmissionDetailPage() {
             });
         });
     });
+    
+    const formDataObject = typeof submission.form_data === 'string' 
+        ? JSON.parse(submission.form_data) 
+        : submission.form_data;
 
-    return Object.keys(submission.form_data).sort().map(stepKey => {
-        const stepContainer = submission.form_data[stepKey];
-        if (!stepContainer) return null;
+    return Object.keys(formDataObject).sort().map(stepKey => {
+        let stepContainer = formDataObject[stepKey];
         
-        const pageData = stepContainer[stepKey] || stepContainer;
+        // Handle the extra nesting e.g., "step_1": { "step_1": { ... } }
+        if (stepContainer && typeof stepContainer === 'object' && stepKey in stepContainer) {
+            stepContainer = stepContainer[stepKey];
+        }
 
-        if (!pageData || typeof pageData !== 'object' || !pageData.page_title || !Array.isArray(pageData.sections)) {
+        if (!stepContainer || typeof stepContainer !== 'object' || !stepContainer.page_title || !Array.isArray(stepContainer.sections)) {
             return null;
         }
 
         const renderablePage: RenderablePage = {
-            title: pageData.page_title,
-            sections: pageData.sections.map((section: any) => {
+            title: stepContainer.page_title,
+            sections: stepContainer.sections.map((section: any) => {
                 if (!section || !section.section_title || typeof section.questions !== 'object') {
                     return null;
                 }
@@ -230,9 +246,9 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
             <CardHeader>
                 <div className="flex justify-between items-start">
-                    <div className="space-y-2">
+                    <div>
                         <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
-                        <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm">
+                        <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
                             {submission.submission_code && (
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-foreground">Submission Code:</span>
@@ -250,8 +266,8 @@ export default function SubmissionDetailPage() {
                     <Badge
                         variant={'outline'}
                         className={cn(
-                            "capitalize h-fit text-base px-4 py-1",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                            "capitalize h-fit text-base px-4 py-1 hover:bg-green-100",
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
                         )}
                     >
                         {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
@@ -289,7 +305,7 @@ export default function SubmissionDetailPage() {
                     <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
                         <FileText className="mx-auto h-12 w-12 mb-4" />
                         <h3 className="text-xl font-semibold">No submission data found to display.</h3>
-                        <p className="text-sm">It seems this submission is empty.</p>
+                        <p className="text-sm">It seems this submission is empty or could not be parsed.</p>
                     </div>
                 )}
             </CardContent>
