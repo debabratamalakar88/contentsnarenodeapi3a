@@ -20,7 +20,7 @@ import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, CheckCircle2 } 
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
 
 
@@ -100,7 +100,7 @@ const renderQuestionInput = (
         case 'number':
              return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
-             return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value?.amount || ''} onChange={e => onChange(questionName, { ...value, amount: e.target.value})} required={question.required} className={inputClassName} />;
+             return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'country':
             return (
                 <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
@@ -191,59 +191,60 @@ export default function SharedRequestPage() {
     
     useEffect(() => {
         if (!requestCode) return;
-        
+    
         const storageKey = `submission_code_${requestCode}`;
-
+    
         async function fetchInitialData() {
             setIsLoading(true);
             try {
                 const requestData = await getSharedRequest(requestCode);
                 setRequest(requestData);
-
+    
                 const storedSubmissionCode = localStorage.getItem(storageKey);
                 if (storedSubmissionCode) {
                     setSubmissionCode(storedSubmissionCode);
-                    try {
-                        const submissionData = await getSubmission(storedSubmissionCode);
-                         if (submissionData.form_data) {
-                            let parsedData = {};
-                            try {
-                                if (typeof submissionData.form_data === 'string') {
-                                    parsedData = JSON.parse(submissionData.form_data);
-                                } else {
-                                    parsedData = submissionData.form_data;
-                                }
-
-                                const flattenedData = Object.values(parsedData).reduce((acc: any, pageData: any) => {
-                                    pageData.sections.forEach((section: any) => {
-                                        Object.assign(acc, section.questions);
-                                    });
-                                    return acc;
-                                }, {});
-                                setAllAnswers(flattenedData || {});
-                                
-                            } catch (e) { console.error("Could not parse saved form data", e); }
+                    const submissionData = await getSubmission(storedSubmissionCode);
+                    
+                    if (submissionData.status === 'completed') {
+                        setIsComplete(true);
+                    } else if (submissionData.form_data) {
+                        let parsedData = {};
+                        try {
+                            if (typeof submissionData.form_data === 'string') {
+                                parsedData = JSON.parse(submissionData.form_data);
+                            } else {
+                                parsedData = submissionData.form_data;
+                            }
+    
+                            const flattenedData = Object.values(parsedData).reduce((acc: any, pageData: any) => {
+                                pageData.sections.forEach((section: any) => {
+                                    Object.assign(acc, section.questions);
+                                });
+                                return acc;
+                            }, {});
+                            setAllAnswers(flattenedData || {});
+                        } catch (e) {
+                            console.error("Could not parse saved form data", e);
                         }
-
-                        if (submissionData.status === 'completed') {
-                            setIsComplete(true);
-                        }
-                    } catch (submissionError) {
-                        console.warn("Could not fetch submission, starting new one.", submissionError);
-                        localStorage.removeItem(storageKey);
-                        setSubmissionCode(null);
-                        setAllAnswers({});
                     }
                 }
             } catch (err: any) {
-                const message = err.message || 'Failed to load request. The link may be invalid or expired.';
-                setError(message);
-                toast({ variant: 'destructive', title: 'Error', description: message });
+                if (err?.status === 404 && submissionCode) {
+                    // Submission was not found on backend, clear local state
+                    localStorage.removeItem(storageKey);
+                    setSubmissionCode(null);
+                    setAllAnswers({});
+                    console.warn("Submission code not found on server, starting fresh.");
+                } else {
+                    const message = err.message || 'Failed to load request. The link may be invalid or expired.';
+                    setError(message);
+                    toast({ variant: 'destructive', title: 'Error', description: message });
+                }
             } finally {
                 setIsLoading(false);
             }
         }
-        
+    
         fetchInitialData();
     }, [requestCode, toast]);
     
@@ -252,6 +253,13 @@ export default function SharedRequestPage() {
             ...prev,
             [fieldName]: value
         }));
+         if (validationErrors[fieldName]) {
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[fieldName];
+                return newErrors;
+            });
+        }
     };
     
     const validatePage = (page: Page): boolean => {
