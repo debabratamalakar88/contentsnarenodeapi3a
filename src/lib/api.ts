@@ -149,6 +149,17 @@ export interface Request {
   updated_at: string;
 }
 
+export interface Submission {
+  id: number;
+  request_id: number;
+  client_id: number;
+  submission_code: string;
+  status: 'in_progress' | 'completed';
+  form_data: any;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PaginatedRequests {
     current_page: number;
     data: Request[];
@@ -789,6 +800,18 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
 // REQUEST SUBMISSION API
 // ===================================
 
+export async function getRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}/submissions`, {
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+      },
+  });
+  return handleResponse(response);
+}
+
 export async function startSubmission(requestCode: string, data: any): Promise<{ message: string, submission_code: string }> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${requestCode}/start`, {
         method: 'POST',
@@ -823,3 +846,4 @@ export async function getSubmission(submissionCode: string): Promise<{ form_data
     });
     return handleResponse(response);
 }
+

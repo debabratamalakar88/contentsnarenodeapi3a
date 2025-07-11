@@ -4,12 +4,12 @@
 
 import React, { useState, useRef, useCallback, useEffect, useMemo, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, type Request, type Question, type Client, type Page } from '@/lib/api';
+import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,9 @@ import { IconSelector } from '@/components/ui/icon-selector';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Link from 'next/link';
 
 
 const getInitials = (name: string): string => {
@@ -533,10 +536,12 @@ export default function ViewRequestPage() {
 
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
+    const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activePageIndex, setActivePageIndex] = useState(0);
+    const [currentTab, setCurrentTab] = useState("form");
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -545,13 +550,15 @@ export default function ViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, clientsData] = await Promise.all([
+                const [requestData, clientsData, submissionsData] = await Promise.all([
                     getRequest(token!, id),
-                    getClients(token!)
+                    getClients(token!),
+                    getRequestSubmissions(token!, id)
                 ]);
 
                 setRequest(requestData);
                 setClients(clientsData || []);
+                setSubmissions(submissionsData || []);
             } catch (err: any) {
                 const message = err.message || 'Failed to load request data.';
                 setError(message);
@@ -567,13 +574,13 @@ export default function ViewRequestPage() {
         if (!request?.client_id || !clients) return [];
         return clients.filter(c => request.client_id!.includes(c.id));
     }, [request, clients]);
+    
+    const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
+
 
     const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsSubmitting(true);
-        // Placeholder for submission logic.
-        // The API for submitting responses is not defined in the provided documentation.
-        // For now, we just show a success message.
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast({ title: 'Form Submitted', description: 'Your response has been recorded (simulation).' });
         setIsSubmitting(false);
@@ -627,47 +634,92 @@ export default function ViewRequestPage() {
             <div className="flex flex-1 overflow-hidden">
                 <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl} />
                 <main className="flex-1 overflow-y-auto">
-                    <form className="max-w-3xl mx-auto p-6" onSubmit={handleFormSubmit}>
-                        {activePage ? (
-                            <Card>
-                                <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
-                                <CardContent className="space-y-8">
-                                    {activePage.sections.map(section => (
-                                        <div key={section.id}>
-                                            <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                            {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
-                                            {section.questions.map(question => (
-                                                <div key={question.id} className="grid gap-2 mb-4">
-                                                    {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
-                                                    {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                    {renderQuestionInput(question)}
+                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="p-6">
+                        <TabsList>
+                            <TabsTrigger value="form">Form Preview</TabsTrigger>
+                            <TabsTrigger value="submissions">Submissions <Badge variant="secondary" className="ml-2">{submissions.length}</Badge></TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="form">
+                             <form className="max-w-3xl mx-auto pt-6" onSubmit={handleFormSubmit}>
+                                {activePage ? (
+                                    <Card>
+                                        <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
+                                        <CardContent className="space-y-8">
+                                            {activePage.sections.map(section => (
+                                                <div key={section.id}>
+                                                    <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
+                                                    {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
+                                                    {section.questions.map(question => (
+                                                        <div key={question.id} className="grid gap-2 mb-4">
+                                                            {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
+                                                            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                            {renderQuestionInput(question)}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ))}
-                                        </div>
-                                    ))}
+                                        </CardContent>
+                                        <CardFooter className="flex justify-between border-t pt-6">
+                                            <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
+                                                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                                            </Button>
+                                            {!isLastPage && (
+                                                <Button type="button" onClick={handleNextPage}>
+                                                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </CardFooter>
+                                    </Card>
+                                ) : (
+                                     <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
+                                )}
+                            </form>
+                        </TabsContent>
+                        <TabsContent value="submissions">
+                           <Card className="mt-6">
+                                <CardHeader><CardTitle>Request Submissions</CardTitle><CardDescription>Here are all the submissions received for this request.</CardDescription></CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Client</TableHead>
+                                                <TableHead>Submitted On</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {submissions.length > 0 ? submissions.map(submission => {
+                                                const clientName = clientMap.get(submission.client_id) || "Anonymous";
+                                                return (
+                                                    <TableRow key={submission.id}>
+                                                        <TableCell className="font-medium">{clientName}</TableCell>
+                                                        <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
+                                                        <TableCell><Badge variant={submission.status === 'completed' ? 'default' : 'secondary'}>{submission.status}</Badge></TableCell>
+                                                        <TableCell>
+                                                            <Button variant="outline" size="sm" asChild>
+                                                                <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            }) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="h-24 text-center">
+                                                        <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                                        No submissions received yet.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 </CardContent>
-                                <CardFooter className="flex justify-between border-t pt-6">
-                                    <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
-                                        <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                                    </Button>
-                                    {isLastPage ? (
-                                        <Button type="submit" disabled={isSubmitting}>
-                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Submit
-                                        </Button>
-                                    ) : (
-                                        <Button type="button" onClick={handleNextPage}>
-                                            Next <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </CardFooter>
-                            </Card>
-                        ) : (
-                             <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
-                        )}
-                    </form>
+                           </Card>
+                        </TabsContent>
+                    </Tabs>
                 </main>
             </div>
         </div>
     );
 }
+
