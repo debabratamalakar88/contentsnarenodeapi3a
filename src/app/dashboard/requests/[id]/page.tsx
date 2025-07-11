@@ -707,7 +707,7 @@ export default function ViewRequestPage() {
                                                           </Badge>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Button variant="outline" size="sm" asChild>
+                                                            <Button variant="default" size="sm" asChild>
                                                                 <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
                                                             </Button>
                                                         </TableCell>
