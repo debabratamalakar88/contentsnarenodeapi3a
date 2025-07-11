@@ -44,12 +44,14 @@ const renderAnswer = (question: Question, answer: any) => {
             break;
 
         case 'checkbox':
-        case 'dropdown':
              if (Array.isArray(answer)) {
                 if (answer.length === 0) return <p className="text-muted-foreground italic">No selection made.</p>;
                 return <p>{answer.join(', ')}</p>;
             }
             break;
+        
+        case 'dropdown':
+             return <p>{answer}</p>;
 
         case 'country':
             const country = countries.find(c => c.code === answer);
@@ -177,7 +179,7 @@ export default function SubmissionDetailPage() {
   
  const processedData = useMemo(() => {
     if (!submission || !request || !request.form_data) return [];
-    
+
     let submissionData = submission.form_data;
     if (typeof submissionData === 'string') {
         try {
@@ -187,64 +189,85 @@ export default function SubmissionDetailPage() {
             return [];
         }
     }
-
     if (typeof submissionData !== 'object' || submissionData === null) return [];
 
     const questionMap = new Map<string, Question>();
-    request.form_data.forEach(page => {
-        page.sections.forEach(section => {
-            section.questions.forEach(question => {
-                if (question.apiId) {
-                    questionMap.set(question.apiId, question);
+    request.form_data.forEach(pageDef => {
+        pageDef.sections.forEach(sectionDef => {
+            sectionDef.questions.forEach(questionDef => {
+                if (questionDef.apiId) {
+                    questionMap.set(questionDef.apiId, questionDef);
                 }
             });
         });
     });
 
-    const answersByApiId: { [key: string]: any } = {};
+    const pagesWithAnswers: RenderablePage[] = [];
 
-    Object.values(submissionData).forEach((stepData: any) => {
-        if (typeof stepData !== 'object' || stepData === null) return;
-        Object.entries(stepData).forEach(([key, value]) => {
-            if (key === 'images' || key === 'docs') {
-                 const qType = key === 'images' ? 'image-upload' : 'file';
-                 const fileQuestion = Array.from(questionMap.values()).find(q => q.type === qType);
-                 if (fileQuestion?.apiId) {
-                    answersByApiId[fileQuestion.apiId] = value;
-                 }
-            } else {
-                answersByApiId[key] = value;
+    // Iterate through steps from the submission data
+    for (const stepKey in submissionData) {
+        if (!Object.prototype.hasOwnProperty.call(submissionData, stepKey)) continue;
+
+        const stepData = submissionData[stepKey];
+        const answersForStep: { [key: string]: any } = {};
+
+        // Two possible structures: with files (flat) or without (nested)
+        if (stepData.images || stepData.docs) {
+            // Flat structure with files
+            for (const answerKey in stepData) {
+                if (Object.prototype.hasOwnProperty.call(stepData, answerKey)) {
+                    answersForStep[answerKey] = stepData[answerKey];
+                }
             }
-        });
-    });
-
-    const pagesWithAnswers: RenderablePage[] = request.form_data.map(pageDef => {
+        } else if (stepData[stepKey] && stepData[stepKey].sections) {
+            // Nested structure without files
+            const nestedStepData = stepData[stepKey];
+            nestedStepData.sections.forEach((section: any) => {
+                if (section.questions && typeof section.questions === 'object') {
+                    for (const questionApiId in section.questions) {
+                        if (Object.prototype.hasOwnProperty.call(section.questions, questionApiId)) {
+                             answersForStep[questionApiId] = section.questions[questionApiId];
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Find the corresponding page definition from the original request
+        // This assumes stepKey (e.g., "step_1") corresponds to the page index
+        const pageIndex = parseInt(stepKey.split('_')[1], 10) - 1;
+        const pageDef = request.form_data[pageIndex];
+        
+        if (!pageDef) continue;
+        
         const sectionsWithAnswers: RenderableSection[] = pageDef.sections.map(sectionDef => {
             const answersInSection: { question: Question; answer: any }[] = [];
             
             sectionDef.questions.forEach(questionDef => {
-                if (questionDef.apiId && answersByApiId.hasOwnProperty(questionDef.apiId)) {
+                if (questionDef.apiId && answersForStep.hasOwnProperty(questionDef.apiId)) {
                     answersInSection.push({
                         question: questionDef,
-                        answer: answersByApiId[questionDef.apiId],
+                        answer: answersForStep[questionDef.apiId],
                     });
+                } else if (questionDef.type === 'image-upload' && answersForStep.hasOwnProperty('images')) {
+                     answersInSection.push({ question: questionDef, answer: answersForStep['images'] });
+                } else if (questionDef.type === 'file' && answersForStep.hasOwnProperty('docs')) {
+                     answersInSection.push({ question: questionDef, answer: answersForStep['docs'] });
                 }
             });
             
-            return {
-                title: sectionDef.title,
-                answers: answersInSection,
-            };
+            return { title: sectionDef.title, answers: answersInSection };
         }).filter(section => section.answers.length > 0);
 
-        return {
-            title: pageDef.title,
-            sections: sectionsWithAnswers,
-        };
-    }).filter(page => page.sections.length > 0);
+        if (sectionsWithAnswers.length > 0) {
+            pagesWithAnswers.push({
+                title: pageDef.title,
+                sections: sectionsWithAnswers,
+            });
+        }
+    }
 
     return pagesWithAnswers;
-
 }, [submission, request]);
 
 
@@ -292,7 +315,7 @@ export default function SubmissionDetailPage() {
         </div>
         <Card className="bg-card shadow-sm w-full">
             <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start flex-wrap gap-4">
                     <div>
                         <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
                          <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
@@ -361,3 +384,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
