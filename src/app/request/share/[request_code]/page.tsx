@@ -40,7 +40,7 @@ const renderQuestionInput = (
         case 'textarea':
             return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'file':
-            return <Input id={questionId} name={questionName} type="file" required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={`${questionName}[]`} type="file" required={question.required} className={inputClassName} multiple />;
         case 'checkbox':
             return (
                 <div className="space-y-2 pt-2">
@@ -94,7 +94,7 @@ const renderQuestionInput = (
         case 'formatted-text':
              return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         case 'image-upload':
-             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
+             return <Input id={questionId} name={`${questionName}[]`} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
         case 'address':
              return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
         case 'number':
@@ -271,20 +271,31 @@ export default function SharedRequestPage() {
                 if (question.type === 'button' || question.type === 'formatted-text') return;
                 
                 const fieldName = question.apiId || `q-${question.id}`;
-                const value = allAnswers[fieldName];
+                const formElement = formRef.current?.elements.namedItem(fieldName) as (HTMLInputElement | RadioNodeList | null);
+                
+                let value = allAnswers[fieldName];
 
-                if (question.required) {
-                    let isMissing = false;
-                    if (question.type === 'checkbox') {
-                        if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
-                    } else if (value === null || value === undefined || String(value).trim() === '') {
-                        isMissing = true;
-                    }
-
-                    if (isMissing) {
+                if (question.type === 'file' || question.type === 'image-upload') {
+                    const fileInput = formElement as HTMLInputElement;
+                    if (question.required && (!fileInput || fileInput.files?.length === 0)) {
                         isValid = false;
                         errors[fieldName] = "This field is required.";
-                        return; // continue to next question
+                        return;
+                    }
+                } else {
+                    if (question.required) {
+                        let isMissing = false;
+                        if (question.type === 'checkbox') {
+                            if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
+                        } else if (value === null || value === undefined || String(value).trim() === '') {
+                            isMissing = true;
+                        }
+
+                        if (isMissing) {
+                            isValid = false;
+                            errors[fieldName] = "This field is required.";
+                            return; // continue to next question
+                        }
                     }
                 }
     
@@ -316,41 +327,26 @@ export default function SharedRequestPage() {
         return isValid;
     };
 
-    const getStructuredFormData = (page: Page) => {
-        const pageData: any = {
-            page_title: page.title,
-            sections: page.sections.map(section => ({
-                section_title: section.title,
-                questions: {}
-            }))
-        };
-
-        page.sections.forEach((section, sectionIndex) => {
-            section.questions.forEach(question => {
-                const fieldName = question.apiId || `q-${question.id}`;
-                if (allAnswers[fieldName] !== undefined) {
-                    pageData.sections[sectionIndex].questions[fieldName] = allAnswers[fieldName];
-                }
-            });
-        });
-        return pageData;
-    };
+    const getFormDataForSubmission = () => {
+        if (!formRef.current) return new FormData();
+        return new FormData(formRef.current);
+    }
     
     const handleStepChange = async (newIndex: number) => {
         const currentPage = request?.form_data[activePageIndex];
         if (!currentPage || !validatePage(currentPage)) return;
 
-        const currentData = getStructuredFormData(currentPage);
+        const formData = getFormDataForSubmission();
         setIsSubmitting(true);
 
         try {
             if (!submissionCode) {
-                 const response = await startSubmission(requestCode, { [`step_${activePageIndex + 1}`]: currentData });
+                 const response = await startSubmission(requestCode, formData);
                  setSubmissionCode(response.submission_code);
                  localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
             } else {
-                 await saveStep(submissionCode, activePageIndex + 1, { [`step_${activePageIndex + 1}`]: currentData });
+                 await saveStep(submissionCode, activePageIndex + 1, formData);
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
             }
              setValidationErrors({});
@@ -368,20 +364,20 @@ export default function SharedRequestPage() {
         if (!currentPage || !validatePage(currentPage)) return;
 
         setIsSubmitting(true);
-        const currentData = getStructuredFormData(currentPage);
+        const formData = getFormDataForSubmission();
         
         try {
             let currentSubmissionCode = submissionCode;
             if (!currentSubmissionCode) {
-                 const response = await startSubmission(requestCode, { [`step_${activePageIndex + 1}`]: currentData });
+                 const response = await startSubmission(requestCode, formData);
                  currentSubmissionCode = response.submission_code;
                  setSubmissionCode(currentSubmissionCode);
                  localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             } else {
-                await saveStep(currentSubmissionCode, activePageIndex + 1, { [`step_${activePageIndex + 1}`]: currentData });
+                await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
             }
 
-            await submitRequest(currentSubmissionCode, {});
+            await submitRequest(currentSubmissionCode, formData);
             toast({ title: "Success", description: "Your submission has been completed." });
             setIsComplete(true);
             localStorage.removeItem(`submission_code_${requestCode}`);
@@ -445,7 +441,7 @@ export default function SharedRequestPage() {
             <div className="flex flex-1 overflow-hidden">
                 <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
                 <main className="flex-1 overflow-y-auto">
-                    <form ref={formRef} onSubmit={handleFormSubmit} noValidate>
+                    <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
                         <div className="max-w-3xl mx-auto p-6">
                             {currentPage ? (
                                 <Card>
@@ -503,3 +499,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+

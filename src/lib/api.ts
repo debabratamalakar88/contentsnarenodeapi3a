@@ -215,6 +215,19 @@ The full server response has been logged to the browser console for debugging.`;
   return data;
 }
 
+async function fetchWithToken(url: string, token: string, options: RequestInit = {}) {
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', `Bearer ${token}`);
+    headers.set('Accept', 'application/json');
+
+    if (!(options.body instanceof FormData)) {
+        headers.set('Content-Type', 'application/json');
+    }
+
+    const response = await fetch(url, { ...options, headers });
+    return handleResponse(response);
+}
+
 // ===================================
 // USER AUTHENTICATION & PROFILE
 // ===================================
@@ -267,65 +280,29 @@ export async function resetPassword(data: any) {
 }
 
 export async function logoutUser(token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/logout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/logout`, token, { method: 'POST' });
 }
 
 export async function resendVerificationEmail(token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/email/verification-notification`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/email/verification-notification`, token, { method: 'POST' });
 }
 
 export async function getProfile(token: string): Promise<{user: Profile}> {
-  const response = await fetch(`${API_BASE_URL}/api/profile`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/profile`, token);
 }
 
 export async function updateProfile(token: string, profileData: Partial<Profile>) {
-  const response = await fetch(`${API_BASE_URL}/api/updateProfile`, {
+  return fetchWithToken(`${API_BASE_URL}/api/updateProfile`, token, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(profileData)
+    body: JSON.stringify(profileData),
   });
-  return handleResponse(response);
 }
 
 export async function changePassword(token: string, passwordData: any) {
-  const response = await fetch(`${API_BASE_URL}/api/changePassword`, {
+  return fetchWithToken(`${API_BASE_URL}/api/changePassword`, token, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(passwordData)
+    body: JSON.stringify(passwordData),
   });
-  return handleResponse(response);
 }
 
 
@@ -333,138 +310,63 @@ export async function changePassword(token: string, passwordData: any) {
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  const response = await fetch(`${API_BASE_URL}/api/clients`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
-  const response = await fetch(`${API_BASE_URL}/api/clients/archived`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/clients/archived`, token);
 }
 
 export async function createClient(token: string, clientData: any) {
-    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+    return fetchWithToken(`${API_BASE_URL}/api/clients`, token, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify(clientData),
     });
-    return handleResponse(response);
 }
 
 export async function getClient(token: string, id: number): Promise<Client> {
-    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
-    return handleResponse(response);
+    return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token);
 }
 
 export async function updateClient(token: string, id: number, clientData: any) {
-    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
+    return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify(clientData),
     });
-    return handleResponse(response);
 }
 
 export async function deleteClient(token: string, id: number) {
-    const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
-    return handleResponse(response);
+    return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreClient(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/clients/${id}/restore`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/clients/${id}/restore`, token, { method: 'POST' });
 }
 
 export async function forceDeleteClient(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/clients/${id}/force`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/clients/${id}/force`, token, { method: 'DELETE' });
 }
 
 // ===================================
 // ADMIN API
 // ===================================
-
 export async function adminLogin(credentials: any): Promise<AdminAuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(credentials),
   });
   return handleResponse(response);
 }
 
 export async function adminLogout(token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/logout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/logout`, token, { method: 'POST' });
 }
 
 export async function adminForgotPassword(emailData: any) {
   const response = await fetch(`${API_BASE_URL}/api/admin/forgot-password`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(emailData),
   });
   return handleResponse(response);
@@ -473,326 +375,166 @@ export async function adminForgotPassword(emailData: any) {
 export async function adminResetPassword(data: any) {
   const response = await fetch(`${API_BASE_URL}/api/admin/reset-password`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(data),
   });
   return handleResponse(response);
 }
 
 export async function getAdminProfile(token: string): Promise<AdminProfile> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  const data = await handleResponse(response);
+  const data = await fetchWithToken(`${API_BASE_URL}/api/admin/profile`, token);
   return data.admin || data;
 }
 
 export async function updateAdminProfile(token: string, profileData: Partial<AdminProfile>) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/updateProfile`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/updateProfile`, token, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(profileData)
+    body: JSON.stringify(profileData),
   });
-  return handleResponse(response);
 }
 
 export async function changeAdminPassword(token: string, passwordData: any) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/changePassword`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/changePassword`, token, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(passwordData)
+    body: JSON.stringify(passwordData),
   });
-  return handleResponse(response);
 }
 
 // --- Admin User Management ---
 export async function getAdminUsers(token: string): Promise<User[]> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-    method: 'GET',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  const users = await handleResponse(response);
+  const users = await fetchWithToken(`${API_BASE_URL}/api/admin/users`, token);
   return Array.isArray(users) ? users : [];
 }
 
 export async function getAdminArchivedUsers(token: string): Promise<User[]> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/archived`, {
-    method: 'GET',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  const users = await handleResponse(response);
+  const users = await fetchWithToken(`${API_BASE_URL}/api/admin/users/archived`, token);
   return Array.isArray(users) ? users : [];
 }
 
 export async function getAdminUser(token: string, id: number): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
-    method: 'GET',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users/${id}`, token);
 }
 
 export async function createAdminUser(token: string, userData: any): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users`, token, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(userData),
   });
-  return handleResponse(response);
 }
 
 export async function updateAdminUser(token: string, id: number, userData: any): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users/${id}`, token, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(userData),
   });
-  return handleResponse(response);
 }
 
 export async function softDeleteAdminUser(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
-    method: 'DELETE',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreAdminUser(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/restore`, {
-    method: 'POST',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users/${id}/restore`, token, { method: 'POST' });
 }
 
 export async function forceDeleteAdminUser(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/force`, {
-    method: 'DELETE',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users/${id}/force`, token, { method: 'DELETE' });
 }
 
 
 // --- Admin Client Management ---
 export async function getAdminClients(token:string): Promise<Client[]> {
-    const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
-    return handleResponse(response);
+    return fetchWithToken(`${API_BASE_URL}/api/admin/clients`, token);
 }
 
 export async function getAdminArchivedClients(token:string): Promise<Client[]> {
-    const response = await fetch(`${API_BASE_URL}/api/admin/clients/archived`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-    });
-    return handleResponse(response);
+    return fetchWithToken(`${API_BASE_URL}/api/admin/clients/archived`, token);
 }
 
 export async function getAdminClient(token: string, id: number): Promise<Client> {
-    const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-    });
-    return handleResponse(response);
+    return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}`, token);
 }
 
 export async function createAdminClient(token: string, clientData: any): Promise<Client> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/clients`, token, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(clientData),
   });
-  return handleResponse(response);
 }
 
 export async function updateAdminClient(token: string, id: number, clientData: any): Promise<Client> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}`, token, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(clientData),
   });
-  return handleResponse(response);
 }
 
 export async function softDeleteAdminClient(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}`, {
-    method: 'DELETE',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreAdminClient(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}/restore`, {
-    method: 'POST',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}/restore`, token, { method: 'POST' });
 }
 
 export async function forceDeleteAdminClient(token: string, id: number) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/clients/${id}/force`, {
-    method: 'DELETE',
-    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}/force`, token, { method: 'DELETE' });
 }
 
 // ===================================
 // REQUEST API
 // ===================================
 export async function getRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
-  const response = await fetch(`${API_BASE_URL}/api/requests?page=${page}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests?page=${page}`, token);
 }
 
 export async function getArchivedRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
-  // Assuming this endpoint exists based on other resource patterns
-  const response = await fetch(`${API_BASE_URL}/api/requests/archived?page=${page}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/archived?page=${page}`, token);
 }
 
 
 export async function getSharedRequest(requestCode: string): Promise<Request> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/share/${requestCode}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
+  const response = await fetch(`${API_BASE_URL}/api/requests/share/${requestCode}`);
   return handleResponse(response);
 }
 
 export async function createRequest(token: string, requestData: any): Promise<Request> {
-  const response = await fetch(`${API_BASE_URL}/api/requests`, {
+  return fetchWithToken(`${API_BASE_URL}/api/requests`, token, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
     body: JSON.stringify(requestData),
   });
-  return handleResponse(response);
 }
 
 export async function getRequest(token: string, id: number): Promise<Request> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token);
 }
 
 export async function updateRequest(token: string, id: number, requestData: Partial<Request>): Promise<Request> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
     body: JSON.stringify(requestData),
   });
-  return handleResponse(response);
 }
 
 export async function softDeleteRequest(token: string, id: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token, { method: 'DELETE' });
 }
 
 export async function forceDeleteRequest(token: string, id: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/force`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${id}/force`, token, { method: 'DELETE' });
 }
 
 export async function restoreRequest(token: string, id: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${id}/restore`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${id}/restore`, token, { method: 'PATCH' });
 }
 
 export async function duplicateRequest(token: string, id: number): Promise<Request> {
-  // 1. Fetch the original request
   const originalRequest = await getRequest(token, id);
-
-  // 2. Prepare the new request data for creation, adhering to the create endpoint's expected payload.
   const newRequestData = {
-    title: `(Copy) ${originalRequest.title}`.substring(0, 255), // Truncate to prevent DB errors
+    title: `(Copy) ${originalRequest.title}`.substring(0, 255),
     description: originalRequest.description,
     form_data: originalRequest.form_data,
   };
-  
-  // 3. Create the new request using the existing create endpoint.
-  // The backend will set the status to 'draft' and generate new IDs.
   return createRequest(token, newRequestData);
 }
 
@@ -801,60 +543,41 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
 // ===================================
 
 export async function getRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}/submissions`, {
-      method: 'GET',
-      headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-      },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions`, token);
 }
 
 export async function getSingleSubmissionForRequest(token: string, requestId: number, submissionId: number): Promise<Submission> {
-  const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}/submissions/${submissionId}`, {
-      method: 'GET',
-      headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-      },
-  });
-  return handleResponse(response);
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
-export async function startSubmission(requestCode: string, data: any): Promise<{ message: string, submission_code: string }> {
+export async function startSubmission(requestCode: string, data: FormData): Promise<{ message: string, submission_code: string }> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${requestCode}/start`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(data),
+        headers: { 'Accept': 'application/json' },
+        body: data,
     });
     return handleResponse(response);
 }
 
-export async function saveStep(submissionCode: string, step: number | string, data: any): Promise<{ message: string }> {
+export async function saveStep(submissionCode: string, step: number | string, data: FormData): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/step/${step}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(data),
+        method: 'POST', // Laravel expects POST for form data with file uploads, even for updates.
+        headers: { 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PUT' }, // Method spoofing
+        body: data,
     });
     return handleResponse(response);
 }
 
-export async function submitRequest(submissionCode: string, data: any): Promise<{ message: string }> {
+export async function submitRequest(submissionCode: string, data: FormData): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(data),
+        headers: { 'Accept': 'application/json' },
+        body: data,
     });
     return handleResponse(response);
 }
 
 export async function getSubmission(submissionCode: string): Promise<Submission> {
-    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    });
+    const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`);
     return handleResponse(response);
 }
