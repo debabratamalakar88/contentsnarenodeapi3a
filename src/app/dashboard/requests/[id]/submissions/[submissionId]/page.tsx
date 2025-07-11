@@ -233,19 +233,29 @@ export default function SubmissionDetailPage() {
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
                         <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            {submission.submission_code && <span>Code: <span className="font-mono text-xs bg-muted p-1 rounded-md">{submission.submission_code}</span></span>}
-                            {submission.updated_at && <span>Submitted On: {format(parseISO(submission.updated_at), 'PPP p')}</span>}
+                        <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm">
+                            {submission.submission_code && (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-foreground">Submission Code:</span>
+                                    <Badge variant="secondary">{submission.submission_code}</Badge>
+                                </div>
+                            )}
+                            {submission.updated_at && (
+                                <div className="flex items-center gap-2 mt-1 md:mt-0">
+                                    <span className="font-semibold text-foreground">Submitted On:</span>
+                                    <span className="text-muted-foreground">{format(parseISO(submission.updated_at), 'PPP p')}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <Badge
                         variant={'outline'}
                         className={cn(
-                            "capitalize h-fit",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                            "capitalize h-fit text-base px-4 py-1",
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
                         )}
                     >
-                        {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                        {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
                         {submission.status}
                     </Badge>
                 </div>
