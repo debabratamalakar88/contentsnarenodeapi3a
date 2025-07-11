@@ -95,7 +95,7 @@ export default function SubmissionDetailPage() {
 
   const processedData = useMemo(() => {
     if (!submission || !request || !submission.form_data) return [];
-    
+
     const questionLabelMap = new Map<string, string>();
     request.form_data.forEach(page => {
         page.sections.forEach(section => {
@@ -109,6 +109,7 @@ export default function SubmissionDetailPage() {
 
     const submittedPages: RenderablePage[] = [];
 
+    // Correctly iterate over the keys of the submission.form_data object
     Object.keys(submission.form_data).sort().forEach(stepKey => {
         const pageData = submission.form_data[stepKey];
 
