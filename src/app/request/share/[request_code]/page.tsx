@@ -40,6 +40,7 @@ const renderQuestionInput = (
         case 'textarea':
             return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'file':
+            // File inputs are uncontrolled, so we don't set a value
             return <Input id={questionId} name={questionName} type="file" required={question.required} className={inputClassName} />;
         case 'checkbox':
             return (
@@ -52,7 +53,7 @@ const renderQuestionInput = (
                                 value={opt.value} 
                                 checked={Array.isArray(value) && value.includes(opt.value)}
                                 onCheckedChange={(checked) => {
-                                    const currentValues = Array.isArray(value) ? value : [];
+                                    const currentValues = Array.isArray(value) ? [...value] : [];
                                     const newValues = checked 
                                         ? [...currentValues, opt.value] 
                                         : currentValues.filter(v => v !== opt.value);
@@ -62,11 +63,12 @@ const renderQuestionInput = (
                             <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
                         </div>
                     ))}
+                    {error && <p className="text-sm font-medium text-destructive">{error}</p>}
                 </div>
             );
         case 'dropdown':
             return (
-                <Select name={questionName} value={value} onValueChange={val => onChange(questionName, val)} required={question.required}>
+                <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
                     <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -81,7 +83,7 @@ const renderQuestionInput = (
             return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'radio':
             return (
-                <RadioGroup name={questionName} value={value} onValueChange={val => onChange(questionName, val)}>
+                <RadioGroup name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)}>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2 pt-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -99,10 +101,10 @@ const renderQuestionInput = (
         case 'number':
              return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
-            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+             return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'country':
             return (
-                <Select name={questionName} value={value} onValueChange={val => onChange(questionName, val)} required={question.required}>
+                <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
                     <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
                     <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
                 </Select>
@@ -110,9 +112,9 @@ const renderQuestionInput = (
         case 'date-range':
              return (
                 <div className="flex items-center gap-2">
-                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" value={value?.start || ''} onChange={e => onChange(questionName, {...value, start: e.target.value})} className={inputClassName} />
+                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" value={value?.start || ''} onChange={e => onChange(questionName, {...(value || {}), start: e.target.value})} className={inputClassName} />
                      <span>to</span>
-                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" value={value?.end || ''} onChange={e => onChange(questionName, {...value, end: e.target.value})} className={inputClassName} />
+                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" value={value?.end || ''} onChange={e => onChange(questionName, {...(value || {}), end: e.target.value})} className={inputClassName} />
                 </div>
              );
         case 'icon-selector':
@@ -207,7 +209,6 @@ export default function SharedRequestPage() {
                         if (submissionData.form_data) {
                             let parsedData = {};
                             try {
-                                // The API seems to return form_data as a JSON string
                                 if (typeof submissionData.form_data === 'string') {
                                     parsedData = JSON.parse(submissionData.form_data);
                                 } else {
@@ -300,30 +301,18 @@ export default function SharedRequestPage() {
     };
 
     const getStructuredFormData = (page: Page) => {
-        const structuredData: any = {
-            page_title: page.title,
-            sections: []
-        };
-    
+        const structuredData: any = {};
         page.sections.forEach(section => {
-            const sectionData: any = {
-                section_title: section.title,
-                questions: {}
-            };
-    
             section.questions.forEach(question => {
                 const fieldName = question.apiId || `q-${question.id}`;
                 if (allAnswers[fieldName] !== undefined) {
-                    sectionData.questions[fieldName] = allAnswers[fieldName];
+                    structuredData[fieldName] = allAnswers[fieldName];
                 }
             });
-            structuredData.sections.push(sectionData);
         });
-    
         return structuredData;
     };
     
-
     const handleStepChange = async (newIndex: number) => {
         const currentPage = request?.form_data[activePageIndex];
         if (!currentPage || !validatePage(currentPage)) return;
