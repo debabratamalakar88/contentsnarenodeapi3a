@@ -113,7 +113,6 @@ export default function SubmissionDetailPage() {
 
     return Object.keys(submission.form_data).sort().map(stepKey => {
         const stepContainer = submission.form_data[stepKey];
-        // Handle potential double nesting e.g., step_1: { step_1: { ... } }
         const pageData = stepContainer[stepKey] || stepContainer;
 
         if (!pageData || !pageData.page_title || !Array.isArray(pageData.sections)) {
@@ -143,17 +142,17 @@ export default function SubmissionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="p-6 space-y-6">
         <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-10 w-64" />
-        <div className="space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-48 w-full" />
-        </div>
-         <div className="space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-24 w-full" />
-        </div>
+        <Card>
+            <CardHeader><Skeleton className="h-10 w-64" /></CardHeader>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </CardContent>
+        </Card>
       </div>
     );
   }
@@ -173,61 +172,68 @@ export default function SubmissionDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-       <Button variant="outline" asChild className="mb-4">
-        <Link href={`/dashboard/requests/${requestId}`}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Request
-        </Link>
-      </Button>
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Submission for "{request.title}"</h1>
-         <div className="flex items-center gap-2">
-            <Badge
-                variant={submission.status === 'completed' ? 'default' : 'secondary'}
-                className={cn(
-                    submission.status === 'completed' && "bg-green-100 text-green-800 border-green-200",
-                    "capitalize"
-                )}
-            >
-                {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
-                {submission.status}
-            </Badge>
-         </div>
-      </div>
-
-       {processedData.length > 0 ? (
-            <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
-            {processedData.map((page, pageIndex) => (
-                <AccordionItem key={pageIndex} value={page.title}>
-                    <AccordionTrigger className="text-xl font-semibold hover:no-underline">{page.title}</AccordionTrigger>
-                    <AccordionContent className="pt-4 px-2">
-                         <div className="space-y-6">
-                            {page.sections.map((section, sectionIndex) => (
-                                <div key={sectionIndex}>
-                                <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
-                                <dl className="space-y-6">
-                                    {section.answers.map((item, itemIndex) => (
-                                    <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                        <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.label}</dt>
-                                        <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.answer)}</dd>
-                                    </div>
+    <div className="p-6 bg-muted/40 min-h-full">
+        <div className="flex items-center gap-4 mb-4">
+            <Button variant="outline" size="icon" asChild>
+                <Link href={`/dashboard/requests/${requestId}`}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Link>
+            </Button>
+            <h1 className="text-2xl font-bold">Submission Details</h1>
+        </div>
+        <Card className="bg-background shadow-sm">
+            <CardHeader>
+                <div className="space-y-2">
+                    <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Badge
+                            variant={submission.status === 'completed' ? 'default' : 'secondary'}
+                            className={cn(
+                                submission.status === 'completed' && "bg-green-100 text-green-800 border-green-200",
+                                "capitalize"
+                            )}
+                        >
+                            {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                            {submission.status}
+                        </Badge>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {processedData.length > 0 ? (
+                    <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
+                    {processedData.map((page, pageIndex) => (
+                        <AccordionItem key={pageIndex} value={page.title}>
+                            <AccordionTrigger className="text-xl font-semibold hover:no-underline">{page.title}</AccordionTrigger>
+                            <AccordionContent className="pt-4 px-2">
+                                <div className="space-y-6">
+                                    {page.sections.map((section, sectionIndex) => (
+                                        <div key={sectionIndex}>
+                                        <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
+                                        <dl className="space-y-6">
+                                            {section.answers.map((item, itemIndex) => (
+                                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                                <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.label}</dt>
+                                                <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.answer)}</dd>
+                                            </div>
+                                            ))}
+                                        </dl>
+                                        </div>
                                     ))}
-                                </dl>
                                 </div>
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            ))}
-            </Accordion>
-        ) : (
-            <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
-                <FileText className="mx-auto h-12 w-12 mb-4" />
-                <h3 className="text-xl font-semibold">No submission data found to display.</h3>
-                <p className="text-sm">It seems this submission is empty.</p>
-            </div>
-        )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                    </Accordion>
+                ) : (
+                    <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
+                        <FileText className="mx-auto h-12 w-12 mb-4" />
+                        <h3 className="text-xl font-semibold">No submission data found to display.</h3>
+                        <p className="text-sm">It seems this submission is empty.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   );
 }
