@@ -176,19 +176,19 @@ export default function SubmissionDetailPage() {
   }, [submissionId, requestId, router, toast]);
   
  const processedData = useMemo(() => {
-    if (!submission || !request || !submission.form_data) return [];
-
-    let formDataObject = submission.form_data;
-    if (typeof formDataObject === 'string') {
+    if (!submission || !request || !request.form_data) return [];
+    
+    let submissionData = submission.form_data;
+    if (typeof submissionData === 'string') {
         try {
-            formDataObject = JSON.parse(formDataObject);
+            submissionData = JSON.parse(submissionData);
         } catch (e) {
-            console.error("Failed to parse form_data JSON string:", e);
+            console.error("Failed to parse submission form_data:", e);
             return [];
         }
     }
-    
-    if (typeof formDataObject !== 'object' || formDataObject === null) return [];
+
+    if (typeof submissionData !== 'object' || submissionData === null) return [];
 
     const questionMap = new Map<string, Question>();
     request.form_data.forEach(page => {
@@ -201,57 +201,47 @@ export default function SubmissionDetailPage() {
         });
     });
 
-    const pagesWithAnswers: RenderablePage[] = [];
+    const answersByApiId: { [key: string]: any } = {};
 
-    request.form_data.forEach((pageDef, pageIndex) => {
-        const stepKey = `step_${pageIndex + 1}`;
-        const stepData = formDataObject[stepKey];
+    Object.values(submissionData).forEach((stepData: any) => {
+        if (typeof stepData !== 'object' || stepData === null) return;
+        Object.entries(stepData).forEach(([key, value]) => {
+            if (key === 'images' || key === 'docs') {
+                 const qType = key === 'images' ? 'image-upload' : 'file';
+                 const fileQuestion = Array.from(questionMap.values()).find(q => q.type === qType);
+                 if (fileQuestion?.apiId) {
+                    answersByApiId[fileQuestion.apiId] = value;
+                 }
+            } else {
+                answersByApiId[key] = value;
+            }
+        });
+    });
 
-        if (!stepData) return;
-
-        const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
-
-        pageDef.sections.forEach(sectionDef => {
-            const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
+    const pagesWithAnswers: RenderablePage[] = request.form_data.map(pageDef => {
+        const sectionsWithAnswers: RenderableSection[] = pageDef.sections.map(sectionDef => {
+            const answersInSection: { question: Question; answer: any }[] = [];
             
             sectionDef.questions.forEach(questionDef => {
-                let answer = undefined;
-                let found = false;
-
-                // Handle regular fields by apiId
-                if (questionDef.apiId && stepData.hasOwnProperty(questionDef.apiId)) {
-                    answer = stepData[questionDef.apiId];
-                    found = true;
-                }
-                
-                // Handle file/image fields which might have special keys
-                if (!found) {
-                    if ((questionDef.type === 'file' || questionDef.type === 'image-upload')) {
-                        const fileKey = questionDef.type === 'image-upload' ? 'images' : 'docs';
-                        if (stepData.hasOwnProperty(fileKey)) {
-                            answer = stepData[fileKey];
-                            found = true;
-                        }
-                    }
-                }
-
-                if (found) {
-                     renderableSection.answers.push({
+                if (questionDef.apiId && answersByApiId.hasOwnProperty(questionDef.apiId)) {
+                    answersInSection.push({
                         question: questionDef,
-                        answer: answer,
+                        answer: answersByApiId[questionDef.apiId],
                     });
                 }
             });
+            
+            return {
+                title: sectionDef.title,
+                answers: answersInSection,
+            };
+        }).filter(section => section.answers.length > 0);
 
-            if (renderableSection.answers.length > 0) {
-                renderablePage.sections.push(renderableSection);
-            }
-        });
-
-        if (renderablePage.sections.length > 0) {
-            pagesWithAnswers.push(renderablePage);
-        }
-    });
+        return {
+            title: pageDef.title,
+            sections: sectionsWithAnswers,
+        };
+    }).filter(page => page.sections.length > 0);
 
     return pagesWithAnswers;
 
