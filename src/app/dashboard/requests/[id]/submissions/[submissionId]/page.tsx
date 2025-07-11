@@ -158,17 +158,16 @@ export default function SubmissionDetailPage() {
         const stepContainer = submission.form_data[stepKey];
         if (!stepContainer) return null;
         
-        // Handle the extra nesting: step_1: { step_1: { ... } }
         const pageData = stepContainer[stepKey] || stepContainer;
 
-        if (!pageData || !pageData.page_title || !Array.isArray(pageData.sections)) {
+        if (!pageData || typeof pageData !== 'object' || !pageData.page_title || !Array.isArray(pageData.sections)) {
             return null;
         }
 
         const renderablePage: RenderablePage = {
             title: pageData.page_title,
             sections: pageData.sections.map((section: any) => {
-                if (!section || !section.section_title || !section.questions) {
+                if (!section || !section.section_title || typeof section.questions !== 'object') {
                     return null;
                 }
                 const renderableSection: RenderableSection = {
