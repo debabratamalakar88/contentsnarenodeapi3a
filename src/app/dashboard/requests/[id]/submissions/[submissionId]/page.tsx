@@ -22,6 +22,8 @@ const renderAnswer = (question: Question, answer: any) => {
     if (answer === null || answer === undefined || answer === '') {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
+    
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     switch (question.type) {
         case 'date':
@@ -70,14 +72,18 @@ const renderAnswer = (question: Question, answer: any) => {
 
         case 'file':
         case 'image-upload':
-            const files = Array.isArray(answer) ? answer : [answer];
+            const files = Array.isArray(answer) ? answer : [];
+            if (files.length === 0) return <p className="text-muted-foreground italic">No files uploaded.</p>;
             return (
                 <div className="space-y-2">
-                    {files.map((fileUrl, index) => (
-                        <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all block">
-                            {fileUrl.split('/').pop()}
-                        </a>
-                    ))}
+                    {files.map((file, index) => {
+                         const fileUrl = file.url ? `${API_BASE_URL}${file.url}` : '#';
+                         return (
+                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all block">
+                                {file.filename || 'Download File'}
+                            </a>
+                         )
+                    })}
                 </div>
             )
         case 'url':
@@ -152,18 +158,20 @@ export default function SubmissionDetailPage() {
 
  const processedData = useMemo(() => {
     if (!submission || !request || !submission.form_data) return [];
-
+    
     const questionMap = new Map<string, Question>();
+    const sectionMap = new Map<string, { section: Section, page: Page }>();
     request.form_data.forEach(page => {
         page.sections.forEach(section => {
             section.questions.forEach(question => {
                 if (question.apiId) {
                     questionMap.set(question.apiId, question);
+                    sectionMap.set(question.apiId, { section, page });
                 }
             });
         });
     });
-    
+
     let formDataObject = submission.form_data;
     if (typeof formDataObject === 'string') {
         try {
@@ -178,60 +186,41 @@ export default function SubmissionDetailPage() {
       return [];
     }
     
-    const pages: RenderablePage[] = [];
+    const pages: Map<number, RenderablePage> = new Map();
 
-    // Iterate through the keys of the submission data object (e.g., 'step_1', 'step_2')
     for (const stepKey in formDataObject) {
       if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
-        let stepData = formDataObject[stepKey];
+        const stepData = formDataObject[stepKey];
+        if (!stepData || typeof stepData !== 'object') continue;
 
-        // Handle cases where the data might be nested one level deeper with the same key
-        if (typeof stepData === 'object' && stepData !== null && stepKey in stepData) {
-          stepData = stepData[stepKey];
-        }
+        for (const apiId in stepData) {
+           if (Object.prototype.hasOwnProperty.call(stepData, apiId)) {
+                const answer = stepData[apiId];
+                const mapping = sectionMap.get(apiId);
+                
+                if (mapping) {
+                    const { section, page } = mapping;
+                    const question = questionMap.get(apiId)!;
 
-        if (!stepData || typeof stepData !== 'object' || !stepData.page_title || !Array.isArray(stepData.sections)) {
-          continue; // Skip this step if it doesn't have the expected structure
-        }
+                    if (!pages.has(page.id)) {
+                        pages.set(page.id, { title: page.title, sections: [] });
+                    }
+                    const renderablePage = pages.get(page.id)!;
 
-        const renderablePage: RenderablePage = {
-          title: stepData.page_title,
-          sections: [],
-        };
+                    let renderableSection = renderablePage.sections.find(s => s.title === section.title);
+                    if (!renderableSection) {
+                        renderableSection = { title: section.title, answers: [] };
+                        renderablePage.sections.push(renderableSection);
+                    }
 
-        stepData.sections.forEach((section: any) => {
-          if (!section || !section.section_title || typeof section.questions !== 'object') {
-            return;
-          }
-
-          const renderableSection: RenderableSection = {
-            title: section.section_title,
-            answers: [],
-          };
-
-          for (const apiId in section.questions) {
-            if (Object.prototype.hasOwnProperty.call(section.questions, apiId)) {
-              const question = questionMap.get(apiId);
-              const answer = section.questions[apiId];
-              
-              if (question) {
-                renderableSection.answers.push({ question, answer });
-              }
-            }
-          }
-          
-          if (renderableSection.answers.length > 0) {
-            renderablePage.sections.push(renderableSection);
-          }
-        });
-
-        if (renderablePage.sections.length > 0) {
-          pages.push(renderablePage);
+                    renderableSection.answers.push({ question, answer });
+                }
+           }
         }
       }
     }
-    return pages;
 
+    return Array.from(pages.values());
   }, [submission, request]);
 
 
