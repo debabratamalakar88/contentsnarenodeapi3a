@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -88,7 +89,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} layout="fill" objectFit="cover" className="group-hover:opacity-75 transition-opacity" />
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} fill objectFit="cover" className="group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -194,51 +195,61 @@ export default function SubmissionDetailPage() {
     }
   
     const questionMap = new Map<string, Question>();
-    request.form_data.forEach(page => {
-      page.sections.forEach(section => {
-        section.questions.forEach(question => {
-          if (question.apiId) {
-            questionMap.set(question.apiId, question);
+    request.form_data.forEach(pageDef => {
+      pageDef.sections.forEach(sectionDef => {
+        sectionDef.questions.forEach(questionDef => {
+          if (questionDef.apiId) {
+            questionMap.set(questionDef.apiId, questionDef);
           }
         });
       });
     });
   
-    const pages: RenderablePage[] = request.form_data.map(pageDef => {
+    const pages: RenderablePage[] = [];
+  
+    for (const stepKey in formDataObject) {
+      if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
+        const stepData = formDataObject[stepKey];
+        const pageDef = request.form_data[parseInt(stepKey.split('_')[1]) - 1];
+  
+        if (!pageDef) continue;
+  
         const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
-        
+  
         pageDef.sections.forEach(sectionDef => {
-            const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
-            sectionDef.questions.forEach(questionDef => {
-                // Find if this question has an answer in ANY step of the submission
-                let foundAnswer: any = undefined;
-                let answerFound = false;
-
-                for (const stepKey in formDataObject) {
-                    if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
-                        const stepData = formDataObject[stepKey];
-                        if (typeof stepData === 'object' && stepData !== null && questionDef.apiId && Object.prototype.hasOwnProperty.call(stepData, questionDef.apiId)) {
-                            foundAnswer = stepData[questionDef.apiId];
-                            answerFound = true;
-                            break;
-                        }
-                    }
-                }
-                 if(answerFound) {
-                    renderableSection.answers.push({ question: questionDef, answer: foundAnswer });
-                }
-            });
-
-             if (renderableSection.answers.length > 0) {
-                renderablePage.sections.push(renderableSection);
+          const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
+  
+          for (const answerKey in stepData) {
+            if (Object.prototype.hasOwnProperty.call(stepData, answerKey)) {
+              const questionDef = questionMap.get(answerKey);
+              if (questionDef && sectionDef.questions.some(q => q.apiId === answerKey)) {
+                renderableSection.answers.push({
+                  question: questionDef,
+                  answer: stepData[answerKey],
+                });
+              } else {
+                 // Handle files that are not mapped directly via apiId, but by a generic key
+                 const fileQuestion = sectionDef.questions.find(q => q.type === 'file' && answerKey === 'docs') || sectionDef.questions.find(q => q.type === 'image-upload' && answerKey === 'images');
+                 if(fileQuestion) {
+                    renderableSection.answers.push({
+                      question: fileQuestion,
+                      answer: stepData[answerKey],
+                    });
+                 }
+              }
             }
+          }
+          if (renderableSection.answers.length > 0) {
+            renderablePage.sections.push(renderableSection);
+          }
         });
-
-        return renderablePage;
-    }).filter(p => p.sections.some(s => s.answers.length > 0));
-
+  
+        if (renderablePage.sections.length > 0) {
+          pages.push(renderablePage);
+        }
+      }
+    }
     return pages;
-
   }, [submission, request]);
 
 
@@ -308,7 +319,7 @@ export default function SubmissionDetailPage() {
                         variant={'outline'}
                         className={cn(
                             "capitalize h-fit text-base px-4 py-1",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
                         )}
                     >
                         {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
@@ -355,3 +366,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
