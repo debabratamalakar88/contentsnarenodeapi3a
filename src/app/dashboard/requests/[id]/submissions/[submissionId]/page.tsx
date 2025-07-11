@@ -57,7 +57,7 @@ export default function SubmissionDetailPage() {
   const params = useParams();
   const { toast } = useToast();
 
-  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [submission, setSubmission] = useState<{form_data: any, status: string} | null>(null);
   const [request, setRequest] = useState<RequestType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -109,7 +109,6 @@ export default function SubmissionDetailPage() {
 
     const submittedPages: RenderablePage[] = [];
 
-    // The form_data is an object with keys like "step_1", "step_2"
     Object.keys(submission.form_data).sort().forEach(stepKey => {
         const pageData = submission.form_data[stepKey];
 
@@ -192,7 +191,7 @@ export default function SubmissionDetailPage() {
         <CardHeader>
           <CardTitle>Viewing Submission for "{request.title}"</CardTitle>
           <CardDescription>
-            Submitted by client ID {submission.client_id} on {submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}.
+            Status: <span className="capitalize font-medium">{submission.status || 'Unknown'}</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -203,7 +202,7 @@ export default function SubmissionDetailPage() {
                   <CardTitle className="text-xl">{page.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {page.sections.map((section, sectionIndex) => (
+                  {page.sections && Array.isArray(page.sections) && page.sections.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
                       <h4 className="font-semibold text-lg">{section.title}</h4>
                       <div className="mt-2 pl-4 border-l-2 space-y-4">
