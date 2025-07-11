@@ -7,10 +7,14 @@ import { getSingleSubmissionForRequest, getRequest, type Submission, type Reques
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
 
 const renderAnswer = (answer: any) => {
   if (answer === null || answer === undefined || answer === '') {
@@ -21,7 +25,7 @@ const renderAnswer = (answer: any) => {
        return <p className="text-muted-foreground italic">No selection made.</p>;
     }
     return (
-      <ul className="list-disc list-inside">
+      <ul className="list-disc list-inside space-y-1">
         {answer.map((item, index) => (
           <li key={index}>{String(item)}</li>
         ))}
@@ -32,7 +36,7 @@ const renderAnswer = (answer: any) => {
       return <p>{format(parseISO(answer.start), 'PPP')} to {format(parseISO(answer.end), 'PPP')}</p>;
   }
   if (typeof answer === 'object') {
-    return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs">{JSON.stringify(answer, null, 2)}</pre>;
+    return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs font-mono">{JSON.stringify(answer, null, 2)}</pre>;
   }
   if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
       return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
@@ -107,61 +111,49 @@ export default function SubmissionDetailPage() {
         });
     });
 
-    const submittedPages: RenderablePage[] = [];
-    
-    Object.keys(submission.form_data).sort().forEach(stepKey => {
+    return Object.keys(submission.form_data).sort().map(stepKey => {
         const stepContainer = submission.form_data[stepKey];
-        // Handle the double nesting, e.g., step_1: { step_1: { ... } }
+        // Handle potential double nesting e.g., step_1: { step_1: { ... } }
         const pageData = stepContainer[stepKey] || stepContainer;
 
-        if (pageData && pageData.page_title && Array.isArray(pageData.sections)) {
-            const renderablePage: RenderablePage = {
-                title: pageData.page_title,
-                sections: []
-            };
-
-            pageData.sections.forEach((section: any) => {
-                if (section && section.section_title && section.questions) {
-                    const renderableSection: RenderableSection = {
-                        title: section.section_title,
-                        answers: []
-                    };
-                    Object.entries(section.questions).forEach(([apiId, answer]) => {
-                        renderableSection.answers.push({
-                            label: questionLabelMap.get(apiId) || apiId,
-                            answer: answer
-                        });
-                    });
-                    if(renderableSection.answers.length > 0) {
-                      renderablePage.sections.push(renderableSection);
-                    }
-                }
-            });
-            if(renderablePage.sections.length > 0){
-              submittedPages.push(renderablePage);
-            }
+        if (!pageData || !pageData.page_title || !Array.isArray(pageData.sections)) {
+            return null;
         }
-    });
-    
-    return submittedPages;
+
+        const renderablePage: RenderablePage = {
+            title: pageData.page_title,
+            sections: pageData.sections.map((section: any) => {
+                if (!section || !section.section_title || !section.questions) {
+                    return null;
+                }
+                const renderableSection: RenderableSection = {
+                    title: section.section_title,
+                    answers: Object.entries(section.questions).map(([apiId, answer]) => ({
+                        label: questionLabelMap.get(apiId) || apiId,
+                        answer: answer
+                    })).filter(a => a.answer !== undefined)
+                };
+                return renderableSection.answers.length > 0 ? renderableSection : null;
+            }).filter((s): s is RenderableSection => s !== null)
+        };
+        return renderablePage.sections.length > 0 ? renderablePage : null;
+    }).filter((p): p is RenderablePage => p !== null);
   }, [submission, request]);
 
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <Skeleton className="h-10 w-48 mb-4" />
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/2 mb-2" />
-            <Skeleton className="h-4 w-1/3" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-16 w-full" />
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-10 w-64" />
+        <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-48 w-full" />
+        </div>
+         <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
             <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </CardContent>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -181,58 +173,61 @@ export default function SubmissionDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <Button variant="outline" asChild className="mb-4">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+       <Button variant="outline" asChild className="mb-4">
         <Link href={`/dashboard/requests/${requestId}`}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Request
         </Link>
       </Button>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Submission for "{request.title}"</h1>
+         <div className="flex items-center gap-2">
+            <Badge
+                variant={submission.status === 'completed' ? 'default' : 'secondary'}
+                className={cn(
+                    submission.status === 'completed' && "bg-green-100 text-green-800 border-green-200",
+                    "capitalize"
+                )}
+            >
+                {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                {submission.status}
+            </Badge>
+         </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Viewing Submission for "{request.title}"</CardTitle>
-          <CardDescription>
-            Status: <span className="capitalize font-medium">{submission.status || 'Unknown'}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {processedData.length > 0 ? (
-            processedData.map((page, pageIndex) => (
-              <Card key={pageIndex} className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-xl">{page.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {page.sections && Array.isArray(page.sections) ? page.sections.map((section, sectionIndex) => (
-                    <div key={sectionIndex}>
-                      <h4 className="font-semibold text-lg">{section.title}</h4>
-                      <div className="mt-2 pl-4 border-l-2 space-y-4">
-                        {section.answers.length > 0 ? (
-                          section.answers.map((item, itemIndex) => (
-                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 border-b border-border/50 last:border-b-0">
-                              <dt className="font-medium text-sm md:col-span-1">{item.label}</dt>
-                              <dd className="text-sm text-foreground md:col-span-2">{renderAnswer(item.answer)}</dd>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-muted-foreground text-sm italic">No questions answered in this section.</p>
-                        )}
-                      </div>
-                    </div>
-                  )) : (
-                     <p className="text-muted-foreground text-sm italic">No sections found for this page.</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-             <div className="text-center py-10 text-muted-foreground">
-                <p>No submission data found to display.</p>
+       {processedData.length > 0 ? (
+            <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
+            {processedData.map((page, pageIndex) => (
+                <AccordionItem key={pageIndex} value={page.title}>
+                    <AccordionTrigger className="text-xl font-semibold hover:no-underline">{page.title}</AccordionTrigger>
+                    <AccordionContent className="pt-4 px-2">
+                         <div className="space-y-6">
+                            {page.sections.map((section, sectionIndex) => (
+                                <div key={sectionIndex}>
+                                <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
+                                <dl className="space-y-6">
+                                    {section.answers.map((item, itemIndex) => (
+                                    <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                        <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.label}</dt>
+                                        <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.answer)}</dd>
+                                    </div>
+                                    ))}
+                                </dl>
+                                </div>
+                            ))}
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
+            </Accordion>
+        ) : (
+            <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
+                <FileText className="mx-auto h-12 w-12 mb-4" />
+                <h3 className="text-xl font-semibold">No submission data found to display.</h3>
+                <p className="text-sm">It seems this submission is empty.</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
     </div>
   );
 }
