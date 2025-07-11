@@ -558,7 +558,8 @@ export default function ViewRequestPage() {
 
                 setRequest(requestData);
                 setClients(clientsData || []);
-                setSubmissions(submissionsData || []);
+                const sortedSubmissions = (submissionsData || []).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+                setSubmissions(sortedSubmissions);
             } catch (err: any) {
                 const message = err.message || 'Failed to load request data.';
                 setError(message);
@@ -699,7 +700,7 @@ export default function ViewRequestPage() {
                                                               variant={'outline'}
                                                               className={cn(
                                                                   "capitalize",
-                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
                                                               )}
                                                           >
                                                               {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
@@ -707,7 +708,7 @@ export default function ViewRequestPage() {
                                                           </Badge>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Button variant="default" size="sm" asChild>
+                                                            <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
                                                                 <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
                                                             </Button>
                                                         </TableCell>
