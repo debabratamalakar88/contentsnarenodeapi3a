@@ -205,7 +205,7 @@ export default function SharedRequestPage() {
                     setSubmissionCode(storedSubmissionCode);
                     try {
                         const submissionData = await getSubmission(storedSubmissionCode);
-                        if (submissionData.form_data) {
+                         if (submissionData.form_data) {
                             let parsedData = {};
                             try {
                                 if (typeof submissionData.form_data === 'string') {
@@ -213,9 +213,18 @@ export default function SharedRequestPage() {
                                 } else {
                                     parsedData = submissionData.form_data;
                                 }
+
+                                const flattenedData = Object.values(parsedData).reduce((acc: any, pageData: any) => {
+                                    pageData.sections.forEach((section: any) => {
+                                        Object.assign(acc, section.questions);
+                                    });
+                                    return acc;
+                                }, {});
+                                setAllAnswers(flattenedData || {});
+                                
                             } catch (e) { console.error("Could not parse saved form data", e); }
-                            setAllAnswers(parsedData || {});
                         }
+
                         if (submissionData.status === 'completed') {
                             setIsComplete(true);
                         }
