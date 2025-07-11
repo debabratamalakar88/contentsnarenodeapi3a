@@ -164,40 +164,74 @@ export default function SubmissionDetailPage() {
         });
     });
     
-    const formDataObject = typeof submission.form_data === 'string' 
-        ? JSON.parse(submission.form_data) 
-        : submission.form_data;
+    let formDataObject = submission.form_data;
+    if (typeof formDataObject === 'string') {
+        try {
+            formDataObject = JSON.parse(formDataObject);
+        } catch (e) {
+            console.error("Failed to parse form_data JSON string:", e);
+            return [];
+        }
+    }
+    
+    if (typeof formDataObject !== 'object' || formDataObject === null) {
+      return [];
+    }
+    
+    const pages: RenderablePage[] = [];
 
-    return Object.keys(formDataObject).sort().map(stepKey => {
-        let stepContainer = formDataObject[stepKey];
-        
-        // Handle the extra nesting e.g., "step_1": { "step_1": { ... } }
-        if (stepContainer && typeof stepContainer === 'object' && stepKey in stepContainer) {
-            stepContainer = stepContainer[stepKey];
+    // Iterate through the keys of the submission data object (e.g., 'step_1', 'step_2')
+    for (const stepKey in formDataObject) {
+      if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
+        let stepData = formDataObject[stepKey];
+
+        // Handle cases where the data might be nested one level deeper with the same key
+        if (typeof stepData === 'object' && stepData !== null && stepKey in stepData) {
+          stepData = stepData[stepKey];
         }
 
-        if (!stepContainer || typeof stepContainer !== 'object' || !stepContainer.page_title || !Array.isArray(stepContainer.sections)) {
-            return null;
+        if (!stepData || typeof stepData !== 'object' || !stepData.page_title || !Array.isArray(stepData.sections)) {
+          continue; // Skip this step if it doesn't have the expected structure
         }
 
         const renderablePage: RenderablePage = {
-            title: stepContainer.page_title,
-            sections: stepContainer.sections.map((section: any) => {
-                if (!section || !section.section_title || typeof section.questions !== 'object') {
-                    return null;
-                }
-                const renderableSection: RenderableSection = {
-                    title: section.section_title,
-                    answers: Object.entries(section.questions).map(([apiId, answer]) => {
-                        const question = questionMap.get(apiId);
-                        return question ? { question, answer } : null;
-                    }).filter((a): a is { question: Question; answer: any } => a !== null && a.answer !== undefined)
-                };
-                return renderableSection.answers.length > 0 ? renderableSection : null;
-            }).filter((s): s is RenderableSection => s !== null)
+          title: stepData.page_title,
+          sections: [],
         };
-        return renderablePage.sections.length > 0 ? renderablePage : null;
-    }).filter((p): p is RenderablePage => p !== null);
+
+        stepData.sections.forEach((section: any) => {
+          if (!section || !section.section_title || typeof section.questions !== 'object') {
+            return;
+          }
+
+          const renderableSection: RenderableSection = {
+            title: section.section_title,
+            answers: [],
+          };
+
+          for (const apiId in section.questions) {
+            if (Object.prototype.hasOwnProperty.call(section.questions, apiId)) {
+              const question = questionMap.get(apiId);
+              const answer = section.questions[apiId];
+              
+              if (question) {
+                renderableSection.answers.push({ question, answer });
+              }
+            }
+          }
+          
+          if (renderableSection.answers.length > 0) {
+            renderablePage.sections.push(renderableSection);
+          }
+        });
+
+        if (renderablePage.sections.length > 0) {
+          pages.push(renderablePage);
+        }
+      }
+    }
+    return pages;
+
   }, [submission, request]);
 
 
@@ -266,8 +300,8 @@ export default function SubmissionDetailPage() {
                     <Badge
                         variant={'outline'}
                         className={cn(
-                            "capitalize h-fit text-base px-4 py-1 hover:bg-green-100",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                            "capitalize h-fit text-base px-4 py-1",
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
                         )}
                     >
                         {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
