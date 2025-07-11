@@ -40,7 +40,6 @@ const renderQuestionInput = (
         case 'textarea':
             return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'file':
-            // File inputs are uncontrolled, so we don't set a value
             return <Input id={questionId} name={questionName} type="file" required={question.required} className={inputClassName} />;
         case 'checkbox':
             return (
@@ -101,7 +100,7 @@ const renderQuestionInput = (
         case 'number':
              return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
-             return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+             return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value?.amount || ''} onChange={e => onChange(questionName, { ...value, amount: e.target.value})} required={question.required} className={inputClassName} />;
         case 'country':
             return (
                 <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
@@ -118,7 +117,7 @@ const renderQuestionInput = (
                 </div>
              );
         case 'icon-selector':
-            return <IconSelector name={questionName} defaultValue={value} />;
+            return <IconSelector name={questionName} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
         case 'color-picker':
             return (
                 <div className="flex items-center gap-2">
@@ -301,16 +300,23 @@ export default function SharedRequestPage() {
     };
 
     const getStructuredFormData = (page: Page) => {
-        const structuredData: any = {};
-        page.sections.forEach(section => {
+        const pageData: any = {
+            page_title: page.title,
+            sections: page.sections.map(section => ({
+                section_title: section.title,
+                questions: {}
+            }))
+        };
+
+        page.sections.forEach((section, sectionIndex) => {
             section.questions.forEach(question => {
                 const fieldName = question.apiId || `q-${question.id}`;
                 if (allAnswers[fieldName] !== undefined) {
-                    structuredData[fieldName] = allAnswers[fieldName];
+                    pageData.sections[sectionIndex].questions[fieldName] = allAnswers[fieldName];
                 }
             });
         });
-        return structuredData;
+        return pageData;
     };
     
     const handleStepChange = async (newIndex: number) => {
@@ -322,12 +328,12 @@ export default function SharedRequestPage() {
 
         try {
             if (!submissionCode) {
-                 const response = await startSubmission(requestCode, currentData);
+                 const response = await startSubmission(requestCode, { [`step_${activePageIndex + 1}`]: currentData });
                  setSubmissionCode(response.submission_code);
                  localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
             } else {
-                 await saveStep(submissionCode, activePageIndex + 1, currentData);
+                 await saveStep(submissionCode, activePageIndex + 1, { [`step_${activePageIndex + 1}`]: currentData });
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
             }
              setValidationErrors({});
@@ -350,12 +356,12 @@ export default function SharedRequestPage() {
         try {
             let currentSubmissionCode = submissionCode;
             if (!currentSubmissionCode) {
-                 const response = await startSubmission(requestCode, currentData);
+                 const response = await startSubmission(requestCode, { [`step_${activePageIndex + 1}`]: currentData });
                  currentSubmissionCode = response.submission_code;
                  setSubmissionCode(currentSubmissionCode);
                  localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             } else {
-                await saveStep(currentSubmissionCode, activePageIndex + 1, currentData);
+                await saveStep(currentSubmissionCode, activePageIndex + 1, { [`step_${activePageIndex + 1}`]: currentData });
             }
 
             await submitRequest(currentSubmissionCode, {});

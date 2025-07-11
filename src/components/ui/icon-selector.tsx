@@ -71,11 +71,25 @@ export const iconList: { name: string; icon: LucideIcon }[] = [
 interface IconSelectorProps {
   name?: string
   defaultValue?: string
+  onValueChange?: (value: string) => void;
 }
 
-export function IconSelector({ name, defaultValue }: IconSelectorProps) {
+export function IconSelector({ name, defaultValue, onValueChange }: IconSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState(defaultValue || '')
+  
+  React.useEffect(() => {
+    if (defaultValue !== value) {
+        setValue(defaultValue || '');
+    }
+  }, [defaultValue]);
+
+  const handleSelect = (currentValue: string) => {
+    const newValue = currentValue.toLowerCase() === value.toLowerCase() ? '' : currentValue;
+    setValue(newValue);
+    onValueChange?.(newValue);
+    setOpen(false);
+  }
 
   const SelectedIcon = React.useMemo(() => {
     const found = iconList.find((item) => item.name.toLowerCase() === value.toLowerCase())
@@ -102,10 +116,7 @@ export function IconSelector({ name, defaultValue }: IconSelectorProps) {
                   <CommandItem
                     key={iconName}
                     value={iconName}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue.toLowerCase() === value.toLowerCase() ? '' : currentValue)
-                      setOpen(false)
-                    }}
+                    onSelect={handleSelect}
                     className="flex items-center justify-center p-2 h-12 w-12 rounded-md cursor-pointer"
                   >
                     <IconComponent className="h-5 w-5" />

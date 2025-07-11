@@ -28,7 +28,9 @@ function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {a
     const [address, setAddress] = useState(defaultValue || '');
 
     useEffect(() => {
-        setAddress(defaultValue || '')
+        if (defaultValue !== address) {
+            setAddress(defaultValue || '')
+        }
     }, [defaultValue])
 
     const onLoad = (ac: google.maps.places.Autocomplete) => {
