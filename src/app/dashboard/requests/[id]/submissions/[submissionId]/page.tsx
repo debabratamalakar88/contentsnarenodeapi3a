@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -17,7 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
-import Image from 'next/image';
 
 const isImageFile = (filename: string) => {
     if (!filename) return false;
@@ -88,8 +86,8 @@ const renderAnswer = (question: Question, answer: any) => {
                          if (question.type === 'image-upload' && isImageFile(file.filename)) {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
-                                   <div className="relative aspect-square">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} fill objectFit="cover" className="group-hover:opacity-75 transition-opacity" />
+                                   <div className="relative aspect-square bg-muted">
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -176,79 +174,71 @@ export default function SubmissionDetailPage() {
 
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
-
+  
   const processedData = useMemo(() => {
     if (!submission || !request) return [];
-  
+
     let formDataObject = submission.form_data;
     if (typeof formDataObject === 'string') {
-      try {
-        formDataObject = JSON.parse(formDataObject);
-      } catch (e) {
-        console.error("Failed to parse form_data JSON string:", e);
-        return [];
-      }
+        try {
+            formDataObject = JSON.parse(formDataObject);
+        } catch (e) {
+            console.error("Failed to parse form_data JSON string:", e);
+            return [];
+        }
     }
-  
+
     if (typeof formDataObject !== 'object' || formDataObject === null) {
-      return [];
+        return [];
     }
-  
+
     const questionMap = new Map<string, Question>();
     request.form_data.forEach(pageDef => {
-      pageDef.sections.forEach(sectionDef => {
-        sectionDef.questions.forEach(questionDef => {
-          if (questionDef.apiId) {
-            questionMap.set(questionDef.apiId, questionDef);
-          }
-        });
-      });
-    });
-  
-    const pages: RenderablePage[] = [];
-  
-    for (const stepKey in formDataObject) {
-      if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
-        const stepData = formDataObject[stepKey];
-        const pageDef = request.form_data[parseInt(stepKey.split('_')[1]) - 1];
-  
-        if (!pageDef) continue;
-  
-        const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
-  
         pageDef.sections.forEach(sectionDef => {
-          const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
-  
-          for (const answerKey in stepData) {
-            if (Object.prototype.hasOwnProperty.call(stepData, answerKey)) {
-              const questionDef = questionMap.get(answerKey);
-              if (questionDef && sectionDef.questions.some(q => q.apiId === answerKey)) {
-                renderableSection.answers.push({
-                  question: questionDef,
-                  answer: stepData[answerKey],
-                });
-              } else {
-                 // Handle files that are not mapped directly via apiId, but by a generic key
-                 const fileQuestion = sectionDef.questions.find(q => q.type === 'file' && answerKey === 'docs') || sectionDef.questions.find(q => q.type === 'image-upload' && answerKey === 'images');
-                 if(fileQuestion) {
-                    renderableSection.answers.push({
-                      question: fileQuestion,
-                      answer: stepData[answerKey],
-                    });
-                 }
-              }
-            }
-          }
-          if (renderableSection.answers.length > 0) {
-            renderablePage.sections.push(renderableSection);
-          }
+            sectionDef.questions.forEach(questionDef => {
+                if (questionDef.apiId) {
+                    questionMap.set(questionDef.apiId, questionDef);
+                } else if (questionDef.type === 'file' || questionDef.type === 'image-upload') {
+                   // Fallback for file uploads that might use a generic key
+                   questionMap.set(questionDef.type === 'image-upload' ? 'images' : 'docs', questionDef);
+                }
+            });
         });
-  
+    });
+
+    const pages: RenderablePage[] = [];
+
+    Object.keys(formDataObject).forEach((stepKey, index) => {
+        const stepData = formDataObject[stepKey];
+        const pageDef = request.form_data[index];
+
+        if (!pageDef || typeof stepData !== 'object' || stepData === null) return;
+        
+        const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
+
+        pageDef.sections.forEach(sectionDef => {
+            const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
+            
+            Object.keys(stepData).forEach(answerKey => {
+                const questionDef = questionMap.get(answerKey);
+                if (questionDef && sectionDef.questions.some(q => q.apiId === answerKey || (q.type === 'image-upload' && answerKey === 'images') || (q.type === 'file' && answerKey === 'docs') )) {
+                    renderableSection.answers.push({
+                        question: questionDef,
+                        answer: stepData[answerKey],
+                    });
+                }
+            });
+
+            if (renderableSection.answers.length > 0) {
+                renderablePage.sections.push(renderableSection);
+            }
+        });
+
         if (renderablePage.sections.length > 0) {
-          pages.push(renderablePage);
+            pages.push(renderablePage);
         }
-      }
-    }
+    });
+
     return pages;
   }, [submission, request]);
 
@@ -366,4 +356,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
