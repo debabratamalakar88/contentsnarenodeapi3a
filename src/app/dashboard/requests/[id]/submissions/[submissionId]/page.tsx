@@ -16,14 +16,20 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
+import Image from 'next/image';
 
+const isImageFile = (filename: string) => {
+    if (!filename) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+};
 
 const renderAnswer = (question: Question, answer: any) => {
     if (answer === null || answer === undefined || answer === '') {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
 
     switch (question.type) {
         case 'date':
@@ -75,12 +81,27 @@ const renderAnswer = (question: Question, answer: any) => {
             const files = Array.isArray(answer) ? answer : [];
             if (files.length === 0) return <p className="text-muted-foreground italic">No files uploaded.</p>;
             return (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {files.map((file, index) => {
                          const fileUrl = file.url ? `${API_ASSETS_BASE_URL}${file.url}` : '#';
+                         if (question.type === 'image-upload' && isImageFile(file.filename)) {
+                            return (
+                                <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
+                                   <div className="relative aspect-square">
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} layout="fill" objectFit="cover" className="group-hover:opacity-75 transition-opacity" />
+                                   </div>
+                                    <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
+                                        {file.filename || 'View Image'}
+                                    </div>
+                                </a>
+                            )
+                         }
                          return (
-                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all block">
-                                {file.filename || 'Download File'}
+                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted">
+                                <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                <span className="text-primary hover:underline break-all block text-sm truncate" title={file.filename}>
+                                    {file.filename || 'Download File'}
+                                </span>
                             </a>
                          )
                     })}
@@ -93,7 +114,6 @@ const renderAnswer = (question: Question, answer: any) => {
             break;
     }
     
-    // Default rendering for other types
     if (Array.isArray(answer)) {
         return <p>{answer.join(', ')}</p>;
     }
@@ -156,9 +176,23 @@ export default function SubmissionDetailPage() {
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
 
- const processedData = useMemo(() => {
-    if (!submission || !request || !submission.form_data) return [];
-
+  const processedData = useMemo(() => {
+    if (!submission || !request) return [];
+  
+    let formDataObject = submission.form_data;
+    if (typeof formDataObject === 'string') {
+      try {
+        formDataObject = JSON.parse(formDataObject);
+      } catch (e) {
+        console.error("Failed to parse form_data JSON string:", e);
+        return [];
+      }
+    }
+  
+    if (typeof formDataObject !== 'object' || formDataObject === null) {
+      return [];
+    }
+  
     const questionMap = new Map<string, Question>();
     request.form_data.forEach(page => {
       page.sections.forEach(section => {
@@ -169,59 +203,41 @@ export default function SubmissionDetailPage() {
         });
       });
     });
-
-    let formDataObject = submission.form_data;
-    if (typeof formDataObject === 'string') {
-      try {
-        formDataObject = JSON.parse(formDataObject);
-      } catch (e) {
-        console.error("Failed to parse form_data JSON string:", e);
-        return [];
-      }
-    }
-
-    if (typeof formDataObject !== 'object' || formDataObject === null) {
-      return [];
-    }
-    
-    const pages: RenderablePage[] = [];
-    const pageMap: Map<string, RenderablePage> = new Map();
-
-    request.form_data.forEach((pageDef) => {
-      const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
-      pageMap.set(pageDef.title, renderablePage);
-      pages.push(renderablePage);
-
-      pageDef.sections.forEach(sectionDef => {
-        const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
-        renderablePage.sections.push(renderableSection);
-      });
-    });
-
-    Object.values(formDataObject).forEach(stepData => {
-        if (typeof stepData !== 'object' || stepData === null) return;
+  
+    const pages: RenderablePage[] = request.form_data.map(pageDef => {
+        const renderablePage: RenderablePage = { title: pageDef.title, sections: [] };
         
-        Object.entries(stepData).forEach(([apiId, answer]) => {
-            const question = questionMap.get(apiId);
-            if (!question) return;
+        pageDef.sections.forEach(sectionDef => {
+            const renderableSection: RenderableSection = { title: sectionDef.title, answers: [] };
+            sectionDef.questions.forEach(questionDef => {
+                // Find if this question has an answer in ANY step of the submission
+                let foundAnswer: any = undefined;
+                let answerFound = false;
 
-            const pageDef = request.form_data.find(p => p.sections.some(s => s.questions.some(q => q.apiId === apiId)));
-            if (!pageDef) return;
-            
-            const sectionDef = pageDef.sections.find(s => s.questions.some(q => q.apiId === apiId));
-            if (!sectionDef) return;
+                for (const stepKey in formDataObject) {
+                    if (Object.prototype.hasOwnProperty.call(formDataObject, stepKey)) {
+                        const stepData = formDataObject[stepKey];
+                        if (typeof stepData === 'object' && stepData !== null && questionDef.apiId && Object.prototype.hasOwnProperty.call(stepData, questionDef.apiId)) {
+                            foundAnswer = stepData[questionDef.apiId];
+                            answerFound = true;
+                            break;
+                        }
+                    }
+                }
+                 if(answerFound) {
+                    renderableSection.answers.push({ question: questionDef, answer: foundAnswer });
+                }
+            });
 
-            const renderablePage = pageMap.get(pageDef.title);
-            if (!renderablePage) return;
-
-            const renderableSection = renderablePage.sections.find(s => s.title === sectionDef.title);
-            if (renderableSection) {
-                 renderableSection.answers.push({ question, answer });
+             if (renderableSection.answers.length > 0) {
+                renderablePage.sections.push(renderableSection);
             }
         });
-    });
 
-    return pages.filter(p => p.sections.some(s => s.answers.length > 0));
+        return renderablePage;
+    }).filter(p => p.sections.some(s => s.answers.length > 0));
+
+    return pages;
 
   }, [submission, request]);
 
@@ -273,7 +289,7 @@ export default function SubmissionDetailPage() {
                 <div className="flex justify-between items-start">
                     <div>
                         <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
-                        <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
+                         <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
                             {submission.submission_code && (
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-foreground">Submission Code:</span>
