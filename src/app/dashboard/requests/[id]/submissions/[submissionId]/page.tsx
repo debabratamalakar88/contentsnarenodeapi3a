@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Page, type Section as SectionType } from '@/lib/api';
+import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,10 +13,13 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 
 const renderAnswer = (answer: any) => {
-  if (answer === null || answer === undefined) {
+  if (answer === null || answer === undefined || answer === '') {
     return <p className="text-muted-foreground italic">No answer provided.</p>;
   }
   if (Array.isArray(answer)) {
+    if (answer.length === 0) {
+       return <p className="text-muted-foreground italic">No selection made.</p>;
+    }
     return (
       <ul className="list-disc list-inside">
         {answer.map((item, index) => (
@@ -26,13 +29,17 @@ const renderAnswer = (answer: any) => {
     );
   }
   if (typeof answer === 'object') {
-     // Handle date range object
     if (answer.start && answer.end) {
       return <p>{format(parseISO(answer.start), 'PPP')} to {format(parseISO(answer.end), 'PPP')}</p>;
     }
     return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs">{JSON.stringify(answer, null, 2)}</pre>;
   }
-  return <p>{String(answer)}</p>;
+  // For file uploads, which might be stored as a string path
+  if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
+      return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
+  }
+
+  return <p className="break-words whitespace-pre-wrap">{String(answer)}</p>;
 };
 
 export default function SubmissionDetailPage() {
@@ -109,17 +116,19 @@ export default function SubmissionDetailPage() {
     );
   }
 
-  // Helper to find the original question label from the request structure using apiId
-  const getQuestionLabel = (pageIndex: number, sectionIndex: number, questionApiId: string): string => {
-    try {
-      const question = request.form_data[pageIndex]?.sections[sectionIndex]?.questions.find(q => q.apiId === questionApiId);
-      return question?.label || questionApiId;
-    } catch {
-      return questionApiId;
+  const getQuestionLabel = (apiId: string): string => {
+    if (!request) return apiId;
+    for (const page of request.form_data) {
+        for (const section of page.sections) {
+            const question = section.questions.find(q => q.apiId === apiId);
+            if (question) return question.label;
+        }
     }
+    return apiId;
   };
-
-  const submittedPages = submission.form_data ? Object.values(submission.form_data) : [];
+  
+  const submittedData = submission.form_data || {};
+  const pageKeys = Object.keys(submittedData).sort();
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -138,28 +147,37 @@ export default function SubmissionDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {submittedPages.map((page: any, pageIndex: number) => (
-            <Card key={pageIndex} className="bg-muted/50">
-              <CardHeader>
-                <CardTitle className="text-xl">{page.page_title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {Array.isArray(page.sections) && page.sections.map((section: any, sectionIndex: number) => (
-                  <div key={sectionIndex}>
-                    <h4 className="font-semibold text-lg">{section.section_title}</h4>
-                    <div className="mt-2 pl-4 border-l-2 space-y-4">
-                      {Object.entries(section.questions).map(([apiId, answer]) => (
-                        <div key={apiId} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                          <dt className="font-medium text-sm md:col-span-1">{getQuestionLabel(pageIndex, sectionIndex, apiId)}</dt>
-                          <dd className="text-sm text-foreground md:col-span-2">{renderAnswer(answer)}</dd>
-                        </div>
-                      ))}
+          {pageKeys.map((pageKey, pageIndex) => {
+            const page = submittedData[pageKey];
+            if (!page || !page.page_title) return null;
+
+            return (
+              <Card key={pageIndex} className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-xl">{page.page_title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {Array.isArray(page.sections) && page.sections.map((section: any, sectionIndex: number) => (
+                    <div key={sectionIndex}>
+                      <h4 className="font-semibold text-lg">{section.section_title}</h4>
+                      <div className="mt-2 pl-4 border-l-2 space-y-4">
+                        {Object.keys(section.questions || {}).length > 0 ? (
+                           Object.entries(section.questions).map(([apiId, answer]) => (
+                            <div key={apiId} className="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 border-b border-border/50 last:border-b-0">
+                              <dt className="font-medium text-sm md:col-span-1">{getQuestionLabel(apiId)}</dt>
+                              <dd className="text-sm text-foreground md:col-span-2">{renderAnswer(answer)}</dd>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground text-sm italic">No questions answered in this section.</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
+                  ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </CardContent>
       </Card>
     </div>
