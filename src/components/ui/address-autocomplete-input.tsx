@@ -11,13 +11,14 @@ interface AddressAutocompleteInputProps {
   name?: string
   placeholder?: string
   defaultValue?: string
+  onValueChange?: (value: string) => void;
 }
 
 const libraries: ('places')[] = ['places'];
 
 // Component with the hook, to be rendered conditionally by the main component.
 function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {apiKey: string}) {
-    const { id, name, placeholder, defaultValue, apiKey } = props;
+    const { id, name, placeholder, defaultValue, apiKey, onValueChange } = props;
 
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: apiKey,
@@ -31,7 +32,7 @@ function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {a
         if (defaultValue !== address) {
             setAddress(defaultValue || '')
         }
-    }, [defaultValue])
+    }, [defaultValue, address]);
 
     const onLoad = (ac: google.maps.places.Autocomplete) => {
         setAutocomplete(ac);
@@ -41,13 +42,17 @@ function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {a
         if (autocomplete !== null) {
             const placeResult = autocomplete.getPlace();
             if (placeResult?.formatted_address) {
-                setAddress(placeResult.formatted_address);
+                const newAddress = placeResult.formatted_address;
+                setAddress(newAddress);
+                onValueChange?.(newAddress);
             }
         }
     };
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setAddress(e.target.value);
+        const newAddress = e.target.value;
+        setAddress(newAddress);
+        onValueChange?.(newAddress);
     }
 
     if (loadError) {
@@ -59,6 +64,7 @@ function AddressAutocompleteWithApiKey(props: AddressAutocompleteInputProps & {a
                 type="text"
                 placeholder={placeholder || "Enter an address..."}
                 defaultValue={defaultValue}
+                onChange={handleInputChange}
             />
         )
     }
@@ -100,6 +106,7 @@ export function AddressAutocompleteInput(props: AddressAutocompleteInputProps) {
               type="text"
               placeholder={props.placeholder || "Enter an address..."}
               defaultValue={props.defaultValue}
+              onChange={(e) => props.onValueChange?.(e.target.value)}
           />
       );
   }

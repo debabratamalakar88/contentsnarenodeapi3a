@@ -96,7 +96,7 @@ const renderQuestionInput = (
         case 'image-upload':
              return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
         case 'address':
-             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} />;
+             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
         case 'number':
              return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
