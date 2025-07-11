@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -23,16 +24,21 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
 
-const renderQuestionInput = (question: Question, savedValue: any, error?: string) => {
+const renderQuestionInput = (
+    question: Question,
+    value: any,
+    onChange: (fieldName: string, value: any) => void,
+    error?: string
+) => {
     const questionId = `q-${question.id}`;
     const questionName = question.apiId || questionId;
     const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "";
 
     switch(question.type) {
         case 'text':
-            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'textarea':
-            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'file':
             return <Input id={questionId} name={questionName} type="file" required={question.required} className={inputClassName} />;
         case 'checkbox':
@@ -40,7 +46,19 @@ const renderQuestionInput = (question: Question, savedValue: any, error?: string
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} name={`${questionName}[]`} value={opt.value} defaultChecked={Array.isArray(savedValue) && savedValue.includes(opt.value)} />
+                            <Checkbox 
+                                id={`${questionId}-${i}`} 
+                                name={`${questionName}[]`} 
+                                value={opt.value} 
+                                checked={Array.isArray(value) && value.includes(opt.value)}
+                                onCheckedChange={(checked) => {
+                                    const currentValues = Array.isArray(value) ? value : [];
+                                    const newValues = checked 
+                                        ? [...currentValues, opt.value] 
+                                        : currentValues.filter(v => v !== opt.value);
+                                    onChange(questionName, newValues);
+                                }}
+                            />
                             <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
                         </div>
                     ))}
@@ -48,22 +66,22 @@ const renderQuestionInput = (question: Question, savedValue: any, error?: string
             );
         case 'dropdown':
             return (
-                <Select name={questionName} defaultValue={savedValue ?? question.defaultValue} required={question.required}>
+                <Select name={questionName} value={value} onValueChange={val => onChange(questionName, val)} required={question.required}>
                     <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
             );
         case 'date':
-            return <Input id={questionId} name={questionName} type="date" defaultValue={savedValue ?? question.defaultValue} required={question.required} className={cn("max-w-[240px]", inputClassName)} />;
+            return <Input id={questionId} name={questionName} type="date" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={cn("max-w-[240px]", inputClassName)} />;
         case 'email':
-            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'tel':
-            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'url':
-            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'radio':
             return (
-                <RadioGroup name={questionName} defaultValue={savedValue ?? question.defaultValue}>
+                <RadioGroup name={questionName} value={value} onValueChange={val => onChange(questionName, val)}>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2 pt-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -77,14 +95,14 @@ const renderQuestionInput = (question: Question, savedValue: any, error?: string
         case 'image-upload':
              return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
         case 'address':
-             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} />;
+             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} />;
         case 'number':
-             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
-            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" defaultValue={savedValue ?? question.defaultValue} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'country':
             return (
-                <Select name={questionName} defaultValue={savedValue ?? question.defaultValue} required={question.required}>
+                <Select name={questionName} value={value} onValueChange={val => onChange(questionName, val)} required={question.required}>
                     <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
                     <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
                 </Select>
@@ -92,18 +110,18 @@ const renderQuestionInput = (question: Question, savedValue: any, error?: string
         case 'date-range':
              return (
                 <div className="flex items-center gap-2">
-                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" defaultValue={savedValue ? savedValue.start : ''} className={inputClassName} />
+                     <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" value={value?.start || ''} onChange={e => onChange(questionName, {...value, start: e.target.value})} className={inputClassName} />
                      <span>to</span>
-                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" defaultValue={savedValue ? savedValue.end : ''} className={inputClassName} />
+                     <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" value={value?.end || ''} onChange={e => onChange(questionName, {...value, end: e.target.value})} className={inputClassName} />
                 </div>
              );
         case 'icon-selector':
-            return <IconSelector name={questionName} defaultValue={savedValue ?? question.defaultValue} />;
+            return <IconSelector name={questionName} defaultValue={value} />;
         case 'color-picker':
             return (
                 <div className="flex items-center gap-2">
-                    <Input type="color" className="w-12 h-10 p-1" defaultValue={savedValue ?? question.defaultValue ?? '#000000'} />
-                    <Input type="text" name={questionName} placeholder="#000000" defaultValue={savedValue ?? question.defaultValue ?? '#000000'} className="max-w-[150px]"/>
+                    <Input type="color" className="w-12 h-10 p-1" value={value || '#000000'} onChange={e => onChange(questionName, e.target.value)} />
+                    <Input type="text" name={questionName} placeholder="#000000" value={value || '#000000'} readOnly className="max-w-[150px]"/>
                 </div>
             );
         case 'button':
@@ -164,7 +182,7 @@ export default function SharedRequestPage() {
     const [error, setError] = useState<string | null>(null);
     const [activePageIndex, setActivePageIndex] = useState(0);
     const [submissionCode, setSubmissionCode] = useState<string | null>(null);
-    const [savedData, setSavedData] = useState<any>({});
+    const [allAnswers, setAllAnswers] = useState<any>({});
     const [isComplete, setIsComplete] = useState(false);
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     
@@ -186,7 +204,18 @@ export default function SharedRequestPage() {
                     setSubmissionCode(storedSubmissionCode);
                     try {
                         const submissionData = await getSubmission(storedSubmissionCode);
-                        setSavedData(submissionData.form_data || {});
+                        if (submissionData.form_data) {
+                            let parsedData = {};
+                            try {
+                                // The API seems to return form_data as a JSON string
+                                if (typeof submissionData.form_data === 'string') {
+                                    parsedData = JSON.parse(submissionData.form_data);
+                                } else {
+                                    parsedData = submissionData.form_data;
+                                }
+                            } catch (e) { console.error("Could not parse saved form data", e); }
+                            setAllAnswers(parsedData || {});
+                        }
                         if (submissionData.status === 'completed') {
                             setIsComplete(true);
                         }
@@ -194,7 +223,7 @@ export default function SharedRequestPage() {
                         console.warn("Could not fetch submission, starting new one.", submissionError);
                         localStorage.removeItem(storageKey);
                         setSubmissionCode(null);
-                        setSavedData({});
+                        setAllAnswers({});
                     }
                 }
             } catch (err: any) {
@@ -209,60 +238,29 @@ export default function SharedRequestPage() {
         fetchInitialData();
     }, [requestCode, toast]);
     
-    const getStructuredFormData = (page: Page) => {
-        if (!formRef.current) return {};
-        const formData = new FormData(formRef.current);
-        const structuredData: any = {
-            page_title: page.title,
-            sections: []
-        };
-    
-        page.sections.forEach(section => {
-            const sectionData: any = {
-                section_title: section.title,
-                questions: {}
-            };
-    
-            section.questions.forEach(question => {
-                const fieldName = question.apiId || `q-${question.id}`;
-                
-                if (question.type === 'checkbox') {
-                    const values = formData.getAll(`${fieldName}[]`);
-                    if (values.length > 0) {
-                        sectionData.questions[fieldName] = values;
-                    }
-                } else {
-                    const value = formData.get(fieldName);
-                    if (value !== null && value !== undefined) {
-                        sectionData.questions[fieldName] = value;
-                    }
-                }
-            });
-            structuredData.sections.push(sectionData);
-        });
-    
-        return structuredData;
+    const handleAnswerChange = (fieldName: string, value: any) => {
+        setAllAnswers((prev: any) => ({
+            ...prev,
+            [fieldName]: value
+        }));
     };
     
     const validatePage = (page: Page): boolean => {
         const errors: { [key: string]: string } = {};
-        const formData = new FormData(formRef.current!);
         let isValid = true;
     
         page.sections.forEach(section => {
             section.questions.forEach(question => {
                 if (question.type === 'button' || question.type === 'formatted-text') return;
+                
                 const fieldName = question.apiId || `q-${question.id}`;
-                const isCheckbox = question.type === 'checkbox';
-                const inputName = isCheckbox ? `${fieldName}[]` : fieldName;
-                const value = formData.get(inputName);
-                const allValues = formData.getAll(inputName);
+                const value = allAnswers[fieldName];
 
                 if (question.required) {
                     let isMissing = false;
-                    if (isCheckbox) {
-                        if (allValues.length === 0) isMissing = true;
-                    } else if (value === null || String(value).trim() === '') {
+                    if (question.type === 'checkbox') {
+                        if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
+                    } else if (value === null || value === undefined || String(value).trim() === '') {
                         isMissing = true;
                     }
 
@@ -301,6 +299,57 @@ export default function SharedRequestPage() {
         return isValid;
     };
 
+    const getStructuredFormData = (page: Page) => {
+        const structuredData: any = {
+            page_title: page.title,
+            sections: []
+        };
+    
+        page.sections.forEach(section => {
+            const sectionData: any = {
+                section_title: section.title,
+                questions: {}
+            };
+    
+            section.questions.forEach(question => {
+                const fieldName = question.apiId || `q-${question.id}`;
+                if (allAnswers[fieldName] !== undefined) {
+                    sectionData.questions[fieldName] = allAnswers[fieldName];
+                }
+            });
+            structuredData.sections.push(sectionData);
+        });
+    
+        return structuredData;
+    };
+    
+
+    const handleStepChange = async (newIndex: number) => {
+        const currentPage = request?.form_data[activePageIndex];
+        if (!currentPage || !validatePage(currentPage)) return;
+
+        const currentData = getStructuredFormData(currentPage);
+        setIsSubmitting(true);
+
+        try {
+            if (!submissionCode) {
+                 const response = await startSubmission(requestCode, currentData);
+                 setSubmissionCode(response.submission_code);
+                 localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
+                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
+            } else {
+                 await saveStep(submissionCode, activePageIndex + 1, currentData);
+                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
+            }
+             setValidationErrors({});
+             setActivePageIndex(newIndex);
+        } catch(err: any) {
+            toast({ title: "Error Saving Progress", description: err.message || "Could not save your data.", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
     const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const currentPage = request?.form_data[activePageIndex];
@@ -327,42 +376,6 @@ export default function SharedRequestPage() {
 
         } catch(err: any) {
             toast({ title: "Submission Error", description: err.message || "An unknown error occurred.", variant: "destructive"});
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleStepChange = async (newIndex: number) => {
-        const currentPage = request?.form_data[activePageIndex];
-        if (!currentPage || !validatePage(currentPage)) return;
-
-        const currentData = getStructuredFormData(currentPage);
-        setIsSubmitting(true);
-
-        try {
-            let currentSubmissionCode = submissionCode;
-
-            if (!currentSubmissionCode) {
-                const response = await startSubmission(requestCode, currentData);
-                currentSubmissionCode = response.submission_code;
-                setSubmissionCode(currentSubmissionCode);
-                localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
-                toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
-            } else {
-                 await saveStep(currentSubmissionCode, activePageIndex + 1, currentData);
-                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
-            }
-            
-             const newSavedData = {
-                ...savedData,
-                [`step_${activePageIndex + 1}`]: currentData
-             };
-             setSavedData(newSavedData);
-             setValidationErrors({});
-             setActivePageIndex(newIndex);
-
-        } catch(err: any) {
-            toast({ title: "Error Saving Progress", description: err.message || "Could not save your data.", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
@@ -409,10 +422,6 @@ export default function SharedRequestPage() {
     
     const currentPage = request.form_data[activePageIndex];
     const isLastPage = activePageIndex === request.form_data.length - 1;
-    
-    // This logic to get saved values for fields needs to be improved
-    // For now, it might not work perfectly with the new structured data.
-    const currentSavedData = savedData[`step_${activePageIndex + 1}`] || {};
 
     return (
         <div className="min-h-screen bg-muted flex flex-col">
@@ -440,11 +449,13 @@ export default function SharedRequestPage() {
                                                     {section.questions.map(question => {
                                                         const fieldName = question.apiId || `q-${question.id}`;
                                                         const fieldError = validationErrors[fieldName];
+                                                        const value = allAnswers[fieldName];
+                                                        
                                                         return (
                                                             <div key={question.id} className="grid gap-2">
                                                                 {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
                                                                 {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                                {renderQuestionInput(question, null, fieldError)}
+                                                                {renderQuestionInput(question, value, handleAnswerChange, fieldError)}
                                                                 {fieldError && <p className="text-sm font-medium text-destructive">{fieldError}</p>}
                                                             </div>
                                                         );
