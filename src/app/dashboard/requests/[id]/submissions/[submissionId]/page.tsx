@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType } from '@/lib/api';
+import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,19 +28,29 @@ const renderAnswer = (answer: any) => {
       </ul>
     );
   }
-  if (typeof answer === 'object') {
-    if (answer.start && answer.end) {
+  if (typeof answer === 'object' && answer.start && answer.end) {
       return <p>{format(parseISO(answer.start), 'PPP')} to {format(parseISO(answer.end), 'PPP')}</p>;
-    }
+  }
+  if (typeof answer === 'object') {
     return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs">{JSON.stringify(answer, null, 2)}</pre>;
   }
-  // For file uploads, which might be stored as a string path
   if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
       return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
   }
 
   return <p className="break-words whitespace-pre-wrap">{String(answer)}</p>;
 };
+
+interface RenderableSection {
+  title: string;
+  answers: { label: string; answer: any }[];
+}
+
+interface RenderablePage {
+  title: string;
+  sections: RenderableSection[];
+}
+
 
 export default function SubmissionDetailPage() {
   const router = useRouter();
@@ -83,6 +93,59 @@ export default function SubmissionDetailPage() {
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
 
+  const processedData = useMemo(() => {
+    if (!submission || !request || !submission.form_data) return [];
+    
+    const questionLabelMap = new Map<string, string>();
+    request.form_data.forEach(page => {
+        page.sections.forEach(section => {
+            section.questions.forEach(question => {
+                if (question.apiId) {
+                    questionLabelMap.set(question.apiId, question.label);
+                }
+            });
+        });
+    });
+
+    const submittedPages: RenderablePage[] = [];
+
+    // The form_data is an object with keys like "step_1", "step_2"
+    Object.keys(submission.form_data).sort().forEach(stepKey => {
+        const pageData = submission.form_data[stepKey];
+
+        if (pageData && pageData.page_title && Array.isArray(pageData.sections)) {
+            const renderablePage: RenderablePage = {
+                title: pageData.page_title,
+                sections: []
+            };
+
+            pageData.sections.forEach((section: any) => {
+                if (section && section.section_title && section.questions) {
+                    const renderableSection: RenderableSection = {
+                        title: section.section_title,
+                        answers: []
+                    };
+                    Object.entries(section.questions).forEach(([apiId, answer]) => {
+                        renderableSection.answers.push({
+                            label: questionLabelMap.get(apiId) || apiId,
+                            answer: answer
+                        });
+                    });
+                    if(renderableSection.answers.length > 0) {
+                      renderablePage.sections.push(renderableSection);
+                    }
+                }
+            });
+            if(renderablePage.sections.length > 0){
+              submittedPages.push(renderablePage);
+            }
+        }
+    });
+    
+    return submittedPages;
+  }, [submission, request]);
+
+
   if (isLoading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -116,20 +179,6 @@ export default function SubmissionDetailPage() {
     );
   }
 
-  const getQuestionLabel = (apiId: string): string => {
-    if (!request) return apiId;
-    for (const page of request.form_data) {
-        for (const section of page.sections) {
-            const question = section.questions.find(q => q.apiId === apiId);
-            if (question) return question.label;
-        }
-    }
-    return apiId;
-  };
-  
-  const submittedData = submission.form_data || {};
-  const pageKeys = Object.keys(submittedData).sort();
-
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <Button variant="outline" asChild className="mb-4">
@@ -147,25 +196,22 @@ export default function SubmissionDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {pageKeys.map((pageKey, pageIndex) => {
-            const page = submittedData[pageKey];
-            if (!page || !page.page_title) return null;
-
-            return (
+          {processedData.length > 0 ? (
+            processedData.map((page, pageIndex) => (
               <Card key={pageIndex} className="bg-muted/50">
                 <CardHeader>
-                  <CardTitle className="text-xl">{page.page_title}</CardTitle>
+                  <CardTitle className="text-xl">{page.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {Array.isArray(page.sections) && page.sections.map((section: any, sectionIndex: number) => (
+                  {page.sections.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
-                      <h4 className="font-semibold text-lg">{section.section_title}</h4>
+                      <h4 className="font-semibold text-lg">{section.title}</h4>
                       <div className="mt-2 pl-4 border-l-2 space-y-4">
-                        {Object.keys(section.questions || {}).length > 0 ? (
-                           Object.entries(section.questions).map(([apiId, answer]) => (
-                            <div key={apiId} className="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 border-b border-border/50 last:border-b-0">
-                              <dt className="font-medium text-sm md:col-span-1">{getQuestionLabel(apiId)}</dt>
-                              <dd className="text-sm text-foreground md:col-span-2">{renderAnswer(answer)}</dd>
+                        {section.answers.length > 0 ? (
+                          section.answers.map((item, itemIndex) => (
+                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 border-b border-border/50 last:border-b-0">
+                              <dt className="font-medium text-sm md:col-span-1">{item.label}</dt>
+                              <dd className="text-sm text-foreground md:col-span-2">{renderAnswer(item.answer)}</dd>
                             </div>
                           ))
                         ) : (
@@ -176,8 +222,12 @@ export default function SubmissionDetailPage() {
                   ))}
                 </CardContent>
               </Card>
-            )
-          })}
+            ))
+          ) : (
+             <div className="text-center py-10 text-muted-foreground">
+                <p>No submission data found to display.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
