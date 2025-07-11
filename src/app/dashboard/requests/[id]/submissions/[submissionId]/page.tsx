@@ -104,7 +104,7 @@ export default function SubmissionDetailPage() {
   const params = useParams();
   const { toast } = useToast();
 
-  const [submission, setSubmission] = useState<{form_data: any, status: string} | null>(null);
+  const [submission, setSubmission] = useState<Submission | null>(null);
   const [request, setRequest] = useState<RequestType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -230,20 +230,24 @@ export default function SubmissionDetailPage() {
         </div>
         <Card className="bg-card shadow-sm w-full">
             <CardHeader>
-                <div className="space-y-2">
-                    <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
-                    <div className="flex items-center gap-2">
-                        <Badge
-                            variant={'outline'}
-                            className={cn(
-                                "capitalize",
-                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                            )}
-                        >
-                            {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
-                            {submission.status}
-                        </Badge>
+                <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                        <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            {submission.submission_code && <span>Code: <span className="font-mono text-xs bg-muted p-1 rounded-md">{submission.submission_code}</span></span>}
+                            {submission.updated_at && <span>Submitted On: {format(parseISO(submission.updated_at), 'PPP p')}</span>}
+                        </div>
                     </div>
+                    <Badge
+                        variant={'outline'}
+                        className={cn(
+                            "capitalize h-fit",
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                        )}
+                    >
+                        {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                        {submission.status}
+                    </Badge>
                 </div>
             </CardHeader>
             <CardContent>
