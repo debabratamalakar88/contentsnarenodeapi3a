@@ -10,44 +10,87 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, CheckCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { countries } from '@/lib/countries';
+import { iconList } from '@/components/ui/icon-selector';
 
 
-const renderAnswer = (answer: any) => {
-  if (answer === null || answer === undefined || answer === '') {
-    return <p className="text-muted-foreground italic">No answer provided.</p>;
-  }
-  if (Array.isArray(answer)) {
-    if (answer.length === 0) {
-       return <p className="text-muted-foreground italic">No selection made.</p>;
+const renderAnswer = (question: Question, answer: any) => {
+    if (answer === null || answer === undefined || answer === '') {
+        return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
-    return (
-      <ul className="list-disc list-inside space-y-1">
-        {answer.map((item, index) => (
-          <li key={index}>{String(item)}</li>
-        ))}
-      </ul>
-    );
-  }
-  if (typeof answer === 'object' && answer.start && answer.end) {
-      return <p>{format(parseISO(answer.start), 'PPP')} to {format(parseISO(answer.end), 'PPP')}</p>;
-  }
-  if (typeof answer === 'object') {
-    return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs font-mono">{JSON.stringify(answer, null, 2)}</pre>;
-  }
-  if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
-      return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
-  }
 
-  return <p className="break-words whitespace-pre-wrap">{String(answer)}</p>;
+    switch (question.type) {
+        case 'date':
+            const parsedDate = parseISO(answer);
+            return <p>{isValid(parsedDate) ? format(parsedDate, 'PPP') : answer}</p>;
+
+        case 'date-range':
+            if (typeof answer === 'object' && answer.start && answer.end) {
+                const startDate = parseISO(answer.start);
+                const endDate = parseISO(answer.end);
+                return <p>{isValid(startDate) ? format(startDate, 'PPP') : answer.start} to {isValid(endDate) ? format(endDate, 'PPP') : answer.end}</p>;
+            }
+            break;
+
+        case 'checkbox':
+        case 'dropdown':
+             if (Array.isArray(answer)) {
+                if (answer.length === 0) return <p className="text-muted-foreground italic">No selection made.</p>;
+                return <p>{answer.join(', ')}</p>;
+            }
+            break;
+
+        case 'country':
+            const country = countries.find(c => c.code === answer);
+            return country ? <div className="flex items-center gap-2"><span>{country.flag}</span><span>{country.name}</span></div> : <p>{answer}</p>;
+
+        case 'color-picker':
+            return (
+                <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 rounded-full border" style={{ backgroundColor: answer }} />
+                    <p>{answer}</p>
+                </div>
+            );
+
+        case 'icon-selector':
+            const IconComponent = iconList.find(i => i.name.toLowerCase() === String(answer).toLowerCase())?.icon;
+            return (
+                <div className="flex items-center gap-2">
+                    {IconComponent && <IconComponent className="h-5 w-5" />}
+                    <p>{answer}</p>
+                </div>
+            );
+        
+        case 'formatted-text':
+            return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: answer }} />;
+
+        case 'file':
+        case 'image-upload':
+        case 'url':
+            if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
+                return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
+            }
+            break;
+    }
+    
+    // Default rendering for other types
+    if (Array.isArray(answer)) {
+        return <p>{answer.join(', ')}</p>;
+    }
+    if (typeof answer === 'object') {
+        return <pre className="p-2 bg-muted rounded-md overflow-x-auto text-xs font-mono">{JSON.stringify(answer, null, 2)}</pre>;
+    }
+
+    return <p className="break-words whitespace-pre-wrap">{String(answer)}</p>;
 };
 
 interface RenderableSection {
   title: string;
-  answers: { label: string; answer: any }[];
+  answers: { question: Question; answer: any }[];
 }
 
 interface RenderablePage {
@@ -100,12 +143,12 @@ export default function SubmissionDetailPage() {
  const processedData = useMemo(() => {
     if (!submission || !request || !submission.form_data) return [];
 
-    const questionLabelMap = new Map<string, string>();
+    const questionMap = new Map<string, Question>();
     request.form_data.forEach(page => {
         page.sections.forEach(section => {
             section.questions.forEach(question => {
                 if (question.apiId) {
-                    questionLabelMap.set(question.apiId, question.label);
+                    questionMap.set(question.apiId, question);
                 }
             });
         });
@@ -113,8 +156,10 @@ export default function SubmissionDetailPage() {
 
     return Object.keys(submission.form_data).sort().map(stepKey => {
         const stepContainer = submission.form_data[stepKey];
-        if (!stepContainer || !stepContainer[stepKey]) return null;
-        const pageData = stepContainer[stepKey];
+        if (!stepContainer) return null;
+        
+        // Handle the extra nesting: step_1: { step_1: { ... } }
+        const pageData = stepContainer[stepKey] || stepContainer;
 
         if (!pageData || !pageData.page_title || !Array.isArray(pageData.sections)) {
             return null;
@@ -128,10 +173,10 @@ export default function SubmissionDetailPage() {
                 }
                 const renderableSection: RenderableSection = {
                     title: section.section_title,
-                    answers: Object.entries(section.questions).map(([apiId, answer]) => ({
-                        label: questionLabelMap.get(apiId) || apiId,
-                        answer: answer
-                    })).filter(a => a.answer !== undefined)
+                    answers: Object.entries(section.questions).map(([apiId, answer]) => {
+                        const question = questionMap.get(apiId);
+                        return question ? { question, answer } : null;
+                    }).filter((a): a is { question: Question; answer: any } => a !== null && a.answer !== undefined)
                 };
                 return renderableSection.answers.length > 0 ? renderableSection : null;
             }).filter((s): s is RenderableSection => s !== null)
@@ -173,7 +218,8 @@ export default function SubmissionDetailPage() {
   }
 
   return (
-    <div className="p-6 bg-white min-h-full">
+    <div className="bg-white min-h-full">
+      <div className="p-6 w-full">
         <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="icon" asChild>
                 <Link href={`/dashboard/requests/${requestId}`}>
@@ -191,7 +237,7 @@ export default function SubmissionDetailPage() {
                             variant={'outline'}
                             className={cn(
                                 "capitalize",
-                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
                             )}
                         >
                             {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
@@ -214,8 +260,8 @@ export default function SubmissionDetailPage() {
                                         <dl className="space-y-6">
                                             {section.answers.map((item, itemIndex) => (
                                             <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                                <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.label}</dt>
-                                                <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.answer)}</dd>
+                                                <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.question.label}</dt>
+                                                <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.question, item.answer)}</dd>
                                             </div>
                                             ))}
                                         </dl>
@@ -235,6 +281,8 @@ export default function SubmissionDetailPage() {
                 )}
             </CardContent>
         </Card>
+      </div>
     </div>
   );
 }
+
