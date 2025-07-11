@@ -682,7 +682,7 @@ export default function ViewRequestPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Client</TableHead>
+                                                <TableHead>Submission Code</TableHead>
                                                 <TableHead>Submitted On</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead><span className="sr-only">Actions</span></TableHead>
@@ -690,10 +690,9 @@ export default function ViewRequestPage() {
                                         </TableHeader>
                                         <TableBody>
                                             {submissions.length > 0 ? submissions.map(submission => {
-                                                const clientName = clientMap.get(submission.client_id) || "Anonymous";
                                                 return (
                                                     <TableRow key={submission.id}>
-                                                        <TableCell className="font-medium">{clientName}</TableCell>
+                                                        <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
                                                         <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
                                                         <TableCell><Badge variant={submission.status === 'completed' ? 'default' : 'secondary'}>{submission.status}</Badge></TableCell>
                                                         <TableCell>
@@ -722,4 +721,3 @@ export default function ViewRequestPage() {
         </div>
     );
 }
-
