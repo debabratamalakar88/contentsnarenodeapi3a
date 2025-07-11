@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
@@ -694,7 +694,18 @@ export default function ViewRequestPage() {
                                                     <TableRow key={submission.id}>
                                                         <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
                                                         <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
-                                                        <TableCell><Badge variant={submission.status === 'completed' ? 'default' : 'secondary'}>{submission.status}</Badge></TableCell>
+                                                        <TableCell>
+                                                          <Badge
+                                                              variant={submission.status === 'completed' ? 'default' : 'secondary'}
+                                                              className={cn(
+                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800",
+                                                                  "capitalize"
+                                                              )}
+                                                          >
+                                                              {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                                                              {submission.status}
+                                                          </Badge>
+                                                        </TableCell>
                                                         <TableCell>
                                                             <Button variant="outline" size="sm" asChild>
                                                                 <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
