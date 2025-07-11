@@ -144,7 +144,7 @@ export default function SubmissionDetailPage() {
                 <CardTitle className="text-xl">{page.page_title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {page.sections.map((section: any, sectionIndex: number) => (
+                {Array.isArray(page.sections) && page.sections.map((section: any, sectionIndex: number) => (
                   <div key={sectionIndex}>
                     <h4 className="font-semibold text-lg">{section.section_title}</h4>
                     <div className="mt-2 pl-4 border-l-2 space-y-4">
