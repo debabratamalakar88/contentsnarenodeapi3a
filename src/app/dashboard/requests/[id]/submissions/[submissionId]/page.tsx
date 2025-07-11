@@ -93,7 +93,7 @@ export default function SubmissionDetailPage() {
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
 
-  const processedData = useMemo(() => {
+ const processedData = useMemo(() => {
     if (!submission || !request || !submission.form_data) return [];
 
     const questionLabelMap = new Map<string, string>();
@@ -108,10 +108,11 @@ export default function SubmissionDetailPage() {
     });
 
     const submittedPages: RenderablePage[] = [];
-
-    // Correctly iterate over the keys of the submission.form_data object
+    
     Object.keys(submission.form_data).sort().forEach(stepKey => {
-        const pageData = submission.form_data[stepKey];
+        const stepContainer = submission.form_data[stepKey];
+        // Handle the double nesting, e.g., step_1: { step_1: { ... } }
+        const pageData = stepContainer[stepKey] || stepContainer;
 
         if (pageData && pageData.page_title && Array.isArray(pageData.sections)) {
             const renderablePage: RenderablePage = {
@@ -203,7 +204,7 @@ export default function SubmissionDetailPage() {
                   <CardTitle className="text-xl">{page.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {page.sections && Array.isArray(page.sections) && page.sections.map((section, sectionIndex) => (
+                  {page.sections && Array.isArray(page.sections) ? page.sections.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
                       <h4 className="font-semibold text-lg">{section.title}</h4>
                       <div className="mt-2 pl-4 border-l-2 space-y-4">
@@ -219,7 +220,9 @@ export default function SubmissionDetailPage() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                     <p className="text-muted-foreground text-sm italic">No sections found for this page.</p>
+                  )}
                 </CardContent>
               </Card>
             ))
