@@ -113,6 +113,7 @@ export default function SubmissionDetailPage() {
 
     return Object.keys(submission.form_data).sort().map(stepKey => {
         const stepContainer = submission.form_data[stepKey];
+        // Handle the extra nesting
         const pageData = stepContainer[stepKey] || stepContainer;
 
         if (!pageData || !pageData.page_title || !Array.isArray(pageData.sections)) {
@@ -172,7 +173,7 @@ export default function SubmissionDetailPage() {
   }
 
   return (
-    <div className="p-6 bg-muted/40 min-h-full">
+    <div className="p-6 bg-background min-h-full">
         <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="icon" asChild>
                 <Link href={`/dashboard/requests/${requestId}`}>
@@ -181,7 +182,7 @@ export default function SubmissionDetailPage() {
             </Button>
             <h1 className="text-2xl font-bold">Submission Details</h1>
         </div>
-        <Card className="bg-background shadow-sm">
+        <Card className="bg-card shadow-sm">
             <CardHeader>
                 <div className="space-y-2">
                     <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
@@ -189,7 +190,7 @@ export default function SubmissionDetailPage() {
                         <Badge
                             variant={submission.status === 'completed' ? 'default' : 'secondary'}
                             className={cn(
-                                submission.status === 'completed' && "bg-green-100 text-green-800 border-green-200",
+                                submission.status === 'completed' && "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
                                 "capitalize"
                             )}
                         >
@@ -237,3 +238,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
