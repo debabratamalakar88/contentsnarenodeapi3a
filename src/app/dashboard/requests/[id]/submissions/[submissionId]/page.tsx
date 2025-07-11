@@ -3,37 +3,36 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSubmission } from '@/lib/api'; // Assuming a function to get a single submission
+import { getSingleSubmissionForRequest, type Submission } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { format, parseISO } from 'date-fns';
 
 export default function SubmissionDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
 
-  const [submission, setSubmission] = useState<any>(null);
+  const [submission, setSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const submissionId = params.submissionId as string;
-  const requestId = params.id as string;
+  const submissionId = Number(params.submissionId);
+  const requestId = Number(params.id);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (!token || !submissionId) {
+    if (!token || !submissionId || !requestId) {
       router.back();
       return;
     }
 
     async function fetchSubmission() {
       try {
-        // We use the submission code to fetch, which is what the API uses.
-        // Assuming submissionId from URL is the code.
-        const data = await getSubmission(submissionId);
+        const data = await getSingleSubmissionForRequest(token, requestId, submissionId);
         setSubmission(data);
       } catch (error: any) {
         toast({
@@ -47,7 +46,7 @@ export default function SubmissionDetailPage() {
     }
 
     fetchSubmission();
-  }, [submissionId, router, toast]);
+  }, [submissionId, requestId, router, toast]);
 
   if (isLoading) {
     return (
@@ -68,8 +67,14 @@ export default function SubmissionDetailPage() {
 
   if (!submission) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-center text-muted-foreground">
         <h1 className="text-xl font-bold">Submission not found.</h1>
+         <Button variant="outline" asChild className="mt-4">
+            <Link href={`/dashboard/requests/${requestId}`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Request
+            </Link>
+        </Button>
       </div>
     );
   }
@@ -87,7 +92,7 @@ export default function SubmissionDetailPage() {
         <CardHeader>
           <CardTitle>Submission Details</CardTitle>
           <CardDescription>
-            Viewing submission from {submission.updated_at ? new Date(submission.updated_at).toLocaleString() : 'N/A'}
+            Viewing submission from client ID {submission.client_id}, last updated at {submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,5 +104,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
-

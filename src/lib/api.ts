@@ -812,6 +812,18 @@ export async function getRequestSubmissions(token: string, requestId: number): P
   return handleResponse(response);
 }
 
+export async function getSingleSubmissionForRequest(token: string, requestId: number, submissionId: number): Promise<Submission> {
+  const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}/submissions/${submissionId}`, {
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+      },
+  });
+  return handleResponse(response);
+}
+
 export async function startSubmission(requestCode: string, data: any): Promise<{ message: string, submission_code: string }> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${requestCode}/start`, {
         method: 'POST',
@@ -839,11 +851,10 @@ export async function submitRequest(submissionCode: string, data: any): Promise<
     return handleResponse(response);
 }
 
-export async function getSubmission(submissionCode: string): Promise<{ form_data: any, status: string }> {
+export async function getSubmission(submissionCode: string): Promise<Submission> {
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     });
     return handleResponse(response);
 }
-
