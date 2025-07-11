@@ -112,7 +112,6 @@ export default function SubmissionDetailPage() {
     });
 
     return Object.keys(submission.form_data).sort().map(stepKey => {
-        // Handle the extra nesting: data is at submission.form_data[stepKey][stepKey]
         const stepContainer = submission.form_data[stepKey];
         if (!stepContainer || !stepContainer[stepKey]) return null;
         const pageData = stepContainer[stepKey];
@@ -189,10 +188,10 @@ export default function SubmissionDetailPage() {
                     <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
                     <div className="flex items-center gap-2">
                         <Badge
-                            variant={submission.status === 'completed' ? 'default' : 'secondary'}
+                            variant={'outline'}
                             className={cn(
-                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800",
-                                "capitalize"
+                                "capitalize",
+                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
                             )}
                         >
                             {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}

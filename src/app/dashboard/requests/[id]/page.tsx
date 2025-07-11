@@ -696,10 +696,10 @@ export default function ViewRequestPage() {
                                                         <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
                                                         <TableCell>
                                                           <Badge
-                                                              variant={submission.status === 'completed' ? 'default' : 'secondary'}
+                                                              variant={'outline'}
                                                               className={cn(
-                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800",
-                                                                  "capitalize"
+                                                                  "capitalize",
+                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
                                                               )}
                                                           >
                                                               {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
