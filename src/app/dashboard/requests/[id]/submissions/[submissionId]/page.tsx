@@ -188,7 +188,7 @@ export default function SubmissionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 bg-white">
+      <div className="p-6 space-y-6 bg-white w-full">
         <Skeleton className="h-8 w-40" />
         <Card>
             <CardHeader><Skeleton className="h-10 w-64" /></CardHeader>
@@ -205,7 +205,7 @@ export default function SubmissionDetailPage() {
 
   if (!submission || !request) {
     return (
-      <div className="p-6 text-center text-muted-foreground bg-white">
+      <div className="p-6 text-center text-muted-foreground bg-white w-full">
         <h1 className="text-xl font-bold">Submission data could not be loaded.</h1>
          <Button variant="outline" asChild className="mt-4">
             <Link href={`/dashboard/requests/${requestId}`}>
@@ -218,8 +218,8 @@ export default function SubmissionDetailPage() {
   }
 
   return (
-    <div className="bg-white min-h-full">
-      <div className="p-6 w-full">
+    <div className="bg-white min-h-full w-full">
+      <div className="p-6">
         <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="icon" asChild>
                 <Link href={`/dashboard/requests/${requestId}`}>
@@ -242,7 +242,7 @@ export default function SubmissionDetailPage() {
                         variant={'outline'}
                         className={cn(
                             "capitalize h-fit",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800 hover:bg-green-100"
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
                         )}
                     >
                         {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
@@ -289,4 +289,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
