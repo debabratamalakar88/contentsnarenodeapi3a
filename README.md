@@ -601,6 +601,68 @@ Delete a request.
 
 ---
 
+### 🎨 **Template Gallery API Documentation**
+
+**Base URL:** `/api/templates`  
+**Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+---
+
+#### `GET /templates/categories`
+
+Retrieve a list of all available template categories.
+
+**Response:** `200 OK` - Returns an array of category objects.
+```json
+[
+    {
+        "id": 1,
+        "name": "Accounting",
+        "slug": "accounting",
+        "template_count": 13
+    },
+    {
+        "id": 2,
+        "name": "Bookkeeping",
+        "slug": "bookkeeping",
+        "template_count": 4
+    }
+]
+```
+
+---
+
+#### `GET /templates`
+
+Retrieve a list of templates. This endpoint supports filtering and searching.
+
+**Query Parameters:**
+
+- `category` (string, optional): Filter templates by category slug (e.g., `?category=accounting`).
+- `search` (string, optional): Search templates by a keyword in their title or description (e.g., `?search=onboarding`).
+
+**Response:** `200 OK` - Returns an array of template objects.
+```json
+[
+    {
+        "id": 1,
+        "title": "ATO Client-agent Linking",
+        "description": "This template walks clients through the steps to link you as their authorised agent...",
+        "icon": "link-2",
+        "category": {
+            "id": 1,
+            "name": "Accounting",
+            "slug": "accounting"
+        },
+        "form_data": [
+            // The full form_data structure, same as a request object
+        ]
+    }
+]
+```
+
+---
+
 ### 💾 **Database Schema for Requests**
 
 For storing the multi-step request forms, a single `requests` table is recommended. The dynamic structure of the form (pages, sections, questions) is best stored in a `JSON` column. This approach simplifies development and aligns with the API structure.
