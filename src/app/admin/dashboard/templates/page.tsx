@@ -123,7 +123,7 @@ export default function ManageTemplatesPage() {
             try {
                 if (categories.length === 0) {
                     const cats = await getAdminTemplateCategories(token);
-                    setCategories(cats.data);
+                    setCategories(cats.data || []);
                 }
                 
                 const categorySlug = selectedCategory === 'all' ? undefined : selectedCategory;
@@ -132,9 +132,9 @@ export default function ManageTemplatesPage() {
                     const templatesData = await getAdminTemplates(token, { search: searchQuery, category: categorySlug });
                     setActiveTemplates(templatesData.data || []);
                 } else {
-                    // Archived templates are not paginated/filtered on the backend in the current implementation
                     const archivedData = await getAdminArchivedTemplates(token);
-                    setArchivedTemplates(archivedData || []);
+                     // Ensure archivedData is always an array before setting state
+                    setArchivedTemplates(Array.isArray(archivedData) ? archivedData : []);
                 }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
@@ -202,6 +202,7 @@ export default function ManageTemplatesPage() {
     };
 
     const filteredArchivedTemplates = useMemo(() => {
+        if (!Array.isArray(archivedTemplates)) return [];
         if (!searchQuery && selectedCategory === 'all') {
             return archivedTemplates;
         }
@@ -238,7 +239,7 @@ export default function ManageTemplatesPage() {
         if (error) {
             return <div className="text-center text-destructive py-10">{error}</div>;
         }
-        if (tpls.length === 0) {
+        if (!Array.isArray(tpls) || tpls.length === 0) {
             const message = isArchivedTab ? "No archived templates found" : "No templates found";
             return (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-10 bg-background rounded-lg border-2 border-dashed">
@@ -365,7 +366,7 @@ interface ViewProps {
 
 const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-        {templates.map(template => (
+        {Array.isArray(templates) && templates.map(template => (
             <TemplateCard key={template.id} template={template} {...props} />
         ))}
          {!isArchived && (
@@ -393,7 +394,7 @@ const TemplatesTable = ({ templates, isArchived, ...props }: ViewProps) => (
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {templates.map(template => (
+                {Array.isArray(templates) && templates.map(template => (
                     <TemplateRow key={template.id} template={template} isArchived={isArchived} {...props} />
                 ))}
                 {!isArchived && (
