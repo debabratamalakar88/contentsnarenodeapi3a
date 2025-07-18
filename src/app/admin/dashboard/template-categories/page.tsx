@@ -55,7 +55,7 @@ import {
   forceDeleteAdminTemplateCategory,
   type TemplateCategory,
 } from '@/lib/api'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -352,7 +352,7 @@ function CategoriesGrid({ categories, isArchived, onArchive, onRestore, onForceD
          <Link href="/admin/dashboard/template-categories/new">
           <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px]">
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
-            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">ADD NEW CATEGORY</Button>
+            <Button variant="secondary" className="pointer-events-none">ADD NEW CATEGORY</Button>
           </Card>
         </Link>
       )}
@@ -375,6 +375,7 @@ function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForce
         <TableBody>
             {categories.map((category) => {
                 const dateString = isArchived ? category.deleted_at : category.created_at;
+                const dateToFormat = dateString ? parseISO(dateString) : null;
                 return (
                     <TableRow key={category.id}>
                         <TableCell className="font-medium">
@@ -384,7 +385,7 @@ function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForce
                             </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
-                        <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
+                        <TableCell>{dateToFormat && isValid(dateToFormat) ? format(dateToFormat, 'PPP') : 'N/A'}</TableCell>
                         <TableCell>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>

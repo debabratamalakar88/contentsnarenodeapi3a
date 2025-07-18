@@ -356,7 +356,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: O
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
               <UserPlus className="h-8 w-8 text-slate-400" />
             </div>
-            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
+            <Button variant="secondary" className="pointer-events-none">
               ADD NEW USER
             </Button>
           </Card>
