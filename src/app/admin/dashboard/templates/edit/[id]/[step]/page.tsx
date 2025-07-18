@@ -318,12 +318,12 @@ export default function EditAdminTemplateWizardPage() {
                     const newQuestion: Question = {
                         id: Date.now() + 1,
                         type: 'text',
-                        label: 'New Single Line Text Field',
-                        instructions: "Enter field instructions here...",
+                        label: 'Single Line Text',
+                        instructions: "",
                         placeholder: "",
                         options: [],
                         required: false,
-                        apiId: slugify(`new_single_line_text_field_${Date.now()}`),
+                        apiId: slugify(`single_line_text_${Date.now()}`),
                     };
                     const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [newQuestion] };
                     return { ...page, sections: [...page.sections, newSection] };
