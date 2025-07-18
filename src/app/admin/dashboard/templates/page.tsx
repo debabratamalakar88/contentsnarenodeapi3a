@@ -130,11 +130,10 @@ export default function ManageTemplatesPage() {
                 
                 if (currentTab === 'active') {
                     const templatesData = await getAdminTemplates(token, { search: searchQuery, category: categorySlug });
-                    setActiveTemplates(templatesData.data || []);
+                    setActiveTemplates(Array.isArray(templatesData.data) ? templatesData.data : []);
                 } else {
                     const archivedData = await getAdminArchivedTemplates(token);
-                     // Ensure archivedData is always an array before setting state
-                    setArchivedTemplates(Array.isArray(archivedData) ? archivedData : []);
+                    setArchivedTemplates(Array.isArray(archivedData.data) ? archivedData.data : []);
                 }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
