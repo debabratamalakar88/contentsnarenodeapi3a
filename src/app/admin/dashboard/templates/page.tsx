@@ -14,11 +14,13 @@ import {
     ArchiveRestore,
     Trash2,
     Eye,
-    PenSquare
+    PenSquare,
+    FileText
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
+import * as React from 'react';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -54,7 +56,6 @@ import {
   softDeleteAdminTemplate,
   restoreAdminTemplate,
   forceDeleteAdminTemplate,
-  // TODO: Add duplicateAdminTemplate API call
   type Template, 
   type TemplateCategory
 } from "@/lib/api";
@@ -71,12 +72,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { iconList } from "@/components/ui/icon-selector";
 
 
-const TemplateIcon = ({ color }: { color?: string }) => {
-    if (!color) return <div className="h-6 w-6 rounded-md bg-muted" />;
-    return <div className="h-6 w-6 rounded-md" style={{ backgroundColor: color }} />;
-}
+const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
+    const IconComponent = useMemo(() => {
+        if (!iconName) return FileText;
+        return iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase())?.icon || FileText;
+    }, [iconName]);
+
+    return (
+        <div className="h-8 w-8 rounded-md flex items-center justify-center" style={{ backgroundColor: categoryColor || 'hsl(var(--muted))' }}>
+            <IconComponent className="h-5 w-5 text-white" />
+        </div>
+    );
+};
 
 
 export default function ManageTemplatesPage() {
@@ -342,10 +352,10 @@ const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
                 <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
-                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                        <Layers className="h-8 w-8 text-slate-400" />
+                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-pink-100 mb-4">
+                        <Layers className="h-8 w-8 text-pink-500" />
                     </div>
-                    <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">ADD NEW TEMPLATE</Button>
+                    <Button variant="secondary" className="pointer-events-none bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 font-semibold">ADD NEW TEMPLATE</Button>
                 </div>
             </Link>
         )}
@@ -385,7 +395,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
             <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
                  <div className="flex items-center gap-2">
-                    <TemplateIcon color={template.category?.color} />
+                    <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
                     <div>
                         <p className="text-sm font-semibold">{template.title}</p>
                     </div>
@@ -424,7 +434,10 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
 
 const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates' | 'isArchived'>) => (
     <TableRow>
-        <TableCell className="font-medium">{template.title}</TableCell>
+        <TableCell className="font-medium flex items-center gap-3">
+          <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+          {template.title}
+        </TableCell>
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>{template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
