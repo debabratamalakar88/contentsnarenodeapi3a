@@ -27,7 +27,7 @@ const adminActions = [
         icon: FileText,
         title: "Global Templates",
         description: "Manage system-wide templates.",
-        href: "#"
+        href: "/admin/dashboard/templates"
     },
     {
         icon: FolderOpen,

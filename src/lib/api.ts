@@ -159,12 +159,17 @@ export interface Submission {
   updated_at: string;
 }
 
-export interface PaginatedRequests {
-    current_page: number;
-    data: Request[];
-    last_page: number;
-    total: number;
+export interface PaginatedResponse<T> {
+    data: T[];
+    meta?: {
+        current_page: number;
+        last_page: number;
+        total: number;
+    }
 }
+
+export interface PaginatedRequests extends PaginatedResponse<Request> {}
+
 
 export interface TemplateCategory {
   id: number;
@@ -178,14 +183,22 @@ export interface TemplateCategory {
   template_count?: number;
 }
 
-export interface PaginatedTemplateCategories {
-    data: TemplateCategory[];
-    meta: {
-      current_page: number;
-      last_page: number;
-      total: number;
-    }
+export interface Template {
+    id: number;
+    title: string;
+    description: string | null;
+    icon: string | null;
+    category_id: number | null;
+    form_data: Page[];
+    is_deleted: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    category?: TemplateCategory;
 }
+
+export interface PaginatedTemplates extends PaginatedResponse<Template> {}
+export interface PaginatedTemplateCategories extends PaginatedResponse<TemplateCategory> {}
 
 
 async function handleResponse(response: Response) {
@@ -540,6 +553,48 @@ export async function restoreAdminTemplateCategory(token: string, id: number): P
 
 export async function forceDeleteAdminTemplateCategory(token: string, id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/admin/template-categories/${id}/force`, token, { method: 'DELETE' });
+}
+
+// --- Admin Template Management ---
+export async function getAdminTemplates(token: string, filters: { search?: string, category?: string } = {}): Promise<PaginatedTemplates> {
+    const url = new URL(`${API_BASE_URL}/api/admin/templates`);
+    if (filters.search) url.searchParams.append('search', filters.search);
+    if (filters.category) url.searchParams.append('category', filters.category);
+    return fetchWithToken(url.toString(), token);
+}
+
+export async function getAdminArchivedTemplates(token: string): Promise<PaginatedTemplates> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/archived`, token);
+}
+
+export async function createAdminTemplate(token: string, data: Partial<Template>): Promise<Template> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates`, token, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function getAdminTemplate(token: string, id: number): Promise<Template> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token);
+}
+
+export async function updateAdminTemplate(token: string, id: number, data: Partial<Template>): Promise<Template> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function softDeleteAdminTemplate(token: string, id: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token, { method: 'DELETE' });
+}
+
+export async function restoreAdminTemplate(token: string, id: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/restore`, token, { method: 'POST' });
+}
+
+export async function forceDeleteAdminTemplate(token: string, id: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/force`, token, { method: 'DELETE' });
 }
 
 
