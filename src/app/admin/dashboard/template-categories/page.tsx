@@ -217,13 +217,14 @@ export default function ManageTemplateCategoriesPage() {
 
   return (
     <>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-            <div>
-                <h1 className="text-2xl font-bold">Template Categories</h1>
-                <p className="text-muted-foreground">Manage your template categories.</p>
-            </div>
-            <div className="flex items-center gap-2">
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col h-full">
+          <div className="flex items-center p-6 pb-0 border-b bg-card">
+              <TabsList className="bg-transparent p-0">
+                  <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE</TabsTrigger>
+                  <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED</TabsTrigger>
+              </TabsList>
+              <div className="ml-auto flex items-center gap-2 mb-2">
                  <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -250,14 +251,12 @@ export default function ManageTemplateCategoriesPage() {
                     <Link href="/admin/dashboard/template-categories/new"><PlusCircle className="mr-2 h-4 w-4"/>Add Category</Link>
                 </Button>
             </div>
-        </div>
-        <Tabs value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
-          </TabsList>
-          <TabsContent value="active">{renderContent(false)}</TabsContent>
-          <TabsContent value="archived">{renderContent(true)}</TabsContent>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
+            <TabsContent value="active">{renderContent(false)}</TabsContent>
+            <TabsContent value="archived">{renderContent(true)}</TabsContent>
+          </div>
         </Tabs>
       </div>
 
@@ -365,57 +364,66 @@ function CategoriesGrid({ categories, isArchived, onArchive, onRestore, onForceD
 
 function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForceDelete }: CategoryViewProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Icon</TableHead>
-          <TableHead>Slug</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>{isArchived ? 'Archived At' : 'Created At'}</TableHead>
-          <TableHead><span className="sr-only">Actions</span></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-          {categories.map((category) => {
-              const dateString = isArchived ? category.deleted_at : category.created_at;
-              return (
-                  <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.title}</TableCell>
-                      <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
-                      <TableCell className="font-mono text-xs">{category.slug}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
-                      <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
-                      <TableCell>
-                          <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                              </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {isArchived ? (
-                                  <>
-                                      <DropdownMenuItem onSelect={() => onRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => onForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                                  </>
-                              ) : (
-                                  <>
-                                      <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                  </>
-                              )}
-                          </DropdownMenuContent>
-                          </DropdownMenu>
-                      </TableCell>
-                  </TableRow>
-              )
-          })}
-      </TableBody>
-    </Table>
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Icon</TableHead>
+            <TableHead>Slug</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>{isArchived ? 'Archived At' : 'Created At'}</TableHead>
+            <TableHead><span className="sr-only">Actions</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+            {categories.map((category) => {
+                const dateString = isArchived ? category.deleted_at : category.created_at;
+                return (
+                    <TableRow key={category.id}>
+                        <TableCell className="font-medium">{category.title}</TableCell>
+                        <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
+                        <TableCell className="font-mono text-xs">{category.slug}</TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
+                        <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
+                        <TableCell>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {isArchived ? (
+                                    <>
+                                        <DropdownMenuItem onSelect={() => onRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                )
+            })}
+            {!isArchived && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-4">
+                  <Link href="/admin/dashboard/template-categories/new" className="text-primary hover:underline text-sm font-medium">Add a category...</Link>
+                </TableCell>
+              </TableRow>
+            )}
+        </TableBody>
+      </Table>
+    </Card>
   )
 }
 
@@ -430,10 +438,12 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list'}) {
       )
     }
     return (
-         <Table>
-          <TableHeader><TableRow>{[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-          <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
-        </Table>
+        <Card>
+            <Table>
+                <TableHeader><TableRow>{[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+                <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+            </Table>
+        </Card>
     )
 }
 
