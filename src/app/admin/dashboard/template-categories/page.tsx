@@ -244,7 +244,7 @@ export default function ManageTemplateCategoriesPage() {
                       <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button asChild>
+                <Button asChild className="bg-primary/10 text-primary hover:bg-primary/20">
                     <Link href="/admin/dashboard/template-categories/new"><PlusCircle className="mr-2 h-4 w-4"/>Add Category</Link>
                 </Button>
             </div>
