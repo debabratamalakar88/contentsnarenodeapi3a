@@ -25,13 +25,13 @@ import {
   type TemplateCategory,
 } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { ChevronLeft, Loader2, type LucideIcon } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { IconSelector, iconList } from '@/components/ui/icon-selector'
+import { ColorSelector } from '@/components/ui/color-selector'
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  icon: z.string().min(1, 'Icon is required.'),
+  color: z.string().optional(),
   description: z.string().optional(),
 })
 
@@ -48,7 +48,7 @@ export default function EditTemplateCategoryPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      icon: '',
+      color: '',
       description: '',
     },
   })
@@ -64,7 +64,7 @@ export default function EditTemplateCategoryPage() {
         const categoryData = await getAdminTemplateCategory(token, id)
         form.reset({
           title: categoryData.title,
-          icon: categoryData.icon || '',
+          color: categoryData.color || '',
           description: categoryData.description || '',
         })
       } catch (error: any) {
@@ -81,7 +81,7 @@ export default function EditTemplateCategoryPage() {
   }, [id, router, toast, form])
 
   const { isSubmitting } = form.formState
-  const selectedIconName = form.watch('icon')
+  const selectedColor = form.watch('color')
 
   async function onSubmit(values: FormValues) {
     const token = localStorage.getItem('adminAuthToken')
@@ -109,10 +109,6 @@ export default function EditTemplateCategoryPage() {
       })
     }
   }
-
-  const IconComponent =
-    iconList.find((i) => i.name.toLowerCase() === selectedIconName?.toLowerCase())
-      ?.icon 
 
   if (isLoading) {
     return (
@@ -180,7 +176,7 @@ export default function EditTemplateCategoryPage() {
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-xl mx-auto space-y-8">
             <div className="flex flex-col items-center gap-4">
-               {IconComponent && <IconComponent className="h-24 w-24 text-primary" />}
+               <div className="h-24 w-24 rounded-full border-4" style={{ borderColor: selectedColor }}/>
             </div>
             <div className="space-y-6">
               <FormField
@@ -198,12 +194,12 @@ export default function EditTemplateCategoryPage() {
               />
               <FormField
                 control={form.control}
-                name="icon"
+                name="color"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Icon</FormLabel>
+                    <FormLabel>Color</FormLabel>
                     <FormControl>
-                       <IconSelector onValueChange={field.onChange} defaultValue={field.value}/>
+                       <ColorSelector value={field.value} onChange={field.onChange}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -685,7 +685,7 @@ Fetch a paginated list of template categories, optionally searchable by `title`.
       "id": 1,
       "title": "Accounting",
       "slug": "accounting",
-      "icon": "briefcase",
+      "color": "#f97316",
       "description": "Templates related to financial accounting",
       "created_at": "...",
       "updated_at": "..."
@@ -709,7 +709,7 @@ Create a new template category.
 ```json
 {
   "title": "Bookkeeping",
-  "icon": "notebook",
+  "color": "#0ea5e9",
   "description": "Basic bookkeeping templates"
 }
 ```
@@ -720,7 +720,7 @@ Create a new template category.
   "id": 2,
   "title": "Bookkeeping",
   "slug": "bookkeeping",
-  "icon": "notebook",
+  "color": "#0ea5e9",
   "description": "Basic bookkeeping templates",
   ...
 }
@@ -744,7 +744,7 @@ Update an existing category.
 ```json
 {
   "title": "Client Onboarding",
-  "icon": "user-check"
+  "color": "#8b5cf6"
 }
 ```
 
@@ -838,4 +838,3 @@ The `form_data` column will store an array of page objects, where each object ha
   - `label`: String
   - `value`: String
 ```
-

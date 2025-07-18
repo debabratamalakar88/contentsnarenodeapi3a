@@ -20,12 +20,12 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { createAdminTemplateCategory } from '@/lib/api'
-import { ChevronLeft, Loader2, type LucideIcon } from 'lucide-react'
-import { IconSelector, iconList } from '@/components/ui/icon-selector'
+import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ColorSelector } from '@/components/ui/color-selector'
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  icon: z.string().min(1, 'Icon is required.'),
+  color: z.string().optional(),
   description: z.string().optional(),
 })
 
@@ -39,16 +39,13 @@ export default function NewTemplateCategoryPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      icon: '',
+      color: '#0ea5e9', // default to a pleasant blue
       description: '',
     },
   })
 
   const { isSubmitting } = form.formState
-  const selectedIconName = form.watch('icon');
-  
-  const IconComponent = iconList.find(i => i.name.toLowerCase() === selectedIconName?.toLowerCase())?.icon;
-
+  const selectedColor = form.watch('color')
 
   async function onSubmit(values: FormValues) {
     const token = localStorage.getItem('adminAuthToken')
@@ -118,7 +115,7 @@ export default function NewTemplateCategoryPage() {
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-xl mx-auto space-y-8">
             <div className="flex flex-col items-center gap-4">
-               {IconComponent && <IconComponent className="h-24 w-24 text-primary" />}
+               <div className="h-24 w-24 rounded-full border-4" style={{ borderColor: selectedColor }}/>
             </div>
             <div className="space-y-6">
               <FormField
@@ -136,12 +133,12 @@ export default function NewTemplateCategoryPage() {
               />
                <FormField
                 control={form.control}
-                name="icon"
+                name="color"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Icon</FormLabel>
+                    <FormLabel>Color</FormLabel>
                      <FormControl>
-                       <IconSelector onValueChange={field.onChange} defaultValue={field.value}/>
+                       <ColorSelector value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

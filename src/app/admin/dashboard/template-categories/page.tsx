@@ -40,7 +40,6 @@ import {
   ArchiveRestore,
   Trash2,
   PenSquare,
-  type LucideIcon,
   LayoutGrid,
   List,
   ChevronDown,
@@ -59,14 +58,11 @@ import { format, parseISO } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { iconList } from '@/components/ui/icon-selector'
 import { Card, CardContent } from '@/components/ui/card'
 
-const CategoryIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {
-    if (!iconName) return <Layers className={className || "h-4 w-4"} />;
-    const IconComponent = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase())?.icon;
-    if (!IconComponent) return <Layers className={className || "h-4 w-4"} />;
-    return <IconComponent className={className || "h-4 w-4"} />
+const CategoryIcon = ({ color }: { color?: string }) => {
+    if (!color) return <div className="h-4 w-4 rounded-full bg-muted-foreground" />;
+    return <div className="h-4 w-4 rounded-full" style={{ backgroundColor: color }} />;
 }
 
 export default function ManageTemplateCategoriesPage() {
@@ -343,7 +339,7 @@ function CategoriesGrid({ categories, isArchived, onArchive, onRestore, onForceD
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100">
-                <CategoryIcon iconName={category.icon} className="h-8 w-8 text-slate-500" />
+                <div className="h-8 w-8 rounded-full" style={{ backgroundColor: category.color || 'hsl(var(--muted-foreground))' }} />
             </div>
             <h3 className="font-semibold text-lg">{category.title}</h3>
             <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">{category.description}</p>
@@ -369,8 +365,6 @@ function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForce
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>Icon</TableHead>
-            <TableHead>Slug</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>{isArchived ? 'Archived At' : 'Created At'}</TableHead>
             <TableHead><span className="sr-only">Actions</span></TableHead>
@@ -381,9 +375,12 @@ function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForce
                 const dateString = isArchived ? category.deleted_at : category.created_at;
                 return (
                     <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.title}</TableCell>
-                        <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
-                        <TableCell className="font-mono text-xs">{category.slug}</TableCell>
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                                <CategoryIcon color={category.color} />
+                                <span>{category.title}</span>
+                            </div>
+                        </TableCell>
                         <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
                         <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
                         <TableCell>
@@ -440,10 +437,9 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list'}) {
     return (
         <Card>
             <Table>
-                <TableHeader><TableRow>{[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-                <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+                <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+                <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
             </Table>
         </Card>
     )
 }
-

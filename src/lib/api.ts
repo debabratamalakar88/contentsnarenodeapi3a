@@ -170,11 +170,12 @@ export interface TemplateCategory {
   id: number;
   title: string;
   slug: string;
-  icon?: string;
+  color?: string;
   description?: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  template_count?: number;
 }
 
 export interface PaginatedTemplateCategories {

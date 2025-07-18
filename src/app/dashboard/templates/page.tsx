@@ -7,25 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-    Home, MoreHorizontal, Filter, Search, LayoutGrid, DollarSign, Building2, Receipt, FileText, 
-    Book, Briefcase, Palette, GraduationCap, PartyPopper, Landmark, Shield, UserCheck, 
-    Handshake, Mail, Users, Scale, Monitor, Code, Star, MessageSquare, Utensils, Mic,
-    ThumbsUp, Video, Wrench, Link2, CalendarDays, Target, Plus, FolderOpen, type LucideIcon
-} from "lucide-react";
+import { MoreHorizontal, Search, Plus, FolderOpen } from "lucide-react";
 import { getTemplateCategories, getTemplates, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { iconList } from '@/components/ui/icon-selector';
 
 const TemplateCard = ({ template, onSelect }: { template: any; onSelect: () => void; }) => {
-    const IconComponent = iconList.find(i => i.name.toLowerCase() === template.icon?.toLowerCase())?.icon || FileText;
-    
     return (
       <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card" onClick={onSelect}>
         <CardContent className="p-4 flex gap-4 items-start flex-grow">
           <div className={`p-3 rounded-lg bg-muted flex-shrink-0`}>
-            <IconComponent className="h-6 w-6 text-primary" />
+             <div className="h-6 w-6 rounded-full" style={{ backgroundColor: template.category?.color || 'hsl(var(--muted-foreground))' }} />
           </div>
           <div className="flex-grow">
             <h3 className="font-semibold">{template.title}</h3>
@@ -91,7 +83,7 @@ export default function TemplatesPage() {
     };
 
     const groupedTemplates = templates.reduce((acc, tpl) => {
-        const categoryName = tpl.category?.name || 'Uncategorized';
+        const categoryName = tpl.category?.title || 'Uncategorized';
         if (!acc[categoryName]) {
             acc[categoryName] = { ...tpl.category, items: [] };
         }
@@ -116,7 +108,7 @@ export default function TemplatesPage() {
                                     className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <CategoryIcon iconName={cat.icon} />
+                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.title}</span>
                                     </div>
                                     <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
@@ -167,7 +159,8 @@ export default function TemplatesPage() {
                             Object.entries(groupedTemplates).map(([categoryName, data]) => (
                                 <section key={categoryName}>
                                     <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
-                                        <CategoryIcon iconName={data.icon} /> {categoryName}
+                                        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
+                                        {categoryName}
                                     </h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                         {data.items.map((template) => (
