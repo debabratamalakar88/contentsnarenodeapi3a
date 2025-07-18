@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template } from "@/lib/api";
+import { getAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, getAdminTemplateCategories, TemplateCategory } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -105,6 +105,9 @@ export default function EditAdminTemplateWizardPage() {
     // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [categoryId, setCategoryId] = useState<number | null>(null);
+    const [templateIcon, setTemplateIcon] = useState<string>("");
+    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,10 +133,18 @@ export default function EditAdminTemplateWizardPage() {
 
         async function fetchTemplateData() {
             try {
-                const data = await getAdminTemplate(token, id);
+                const [data, categoriesData] = await Promise.all([
+                    getAdminTemplate(token, id),
+                    getAdminTemplateCategories(token)
+                ]);
+                
                 setTemplateTitle(data.title);
                 setTemplateDescription(data.description || "");
+                setCategoryId(data.category_id || null);
+                setTemplateIcon(data.icon || "");
+                setCategories(categoriesData.data);
                 setPages(data.form_data || []);
+
                 if (data.form_data?.length > 0) {
                     setActivePageId(data.form_data[0].id);
                 }
@@ -168,10 +179,12 @@ export default function EditAdminTemplateWizardPage() {
         }
         
         try {
-            const payload = {
+            const payload: Partial<Template> = {
                 title: templateTitle,
                 description: templateDescription,
                 form_data: pages,
+                category_id: categoryId,
+                icon: templateIcon,
             };
             await updateAdminTemplate(token, id, payload);
             toast({ title: "Template draft updated" });
@@ -201,10 +214,12 @@ export default function EditAdminTemplateWizardPage() {
             return;
         }
         
-        const payload = {
+        const payload: Partial<Template> = {
             title: templateTitle,
             description: templateDescription,
             form_data: pages,
+            category_id: categoryId,
+            icon: templateIcon,
         };
 
         try {
@@ -439,7 +454,20 @@ export default function EditAdminTemplateWizardPage() {
         }
         
         switch (currentStep) {
-            case "Essentials": return <EssentialsStep title={templateTitle} setTitle={setTemplateTitle} description={templateDescription} setDescription={setTemplateDescription} />;
+            case "Essentials": 
+                return (
+                    <EssentialsStep 
+                        title={templateTitle} 
+                        setTitle={setTemplateTitle} 
+                        description={templateDescription} 
+                        setDescription={setTemplateDescription}
+                        categoryId={categoryId}
+                        setCategoryId={setCategoryId}
+                        icon={templateIcon}
+                        setIcon={setTemplateIcon}
+                        categories={categories}
+                    />
+                );
             case "Builder": return <BuilderStep
                                         requestTitle={templateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}

@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { createAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType } from "@/lib/api";
+import { createAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, TemplateCategory, getAdminTemplateCategories } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -119,10 +119,14 @@ export default function NewAdminTemplateWizardPage() {
     // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [categoryId, setCategoryId] = useState<number | null>(null);
+    const [templateIcon, setTemplateIcon] = useState<string>("");
+    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
     const [templateId, setTemplateId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -133,6 +137,17 @@ export default function NewAdminTemplateWizardPage() {
     const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem('adminAuthToken');
+        if (!token) return;
+
+        getAdminTemplateCategories(token)
+            .then(data => setCategories(data.data || []))
+            .catch(() => toast({ title: "Failed to load categories", variant: "destructive" }))
+            .finally(() => setIsLoadingCategories(false));
+    }, [toast]);
+
 
     const nextStep = async () => {
         if (currentStepIndex >= steps.length - 1) { // On last step, save and exit
@@ -158,10 +173,12 @@ export default function NewAdminTemplateWizardPage() {
         }
         
         try {
-            const payload = {
+            const payload: Partial<Template> = {
                 title: templateTitle,
                 description: templateDescription,
                 form_data: pages,
+                category_id: categoryId,
+                icon: templateIcon,
             };
 
             let currentTemplateId = templateId;
@@ -201,10 +218,12 @@ export default function NewAdminTemplateWizardPage() {
             return;
         }
         
-        const payload = {
+        const payload: Partial<Template> = {
             title: templateTitle,
             description: templateDescription,
             form_data: pages,
+            category_id: categoryId,
+            icon: templateIcon,
         };
 
         try {
@@ -225,7 +244,7 @@ export default function NewAdminTemplateWizardPage() {
     };
 
     const handleBack = () => {
-        if (currentStepIndex > 0) {
+        if (currentStepIndex > 0 && templateId) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/admin/dashboard/templates/edit/${templateId}/${prevStepSlug}`);
         } else {
@@ -449,7 +468,20 @@ export default function NewAdminTemplateWizardPage() {
 
     const renderStep = () => {
         switch (currentStep) {
-            case "Essentials": return <EssentialsStep title={templateTitle} setTitle={setTemplateTitle} description={templateDescription} setDescription={setTemplateDescription} />;
+            case "Essentials": 
+                return (
+                    <EssentialsStep 
+                        title={templateTitle} 
+                        setTitle={setTemplateTitle} 
+                        description={templateDescription} 
+                        setDescription={setTemplateDescription}
+                        categoryId={categoryId}
+                        setCategoryId={setCategoryId}
+                        icon={templateIcon}
+                        setIcon={setTemplateIcon}
+                        categories={categories}
+                    />
+                );
             case "Builder": return <BuilderStep
                                         requestTitle={templateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
