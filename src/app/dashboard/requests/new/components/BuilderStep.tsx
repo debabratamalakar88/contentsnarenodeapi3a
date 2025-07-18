@@ -119,7 +119,23 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
                                     {pages.length > 1 && (
                                         <>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onClick={() => deletePage(page.id)}>Delete Page</DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete Page</DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete this page and all its content.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => deletePage(page.id)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </>
                                     )}
                                 </DropdownMenuContent>
@@ -391,7 +407,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                                     </div>
                                                                 </div>
                                                                 <div className="p-3">
-                                                                    <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0" defaultValue={question.instructions} />
+                                                                    <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} />
                                                                 </div>
                                                             </div>
                                                         )}
