@@ -463,3 +463,5 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         </TableCell>
     </TableRow>
 );
+
+    
