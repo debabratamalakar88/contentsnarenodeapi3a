@@ -277,7 +277,8 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                     <Pencil className="h-4 w-4" />
                                 </Button>
                             </div>
-                             {requestDescription === undefined && <Textarea 
+                            
+                            {page.instructions && <Textarea 
                                 placeholder="Enter page instructions here..." 
                                 className="mb-4 min-h-[60px]"
                                 defaultValue={page.instructions}
@@ -390,7 +391,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                                     </div>
                                                                 </div>
                                                                 <div className="p-3">
-                                                                    <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-0" defaultValue={question.instructions} />
+                                                                    <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0" defaultValue={question.instructions} />
                                                                 </div>
                                                             </div>
                                                         )}
