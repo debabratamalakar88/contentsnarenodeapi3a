@@ -159,8 +159,8 @@ export default function EditAdminClientPage() {
                             <h1 className="text-lg font-semibold">Edit Client Details</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300"><Link href={`/admin/dashboard/clients/${id}`}>CANCEL</Link></Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}SAVE CHANGES</Button>
+                            <Button variant="outline" type="button" asChild><Link href={`/admin/dashboard/clients/${id}`}>CANCEL</Link></Button>
+                            <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}SAVE CHANGES</Button>
                         </div>
                     </div>
                 </header>
@@ -168,7 +168,7 @@ export default function EditAdminClientPage() {
                     <div className="max-w-xl mx-auto space-y-8">
                         <div className="flex flex-col items-center gap-2">
                             <Avatar className="h-24 w-24"><AvatarFallback className="bg-green-100 text-green-800 text-4xl font-bold border">{initials || 'CL'}</AvatarFallback></Avatar>
-                            <Button variant="link" type="button" className="text-indigo-600 font-semibold">Change Image</Button>
+                            <Button variant="link" type="button" className="text-primary font-semibold">Change Image</Button>
                         </div>
                         <div className="space-y-6">
                             <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label><FormControl><Input id="fullName" placeholder="Client full name..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -177,7 +177,7 @@ export default function EditAdminClientPage() {
                                 <Label htmlFor="companyName" className="font-semibold text-gray-700">Company Name (optional)</Label>
                                 <div className="flex flex-wrap items-center gap-2 mt-2">
                                     {companies?.map((company, index) => (
-                                        <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">{company}<button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"><X className="h-3 w-3" /></button></Badge>
+                                        <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">{company}<button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"><X className="h-3 w-3" /></button></Badge>
                                     ))}
                                 </div>
                                 <Input id="companyName" value={companyInput} onChange={(e) => setCompanyInput(e.target.value)} onKeyDown={handleCompanyKeyDown} placeholder="Type a company name and press Enter..." className="bg-gray-50 mt-2"/>

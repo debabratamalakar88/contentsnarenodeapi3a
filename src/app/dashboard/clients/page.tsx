@@ -208,7 +208,7 @@ export default function ClientsPage() {
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
               <Layers className="h-8 w-8 text-slate-400" />
             </div>
-            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">
+            <Button variant="secondary" className="pointer-events-none">
               ADD NEW CLIENT
             </Button>
           </Card>
@@ -335,10 +335,10 @@ export default function ClientsPage() {
                   </TabsTrigger>
               </TabsList>
               <div className="ml-auto flex items-center gap-2 mb-2">
-                  <Button variant="outline" className="text-indigo-600 border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">IMPORT</Button>
+                  <Button variant="outline">IMPORT</Button>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="flex items-center gap-1 text-primary border-primary hover:bg-primary/5 hover:text-primary">
+                          <Button variant="outline" className="flex items-center gap-1 text-primary border-primary bg-primary/10 hover:bg-primary/10 hover:text-primary">
                               <ViewIcon className="h-4 w-4" />
                               <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
                               <ChevronDown className="h-4 w-4 text-muted-foreground" />

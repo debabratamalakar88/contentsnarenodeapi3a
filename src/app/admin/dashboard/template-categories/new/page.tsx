@@ -95,14 +95,12 @@ export default function NewTemplateCategoryPage() {
                 variant="outline"
                 type="button"
                 asChild
-                className="text-gray-700 font-semibold border-gray-300"
               >
                 <Link href="/admin/dashboard/template-categories">CANCEL</Link>
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -104,10 +104,10 @@ export default function NewUserPage() {
                   <h1 className="text-lg font-semibold">New User Details</h1>
               </div>
               <div className="flex items-center gap-2">
-                  <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
+                  <Button variant="outline" type="button" asChild>
                       <Link href="/admin/dashboard/users">CANCEL</Link>
                   </Button>
-                  <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
+                  <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       SAVE
                   </Button>
@@ -124,7 +124,7 @@ export default function NewUserPage() {
                           )}
                       </AvatarFallback>
                   </Avatar>
-                  <Button variant="link" type="button" className="text-indigo-600 font-semibold">Change Image</Button>
+                  <Button variant="link" type="button" className="text-primary font-semibold">Change Image</Button>
               </div>
               <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,5 +148,3 @@ export default function NewUserPage() {
     </Form>
   )
 }
-
-    

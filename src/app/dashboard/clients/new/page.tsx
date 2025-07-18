@@ -120,10 +120,10 @@ export default function NewClientPage() {
                             <h1 className="text-lg font-semibold">New Client Details</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
+                            <Button variant="outline" type="button" asChild>
                                 <Link href="/dashboard/clients">CANCEL</Link>
                             </Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
+                            <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 SAVE
                             </Button>
@@ -140,7 +140,7 @@ export default function NewClientPage() {
                                     )}
                                 </AvatarFallback>
                             </Avatar>
-                            <Button variant="link" type="button" className="text-indigo-600 font-semibold">Change Image</Button>
+                            <Button variant="link" type="button" className="text-primary font-semibold">Change Image</Button>
                         </div>
 
                         <div className="space-y-6">
@@ -182,7 +182,7 @@ export default function NewClientPage() {
                                     {companies.map((company, index) => (
                                         <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">
                                             {company}
-                                            <button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500">
+                                            <button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </Badge>
