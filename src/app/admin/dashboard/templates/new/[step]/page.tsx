@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 
+const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
 const initialPagesData: Page[] = [
   {
@@ -38,7 +39,18 @@ const initialPagesData: Page[] = [
             id: 101,
             title: "1.1 New Section",
             instructions: "",
-            questions: []
+            questions: [
+                { 
+                    id: 1001, 
+                    label: "Single Line Text", 
+                    type: 'text', 
+                    instructions: "", 
+                    placeholder: "", 
+                    options: undefined, 
+                    required: false,
+                    apiId: slugify(`single_line_text_${Date.now()}`)
+                },
+            ]
         }
     ]
   },
@@ -256,8 +268,6 @@ export default function NewAdminTemplateWizardPage() {
         if (!templateId) return; // Can't navigate without an ID
         router.push(`/admin/dashboard/templates/edit/${templateId}/${slug}`);
     };
-
-    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
       return pagesToRenumber.map((page, pageIndex) => {
@@ -670,4 +680,3 @@ export default function NewAdminTemplateWizardPage() {
         </div>
     );
 }
-
