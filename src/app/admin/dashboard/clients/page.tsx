@@ -5,9 +5,6 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -39,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, Loader2, PlusCircle, Search, LayoutGrid, ChevronDown, List, ArrowUpDown, Layers, User } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -192,6 +189,31 @@ export default function ManageClientsPage() {
     users: allUsers,
   };
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+  
+  const renderContent = (isArchived: boolean) => {
+    if (isLoading) {
+      return <LoadingSkeleton view={viewMode} />;
+    }
+    if (filteredClients.length === 0) {
+      const message = isArchived ? "No archived clients found." : "No active clients found.";
+      const action = !isArchived ? <Button asChild className="mt-4"><Link href="/admin/dashboard/clients/new">Add New Client</Link></Button> : null;
+      return (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">{message}</p>
+          {action}
+        </div>
+      );
+    }
+    const viewProps = {
+      clients: filteredClients,
+      isArchived,
+      onArchive: setClientToArchive,
+      onRestore: setClientToRestore,
+      onForceDelete: setClientToForceDelete,
+      users: allUsers,
+    };
+    return viewMode === 'grid' ? <ClientsGrid {...viewProps} /> : <ClientsTable {...viewProps} />;
+  }
 
   return (
     <>
@@ -210,7 +232,7 @@ export default function ManageClientsPage() {
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
+                          <UserIcon className="h-4 w-4" />
                           <span>{selectedUserName}</span>
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       </Button>
@@ -245,10 +267,10 @@ export default function ManageClientsPage() {
           
           <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
             <TabsContent value="active">
-              {isLoading ? <LoadingSkeleton view={viewMode} /> : <ClientsGrid {...viewProps} isArchived={false} viewMode={viewMode}/>}
+                {renderContent(false)}
             </TabsContent>
             <TabsContent value="archived">
-              {isLoading ? <LoadingSkeleton view={viewMode} /> : <ClientsGrid {...viewProps} isArchived={true} viewMode={viewMode}/>}
+                {renderContent(true)}
             </TabsContent>
           </div>
         </Tabs>
@@ -280,20 +302,14 @@ export default function ManageClientsPage() {
 
 interface ClientViewProps {
   clients: Client[];
-  isLoading: boolean;
   isArchived: boolean;
   onArchive: (client: Client) => void;
   onRestore: (client: Client) => void;
   onForceDelete: (client: Client) => void;
-  viewMode: 'grid' | 'list';
   users: UserType[];
 }
 
-function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete, viewMode, users }: ClientViewProps) {
-  if (viewMode === 'list') {
-    return <ClientsTable clients={clients} isArchived={isArchived} onArchive={onArchive} onRestore={onRestore} onForceDelete={onForceDelete} users={users} />;
-  }
-
+function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete, users }: ClientViewProps) {
   const getUserName = (userId: number | null) => {
     if (userId === null) return 'Admin';
     const user = users.find(u => u.id === userId);
@@ -335,7 +351,7 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
   )
 }
 
-function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete, users }: Omit<ClientViewProps, 'viewMode' | 'isLoading'>) {
+function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete, users }: ClientViewProps) {
    const getUserName = (userId: number | null) => {
     if (userId === null) return 'Admin';
     const user = users.find(u => u.id === userId);

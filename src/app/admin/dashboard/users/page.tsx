@@ -39,7 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, Loader2, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminUsers, 
@@ -155,14 +155,31 @@ export default function ManageUsersPage() {
     }
   };
 
-  const viewProps = {
-    users: filteredUsers,
-    isLoading,
-    onArchive: setUserToArchive,
-    onRestore: setUserToRestore,
-    onForceDelete: setUserToForceDelete,
-  };
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+  
+  const renderContent = (isArchived: boolean) => {
+    if (isLoading) {
+      return <LoadingSkeleton view={viewMode} />;
+    }
+    if (filteredUsers.length === 0) {
+      const message = isArchived ? "No archived users found." : "No active users found.";
+      const action = !isArchived ? <Button asChild className="mt-4"><Link href="/admin/dashboard/users/new">Create a User</Link></Button> : null;
+      return (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">{message}</p>
+          {action}
+        </div>
+      );
+    }
+    const viewProps = {
+      users: filteredUsers,
+      isArchived,
+      onArchive: setUserToArchive,
+      onRestore: setUserToRestore,
+      onForceDelete: setUserToForceDelete,
+    };
+    return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
+  }
 
   return (
     <>
@@ -205,18 +222,10 @@ export default function ManageUsersPage() {
             </div>
             <div className="flex-1 overflow-y-auto p-6 bg-muted/40">
                 <TabsContent value="active">
-                  {isLoading ? <LoadingSkeleton view={viewMode} /> : (
-                    viewMode === 'grid' 
-                      ? <UsersGrid {...viewProps} isArchived={false} /> 
-                      : <UsersTable {...viewProps} isArchived={false} />
-                  )}
+                  {renderContent(false)}
                 </TabsContent>
                 <TabsContent value="archived">
-                    {isLoading ? <LoadingSkeleton view={viewMode} /> : (
-                      viewMode === 'grid' 
-                      ? <UsersGrid {...viewProps} isArchived={true} /> 
-                      : <UsersTable {...viewProps} isArchived={true} />
-                    )}
+                  {renderContent(true)}
                 </TabsContent>
             </div>
         </Tabs>
@@ -274,14 +283,13 @@ export default function ManageUsersPage() {
 
 interface UsersViewProps {
   users: UserType[];
-  isLoading: boolean;
   isArchived: boolean;
   onArchive: (user: UserType) => void;
   onRestore: (user: UserType) => void;
   onForceDelete: (user: UserType) => void;
 }
 
-function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: Omit<UsersViewProps, 'isLoading'>) {
+function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {users.map(user => (
@@ -366,7 +374,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: O
   )
 }
 
-function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: Omit<UsersViewProps, 'isLoading'>) {
+function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
     <Card>
       <Table>
@@ -461,20 +469,6 @@ function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: 
                 <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
                   Add a user...
                 </Link>
-              </TableCell>
-            </TableRow>
-          )}
-           {users.length === 0 && !isArchived && (
-            <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                No active users found.
-              </TableCell>
-            </TableRow>
-          )}
-          {users.length === 0 && isArchived && (
-            <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                No archived users found.
               </TableCell>
             </TableRow>
           )}
