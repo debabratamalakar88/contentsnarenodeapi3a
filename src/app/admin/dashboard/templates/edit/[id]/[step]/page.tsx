@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -452,6 +453,13 @@ export default function EditAdminTemplateWizardPage() {
         }
     };
 
+    const stepContainerClasses = () => {
+        if (currentStep === 'Builder' || currentStep === 'Preview') {
+            return 'bg-white';
+        }
+        return 'p-6 flex justify-center items-start';
+    };
+
     return (
         <div className="flex flex-col h-full bg-background">
             <div className="flex items-center gap-4 p-4 border-b">
@@ -478,7 +486,7 @@ export default function EditAdminTemplateWizardPage() {
                 </div>
             </div>
             
-            <div className={cn("flex-grow overflow-y-scroll", (currentStep === 'Builder' || currentStep === 'Preview') ? "" : "p-6 flex justify-center items-start")}>
+            <div className={cn("flex-grow overflow-y-scroll", stepContainerClasses())}>
                 {renderStep()}
             </div>
 
