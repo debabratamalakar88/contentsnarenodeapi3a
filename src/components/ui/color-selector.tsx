@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/popover'
 
 export const colorPalette = [
-    '#0ea5e9', '#f97316', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#3b82f6', '#ec4899'
+    '#f9a825', '#cce7ff', '#f59e0b', '#3b82f6', '#0c4a6e', '#d8b4fe', '#3730a3',
+    '#6d28d9', '#000000', '#a5f3fc', '#fde68a', '#facc15', '#e879f9', '#f97316',
+    '#ef4444'
 ];
 
 interface ColorSelectorProps {
