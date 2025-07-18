@@ -127,12 +127,14 @@ export default function ManageTemplatesPage() {
                 }
                 
                 const categorySlug = selectedCategory === 'all' ? undefined : selectedCategory;
+                
                 if (currentTab === 'active') {
                     const templatesData = await getAdminTemplates(token, { search: searchQuery, category: categorySlug });
                     setActiveTemplates(templatesData.data || []);
                 } else {
+                    // Archived templates are not paginated/filtered on the backend in the current implementation
                     const archivedData = await getAdminArchivedTemplates(token);
-                    setArchivedTemplates(archivedData.data || []);
+                    setArchivedTemplates(archivedData || []);
                 }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
