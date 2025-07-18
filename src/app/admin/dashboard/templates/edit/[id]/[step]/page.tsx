@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 const steps = [
@@ -321,6 +322,48 @@ export default function EditAdminTemplateWizardPage() {
         });
     };
 
+    const duplicateSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const page = newPages.find(p => p.id === pageId);
+            if (!page) return prevPages;
+
+            const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return prevPages;
+
+            const sectionToDuplicate = page.sections[sectionIndex];
+            const newSection: Section = JSON.parse(JSON.stringify(sectionToDuplicate));
+            
+            newSection.id = Date.now();
+            const originalTitle = newSection.title.replace(/^[0-9\.]+\s*/, '');
+            newSection.title = `${originalTitle.replace(/\s*\(Copy\)/gi, '').trim()} (Copy)`;
+            newSection.questions.forEach(q => {
+                q.id = Date.now() + Math.random();
+                q.apiId = slugify(`${q.label}_${Date.now()}`);
+            });
+            
+            page.sections.splice(sectionIndex + 1, 0, newSection);
+            return renumberItems(newPages);
+        });
+    };
+
+    const deleteSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = prevPages.map(page => {
+                if (page.id === pageId) {
+                    if (page.sections.length <= 1) {
+                         toast({ title: "Action Forbidden", description: "You cannot delete the only section on a page.", variant: "destructive" });
+                         return page;
+                    }
+                    const updatedSections = page.sections.filter(s => s.id !== sectionId);
+                    return { ...page, sections: updatedSections };
+                }
+                return page;
+            });
+            return renumberItems(newPages);
+        });
+    };
+
     const updatePageTitle = (pageId: number, newTitle: string) => setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, title: newTitle } : page));
     const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, title: newTitle } : section) } : page));
 
@@ -475,7 +518,9 @@ export default function EditAdminTemplateWizardPage() {
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}
-                                        duplicatePage={duplicatePage} deletePage={deletePage} reorderQuestions={reorderQuestions}
+                                        duplicatePage={duplicatePage} deletePage={deletePage}
+                                        duplicateSection={duplicateSection} deleteSection={deleteSection}
+                                        reorderQuestions={reorderQuestions}
                                     />;
             case "Preview": return <PreviewStep title={templateTitle} description={templateDescription} pages={pages} />;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
