@@ -323,12 +323,24 @@ export default function NewAdminTemplateWizardPage() {
           return renumberItems(newPages);
       });
     };
+    
+    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     const addSection = (pageId: number) => {
         setPages(prevPages => {
             const newPages = prevPages.map(page => {
                 if (page.id === pageId) {
-                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [] };
+                     const newQuestion: Question = {
+                        id: Date.now() + 1,
+                        type: 'text',
+                        label: 'New Single Line Text Field',
+                        instructions: "Enter field instructions here...",
+                        placeholder: "",
+                        options: [],
+                        required: false,
+                        apiId: slugify(`new_single_line_text_field_${Date.now()}`),
+                    };
+                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [newQuestion] };
                     return { ...page, sections: [...page.sections, newSection] };
                 }
                 return page;
@@ -350,8 +362,6 @@ export default function NewAdminTemplateWizardPage() {
         setSearchTerm("");
         setQuestionTypeDialogOpen(true);
     };
-    
-    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     const addQuestion = (type: QuestionType) => {
         if (!currentLocation) return;
@@ -652,3 +662,4 @@ export default function NewAdminTemplateWizardPage() {
         </div>
     );
 }
+
