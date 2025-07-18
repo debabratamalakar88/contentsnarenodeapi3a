@@ -198,8 +198,10 @@ export default function EditTemplateCategoryPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Icon Color</FormLabel>
-                    <FormControl className="mt-2">
-                       <ColorSelector value={field.value} onChange={field.onChange}/>
+                    <FormControl>
+                       <div className="mt-2">
+                        <ColorSelector value={field.value} onChange={field.onChange}/>
+                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
