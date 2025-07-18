@@ -44,6 +44,7 @@ import {
   List,
   ChevronDown,
   Layers,
+  Eye,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -332,6 +333,7 @@ function CategoriesGrid({ categories, isArchived, onArchive, onRestore, onForceD
                     </>
                 ) : (
                     <>
+                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}`}><Eye className="mr-2 h-4 w-4" />View</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                     </>
@@ -401,6 +403,7 @@ function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForce
                                     </>
                                 ) : (
                                     <>
+                                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}`}><Eye className="mr-2 h-4 w-4" />View</Link></DropdownMenuItem>
                                         <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                                     </>
