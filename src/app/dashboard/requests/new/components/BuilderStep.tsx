@@ -42,8 +42,8 @@ interface BuilderStepProps {
   setActivePageId: (id: number) => void;
   duplicatePage: (pageId: number) => void;
   deletePage: (pageId: number) => void;
-  duplicateSection: (pageId: number, sectionId: number) => void;
-  deleteSection: (pageId: number, sectionId: number) => void;
+  duplicateSection?: (pageId: number, sectionId: number) => void;
+  deleteSection?: (pageId: number, sectionId: number) => void;
   reorderQuestions: (pageId: number, sectionId: number, startIndex: number, endIndex: number) => void;
 }
 
@@ -277,11 +277,11 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                     <Pencil className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <Textarea 
+                             {requestDescription === undefined && <Textarea 
                                 placeholder="Enter page instructions here..." 
                                 className="mb-4 min-h-[60px]"
                                 defaultValue={page.instructions}
-                            />
+                            />}
 
                             {page.sections.map(section => {
                                 return (
@@ -307,6 +307,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleSectionTitleEdit(section)}>
                                             <Pencil className="h-4 w-4" />
                                         </Button>
+                                        {duplicateSection && deleteSection && (
                                          <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -334,6 +335,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                 </AlertDialog>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
+                                        )}
                                     </div>
                                     
                                     <StrictModeDroppable
@@ -399,7 +401,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                         )}
                                     </StrictModeDroppable>
 
-                                    <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)}>Add a Field</Button>
+                                    <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)} className="mt-4">Add a Field</Button>
                                 </div>
                             )})}
                             <Button variant="outline" size="sm" onClick={() => addSection(page.id)}>Add a Section</Button>
