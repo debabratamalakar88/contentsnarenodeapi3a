@@ -249,6 +249,8 @@ export default function EditAdminTemplateWizardPage() {
         router.push(`/admin/dashboard/templates/edit/${id}/${slug}`);
     };
 
+    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
       return pagesToRenumber.map((page, pageIndex) => {
           const newPageNumber = pageIndex + 1;
@@ -264,7 +266,16 @@ export default function EditAdminTemplateWizardPage() {
 
     const addPage = () => {
         const newPageId = Date.now();
-        const newPage: Page = { id: newPageId, title: `New Page`, instructions: "", sections: [{ id: Date.now() + 1, title: `New Section`, instructions: '', questions: [] }]};
+        const newQuestion: Question = {
+            id: Date.now() + 2, 
+            type: 'text',
+            label: 'Single Line Text',
+            instructions: "",
+            placeholder: "",
+            required: false,
+            apiId: slugify(`single_line_text_${Date.now() + 2}`),
+        };
+        const newPage: Page = { id: newPageId, title: `New Page`, instructions: "", sections: [{ id: Date.now() + 1, title: `New Section`, instructions: '', questions: [newQuestion] }]};
         const newPages = renumberItems([...pages, newPage]);
         setPages(newPages);
         setActivePageId(newPageId);
@@ -308,8 +319,6 @@ export default function EditAdminTemplateWizardPage() {
           return renumberItems(newPages);
       });
     };
-    
-    const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     const addSection = (pageId: number) => {
         setPages(prevPages => {
@@ -321,7 +330,6 @@ export default function EditAdminTemplateWizardPage() {
                         label: 'Single Line Text',
                         instructions: "",
                         placeholder: "",
-                        options: [],
                         required: false,
                         apiId: slugify(`single_line_text_${Date.now()}`),
                     };
