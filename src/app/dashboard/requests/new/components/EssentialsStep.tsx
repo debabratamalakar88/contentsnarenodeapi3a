@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -19,19 +20,21 @@ interface EssentialsStepProps {
 }
 
 export default function EssentialsStep({ title, setTitle, description, setDescription }: EssentialsStepProps) {
+    const isTemplateFlow = window.location.pathname.includes('/admin/dashboard/templates');
+
     return (
         <div className="max-w-3xl mx-auto animate-in fade-in-50">
             <Card>
                 <CardHeader>
-                    <CardTitle>Request Essentials</CardTitle>
+                    <CardTitle>{isTemplateFlow ? 'Template Essentials' : 'Request Essentials'}</CardTitle>
                     <CardDescription>
-                        Give your request a clear title and description for your clients.
+                       {isTemplateFlow ? 'Give your template a clear title and description.' : 'Give your request a clear title and description for your clients.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-6">
                         <div className="grid gap-3">
-                            <Label htmlFor="title">Request Title</Label>
+                            <Label htmlFor="title">{isTemplateFlow ? 'Template Title' : 'Request Title'}</Label>
                             <Input
                                 id="title"
                                 type="text"
