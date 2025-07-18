@@ -18,7 +18,7 @@ import {
     FileText
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 import * as React from 'react';
 
@@ -366,7 +366,7 @@ interface ViewProps {
 const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {Array.isArray(templates) && templates.map(template => (
-            <TemplateCard key={template.id} template={template} {...props} />
+            <TemplateCard key={template.id} template={template} isArchived={isArchived} {...props} />
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
@@ -409,7 +409,7 @@ const TemplatesTable = ({ templates, isArchived, ...props }: ViewProps) => (
 );
 
 
-const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates' | 'isArchived'>) => {
+const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & ViewProps) => {
     return (
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
             <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
@@ -451,7 +451,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
     );
 };
 
-const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates' | 'isArchived'>) => (
+const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates'>) => (
     <TableRow>
         <TableCell className="font-medium flex items-center gap-3">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
@@ -482,3 +482,5 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         </TableCell>
     </TableRow>
 );
+
+    
