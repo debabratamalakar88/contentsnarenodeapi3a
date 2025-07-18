@@ -31,6 +31,7 @@ interface EssentialsStepProps {
 
 export default function EssentialsStep({ title, setTitle, description, setDescription, categoryId, setCategoryId, icon, setIcon, categories }: EssentialsStepProps) {
     const isTemplateFlow = typeof window !== 'undefined' && window.location.pathname.includes('/admin/dashboard/templates');
+    const noCategoryValue = "__none__";
 
     return (
         <div className="max-w-3xl mx-auto animate-in fade-in-50">
@@ -69,14 +70,14 @@ export default function EssentialsStep({ title, setTitle, description, setDescri
                                 <div className="grid gap-3">
                                     <Label htmlFor="category">Category</Label>
                                     <Select 
-                                        value={categoryId ? String(categoryId) : ""}
-                                        onValueChange={(value) => setCategoryId(value ? Number(value) : null)}
+                                        value={categoryId ? String(categoryId) : noCategoryValue}
+                                        onValueChange={(value) => setCategoryId(value === noCategoryValue ? null : Number(value))}
                                     >
                                         <SelectTrigger id="category">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">No Category</SelectItem>
+                                            <SelectItem value={noCategoryValue}>No Category</SelectItem>
                                             {categories.map(cat => (
                                                 <SelectItem key={cat.id} value={String(cat.id)}>
                                                     {cat.title}
