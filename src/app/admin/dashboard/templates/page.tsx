@@ -91,7 +91,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 
 export default function ManageTemplatesPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [templates, setTemplates] = useState<Template[]>([]);
+    const [activeTemplates, setActiveTemplates] = useState<Template[]>([]);
+    const [archivedTemplates, setArchivedTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -125,11 +126,14 @@ export default function ManageTemplatesPage() {
                     setCategories(cats.data);
                 }
                 
-                const fetcher = currentTab === 'active' ? getAdminTemplates : getAdminArchivedTemplates;
                 const categorySlug = selectedCategory === 'all' ? undefined : selectedCategory;
-                const templatesData = await fetcher(token, { search: searchQuery, category: categorySlug });
-                
-                setTemplates(templatesData.data || []);
+                if (currentTab === 'active') {
+                    const templatesData = await getAdminTemplates(token, { search: searchQuery, category: categorySlug });
+                    setActiveTemplates(templatesData.data || []);
+                } else {
+                    const archivedData = await getAdminArchivedTemplates(token);
+                    setArchivedTemplates(archivedData.data || []);
+                }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
                 toast({
@@ -144,7 +148,7 @@ export default function ManageTemplatesPage() {
         
         const timer = setTimeout(() => {
             loadData();
-        }, 300); // Debounce search
+        }, 300);
 
         return () => clearTimeout(timer);
 
@@ -194,6 +198,19 @@ export default function ManageTemplatesPage() {
             setTemplateToForceDelete(null);
         }
     };
+
+    const filteredArchivedTemplates = useMemo(() => {
+        if (!searchQuery && selectedCategory === 'all') {
+            return archivedTemplates;
+        }
+        return archivedTemplates.filter(template => {
+            const searchLower = searchQuery.toLowerCase();
+            const matchesSearch = template.title.toLowerCase().includes(searchLower) ||
+                                (template.description && template.description.toLowerCase().includes(searchLower));
+            const matchesCategory = selectedCategory === 'all' || template.category?.slug === selectedCategory;
+            return matchesSearch && matchesCategory;
+        });
+    }, [archivedTemplates, searchQuery, selectedCategory]);
 
     const renderLoadingSkeleton = () => (
         viewMode === 'grid' ? (
@@ -303,10 +320,10 @@ export default function ManageTemplatesPage() {
                 <main className="flex-1 p-6 overflow-y-auto">
                      <Tabs value={currentTab} onValueChange={setCurrentTab}>
                         <TabsContent value="active" className="mt-0">
-                            {renderContent(templates, false)}
+                            {renderContent(activeTemplates, false)}
                         </TabsContent>
                         <TabsContent value="archived" className="mt-0">
-                            {renderContent(templates, true)}
+                            {renderContent(filteredArchivedTemplates, true)}
                         </TabsContent>
                     </Tabs>
                 </main>
@@ -463,5 +480,3 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         </TableCell>
     </TableRow>
 );
-
-    
