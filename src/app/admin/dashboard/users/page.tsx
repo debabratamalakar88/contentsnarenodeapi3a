@@ -213,7 +213,7 @@ export default function ManageUsersPage() {
                           <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                       </DropdownMenuContent>
                   </DropdownMenu>
-                  <Button asChild className="bg-primary/10 text-primary hover:bg-primary/20">
+                  <Button asChild>
                       <Link href="/admin/dashboard/users/new">
                           <PlusCircle className="mr-2 h-4 w-4"/> Add User
                       </Link>
