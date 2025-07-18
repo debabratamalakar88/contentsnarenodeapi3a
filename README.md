@@ -1,4 +1,5 @@
 
+
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -660,6 +661,136 @@ Retrieve a list of templates. This endpoint supports filtering and searching.
     }
 ]
 ```
+---
+
+### 📘 **Template Categories API Documentation (Admin)**
+
+**Base URL:** `/api/admin/template-categories`  
+**Auth:** Required (Admin Bearer token via `auth:sanctum`)
+
+---
+
+#### 📍 `GET /template-categories`
+
+Fetch a paginated list of template categories, optionally searchable by `title`.
+
+**Query Parameters:**
+- `search` (string, optional)
+
+**Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Accounting",
+      "slug": "accounting",
+      "icon": "briefcase",
+      "description": "Templates related to financial accounting",
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 2,
+    "total": 20
+  }
+}
+```
+
+---
+
+#### 🧾 `POST /template-categories`
+
+Create a new template category.
+
+**Request Body:**
+```json
+{
+  "title": "Bookkeeping",
+  "icon": "notebook",
+  "description": "Basic bookkeeping templates"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 2,
+  "title": "Bookkeeping",
+  "slug": "bookkeeping",
+  "icon": "notebook",
+  "description": "Basic bookkeeping templates",
+  ...
+}
+```
+
+---
+
+#### 🔍 `GET /template-categories/{id}`
+
+Retrieve details of a single category by ID.
+
+**Response:** `200 OK`
+
+---
+
+#### ✏️ `PUT /template-categories/{id}`
+
+Update an existing category.
+
+**Request Body (partial allowed):**
+```json
+{
+  "title": "Client Onboarding",
+  "icon": "user-check"
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+#### 🗃 `DELETE /template-categories/{id}`
+
+Soft delete a category (archive).
+
+**Response:** `200 OK`
+```json
+{ "message": "Category archived successfully." }
+```
+
+---
+
+#### 🧙‍♀️ `GET /template-categories/archived`
+
+List all soft-deleted (archived) categories.
+
+**Response:** `200 OK` - Returns an array of category objects.
+
+---
+
+#### 🪄 `POST /template-categories/{id}/restore`
+
+Restore a previously archived category.
+
+**Response:** `200 OK`
+```json
+{ "message": "Category restored successfully." }
+```
+
+---
+
+#### 💣 `DELETE /template-categories/{id}/force`
+
+Permanently delete a soft-deleted category.
+
+**Response:** `200 OK`
+```json
+{ "message": "Category permanently deleted." }
+```
+
 
 ---
 
@@ -707,3 +838,4 @@ The `form_data` column will store an array of page objects, where each object ha
   - `label`: String
   - `value`: String
 ```
+

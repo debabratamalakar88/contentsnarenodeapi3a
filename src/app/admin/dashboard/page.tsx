@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -6,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Building, Users, ShieldCheck, Mail, FileText, Brush, Users2, FileStack } from "lucide-react"
+import { Building, Users, ShieldCheck, Mail, FileText, Brush, Users2, FileStack, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 const adminActions = [
@@ -23,15 +24,21 @@ const adminActions = [
         href: "/admin/dashboard/clients"
     },
     {
-        icon: ShieldCheck,
-        title: "Roles & Permissions",
-        description: "Configure global roles and permissions.",
-        href: "#"
-    },
-    {
         icon: FileText,
         title: "Global Templates",
         description: "Manage system-wide templates.",
+        href: "#"
+    },
+    {
+        icon: FolderOpen,
+        title: "Template Categories",
+        description: "Organize templates into categories.",
+        href: "/admin/dashboard/template-categories"
+    },
+    {
+        icon: ShieldCheck,
+        title: "Roles & Permissions",
+        description: "Configure global roles and permissions.",
         href: "#"
     },
     {

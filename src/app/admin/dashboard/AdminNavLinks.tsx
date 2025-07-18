@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -8,6 +9,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/dashboard/users", label: "Users" },
   { href: "/admin/dashboard/clients", label: "Clients" },
+  { href: "/admin/dashboard/template-categories", label: "Categories" },
 ];
 
 export function AdminNavLinks() {
