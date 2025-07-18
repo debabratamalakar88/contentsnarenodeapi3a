@@ -209,40 +209,43 @@ export default function ManageTemplateCategoriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-                {categories.map((category) => (
-                    <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.title}</TableCell>
-                        <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
-                        <TableCell className="font-mono text-xs">{category.slug}</TableCell>
-                        <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
-                        <TableCell>{format(parseISO(isArchived ? category.deleted_at! : category.created_at!), 'PPP')}</TableCell>
-                        <TableCell>
-                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Toggle menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {isArchived ? (
-                                    <>
-                                        <DropdownMenuItem onSelect={() => setCategoryToRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setCategoryToForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                                    </>
-                                ) : (
-                                    <>
-                                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setCategoryToArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                    </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                ))}
+                {categories.map((category) => {
+                    const dateString = isArchived ? category.deleted_at : category.created_at;
+                    return (
+                        <TableRow key={category.id}>
+                            <TableCell className="font-medium">{category.title}</TableCell>
+                            <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
+                            <TableCell className="font-mono text-xs">{category.slug}</TableCell>
+                            <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
+                            <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
+                            <TableCell>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {isArchived ? (
+                                        <>
+                                            <DropdownMenuItem onSelect={() => setCategoryToRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setCategoryToForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setCategoryToArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                    )
+                })}
             </TableBody>
         </Table>
     )
@@ -339,3 +342,4 @@ function LoadingSkeleton() {
         </Table>
     )
 }
+
