@@ -26,6 +26,7 @@ import { StrictModeDroppable } from './StrictModeDroppable';
 
 interface BuilderStepProps {
   requestTitle: string;
+  requestDescription?: string;
   pages: Page[];
   addPage: () => void;
   addSection: (pageId: number) => void;
@@ -155,7 +156,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
     )
 }
 
-export default function BuilderStep({ requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage, reorderQuestions }: BuilderStepProps) {
+export default function BuilderStep({ requestTitle, requestDescription, pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage, reorderQuestions }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
@@ -240,16 +241,9 @@ export default function BuilderStep({ requestTitle, pages, addPage, addSection, 
         
         <main className="flex-1 overflow-y-scroll">
             <div className="max-w-4xl mx-auto p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex flex-col">
-                        <h1 className="text-2xl font-bold h-auto">{requestTitle}</h1>
-                        <div className="flex items-center">
-                            <Button variant="ghost" className="text-muted-foreground p-1 h-auto">
-                                <Folder className="h-4 w-4 mr-2" /> Default Folder <ChevronDown className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
-                    </div>
-                    <Button variant="link" className="text-primary">Edit request instructions</Button>
+                <div className="mb-4">
+                    <h1 className="text-2xl font-bold">{requestTitle}</h1>
+                    {requestDescription && <p className="text-muted-foreground mt-1">{requestDescription}</p>}
                 </div>
 
 
