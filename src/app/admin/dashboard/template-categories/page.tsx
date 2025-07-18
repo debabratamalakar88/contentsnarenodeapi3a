@@ -41,6 +41,10 @@ import {
   Trash2,
   PenSquare,
   type LucideIcon,
+  LayoutGrid,
+  List,
+  ChevronDown,
+  Layers,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -56,12 +60,13 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { iconList } from '@/components/ui/icon-selector'
+import { Card, CardContent } from '@/components/ui/card'
 
-const CategoryIcon = ({ iconName }: { iconName: string | undefined }) => {
-    if (!iconName) return null;
+const CategoryIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {
+    if (!iconName) return <Layers className={className || "h-4 w-4"} />;
     const IconComponent = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase())?.icon;
-    if (!IconComponent) return null;
-    return <IconComponent className="h-4 w-4" />
+    if (!IconComponent) return <Layers className={className || "h-4 w-4"} />;
+    return <IconComponent className={className || "h-4 w-4"} />
 }
 
 export default function ManageTemplateCategoriesPage() {
@@ -72,6 +77,7 @@ export default function ManageTemplateCategoriesPage() {
   const [dataVersion, setDataVersion] = useState(0)
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [categoryToArchive, setCategoryToArchive] = useState<TemplateCategory | null>(null)
   const [categoryToRestore, setCategoryToRestore] = useState<TemplateCategory | null>(null)
@@ -184,7 +190,7 @@ export default function ManageTemplateCategoriesPage() {
 
   const renderContent = (isArchived: boolean) => {
     if (isLoading) {
-        return <LoadingSkeleton />
+        return <LoadingSkeleton view={viewMode} />
     }
 
     if (categories.length === 0) {
@@ -196,60 +202,18 @@ export default function ManageTemplateCategoriesPage() {
         )
     }
 
-    return (
-        <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Icon</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>{isArchived ? 'Archived At' : 'Created At'}</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-                {categories.map((category) => {
-                    const dateString = isArchived ? category.deleted_at : category.created_at;
-                    return (
-                        <TableRow key={category.id}>
-                            <TableCell className="font-medium">{category.title}</TableCell>
-                            <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
-                            <TableCell className="font-mono text-xs">{category.slug}</TableCell>
-                            <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
-                            <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
-                            <TableCell>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {isArchived ? (
-                                        <>
-                                            <DropdownMenuItem onSelect={() => setCategoryToRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setCategoryToForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setCategoryToArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    )
-                })}
-            </TableBody>
-        </Table>
-    )
+    const viewProps = {
+        categories,
+        isArchived,
+        onArchive: setCategoryToArchive,
+        onRestore: setCategoryToRestore,
+        onForceDelete: setCategoryToForceDelete,
+    };
+
+    return viewMode === 'grid' ? <CategoriesGrid {...viewProps} /> : <CategoriesTable {...viewProps} />
   }
+  
+  const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
   return (
     <>
@@ -269,6 +233,19 @@ export default function ManageTemplateCategoriesPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                   </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-1">
+                          <ViewIcon className="h-4 w-4" />
+                          <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button asChild>
                     <Link href="/admin/dashboard/template-categories/new"><PlusCircle className="mr-2 h-4 w-4"/>Add Category</Link>
                 </Button>
@@ -334,7 +311,124 @@ export default function ManageTemplateCategoriesPage() {
   )
 }
 
-function LoadingSkeleton() {
+interface CategoryViewProps {
+  categories: TemplateCategory[];
+  isArchived: boolean;
+  onArchive: (category: TemplateCategory) => void;
+  onRestore: (category: TemplateCategory) => void;
+  onForceDelete: (category: TemplateCategory) => void;
+}
+
+
+function CategoriesGrid({ categories, isArchived, onArchive, onRestore, onForceDelete }: CategoryViewProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {categories.map(category => (
+        <Card key={category.id} className="relative group">
+          <CardContent className="flex flex-col items-center text-center p-6 gap-3">
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                 {isArchived ? (
+                    <>
+                        <DropdownMenuItem onSelect={() => onRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                    </>
+                ) : (
+                    <>
+                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                    </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100">
+                <CategoryIcon iconName={category.icon} className="h-8 w-8 text-slate-500" />
+            </div>
+            <h3 className="font-semibold text-lg">{category.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">{category.description}</p>
+          </CardContent>
+        </Card>
+      ))}
+      {!isArchived && (
+         <Link href="/admin/dashboard/template-categories/new">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px]">
+            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
+            <Button className="bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 pointer-events-none">ADD NEW CATEGORY</Button>
+          </Card>
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function CategoriesTable({ categories, isArchived, onArchive, onRestore, onForceDelete }: CategoryViewProps) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Title</TableHead>
+          <TableHead>Icon</TableHead>
+          <TableHead>Slug</TableHead>
+          <TableHead>Description</TableHead>
+          <TableHead>{isArchived ? 'Archived At' : 'Created At'}</TableHead>
+          <TableHead><span className="sr-only">Actions</span></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+          {categories.map((category) => {
+              const dateString = isArchived ? category.deleted_at : category.created_at;
+              return (
+                  <TableRow key={category.id}>
+                      <TableCell className="font-medium">{category.title}</TableCell>
+                      <TableCell><CategoryIcon iconName={category.icon} /></TableCell>
+                      <TableCell className="font-mono text-xs">{category.slug}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-xs">{category.description}</TableCell>
+                      <TableCell>{dateString ? format(parseISO(dateString), 'PPP') : 'N/A'}</TableCell>
+                      <TableCell>
+                          <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {isArchived ? (
+                                  <>
+                                      <DropdownMenuItem onSelect={() => onRestore(category)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => onForceDelete(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                                  </>
+                              ) : (
+                                  <>
+                                      <DropdownMenuItem asChild><Link href={`/admin/dashboard/template-categories/${category.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => onArchive(category)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                  </>
+                              )}
+                          </DropdownMenuContent>
+                          </DropdownMenu>
+                      </TableCell>
+                  </TableRow>
+              )
+          })}
+      </TableBody>
+    </Table>
+  )
+}
+
+function LoadingSkeleton({ view }: { view: 'grid' | 'list'}) {
+    if (view === 'grid') {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+             <Card key={i}><CardContent className="flex flex-col items-center text-center p-6 gap-3"><Skeleton className="h-16 w-16 rounded-full" /><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></CardContent></Card>
+          ))}
+        </div>
+      )
+    }
     return (
          <Table>
           <TableHeader><TableRow>{[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
