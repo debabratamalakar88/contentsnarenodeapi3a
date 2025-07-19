@@ -449,7 +449,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                     {template.category?.title || 'Uncategorized'}
                 </Badge>
                 {isArchived ? (
-                     <Badge className='capitalize font-semibold bg-gray-100 text-gray-800 border-gray-200'>
+                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200'>
                         Archived
                     </Badge>
                 ) : (
@@ -479,7 +479,7 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>
             {isArchived ? (
-                <Badge className='capitalize font-semibold bg-gray-100 text-gray-800 border-gray-200'>
+                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200'>
                     Archived
                 </Badge>
             ) : (
