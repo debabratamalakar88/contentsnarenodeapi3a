@@ -108,7 +108,6 @@ export default function EditAdminTemplateWizardPage() {
     const [templateDescription, setTemplateDescription] = useState("");
     const [categoryId, setCategoryId] = useState<number | null>(null);
     const [templateIcon, setTemplateIcon] = useState<string>("");
-    const [templateStatus, setTemplateStatus] = useState<'draft' | 'published'>('draft');
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
@@ -145,7 +144,6 @@ export default function EditAdminTemplateWizardPage() {
                 setTemplateDescription(data.description || "");
                 setCategoryId(data.category_id || null);
                 setTemplateIcon(data.icon || "");
-                setTemplateStatus(data.status || 'draft');
                 setCategories(categoriesData.data.filter(cat => cat.deleted_at === null));
                 setPages(data.form_data || []);
                 setInitialTemplateData(data);
@@ -164,7 +162,7 @@ export default function EditAdminTemplateWizardPage() {
         fetchTemplateData();
     }, [id, router, toast]);
 
-    const saveAsDraft = async () => {
+    const saveProgress = async () => {
         setIsSubmitting(true);
         const token = localStorage.getItem('adminAuthToken');
         if (!token) {
@@ -172,6 +170,8 @@ export default function EditAdminTemplateWizardPage() {
             setIsSubmitting(false);
             return false;
         }
+
+        const isPublishedTemplate = initialTemplateData?.status === 'published';
         
         try {
             const payload: Partial<Template> = {
@@ -180,10 +180,11 @@ export default function EditAdminTemplateWizardPage() {
                 form_data: pages,
                 category_id: categoryId,
                 icon: templateIcon,
-                status: 'draft',
+                status: initialTemplateData?.status || 'draft'
             };
+
             await updateAdminTemplate(token, id, payload);
-            toast({ title: "Template draft saved" });
+            toast({ title: isPublishedTemplate ? "Template updated" : "Template draft saved" });
             return true;
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -202,7 +203,7 @@ export default function EditAdminTemplateWizardPage() {
             return;
         }
 
-        const saved = await saveAsDraft();
+        const saved = await saveProgress();
         if (saved) {
             const nextStepSlug = steps[currentStepIndex + 1].slug;
             router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
@@ -671,4 +672,3 @@ export default function EditAdminTemplateWizardPage() {
         </div>
     );
 }
-
