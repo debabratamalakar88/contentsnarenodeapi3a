@@ -280,9 +280,9 @@ export default function ManageTemplatesPage() {
         const viewProps = {
             templates: tpls,
             onDuplicate: handleDuplicate,
-            onArchive: setRequestToArchive,
-            onRestore: setRequestToRestore,
-            onForceDelete: setRequestToForceDelete,
+            onArchive: setTemplateToArchive,
+            onRestore: setTemplateToRestore,
+            onForceDelete: setTemplateToForceDelete,
             isArchived: isArchivedTab,
         };
 
@@ -473,7 +473,7 @@ const TemplateCard = ({ template, onDuplicate, onArchive, onRestore, onForceDele
                     {template.category?.title || 'Uncategorized'}
                 </Badge>
                 {isArchived ? (
-                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100 hover:text-red-800'>
+                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
                         Archived
                     </Badge>
                 ) : (
@@ -502,7 +502,7 @@ const TemplateRow = ({ template, onDuplicate, onArchive, onRestore, onForceDelet
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>
             {isArchived ? (
-                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100 hover:text-red-800'>
+                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
                     Archived
                 </Badge>
             ) : (
@@ -542,3 +542,5 @@ const TemplateRow = ({ template, onDuplicate, onArchive, onRestore, onForceDelet
         </TableCell>
     </TableRow>
 );
+
+    
