@@ -49,6 +49,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   getAdminTemplates, 
@@ -450,10 +451,10 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                 <Badge
                     variant={template.status === 'published' ? 'default' : 'secondary'}
                     className={cn(
-                        'capitalize font-medium',
+                        'capitalize font-semibold',
                         template.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border border-green-200'
-                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
+                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
                 )}
                 >
                     {template.status}
@@ -474,10 +475,10 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
             <Badge
                 variant={template.status === 'published' ? 'default' : 'secondary'}
                 className={cn(
-                    'capitalize font-medium',
+                    'capitalize font-semibold',
                     template.status === 'published' 
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
+                        : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
                 )}
             >
                 {template.status}
@@ -506,5 +507,3 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         </TableCell>
     </TableRow>
 );
-
-    
