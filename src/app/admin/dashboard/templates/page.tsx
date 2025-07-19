@@ -449,17 +449,16 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                     {template.category?.title || 'Uncategorized'}
                 </Badge>
                 {isArchived ? (
-                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200'>
+                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
                         Archived
                     </Badge>
                 ) : (
                     <Badge
-                        variant={template.status === 'published' ? 'default' : 'secondary'}
                         className={cn(
                             'capitalize font-semibold',
                             template.status === 'published' 
-                                ? 'bg-green-100 text-green-800 border-green-200'
-                                : 'bg-amber-100 text-amber-800 border-amber-200'
+                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
+                                : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
                     )}
                     >
                         {template.status}
@@ -479,17 +478,16 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>
             {isArchived ? (
-                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200'>
+                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
                     Archived
                 </Badge>
             ) : (
                 <Badge
-                    variant={template.status === 'published' ? 'default' : 'secondary'}
                     className={cn(
                         'capitalize font-semibold',
                         template.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-amber-100 text-amber-800 border-amber-200'
+                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
+                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
                     )}
                 >
                     {template.status}
