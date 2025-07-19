@@ -108,7 +108,7 @@ export default function DashboardLayout({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
-                <User className="h-5 w-5" />
+                <User className="h-5 w-5 text-white" />
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
