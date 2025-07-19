@@ -114,6 +114,7 @@ export default function EditAdminTemplateWizardPage() {
     const [activePageId, setActivePageId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [initialTemplateData, setInitialTemplateData] = useState<Template | null>(null);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -145,8 +146,9 @@ export default function EditAdminTemplateWizardPage() {
                 setCategoryId(data.category_id || null);
                 setTemplateIcon(data.icon || "");
                 setTemplateStatus(data.status || 'draft');
-                setCategories(categoriesData.data);
+                setCategories(categoriesData.data.filter(cat => cat.deleted_at === null));
                 setPages(data.form_data || []);
+                setInitialTemplateData(data);
 
                 if (data.form_data?.length > 0) {
                     setActivePageId(data.form_data[0].id);
@@ -207,8 +209,8 @@ export default function EditAdminTemplateWizardPage() {
         }
     };
 
-    const handlePublish = async () => {
-        if (!templateTitle.trim()) {
+    const handlePublishOrUpdate = async () => {
+       if (!templateTitle.trim()) {
            toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
            return;
        }
@@ -221,6 +223,8 @@ export default function EditAdminTemplateWizardPage() {
            return;
        }
        
+       const isAlreadyPublished = initialTemplateData?.status === 'published';
+
        const payload: Partial<Template> = {
            title: templateTitle,
            description: templateDescription,
@@ -232,12 +236,13 @@ export default function EditAdminTemplateWizardPage() {
 
        try {
            await updateAdminTemplate(token, id, payload);
-           toast({ title: "Template Published!", description: "Your template is now live." });
+           const successMessage = isAlreadyPublished ? "Template updated successfully." : "Template Published! Your template is now live.";
+           toast({ title: "Success", description: successMessage });
            router.push('/admin/dashboard/templates');
            router.refresh();
        } catch(error: any) {
            const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
-           toast({ title: "Publish Failed", description, variant: "destructive" });
+           toast({ title: "Action Failed", description, variant: "destructive" });
        } finally {
            setIsSubmitting(false);
        }
@@ -559,6 +564,9 @@ export default function EditAdminTemplateWizardPage() {
         return 'p-6 flex justify-center items-start';
     };
 
+    const isLastStep = currentStepIndex === steps.length - 1;
+    const isPublished = initialTemplateData?.status === 'published';
+
     return (
         <div className="flex flex-col h-full bg-background">
             <div className="flex items-center gap-4 p-4 border-b">
@@ -572,15 +580,15 @@ export default function EditAdminTemplateWizardPage() {
                     maxVisitedStepIndex={steps.length}
                 />
                 <div className="ml-auto flex items-center gap-2">
-                    {currentStepIndex < steps.length - 1 ? (
+                    {isLastStep ? (
+                        <Button onClick={handlePublishOrUpdate} disabled={isSubmitting || isLoading}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isPublished ? 'Update' : 'Publish'}
+                        </Button>
+                    ) : (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    ) : (
-                        <Button onClick={handlePublish} disabled={isSubmitting || isLoading}>
-                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                             Publish
                         </Button>
                     )}
                 </div>
