@@ -340,12 +340,12 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
         </Card>
       ))}
       {!isArchived && (
-        <Link href="/admin/dashboard/clients/new">
           <Card className="flex flex-col items-center justify-center bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[240px] h-full">
-            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
-            <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">ADD NEW CLIENT</Button>
+            <Link href="/admin/dashboard/clients/new" className="flex flex-col items-center justify-center h-full w-full">
+                <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
+                <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">ADD NEW CLIENT</Button>
+            </Link>
           </Card>
-        </Link>
       )}
     </div>
   )
@@ -383,7 +383,7 @@ function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete
               </TableCell>
             </TableRow>
           ))}
-          {!isArchived && <TableRow><TableCell colSpan={5} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link></TableCell></TableRow>}
+          {!isArchived && <TableRow><TableCell colSpan={5} className="py-4"><Link href="/admin/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add new client...</Link></TableCell></TableRow>}
         </TableBody>
       </Table>
     </Card>
@@ -409,3 +409,4 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+
