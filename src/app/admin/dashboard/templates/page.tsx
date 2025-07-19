@@ -135,8 +135,17 @@ export default function ManageTemplatesPage() {
                     const templatesData = await getAdminTemplates(token, { search: searchQuery, category: categorySlug });
                     setActiveTemplates(Array.isArray(templatesData.data) ? templatesData.data : []);
                 } else {
-                    const archivedData = await getAdminArchivedTemplates(token);
-                    setArchivedTemplates(Array.isArray(archivedData.data) ? archivedData.data : []);
+                     const archivedData = await getAdminArchivedTemplates(token);
+                    const filteredData = Array.isArray(archivedData.data)
+                        ? archivedData.data.filter(template => {
+                            const searchLower = searchQuery.toLowerCase();
+                            const categoryMatch = selectedCategory === 'all' || template.category?.slug === selectedCategory;
+                            const searchMatch = template.title.toLowerCase().includes(searchLower) ||
+                                (template.description && template.description.toLowerCase().includes(searchLower));
+                            return categoryMatch && searchMatch;
+                          })
+                        : [];
+                    setArchivedTemplates(filteredData);
                 }
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
@@ -388,12 +397,10 @@ const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
-                <div className="flex flex-col items-center justify-center bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
-                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-pink-100 mb-4">
-                        <Layers className="h-8 w-8 text-pink-500" />
-                    </div>
-                    <Button variant="secondary" className="pointer-events-none bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 font-semibold">ADD NEW TEMPLATE</Button>
-                </div>
+              <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full">
+                <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
+                <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">ADD NEW TEMPLATE</Button>
+              </Card>
             </Link>
         )}
     </div>
