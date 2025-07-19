@@ -371,7 +371,7 @@ const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
-                <div className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
+                <div className="flex flex-col items-center justify-center bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
                     <div className="flex items-center justify-center h-16 w-16 rounded-full bg-pink-100 mb-4">
                         <Layers className="h-8 w-8 text-pink-500" />
                     </div>
@@ -389,6 +389,7 @@ const TemplatesTable = ({ templates, isArchived, ...props }: ViewProps) => (
                 <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>{isArchived ? "Archived At" : "Last Updated"}</TableHead>
                     <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
@@ -399,7 +400,7 @@ const TemplatesTable = ({ templates, isArchived, ...props }: ViewProps) => (
                 ))}
                 {!isArchived && (
                     <TableRow>
-                        <TableCell colSpan={4} className="py-2">
+                        <TableCell colSpan={5} className="py-2">
                             <Link href="/admin/dashboard/templates/new" className="text-primary hover:underline text-sm font-medium">Add new template...</Link>
                         </TableCell>
                     </TableRow>
@@ -433,7 +434,6 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                             <>
                                 <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                {/* <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem> */}
                                 <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                             </>
                          )}
@@ -443,22 +443,46 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
             <CardContent className="p-4 pt-2 flex-grow flex flex-col relative min-h-[60px]">
                 <p className="text-sm text-muted-foreground line-clamp-3">{template.description || "No description provided."}</p>
             </CardContent>
-             <CardFooter className="p-4 border-t">
+             <CardFooter className="p-4 border-t flex justify-between items-center">
                  <Badge variant={template.category ? "outline" : "secondary"}>
                     {template.category?.title || 'Uncategorized'}
+                </Badge>
+                <Badge
+                    variant={template.status === 'published' ? 'default' : 'secondary'}
+                    className={cn(
+                        'capitalize font-medium',
+                        template.status === 'published' 
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                )}
+                >
+                    {template.status}
                 </Badge>
             </CardFooter>
         </Card>
     );
 };
 
-const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates'>) => (
+const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates' | 'isArchived'>) => (
     <TableRow>
         <TableCell className="font-medium flex items-center gap-3">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
           {template.title}
         </TableCell>
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
+        <TableCell>
+            <Badge
+                variant={template.status === 'published' ? 'default' : 'secondary'}
+                className={cn(
+                    'capitalize font-medium',
+                    template.status === 'published' 
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                )}
+            >
+                {template.status}
+            </Badge>
+        </TableCell>
         <TableCell>{template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
             <DropdownMenu>
@@ -474,7 +498,6 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
                         <>
                             <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                            {/* <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem> */}
                             <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                         </>
                     )}
