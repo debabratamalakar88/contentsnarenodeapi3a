@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -370,7 +371,7 @@ const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
-                <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
+                <div className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[160px] h-full text-muted-foreground">
                     <div className="flex items-center justify-center h-16 w-16 rounded-full bg-pink-100 mb-4">
                         <Layers className="h-8 w-8 text-pink-500" />
                     </div>
