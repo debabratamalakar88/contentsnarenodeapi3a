@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -188,6 +189,7 @@ export interface Template {
     title: string;
     description: string | null;
     icon: string | null;
+    status: 'draft' | 'published';
     category_id: number | null;
     form_data: Page[];
     is_deleted: boolean;
@@ -521,8 +523,9 @@ export async function getAdminTemplateCategories(token: string, search: string =
     return fetchWithToken(url.toString(), token);
 }
 
-export async function getAdminArchivedTemplateCategories(token: string): Promise<TemplateCategory[]> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/template-categories/archived`, token);
+export async function getAdminArchivedTemplateCategories(token: string): Promise<PaginatedTemplateCategories> {
+    const url = new URL(`${API_BASE_URL}/api/admin/template-categories/archived`);
+    return fetchWithToken(url.toString(), token);
 }
 
 export async function createAdminTemplateCategory(token: string, data: any): Promise<TemplateCategory> {
@@ -560,11 +563,13 @@ export async function getAdminTemplates(token: string, filters: { search?: strin
     const url = new URL(`${API_BASE_URL}/api/admin/templates`);
     if (filters.search) url.searchParams.append('search', filters.search);
     if (filters.category) url.searchParams.append('category', filters.category);
-    return fetchWithToken(url.toString(), token);
+    const response = await fetchWithToken(url.toString(), token);
+    return response || { data: [] };
 }
 
 export async function getAdminArchivedTemplates(token: string): Promise<PaginatedTemplates> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/archived`, token);
+    const response = await fetchWithToken(`${API_BASE_URL}/api/admin/templates/archived`, token);
+    return response || { data: [] };
 }
 
 export async function createAdminTemplate(token: string, data: Partial<Template>): Promise<Template> {

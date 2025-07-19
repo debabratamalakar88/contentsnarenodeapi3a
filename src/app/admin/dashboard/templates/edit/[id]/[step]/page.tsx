@@ -108,6 +108,7 @@ export default function EditAdminTemplateWizardPage() {
     const [templateDescription, setTemplateDescription] = useState("");
     const [categoryId, setCategoryId] = useState<number | null>(null);
     const [templateIcon, setTemplateIcon] = useState<string>("");
+    const [templateStatus, setTemplateStatus] = useState<'draft' | 'published'>('draft');
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
@@ -143,6 +144,7 @@ export default function EditAdminTemplateWizardPage() {
                 setTemplateDescription(data.description || "");
                 setCategoryId(data.category_id || null);
                 setTemplateIcon(data.icon || "");
+                setTemplateStatus(data.status || 'draft');
                 setCategories(categoriesData.data);
                 setPages(data.form_data || []);
 
@@ -160,23 +162,13 @@ export default function EditAdminTemplateWizardPage() {
         fetchTemplateData();
     }, [id, router, toast]);
 
-    const nextStep = async () => {
-        if (currentStepIndex >= steps.length - 1) { // On last step, save and exit
-            handleFinalSave();
-            return;
-        }
-
-        if (currentStepIndex === 0 && !templateTitle.trim()) {
-            toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
-            return;
-        }
-
+    const saveAsDraft = async () => {
         setIsSubmitting(true);
         const token = localStorage.getItem('adminAuthToken');
         if (!token) {
             toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
             setIsSubmitting(false);
-            return;
+            return false;
         }
         
         try {
@@ -186,55 +178,70 @@ export default function EditAdminTemplateWizardPage() {
                 form_data: pages,
                 category_id: categoryId,
                 icon: templateIcon,
+                status: 'draft',
             };
             await updateAdminTemplate(token, id, payload);
-            toast({ title: "Template draft updated" });
-            
-            const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
-
+            toast({ title: "Template draft saved" });
+            return true;
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
     
-    const handleFinalSave = async () => {
-         if (!templateTitle.trim()) {
+    const nextStep = async () => {
+        if (currentStepIndex >= steps.length - 1) return;
+
+        if (currentStepIndex === 0 && !templateTitle.trim()) {
             toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
             return;
         }
 
-        setIsSubmitting(true);
-        const token = localStorage.getItem('adminAuthToken');
-        if (!token) {
-            toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
-            setIsSubmitting(false);
-            return;
-        }
-        
-        const payload: Partial<Template> = {
-            title: templateTitle,
-            description: templateDescription,
-            form_data: pages,
-            category_id: categoryId,
-            icon: templateIcon,
-        };
-
-        try {
-            await updateAdminTemplate(token, id, payload);
-            toast({ title: "Template Saved", description: "Your template has been saved successfully." });
-            router.push('/admin/dashboard/templates');
-            router.refresh();
-        } catch(error: any) {
-            const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
-            toast({ title: "Save Failed", description, variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
+        const saved = await saveAsDraft();
+        if (saved) {
+            const nextStepSlug = steps[currentStepIndex + 1].slug;
+            router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
+
+    const handlePublish = async () => {
+        if (!templateTitle.trim()) {
+           toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
+           return;
+       }
+
+       setIsSubmitting(true);
+       const token = localStorage.getItem('adminAuthToken');
+       if (!token) {
+           toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+           setIsSubmitting(false);
+           return;
+       }
+       
+       const payload: Partial<Template> = {
+           title: templateTitle,
+           description: templateDescription,
+           form_data: pages,
+           category_id: categoryId,
+           icon: templateIcon,
+           status: 'published',
+       };
+
+       try {
+           await updateAdminTemplate(token, id, payload);
+           toast({ title: "Template Published!", description: "Your template is now live." });
+           router.push('/admin/dashboard/templates');
+           router.refresh();
+       } catch(error: any) {
+           const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+           toast({ title: "Publish Failed", description, variant: "destructive" });
+       } finally {
+           setIsSubmitting(false);
+       }
+   };
 
     const handleBack = () => {
         if (currentStepIndex > 0) {
@@ -565,14 +572,15 @@ export default function EditAdminTemplateWizardPage() {
                     maxVisitedStepIndex={steps.length}
                 />
                 <div className="ml-auto flex items-center gap-2">
-                    <Button variant="outline" onClick={handleFinalSave} disabled={isSubmitting || isLoading}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save & Exit
-                    </Button>
-                    {currentStepIndex < steps.length - 1 && (
+                    {currentStepIndex < steps.length - 1 ? (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Next <ChevronRight className="h-4 w-4 ml-1" />
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    ) : (
+                        <Button onClick={handlePublish} disabled={isSubmitting || isLoading}>
+                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Publish
                         </Button>
                     )}
                 </div>

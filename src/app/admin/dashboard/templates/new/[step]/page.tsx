@@ -1,10 +1,8 @@
 
 
 'use client'
-
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { DragDropContext, Droppable, type DropResult } from "react-beautiful-dnd";
 
 import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
@@ -160,28 +158,13 @@ export default function NewAdminTemplateWizardPage() {
             .finally(() => setIsLoadingCategories(false));
     }, [toast]);
 
-
-    const nextStep = async () => {
-        if (currentStepIndex >= steps.length - 1) { // On last step, save and exit
-            handleFinalSave();
-            return;
-        }
-
-        if (currentStepIndex === 0 && !templateTitle.trim()) {
-            toast({
-                title: "Template Title Required",
-                description: "Please provide a title for your template.",
-                variant: "destructive",
-            });
-            return;
-        }
-
+    const saveAsDraft = async () => {
         setIsSubmitting(true);
         const token = localStorage.getItem('adminAuthToken');
         if (!token) {
             toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
             setIsSubmitting(false);
-            return;
+            return false;
         }
         
         try {
@@ -191,6 +174,7 @@ export default function NewAdminTemplateWizardPage() {
                 form_data: pages,
                 category_id: categoryId,
                 icon: templateIcon,
+                status: 'draft',
             };
 
             let currentTemplateId = templateId;
@@ -203,20 +187,35 @@ export default function NewAdminTemplateWizardPage() {
                 currentTemplateId = newTemplate.id;
                 toast({ title: "Template draft created" });
             }
-            
             // Navigate to the next step using the new or existing ID
             const nextStepSlug = steps[currentStepIndex + 1].slug;
             router.push(`/admin/dashboard/templates/edit/${currentTemplateId}/${nextStepSlug}`);
+            return true;
 
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const nextStep = async () => {
+        if (currentStepIndex >= steps.length - 1) return;
+
+        if (currentStepIndex === 0 && !templateTitle.trim()) {
+            toast({
+                title: "Template Title Required",
+                description: "Please provide a title for your template.",
+                variant: "destructive",
+            });
+            return;
+        }
+        await saveAsDraft();
+    };
     
-    const handleFinalSave = async () => {
+    const handlePublish = async () => {
          if (!templateTitle.trim()) {
             toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
             return;
@@ -236,20 +235,22 @@ export default function NewAdminTemplateWizardPage() {
             form_data: pages,
             category_id: categoryId,
             icon: templateIcon,
+            status: 'published'
         };
 
         try {
             if (templateId) {
                 await updateAdminTemplate(token, templateId, payload);
             } else {
-                await createAdminTemplate(token, payload);
+                const newTemplate = await createAdminTemplate(token, payload);
+                setTemplateId(newTemplate.id);
             }
-            toast({ title: "Template Saved", description: "Your new template has been saved successfully." });
+            toast({ title: "Template Published!", description: "Your template is now live." });
             router.push('/admin/dashboard/templates');
             router.refresh();
         } catch(error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
-            toast({ title: "Save Failed", description, variant: "destructive" });
+            toast({ title: "Publish Failed", description, variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
@@ -257,8 +258,7 @@ export default function NewAdminTemplateWizardPage() {
 
     const handleBack = () => {
         if (currentStepIndex > 0 && templateId) {
-            const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/admin/dashboard/templates/edit/${templateId}/${prevStepSlug}`);
+            router.push(`/admin/dashboard/templates/edit/${templateId}/${steps[currentStepIndex - 1].slug}`);
         } else {
             router.push('/admin/dashboard/templates');
         }
@@ -541,17 +541,18 @@ export default function NewAdminTemplateWizardPage() {
                     steps={steps}
                     currentStepSlug={stepSlug}
                     onStepClick={handleStepClick}
-                    maxVisitedStepIndex={templateId ? steps.length : 0}
+                    maxVisitedStepIndex={steps.length}
                 />
-                <div className="ml-auto flex items-center gap-2">
-                    <Button variant="outline" onClick={handleFinalSave} disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save & Exit
-                    </Button>
-                    {currentStepIndex < steps.length - 1 && (
+                 <div className="ml-auto flex items-center gap-2">
+                    {currentStepIndex < steps.length - 1 ? (
                         <Button onClick={nextStep} disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Next <ChevronRight className="h-4 w-4 ml-1" />
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    ) : (
+                        <Button onClick={handlePublish} disabled={isSubmitting}>
+                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Publish
                         </Button>
                     )}
                 </div>
@@ -680,3 +681,4 @@ export default function NewAdminTemplateWizardPage() {
         </div>
     );
 }
+
