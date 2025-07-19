@@ -448,23 +448,29 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                  <Badge variant={template.category ? "outline" : "secondary"}>
                     {template.category?.title || 'Uncategorized'}
                 </Badge>
-                <Badge
-                    variant={template.status === 'published' ? 'default' : 'secondary'}
-                    className={cn(
-                        'capitalize font-semibold',
-                        template.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
-                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
+                {isArchived ? (
+                     <Badge className='capitalize font-semibold bg-gray-100 text-gray-800 border-gray-200'>
+                        Archived
+                    </Badge>
+                ) : (
+                    <Badge
+                        variant={template.status === 'published' ? 'default' : 'secondary'}
+                        className={cn(
+                            'capitalize font-semibold',
+                            template.status === 'published' 
+                                ? 'bg-green-100 text-green-800 border-green-200'
+                                : 'bg-amber-100 text-amber-800 border-amber-200'
+                    )}
+                    >
+                        {template.status}
+                    </Badge>
                 )}
-                >
-                    {template.status}
-                </Badge>
             </CardFooter>
         </Card>
     );
 };
 
-const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template, isArchived: boolean } & Omit<ViewProps, 'templates' | 'isArchived'>) => (
+const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates'>) => (
     <TableRow>
         <TableCell className="font-medium flex items-center gap-3">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
@@ -472,19 +478,25 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         </TableCell>
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>
-            <Badge
-                variant={template.status === 'published' ? 'default' : 'secondary'}
-                className={cn(
-                    'capitalize font-semibold',
-                    template.status === 'published' 
-                        ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
-                        : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
-                )}
-            >
-                {template.status}
-            </Badge>
+            {isArchived ? (
+                <Badge className='capitalize font-semibold bg-gray-100 text-gray-800 border-gray-200'>
+                    Archived
+                </Badge>
+            ) : (
+                <Badge
+                    variant={template.status === 'published' ? 'default' : 'secondary'}
+                    className={cn(
+                        'capitalize font-semibold',
+                        template.status === 'published' 
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-amber-100 text-amber-800 border-amber-200'
+                    )}
+                >
+                    {template.status}
+                </Badge>
+            )}
         </TableCell>
-        <TableCell>{template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A'}</TableCell>
+        <TableCell>{isArchived ? (template.deleted_at ? format(parseISO(template.deleted_at), 'PPP') : 'N/A') : (template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A')}</TableCell>
         <TableCell>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
