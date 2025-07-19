@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">{action.description}</p>
-                    <Button asChild variant="secondary" className="w-full">
+                    <Button asChild className="w-full">
                         <Link href={action.href}>Manage</Link>
                     </Button>
                 </CardContent>
