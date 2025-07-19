@@ -280,9 +280,9 @@ export default function ManageTemplatesPage() {
         const viewProps = {
             templates: tpls,
             onDuplicate: handleDuplicate,
-            onArchive: setTemplateToArchive,
-            onRestore: setTemplateToRestore,
-            onForceDelete: setTemplateToForceDelete,
+            onArchive: setRequestToArchive,
+            onRestore: setRequestToRestore,
+            onForceDelete: setRequestToForceDelete,
             isArchived: isArchivedTab,
         };
 
@@ -320,7 +320,7 @@ export default function ManageTemplatesPage() {
                         </DropdownMenu>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
+                                <Button variant="outline" className="flex items-center gap-2 font-semibold h-9">
                                     <ViewIcon className="h-4 w-4" />
                                     {viewMode === 'grid' ? 'Grid' : 'List'}
                                 </Button>
@@ -397,7 +397,7 @@ const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
-              <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full">
+              <Card className="flex flex-col items-center justify-center bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full">
                 <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4"><Layers className="h-8 w-8 text-slate-400" /></div>
                 <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">ADD NEW TEMPLATE</Button>
               </Card>
