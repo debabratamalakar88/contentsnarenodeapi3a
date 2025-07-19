@@ -58,6 +58,7 @@ import {
   softDeleteAdminTemplate,
   restoreAdminTemplate,
   forceDeleteAdminTemplate,
+  duplicateAdminTemplate,
   type Template, 
   type TemplateCategory
 } from "@/lib/api";
@@ -160,6 +161,19 @@ export default function ManageTemplatesPage() {
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
+    const handleDuplicate = async (templateId: number) => {
+        const token = localStorage.getItem('adminAuthToken');
+        if (!token) return;
+        toast({ title: 'Duplicating template...', description: 'Please wait.'});
+        try {
+            await duplicateAdminTemplate(token, templateId);
+            toast({ title: 'Success', description: 'Template duplicated successfully. You can find the copy in your drafts.' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error duplicating template', description: err.message });
+        }
+    };
+
     const handleArchive = async () => {
         const token = localStorage.getItem('adminAuthToken');
         if (!token || !templateToArchive) return;
@@ -256,6 +270,7 @@ export default function ManageTemplatesPage() {
 
         const viewProps = {
             templates: tpls,
+            onDuplicate: handleDuplicate,
             onArchive: setTemplateToArchive,
             onRestore: setTemplateToRestore,
             onForceDelete: setTemplateToForceDelete,
@@ -360,6 +375,7 @@ export default function ManageTemplatesPage() {
 interface ViewProps {
     templates: Template[];
     isArchived: boolean;
+    onDuplicate: (templateId: number) => void;
     onArchive: (template: Template) => void;
     onRestore: (template: Template) => void;
     onForceDelete: (template: Template) => void;
@@ -412,7 +428,7 @@ const TemplatesTable = ({ templates, isArchived, ...props }: ViewProps) => (
 );
 
 
-const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & ViewProps) => {
+const TemplateCard = ({ template, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & ViewProps) => {
     return (
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
             <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
@@ -435,6 +451,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                             <>
                                 <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
                                 <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                             </>
                          )}
@@ -449,7 +466,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                     {template.category?.title || 'Uncategorized'}
                 </Badge>
                 {isArchived ? (
-                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
+                     <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100 hover:text-red-800'>
                         Archived
                     </Badge>
                 ) : (
@@ -457,8 +474,8 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
                         className={cn(
                             'capitalize font-semibold',
                             template.status === 'published' 
-                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
-                                : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800'
+                                : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 hover:text-amber-800'
                     )}
                     >
                         {template.status}
@@ -469,7 +486,7 @@ const TemplateCard = ({ template, onArchive, onRestore, onForceDelete, isArchive
     );
 };
 
-const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates'>) => (
+const TemplateRow = ({ template, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates'>) => (
     <TableRow>
         <TableCell className="font-medium flex items-center gap-3">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
@@ -478,7 +495,7 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
         <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
         <TableCell>
             {isArchived ? (
-                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
+                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100 hover:text-red-800'>
                     Archived
                 </Badge>
             ) : (
@@ -486,8 +503,8 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
                     className={cn(
                         'capitalize font-semibold',
                         template.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
-                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
+                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800'
+                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 hover:text-amber-800'
                     )}
                 >
                     {template.status}
@@ -509,6 +526,7 @@ const TemplateRow = ({ template, onArchive, onRestore, onForceDelete, isArchived
                         <>
                             <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                         </>
                     )}

@@ -590,6 +590,19 @@ export async function updateAdminTemplate(token: string, id: number, data: Parti
     });
 }
 
+export async function duplicateAdminTemplate(token: string, id: number): Promise<Template> {
+    const originalTemplate = await getAdminTemplate(token, id);
+    const newTemplateData = {
+      title: `(Copy) ${originalTemplate.title}`.substring(0, 255),
+      description: originalTemplate.description,
+      form_data: originalTemplate.form_data,
+      category_id: originalTemplate.category_id,
+      icon: originalTemplate.icon,
+      status: 'draft' as const,
+    };
+    return createAdminTemplate(token, newTemplateData);
+}
+
 export async function softDeleteAdminTemplate(token: string, id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token, { method: 'DELETE' });
 }
