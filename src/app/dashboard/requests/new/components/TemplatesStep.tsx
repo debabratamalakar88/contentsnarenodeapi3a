@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     MoreHorizontal, Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplateCategories, getTemplates, type TemplateCategory, type Template } from '@/lib/api';
+import { getTemplates, type Template, type PaginatedResponse } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -53,12 +53,11 @@ const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: ()
 );
 
 interface TemplatesStepProps {
-    onProceed: (isFromScratch: boolean) => void;
+    onProceed: (isFromScratch: boolean, selectedTemplate?: Template) => void;
 }
 
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const { toast } = useToast();
-    const [allCategories, setAllCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
@@ -76,20 +75,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const [catsResponse, tplsResponse] = await Promise.all([
-                    getTemplateCategories(token),
-                    getTemplates(token, undefined, searchTerm || undefined)
-                ]);
+                const tplsResponse = await getTemplates(token, undefined, searchTerm || undefined)
                 
-                const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
-                setAllCategories(categoriesData);
-                
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
-                setTemplates(templatesData);
+                const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
+                setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
-                setAllCategories([]);
                 setTemplates([]);
             } finally {
                 setIsLoading(false);
@@ -112,32 +104,34 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
-    
-    const filteredTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return [];
-        if (!searchTerm) return templates;
-        return templates.filter(template => 
-            template.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-    }, [templates, searchTerm]);
 
     const groupedTemplates = useMemo(() => {
-        return filteredTemplates.reduce((acc, tpl) => {
+        if (!Array.isArray(templates)) return {};
+        
+        return templates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
-                acc[categoryName] = { ...tpl.category, name: categoryName, items: [] };
+                 acc[categoryName] = { 
+                    ...tpl.category, 
+                    name: categoryName, // Ensure name is set for 'Uncategorized'
+                    slug: tpl.category?.slug || 'uncategorized',
+                    items: [] 
+                };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory> & {name: string}>);
-    }, [filteredTemplates]);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string; name: string}>);
+    }, [templates]);
 
     const visibleCategories = useMemo(() => {
-        if (!Array.isArray(allCategories) || Object.keys(groupedTemplates).length === 0) return [];
-        const categoriesWithTemplates = new Set(Object.values(groupedTemplates).map(group => group.slug));
-        return allCategories.filter(cat => categoriesWithTemplates.has(cat.slug));
-    }, [allCategories, groupedTemplates]);
+        return Object.values(groupedTemplates).map(group => ({
+            name: group.name,
+            slug: group.slug,
+            color: group.color,
+            template_count: group.items.length,
+        })).sort((a,b) => a.name.localeCompare(b.name));
+    }, [groupedTemplates]);
+
 
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -148,7 +142,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
                         visibleCategories.map((cat) => (
-                            <li key={cat.id}>
+                            <li key={cat.slug}>
                                 <a
                                     href={`#category-${cat.slug}`}
                                     onClick={(e) => handleCategoryClick(e, cat.slug)}
@@ -158,7 +152,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.name}</span>
                                     </div>
-                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.name]?.items.length}</span>
+                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
                                 </a>
                             </li>
                         ))
@@ -206,7 +200,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                         {data.items.map((template) => (
-                                            <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false)} />
+                                            <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} />
                                         ))}
                                     </div>
                                 </section>
@@ -215,7 +209,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          <div className="text-center py-20">
                             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
                             <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
+                            <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or create one from scratch.</p>
                          </div>
                        )
                     )}
