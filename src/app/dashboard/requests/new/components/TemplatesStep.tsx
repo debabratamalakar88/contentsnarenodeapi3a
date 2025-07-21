@@ -70,7 +70,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 ]);
 
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
-                setTemplates(Array.isArray(tplsResponse) ? tplsResponse : []);
+                setTemplates(Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -112,21 +112,22 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
-            const categoryName = tpl.category?.name || 'Uncategorized';
-            if (!acc[categoryName]) {
-                 acc[categoryName] = { 
+            const categoryTitle = tpl.category?.title || 'Uncategorized';
+            if (!acc[categoryTitle]) {
+                 acc[categoryTitle] = { 
                     ...tpl.category,
-                    name: categoryName,
+                    name: categoryTitle, // Use name for display
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
                 };
             }
-            acc[categoryName].items.push(tpl);
+            acc[categoryTitle].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title?: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
+        if (!Array.isArray(categories)) return [];
         const templateCategorySlugs = new Set(
             Object.values(groupedTemplates).map(group => group.slug)
         );
@@ -158,9 +159,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
-                                            <span>{cat.name}</span>
+                                            <span>{cat.title}</span>
                                         </div>
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.name as any]?.items.length || 0}</span>
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title as any]?.items.length || 0}</span>
                                     </a>
                                 </li>
                             ))}
@@ -207,7 +208,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                             <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
-                                            {data.name}
+                                            {data.title}
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                             {data.items.map((template) => (
