@@ -55,14 +55,15 @@ export default function TemplatesPage() {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const [cats, tpls] = await Promise.all([
+                const [catsResponse, tplsResponse] = await Promise.all([
                     getTemplateCategories(token),
                     getTemplates(token, activeCategorySlug || undefined, searchTerm || undefined)
                 ]);
-                setCategories(cats);
-                setTemplates(Array.isArray(tpls) ? tpls : []);
+                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
+                setTemplates(Array.isArray(tplsResponse) ? tplsResponse : []);
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
+                 setCategories([]);
                  setTemplates([]);
             } finally {
                 setIsLoading(false);
@@ -83,14 +84,14 @@ export default function TemplatesPage() {
         mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const groupedTemplates = templates.reduce((acc, tpl) => {
+    const groupedTemplates = Array.isArray(templates) ? templates.reduce((acc, tpl) => {
         const categoryName = tpl.category?.title || 'Uncategorized';
         if (!acc[categoryName]) {
             acc[categoryName] = { ...tpl.category, items: [] };
         }
         acc[categoryName].items.push(tpl);
         return acc;
-    }, {} as Record<string, {items: any[]} & TemplateCategory>);
+    }, {} as Record<string, {items: any[]} & TemplateCategory>) : {};
 
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
