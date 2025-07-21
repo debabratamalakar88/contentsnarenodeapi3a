@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     MoreHorizontal, Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplates, type Template, type PaginatedResponse } from '@/lib/api';
+import { getTemplates, getTemplateCategories, type Template, type PaginatedResponse, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -58,6 +58,7 @@ interface TemplatesStepProps {
 
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const { toast } = useToast();
+    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
@@ -75,13 +76,20 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const tplsResponse = await getTemplates(token, undefined, searchTerm || undefined)
+                const [catsResponse, tplsResponse] = await Promise.all([
+                    getTemplateCategories(token),
+                    getTemplates(token, searchTerm || undefined)
+                ]);
+
+                const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as any)?.data || [];
+                setCategories(Array.isArray(categoriesData) ? categoriesData : []);
                 
-                const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as PaginatedResponse<Template>)?.data || [];
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
-                toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
+                toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
+                setCategories([]);
                 setTemplates([]);
             } finally {
                 setIsLoading(false);
@@ -96,43 +104,44 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     }, [token, toast, searchTerm]);
 
-    const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string) => {
+    const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        const section = document.getElementById(`category-${slug}`);
+        const targetId = slug ? `category-${slug}` : 'category-uncategorized';
+        const section = document.getElementById(targetId);
         if (section) {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
-
+    
     const groupedTemplates = useMemo(() => {
         if (!Array.isArray(templates)) return {};
         
-        return templates.reduce((acc, tpl) => {
-            const categoryName = tpl.category?.name || 'Uncategorized';
+        const filtered = templates.filter(tpl => 
+            tpl.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (tpl.description && tpl.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        return filtered.reduce((acc, tpl) => {
+            const categoryName = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
                     ...tpl.category, 
-                    name: categoryName, // Ensure name is set for 'Uncategorized'
+                    title: categoryName,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
                 };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string; name: string}>);
-    }, [templates]);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string; title: string}>);
+    }, [templates, searchTerm]);
 
     const visibleCategories = useMemo(() => {
-        return Object.values(groupedTemplates).map(group => ({
-            name: group.name,
-            slug: group.slug,
-            color: group.color,
-            template_count: group.items.length,
-        })).sort((a,b) => a.name.localeCompare(b.name));
-    }, [groupedTemplates]);
-
-
+      const categorySlugsInTemplates = new Set(Object.values(groupedTemplates).map(g => g.slug));
+      return categories.filter(cat => categorySlugsInTemplates.has(cat.slug));
+    }, [groupedTemplates, categories]);
+    
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
@@ -141,21 +150,30 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                      {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
-                        visibleCategories.map((cat) => (
-                            <li key={cat.slug}>
-                                <a
-                                    href={`#category-${cat.slug}`}
-                                    onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                    className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
-                                        <span>{cat.name}</span>
-                                    </div>
-                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
-                                </a>
-                            </li>
-                        ))
+                        <>
+                            <a
+                                href="#"
+                                onClick={(e) => handleCategoryClick(e, null)}
+                                className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                            >
+                                All Templates
+                            </a>
+                            {visibleCategories.map((cat) => (
+                                <li key={cat.slug}>
+                                    <a
+                                        href={`#category-${cat.slug}`}
+                                        onClick={(e) => handleCategoryClick(e, cat.slug)}
+                                        className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
+                                            <span>{cat.title}</span>
+                                        </div>
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </>
                     )}
                 </ul>
                 <div className="mt-auto pt-4">
@@ -192,19 +210,22 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                         ))
                     ) : (
                        Object.keys(groupedTemplates).length > 0 ? (
-                            Object.entries(groupedTemplates).map(([categoryName, data]) => (
-                                <section key={categoryName} id={`category-${data.slug}`}>
-                                    <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
-                                        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
-                                        {categoryName}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                        {data.items.map((template) => (
-                                            <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} />
-                                        ))}
-                                    </div>
-                                </section>
-                            ))
+                            Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                                if (activeCategorySlug && activeCategorySlug !== data.slug) return null;
+                                return (
+                                    <section key={categoryName} id={`category-${data.slug}`}>
+                                        <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
+                                            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
+                                            {data.title}
+                                        </h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                            {data.items.map((template) => (
+                                                <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} />
+                                            ))}
+                                        </div>
+                                    </section>
+                                )
+                            })
                        ) : (
                          <div className="text-center py-20">
                             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
