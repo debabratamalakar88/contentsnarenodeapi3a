@@ -195,13 +195,13 @@ export default function ClientsPage() {
             </Avatar>
             <p className="font-semibold text-lg">{client.full_name}</p>
             <p className="text-sm text-muted-foreground h-5">{client.companies?.[0]}</p>
-            <p className="text-sm text-muted-foreground">{client.email}</p>
+            <p className="text-sm text-muted-foreground mt-2">{client.email}</p>
           </CardContent>
         </Card>
       ))}
       {!isArchived && (
         <Link href="/dashboard/clients/new">
-          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[220px]">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[240px]">
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
               <Layers className="h-8 w-8 text-slate-400" />
             </div>
@@ -389,7 +389,7 @@ export default function ClientsPage() {
                         </div>
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
-                            <p>Archived clients will be shown here.</p>
+                            <p>No archived clients found.</p>
                         </div>
                     )}
                 </TabsContent>
