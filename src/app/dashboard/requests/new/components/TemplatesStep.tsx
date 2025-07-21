@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     MoreHorizontal, Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplateCategories, getTemplates, type TemplateCategory, type Template, type PaginatedResponse } from '@/lib/api';
+import { getTemplateCategories, getTemplates, type TemplateCategory, type Template } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -82,10 +82,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 ]);
                 
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
-                setAllCategories(categoriesData.map(c => ({...c, title: c.name} as any)));
+                setAllCategories(categoriesData);
                 
-                const templatesData = (tplsResponse as any)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
-                setTemplates(Array.isArray(templatesData) ? templatesData : []);
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
+                setTemplates(templatesData);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
@@ -126,16 +126,16 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
-                acc[categoryName] = { ...(tpl.category as any), title: categoryName, items: [] };
+                acc[categoryName] = { ...tpl.category, name: categoryName, items: [] };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory> & {name: string, title: string}>);
+        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory> & {name: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
-        const categoriesWithTemplates = new Set(Object.values(groupedTemplates).map(group => group.slug).filter(Boolean));
-        if (!Array.isArray(allCategories)) return [];
+        if (!Array.isArray(allCategories) || Object.keys(groupedTemplates).length === 0) return [];
+        const categoriesWithTemplates = new Set(Object.values(groupedTemplates).map(group => group.slug));
         return allCategories.filter(cat => categoriesWithTemplates.has(cat.slug));
     }, [allCategories, groupedTemplates]);
 
@@ -156,9 +156,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
-                                        <span>{cat.title}</span>
+                                        <span>{cat.name}</span>
                                     </div>
-                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title]?.items.length}</span>
+                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.name]?.items.length}</span>
                                 </a>
                             </li>
                         ))
@@ -197,7 +197,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             </section>
                         ))
                     ) : (
-                       Object.entries(groupedTemplates).length > 0 ? (
+                       Object.keys(groupedTemplates).length > 0 ? (
                             Object.entries(groupedTemplates).map(([categoryName, data]) => (
                                 <section key={categoryName} id={`category-${data.slug}`}>
                                     <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
