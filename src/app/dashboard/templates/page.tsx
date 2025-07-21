@@ -183,9 +183,6 @@ export default function TemplatesPage() {
             <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                  <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                     <div className="flex items-center gap-4">
-                        <Button className="bg-primary hover:bg-primary/90" asChild>
-                            <Link href="/dashboard/requests/new/templates"><Plus className="mr-2 h-4 w-4" /> START FROM SCRATCH</Link>
-                        </Button>
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -234,4 +231,3 @@ export default function TemplatesPage() {
         </div>
     );
 }
-
