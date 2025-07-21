@@ -172,7 +172,7 @@ export default function PreviewTemplatePage() {
                     </div>
                 </div>
                 <Button size="lg" asChild>
-                    <Link href={`/dashboard/requests/new/templates?templateId=${template.id}`}>Use this template</Link>
+                    <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use this template</Link>
                 </Button>
             </header>
             <div className="flex flex-1 overflow-hidden">
