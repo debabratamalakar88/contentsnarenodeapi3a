@@ -76,9 +76,11 @@ export default function TemplatesPage() {
                     getTemplates(token)
                 ]);
 
+                // The user-facing API for categories returns a plain array, not paginated.
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
                 setCategories(categoriesData);
                 
+                // The templates API returns a paginated response object.
                 const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
@@ -118,7 +120,6 @@ export default function TemplatesPage() {
             (tpl.description && tpl.description.toLowerCase().includes(searchLower))
         );
     }, [templates, searchTerm]);
-
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
@@ -168,7 +169,7 @@ export default function TemplatesPage() {
                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                             <span>{cat.name}</span>
                                         </div>
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title as any]?.items.length || 0}</span>
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.name as any]?.items.length || 0}</span>
                                     </a>
                                 </li>
                             ))}
@@ -222,7 +223,7 @@ export default function TemplatesPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                         {data.items.map((template) => (
                                             <TemplateCard key={template.id} template={template} onSelect={() => {
-                                                const newWindow = window.open(`/dashboard/requests/new/templates?templateId=${template.id}`, '_blank');
+                                                const newWindow = window.open(`/dashboard/requests/new?templateId=${template.id}`, '_blank');
                                                 if(newWindow) newWindow.focus();
                                             }} />
                                         ))}
