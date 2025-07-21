@@ -331,7 +331,6 @@ export default function ClientsPage() {
                   </TabsTrigger>
               </TabsList>
               <div className="ml-auto flex items-center gap-2 mb-2">
-                  <Button variant="outline">IMPORT</Button>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="flex items-center gap-1 text-primary border-primary bg-primary/10 hover:bg-primary/10 hover:text-primary">
