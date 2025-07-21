@@ -235,13 +235,14 @@ export default function EditRequestWizardPage() {
         if (currentStepIndex > 1) { // If on builder or later, go back one step
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/dashboard/requests/edit/${id}/${prevStepSlug}`);
-        } else { // If on essentials, go back to template selection
-            router.push('/dashboard/requests/new/templates');
+        } else { // If on essentials, go back to template selection (or dashboard if direct edit)
+             router.push('/dashboard/requests');
         }
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/dashboard/requests/new/${slug}`);
+        if (slug === 'templates') return; // Do not allow going back to templates in edit mode
+        router.push(`/dashboard/requests/edit/${id}/${slug}`);
     };
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
@@ -378,7 +379,7 @@ export default function EditRequestWizardPage() {
 
     const openQuestionSettings = (question: Question) => {
         setEditingQuestion(question);
-        setTempQuestion(JSON.parse(JSON.stringify(question)));
+        setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
         setQuestionSettingsOpen(true);
     };
     
@@ -481,6 +482,7 @@ export default function EditRequestWizardPage() {
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep
                                         requestTitle={requestTitle}
+                                        requestDescription={requestDescription}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
@@ -511,6 +513,7 @@ export default function EditRequestWizardPage() {
                     currentStepSlug={stepSlug}
                     onStepClick={handleStepClick}
                     maxVisitedStepIndex={maxVisitedStepIndex}
+                    disabledSteps={['templates']}
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {isFinalizeStep && (
