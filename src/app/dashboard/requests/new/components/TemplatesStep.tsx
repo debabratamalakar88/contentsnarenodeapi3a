@@ -58,7 +58,7 @@ interface TemplatesStepProps {
 
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const { toast } = useToast();
-    const [categories, setCategories] = useState<TemplateCategory[]>([]);
+    const [allCategories, setAllCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
@@ -81,15 +81,15 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     getTemplates(token, undefined, searchTerm || undefined)
                 ]);
                 
-                const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as any)?.data;
-                setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+                const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
+                setAllCategories(categoriesData);
                 
-                const templatesData = (tplsResponse as PaginatedResponse<Template>).data;
+                const templatesData = (tplsResponse as any)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
-                setCategories([]);
+                setAllCategories([]);
                 setTemplates([]);
             } finally {
                 setIsLoading(false);
@@ -134,9 +134,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
-        if (!Array.isArray(categories)) return [];
-        return categories.filter(cat => cat.template_count && cat.template_count > 0);
-    }, [categories]);
+        const categoriesWithTemplates = new Set(Object.values(groupedTemplates).map(group => group.slug).filter(Boolean));
+        if (!Array.isArray(allCategories)) return [];
+        return allCategories.filter(cat => categoriesWithTemplates.has(cat.slug));
+    }, [allCategories, groupedTemplates]);
 
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -158,7 +159,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.title}</span>
                                     </div>
-                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
+                                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title]?.items.length}</span>
                                 </a>
                             </li>
                         ))
