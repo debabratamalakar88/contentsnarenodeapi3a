@@ -301,14 +301,14 @@ const RequestsGrid = ({ requests, clientMap, ...props }: Omit<RequestCardProps, 
             ))}
             {!props.isArchived && (
               <Link href="/dashboard/requests/new">
-                  <div className="flex flex-col items-center justify-center bg-background/50 hover:bg-background transition-colors cursor-pointer border-2 border-dashed hover:border-primary/50 rounded-lg min-h-[290px] h-full text-muted-foreground">
-                      <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                          <Layers className="h-8 w-8 text-slate-400" />
-                      </div>
-                      <Button variant="ghost" className="text-primary font-semibold bg-primary/20 hover:bg-primary/30 px-4 py-2 rounded-lg">
-                          ADD NEW REQUEST
-                      </Button>
-                  </div>
+                  <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[290px] h-full">
+                    <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                        <Layers className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
+                        ADD NEW REQUEST
+                    </Button>
+                  </Card>
               </Link>
             )}
         </div>
