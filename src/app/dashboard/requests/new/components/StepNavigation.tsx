@@ -24,7 +24,9 @@ export default function StepNavigation({ steps, currentStepSlug, onStepClick, ma
         <nav className="flex items-center justify-center">
             <div className="flex items-center">
                 {steps.map((step, index) => {
-                    const isStepDisabled = index > maxVisitedStepIndex || disabledSteps.includes(step.slug);
+                    // A step is disabled if its index is greater than the max visited index.
+                    // However, we override this for the "Templates" step (index 0) to always be enabled.
+                    const isStepDisabled = index > 0 && (index > maxVisitedStepIndex || disabledSteps.includes(step.slug));
                     return (
                         <div key={step.slug} className="flex items-center">
                             <button

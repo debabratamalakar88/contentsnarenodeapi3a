@@ -235,12 +235,16 @@ export default function EditRequestWizardPage() {
         if (currentStepIndex > 1) { // If on builder or later, go back one step
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/dashboard/requests/edit/${id}/${prevStepSlug}`);
-        } else { // If on essentials, go back to requests list
-            router.push('/dashboard/requests');
+        } else { // If on essentials, go back to template selection
+            router.push('/dashboard/requests/new/templates');
         }
     };
 
     const handleStepClick = (slug: string) => {
+        if (slug === 'templates') {
+            router.push('/dashboard/requests/new/templates');
+            return;
+        }
         const targetIndex = steps.findIndex(s => s.slug === slug);
         if (targetIndex > 0 && targetIndex <= maxVisitedStepIndex) {
           router.push(`/dashboard/requests/edit/${id}/${slug}`);
@@ -514,7 +518,6 @@ export default function EditRequestWizardPage() {
                     currentStepSlug={stepSlug}
                     onStepClick={handleStepClick}
                     maxVisitedStepIndex={maxVisitedStepIndex}
-                    disabledSteps={['templates']}
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {isFinalizeStep && (
