@@ -330,16 +330,16 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Template Preview</DialogTitle>
+                        {previewTemplate && <DialogDescription>{previewTemplate.title}</DialogDescription>}
+                    </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.title ? (
                          <div className="flex items-center justify-center h-full">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>
                     ) : (
                         <>
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl">{previewTemplate.title}</DialogTitle>
-                            <DialogDescription>{previewTemplate.description}</DialogDescription>
-                        </DialogHeader>
                         <div className="flex-grow overflow-y-auto -mx-6 px-6 py-4 border-t border-b">
                             {previewTemplate.form_data?.map(page => (
                                 <div key={page.id} className="mb-8">
