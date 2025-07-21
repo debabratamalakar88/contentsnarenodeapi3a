@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     MoreHorizontal, Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplateCategories, getTemplates, type TemplateCategory, type Template } from '@/lib/api';
+import { getTemplateCategories, getTemplates, type TemplateCategory, type Template, type PaginatedResponse } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -79,13 +79,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             try {
                 const [catsResponse, tplsResponse] = await Promise.all([
                     getTemplateCategories(token),
-                    getTemplates(token, activeCategorySlug || undefined, searchTerm || undefined)
+                    getTemplates(token, undefined, searchTerm || undefined)
                 ]);
                 
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as any)?.data;
                 setCategories(Array.isArray(categoriesData) ? categoriesData : []);
                 
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as any)?.data;
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as PaginatedResponse<Template>).data;
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
@@ -103,25 +103,36 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
         return () => clearTimeout(timer);
 
-    }, [token, toast, activeCategorySlug, searchTerm]);
+    }, [token, toast, searchTerm]);
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string) => {
         e.preventDefault();
-        setActiveCategorySlug(slug === activeCategorySlug ? null : slug);
-        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        setActiveCategorySlug(slug);
+        const section = document.getElementById(`category-${slug}`);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
     
+    const filteredTemplates = useMemo(() => {
+        if (!Array.isArray(templates)) return [];
+        if (!searchTerm) return templates;
+        return templates.filter(template => 
+            template.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }, [templates, searchTerm]);
+
     const groupedTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return {};
-        return templates.reduce((acc, tpl) => {
+        return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryName]) {
                 acc[categoryName] = { ...tpl.category, items: [] };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]} & TemplateCategory>);
-    }, [templates]);
+        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory>>);
+    }, [filteredTemplates]);
 
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -135,7 +146,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                         Array.isArray(categories) && categories.map((cat) => (
                             <li key={cat.id}>
                                 <a
-                                    href="#"
+                                    href={`#category-${cat.slug}`}
                                     onClick={(e) => handleCategoryClick(e, cat.slug)}
                                     className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                                 >
@@ -185,7 +196,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     ) : (
                        Object.entries(groupedTemplates).length > 0 ? (
                             Object.entries(groupedTemplates).map(([categoryName, data]) => (
-                                <section key={categoryName}>
+                                <section key={categoryName} id={`category-${data.slug}`}>
                                     <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                         <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
                                         {categoryName}
