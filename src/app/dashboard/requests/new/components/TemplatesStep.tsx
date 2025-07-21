@@ -1,20 +1,18 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
-    MoreHorizontal, Search, Plus, FolderOpen
+    Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, type Template, type PaginatedResponse, type TemplateCategory } from '@/lib/api';
+import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
-
+import Link from 'next/link';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -38,16 +36,6 @@ const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: ()
         <h3 className="font-semibold">{template.title}</h3>
         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
       </div>
-       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem onClick={onSelect}>Use Template</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </CardContent>
   </Card>
 );
@@ -84,8 +72,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
                 setCategories(categoriesData);
                 
-                const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
-                setTemplates(Array.isArray(templatesData) ? templatesData : []);
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
+                setTemplates(templatesData);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -103,13 +91,14 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        if (slug) {
-            const section = document.getElementById(`category-${slug}`);
+        const targetId = slug ? `category-${slug}` : null;
+        if (targetId) {
+            const section = document.getElementById(targetId);
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        } else {
-             mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (mainRef.current) {
+             mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     
@@ -124,13 +113,12 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         );
     }, [templates, searchTerm]);
 
-
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
-                    ...(tpl.category || {}),
+                    ...tpl.category,
                     title: categoryName,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
@@ -138,13 +126,15 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
-      const categorySlugsInTemplates = new Set(Object.values(groupedTemplates).map(g => g.slug));
-      return categories.filter(cat => categorySlugsInTemplates.has(cat.slug));
-    }, [groupedTemplates, categories]);
+        const templateCategorySlugs = new Set(
+            Object.values(groupedTemplates).map(group => group.slug)
+        );
+        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
+    }, [categories, groupedTemplates]);
     
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -243,3 +233,5 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </div>
     );
 }
+
+    

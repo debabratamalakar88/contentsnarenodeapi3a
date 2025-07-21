@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { 
     MoreHorizontal, Search, Plus, FolderOpen
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, type Template, type PaginatedResponse, type TemplateCategory } from '@/lib/api';
+import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -29,25 +29,17 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
     );
 };
 
-const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: () => void; }) => (
-  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card" onClick={onSelect}>
-    <CardContent className="p-4 flex gap-4 items-start flex-grow">
-      <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-      <div className="flex-grow">
-        <h3 className="font-semibold">{template.title}</h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
-      </div>
-       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem onClick={onSelect}>Use Template</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </CardContent>
+const TemplateCard = ({ template }: { template: Template; }) => (
+  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card">
+     <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`} className="flex flex-col flex-grow">
+      <CardContent className="p-4 flex gap-4 items-start flex-grow">
+        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+        <div className="flex-grow">
+          <h3 className="font-semibold">{template.title}</h3>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+        </div>
+      </CardContent>
+    </Link>
   </Card>
 );
 
@@ -76,13 +68,11 @@ export default function TemplatesPage() {
                     getTemplates(token)
                 ]);
 
-                // The user-facing API for categories returns a plain array, not paginated.
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
                 setCategories(categoriesData);
                 
-                // The templates API returns a paginated response object.
-                const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
-                setTemplates(Array.isArray(templatesData) ? templatesData : []);
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
+                setTemplates(templatesData);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -100,13 +90,15 @@ export default function TemplatesPage() {
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        if (slug) {
-            const section = document.getElementById(`category-${slug}`);
+        const targetId = slug ? `category-${slug}` : null;
+
+        if (targetId) {
+            const section = document.getElementById(targetId);
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        } else {
-             mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if(mainRef.current) {
+             mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     
@@ -123,10 +115,10 @@ export default function TemplatesPage() {
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
-            const categoryName = tpl.category?.title || 'Uncategorized';
+            const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
-                    ...(tpl.category || {}),
+                    ...tpl.category,
                     title: categoryName,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
@@ -134,14 +126,16 @@ export default function TemplatesPage() {
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
-      const categorySlugsInTemplates = new Set(Object.values(groupedTemplates).map(g => g.slug));
-      return categories.filter(cat => categorySlugsInTemplates.has(cat.slug));
-    }, [groupedTemplates, categories]);
-    
+        const templateCategorySlugs = new Set(
+            Object.values(groupedTemplates).map(group => group.slug)
+        );
+        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
+    }, [categories, groupedTemplates]);
+
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
@@ -214,22 +208,22 @@ export default function TemplatesPage() {
                         ))
                     ) : (
                        Object.keys(groupedTemplates).length > 0 ? (
-                            Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => (
-                                <section key={categoryName} id={`category-${data.slug}`}>
-                                    <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
-                                        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
-                                        {data.title}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                        {data.items.map((template) => (
-                                            <TemplateCard key={template.id} template={template} onSelect={() => {
-                                                const newWindow = window.open(`/dashboard/requests/new?templateId=${template.id}`, '_blank');
-                                                if(newWindow) newWindow.focus();
-                                            }} />
-                                        ))}
-                                    </div>
-                                </section>
-                            ))
+                            Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                                if (activeCategorySlug && activeCategorySlug !== data.slug) return null;
+                                return (
+                                    <section key={categoryName} id={`category-${data.slug}`}>
+                                        <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
+                                            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
+                                            {data.title}
+                                        </h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                            {data.items.map((template) => (
+                                                <TemplateCard key={template.id} template={template} />
+                                            ))}
+                                        </div>
+                                    </section>
+                                )
+                            })
                        ) : (
                          <div className="text-center py-20">
                             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -243,3 +237,5 @@ export default function TemplatesPage() {
         </div>
     );
 }
+
+    
