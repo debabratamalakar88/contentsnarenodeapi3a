@@ -78,7 +78,7 @@ export default function TemplatesPage() {
 
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
                 setCategories(categoriesData);
-
+                
                 const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
@@ -122,7 +122,7 @@ export default function TemplatesPage() {
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
-            const categoryName = tpl.category?.name || 'Uncategorized';
+            const categoryName = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
                     ...(tpl.category || {}),
@@ -168,7 +168,7 @@ export default function TemplatesPage() {
                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                             <span>{cat.name}</span>
                                         </div>
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.name]?.items.length || 0}</span>
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title as any]?.items.length || 0}</span>
                                     </a>
                                 </li>
                             ))}
