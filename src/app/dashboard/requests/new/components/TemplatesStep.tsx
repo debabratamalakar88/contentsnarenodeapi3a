@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -116,7 +115,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             const categoryTitle = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryTitle]) {
                  acc[categoryTitle] = { 
-                    ...tpl.category,
+                    ...(tpl.category || {}),
                     title: categoryTitle,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
@@ -129,9 +128,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     const visibleCategories = useMemo(() => {
         if (!Array.isArray(categories)) return [];
-        const templateCategorySlugs = new Set(
-            Object.values(groupedTemplates).map(group => group.slug)
-        );
+        const templateCategorySlugs = new Set(Object.values(groupedTemplates).map(group => group.slug));
         return categories.filter(cat => templateCategorySlugs.has(cat.slug));
     }, [categories, groupedTemplates]);
     
@@ -166,6 +163,18 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </a>
                                 </li>
                             ))}
+                            {groupedTemplates['Uncategorized'] && (
+                                <li>
+                                    <a
+                                        href={`#category-uncategorized`}
+                                        onClick={(e) => handleCategoryClick(e, 'uncategorized')}
+                                        className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === 'uncategorized' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                                    >
+                                        Uncategorized
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates['Uncategorized'].items.length}</span>
+                                    </a>
+                                </li>
+                            )}
                         </>
                     )}
                 </ul>
