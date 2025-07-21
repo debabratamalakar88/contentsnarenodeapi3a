@@ -3,7 +3,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -85,7 +84,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as any)?.data;
                 setCategories(Array.isArray(categoriesData) ? categoriesData : []);
                 
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as PaginatedResponse<Template>).data;
+                const templatesData = (tplsResponse as PaginatedResponse<Template>).data;
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
@@ -134,6 +133,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory>>);
     }, [filteredTemplates]);
 
+    const visibleCategories = useMemo(() => {
+        if (!Array.isArray(categories)) return [];
+        return categories.filter(cat => cat.template_count && cat.template_count > 0);
+    }, [categories]);
+
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             {/* Left Sidebar */}
@@ -143,7 +147,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                      {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
-                        Array.isArray(categories) && categories.map((cat) => (
+                        visibleCategories.map((cat) => (
                             <li key={cat.id}>
                                 <a
                                     href={`#category-${cat.slug}`}
@@ -221,4 +225,3 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </div>
     );
 }
-
