@@ -12,7 +12,7 @@ import { getTemplates, getTemplateCategories, type Template, type TemplateCatego
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
-import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -46,6 +46,9 @@ interface TemplatesStepProps {
 
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const { toast } = useToast();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +57,16 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const mainRef = useRef<HTMLDivElement>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+    useEffect(() => {
+      const templateId = searchParams.get('templateId');
+      if (templateId) {
+        const selectedTemplate = templates.find(t => t.id === Number(templateId));
+        if (selectedTemplate) {
+          onProceed(false, selectedTemplate);
+        }
+      }
+    }, [searchParams, templates, onProceed]);
 
     useEffect(() => {
         if (!token) {
@@ -88,34 +101,30 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        const targetId = slug ? `category-${slug}` : 'my-templates';
-        const section = document.getElementById(targetId);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (mainRef.current) {
+            mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     
-     const filteredTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return [];
-        let filtered = templates;
-
-        if (activeCategorySlug) {
-            filtered = filtered.filter(tpl => tpl.category?.slug === activeCategorySlug);
-        }
-
+    const groupedAndFilteredTemplates = useMemo(() => {
+        if (!Array.isArray(templates)) return {};
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        let filteredBySearch = templates;
         if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(tpl => 
+            filteredBySearch = templates.filter(tpl => 
                 tpl.title.toLowerCase().includes(searchLower) || 
                 (tpl.description && tpl.description.toLowerCase().includes(searchLower))
             );
         }
-        
-        return filtered;
-    }, [templates, activeCategorySlug, searchTerm]);
 
-    const groupedTemplates = useMemo(() => {
-        return filteredTemplates.reduce((acc, tpl) => {
+        let filteredByCategory = filteredBySearch;
+        if (activeCategorySlug) {
+            filteredByCategory = filteredBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
+        }
+        
+        return filteredByCategory.reduce((acc, tpl) => {
             const categoryTitle = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryTitle]) {
                  acc[categoryTitle] = { 
@@ -128,11 +137,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             acc[categoryTitle].items.push(tpl);
             return acc;
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
-    }, [filteredTemplates]);
+    }, [templates, activeCategorySlug, searchTerm]);
 
     const visibleCategories = useMemo(() => {
         if (!Array.isArray(categories) || !Array.isArray(templates)) return [];
-        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined));
+        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined && id !== null));
         return categories.filter(cat => templateCategoryIds.has(cat.id));
     }, [categories, templates]);
     
@@ -152,7 +161,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary bg-primary/10' : ''}`}
                                 >
                                     <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}/>
-                                    <span>My Templates</span>
+                                    <span>All Templates</span>
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (
@@ -203,8 +212,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             </section>
                         ))
                     ) : (
-                       Object.keys(groupedTemplates).length > 0 ? (
-                            Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                       Object.keys(groupedAndFilteredTemplates).length > 0 ? (
+                            Object.entries(groupedAndFilteredTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
                                 return (
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>

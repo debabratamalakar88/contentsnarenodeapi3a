@@ -29,8 +29,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 };
 
 const TemplateCard = ({ template }: { template: Template; }) => (
-  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card">
-     <Link href={`/dashboard/requests/new?templateId=${template.id}`} className="flex flex-col flex-grow">
+  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card" >
+     <Link href={`/dashboard/requests/new/templates?templateId=${template.id}`} className="flex flex-col flex-grow">
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
         <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
         <div className="flex-grow">
@@ -66,7 +66,7 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token)
                 ]);
-                
+
                 setCategories(catsResponse || []);
                 setTemplates(tplsResponse?.data || []);
 
@@ -86,34 +86,30 @@ export default function TemplatesPage() {
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        const targetId = slug ? `category-${slug}` : 'my-templates';
-        const section = document.getElementById(targetId);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (mainRef.current) {
+            mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     
-     const filteredTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return [];
-        let filtered = templates;
-
-        if (activeCategorySlug) {
-            filtered = filtered.filter(tpl => tpl.category?.slug === activeCategorySlug);
-        }
-
+    const groupedAndFilteredTemplates = useMemo(() => {
+        if (!Array.isArray(templates)) return {};
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        let filteredBySearch = templates;
         if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(tpl => 
+            filteredBySearch = templates.filter(tpl => 
                 tpl.title.toLowerCase().includes(searchLower) || 
                 (tpl.description && tpl.description.toLowerCase().includes(searchLower))
             );
         }
 
-        return filtered;
-    }, [templates, activeCategorySlug, searchTerm]);
-
-    const groupedTemplates = useMemo(() => {
-        return filteredTemplates.reduce((acc, tpl) => {
+        let filteredByCategory = filteredBySearch;
+        if (activeCategorySlug) {
+            filteredByCategory = filteredBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
+        }
+        
+        return filteredByCategory.reduce((acc, tpl) => {
             const categoryTitle = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryTitle]) {
                  acc[categoryTitle] = { 
@@ -126,11 +122,11 @@ export default function TemplatesPage() {
             acc[categoryTitle].items.push(tpl);
             return acc;
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
-    }, [filteredTemplates]);
+    }, [templates, activeCategorySlug, searchTerm]);
 
     const visibleCategories = useMemo(() => {
         if (!Array.isArray(categories) || !Array.isArray(templates)) return [];
-        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined));
+        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined && id !== null));
         return categories.filter(cat => templateCategoryIds.has(cat.id));
     }, [categories, templates]);
     
@@ -150,7 +146,7 @@ export default function TemplatesPage() {
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary bg-primary/10' : ''}`}
                                 >
                                     <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}/>
-                                    <span>My Templates</span>
+                                    <span>All Templates</span>
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (
@@ -205,8 +201,8 @@ export default function TemplatesPage() {
                             </section>
                         ))
                     ) : (
-                       Object.keys(groupedTemplates).length > 0 ? (
-                            Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                       Object.keys(groupedAndFilteredTemplates).length > 0 ? (
+                            Object.entries(groupedAndFilteredTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
                                 return (
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
