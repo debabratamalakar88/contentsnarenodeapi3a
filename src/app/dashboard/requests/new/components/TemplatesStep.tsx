@@ -70,7 +70,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 ]);
 
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
-                setTemplates(Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
+                setTemplates(tplsResponse?.data && Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -116,14 +116,14 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             if (!acc[categoryTitle]) {
                  acc[categoryTitle] = { 
                     ...tpl.category,
-                    name: categoryTitle, // Use name for display
+                    title: categoryTitle,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
                 };
             }
             acc[categoryTitle].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title?: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {

@@ -66,9 +66,9 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token)
                 ]);
-
+                
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
-                setTemplates(Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
+                setTemplates(tplsResponse?.data && Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -87,13 +87,12 @@ export default function TemplatesPage() {
         e.preventDefault();
         setActiveCategorySlug(slug);
         const targetId = slug ? `category-${slug}` : null;
-
         if (targetId) {
             const section = document.getElementById(targetId);
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        } else if(mainRef.current) {
+        } else if (mainRef.current) {
              mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -115,14 +114,14 @@ export default function TemplatesPage() {
             if (!acc[categoryTitle]) {
                  acc[categoryTitle] = { 
                     ...tpl.category,
-                    name: categoryTitle, // Use name for display
+                    title: categoryTitle,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
                 };
             }
             acc[categoryTitle].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title?: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
@@ -132,7 +131,7 @@ export default function TemplatesPage() {
         );
         return categories.filter(cat => templateCategorySlugs.has(cat.slug));
     }, [categories, groupedTemplates]);
-
+    
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
