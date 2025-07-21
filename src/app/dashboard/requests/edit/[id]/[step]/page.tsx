@@ -241,14 +241,7 @@ export default function EditRequestWizardPage() {
     };
 
     const handleStepClick = (slug: string) => {
-        if (slug === 'templates') {
-            router.push('/dashboard/requests/new/templates');
-            return;
-        }
-        const targetIndex = steps.findIndex(s => s.slug === slug);
-        if (targetIndex > 0 && targetIndex <= maxVisitedStepIndex) {
-          router.push(`/dashboard/requests/edit/${id}/${slug}`);
-        }
+        router.push(`/dashboard/requests/new/${slug}`);
     };
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
