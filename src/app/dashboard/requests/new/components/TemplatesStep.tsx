@@ -244,7 +244,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <a
                                         href="#"
                                         onClick={(e) => handleCategoryClick(e, null)}
-                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
+                                        className={cn('flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors',
+                                          activeCategorySlug === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                                        )}
                                     >
                                         All Templates
                                     </a>
@@ -254,7 +256,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         <a
                                             href={`#category-${cat.slug}`}
                                             onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                            className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary' : ''}`}
+                                            className={cn(
+                                                'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors',
+                                                activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                                            )}
                                         >
                                             <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                             <span>{cat.title}</span>
