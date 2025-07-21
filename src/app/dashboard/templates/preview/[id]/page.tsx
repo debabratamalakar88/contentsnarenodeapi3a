@@ -3,15 +3,18 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getTemplate, type Request, type Question, type Page, type Template } from '@/lib/api';
+import { getTemplate, type Question, type Page, type Template } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye } from 'lucide-react';
+import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye, RadioGroup } from 'lucide-react';
 import Link from 'next/link';
 import { iconList } from '@/components/ui/icon-selector';
-
+import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroupItem } from '@/components/ui/radio-group';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -27,6 +30,38 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
     );
 };
 
+
+const renderQuestionPreview = (question: Question) => {
+    const questionId = `preview-${question.id}`;
+    
+    switch (question.type) {
+        case 'text':
+        case 'email':
+        case 'tel':
+        case 'url':
+        case 'number':
+        case 'date':
+        case 'currency':
+             return <Input id={questionId} type="text" placeholder={question.placeholder} disabled className="bg-muted/60" />;
+        case 'textarea':
+             return <div className="h-20 rounded-md border bg-muted/60" />;
+        case 'radio':
+            return (
+                <RadioGroup disabled>
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            )
+        default:
+            return <Input id={questionId} type="text" placeholder={question.label} disabled className="bg-muted/60" />;
+    }
+}
+
+
 export default function PreviewTemplatePage() {
     const router = useRouter();
     const params = useParams();
@@ -37,6 +72,8 @@ export default function PreviewTemplatePage() {
     const [template, setTemplate] = useState<Template | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activePageIndex, setActivePageIndex] = useState(0);
+
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/templates'); return; }
@@ -58,6 +95,7 @@ export default function PreviewTemplatePage() {
         fetchTemplateData();
     }, [id, router, toast]);
 
+    const activePage = template?.form_data[activePageIndex];
 
     if (isLoading) {
         return (
@@ -97,7 +135,7 @@ export default function PreviewTemplatePage() {
     }
 
     return (
-        <div className="flex flex-1 flex-col bg-muted/40 overflow-hidden">
+        <div className="flex flex-1 flex-col bg-muted/40 overflow-hidden h-full">
             <header className="flex items-center justify-between gap-4 px-6 py-3 border-b bg-background flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" asChild>
@@ -115,44 +153,54 @@ export default function PreviewTemplatePage() {
                     <Link href={`/dashboard/requests/new?templateId=${template.id}`}>Use this template</Link>
                 </Button>
             </header>
-            <main className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-4xl mx-auto space-y-6">
-                    {template.description && (
-                        <Card>
-                            <CardHeader><CardTitle>Description</CardTitle></CardHeader>
-                            <CardContent><p className="text-muted-foreground">{template.description}</p></CardContent>
-                        </Card>
-                    )}
-
-                    {template.form_data.map((page) => (
-                        <Card key={page.id}>
-                            <CardHeader>
-                                <CardTitle>{page.title.replace(/^[0-9\.]+\s*/, '')}</CardTitle>
-                                {page.instructions && <CardDescription>{page.instructions}</CardDescription>}
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {page.sections.map((section) => (
+            <div className="flex flex-1 overflow-hidden">
+                <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
+                     <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
+                     <ul className="space-y-1">
+                        {template.form_data.map((page, index) => (
+                             <li key={page.id}>
+                                <button
+                                    onClick={() => setActivePageIndex(index)}
+                                    className={cn(
+                                        "w-full text-left p-2 rounded-md font-semibold text-sm transition-colors text-foreground",
+                                        activePageIndex === index ? 'bg-pink-100 text-pink-700' : 'hover:bg-muted'
+                                    )}
+                                >
+                                    {page.title}
+                                </button>
+                             </li>
+                        ))}
+                     </ul>
+                </aside>
+                 <main className="flex-1 overflow-y-auto p-8">
+                    <div className="max-w-3xl mx-auto bg-card p-8 rounded-lg shadow-sm">
+                        <h2 className="text-2xl font-bold">{template.title}</h2>
+                        <p className="text-muted-foreground mb-8">{template.description}</p>
+                        
+                        {activePage && (
+                            <div className="space-y-8">
+                                <h3 className="text-xl font-bold border-b pb-2">{activePage.title}</h3>
+                                {activePage.sections.map(section => (
                                     <div key={section.id}>
-                                        <h4 className="font-semibold text-base border-b pb-2 mb-4">{section.title.replace(/^[0-9\.]+\s*/, '')}</h4>
-                                        {section.instructions && <p className="text-sm text-muted-foreground mb-4">{section.instructions}</p>}
-                                        <div className="space-y-4">
-                                            {section.questions.map((q) => (
-                                                <div key={q.id} className="text-sm">
-                                                    <span className="font-medium">{q.label}</span>
-                                                    {q.required && <span className="text-destructive ml-1">*</span>}
-                                                    {q.instructions && <p className="text-xs text-muted-foreground">{q.instructions}</p>}
+                                        <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
+                                        <div className="space-y-6">
+                                            {section.questions.map(q => (
+                                                <div key={q.id} className="grid gap-2">
+                                                    <Label htmlFor={`preview-${q.id}`}>
+                                                        {q.label}
+                                                        {q.required && <span className="text-destructive ml-1">*</span>}
+                                                    </Label>
+                                                    {renderQuestionPreview(q)}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 ))}
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </main>
+                            </div>
+                        )}
+                    </div>
+                 </main>
+            </div>
         </div>
     );
 }
-
-    
