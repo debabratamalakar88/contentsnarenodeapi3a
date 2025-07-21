@@ -19,7 +19,7 @@ import {
     PenSquare
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button"
@@ -176,15 +176,19 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                 </div>
             </CardContent>
             <CardFooter className="p-4 border-t">
-                 <Badge 
-                    variant="outline" 
-                    className={cn(
-                        "capitalize font-semibold", 
-                        request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
-                    )}
-                 >
-                    {request.status}
-                </Badge>
+                 {isArchived ? (
+                    <Badge variant="destructive" className="capitalize font-semibold">Archived</Badge>
+                ) : (
+                    <Badge 
+                        variant="outline" 
+                        className={cn(
+                            "capitalize font-semibold", 
+                            request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
+                        )}
+                    >
+                        {request.status}
+                    </Badge>
+                )}
             </CardFooter>
         </Card>
     )
@@ -223,15 +227,19 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
         </TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
-            <Badge 
-                variant="outline"
-                className={cn(
-                    "capitalize font-semibold", 
-                    request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
-                )}
-            >
-                {request.status}
-            </Badge>
+            {isArchived ? (
+                <Badge variant="destructive" className="capitalize font-semibold">Archived</Badge>
+            ) : (
+                <Badge 
+                    variant="outline"
+                    className={cn(
+                        "capitalize font-semibold", 
+                        request.status === 'published' && 'bg-green-100 text-green-800 border-green-200'
+                    )}
+                >
+                    {request.status}
+                </Badge>
+            )}
         </TableCell>
         <TableCell>
             <DropdownMenu>
