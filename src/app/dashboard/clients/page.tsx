@@ -161,54 +161,53 @@ export default function ClientsPage() {
   const renderClientGrid = (clientList: Client[], isArchived: boolean) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => (
-          <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isArchived ? (
-                  <>
-                    <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <CardContent className="flex flex-col items-center text-center p-6 pt-8">
-              <Avatar className="h-16 w-16 mb-4">
-                <AvatarFallback className="bg-pink-100 text-pink-800 font-bold text-xl">
-                  {getInitials(client.full_name)}
-                </AvatarFallback>
-              </Avatar>
-              <p className="font-semibold text-lg">{client.full_name}</p>
-              <p className="text-sm text-muted-foreground mt-2">{client.companies?.[0]}</p>
-              <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-                <p>{client.email}</p>
-                <p>{client.phone_number}</p>
-              </div>
-            </CardContent>
-          </Card>
+        <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isArchived ? (
+                <>
+                  <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <CardContent className="flex flex-col items-center text-center p-6 pt-8">
+            <Avatar className="h-16 w-16 mb-4">
+              <AvatarFallback className="bg-pink-100 text-pink-700 font-bold text-xl">
+                {getInitials(client.full_name)}
+              </AvatarFallback>
+            </Avatar>
+            <p className="font-semibold text-lg">{client.full_name}</p>
+            <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
+              <p>{client.email}</p>
+              <p className="text-xs">Created by: {client.creator_name || 'Admin'}</p>
+            </div>
+          </CardContent>
+        </Card>
       ))}
       {!isArchived && (
         <Link href="/dashboard/clients/new">
-          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[268px]">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[220px]">
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
               <Layers className="h-8 w-8 text-slate-400" />
             </div>
-            <Button variant="secondary" className="pointer-events-none">
+            <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
               ADD NEW CLIENT
             </Button>
           </Card>
@@ -288,7 +287,6 @@ export default function ClientsPage() {
         <CardContent className="flex flex-col items-center text-center p-6 pt-8 gap-4">
           <Skeleton className="h-16 w-16 rounded-full" />
           <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-28" />
         </CardContent>

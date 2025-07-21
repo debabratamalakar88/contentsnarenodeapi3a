@@ -85,6 +85,7 @@ export interface Client {
   is_deleted: boolean;
   deleted_at: string | null;
   created_by: number | null;
+  creator_name?: string;
   updated_by: number | null;
   deleted_by: number | null;
   created_at: string;
@@ -735,5 +736,3 @@ export async function getTemplates(token: string, category?: string, search?: st
 export async function getTemplate(token: string, id: number): Promise<Template> {
   return fetchWithToken(`${API_BASE_URL}/api/templates/${id}`, token);
 }
-
-    
