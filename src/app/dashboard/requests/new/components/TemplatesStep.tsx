@@ -169,7 +169,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handlePreviewClick = async (templateId: number) => {
         if (!token) return;
         setIsPreviewLoading(true);
-        setPreviewTemplate({ id: templateId } as Template); // Set a temporary object to open dialog
+        setPreviewTemplate({ id: templateId } as Template);
         try {
             const fullTemplate = await getTemplate(token, templateId);
             setPreviewTemplate(fullTemplate);
