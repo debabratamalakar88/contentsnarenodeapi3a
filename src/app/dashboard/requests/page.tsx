@@ -111,6 +111,7 @@ interface RequestCardProps {
 const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestCardProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
+    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     
     return (
         <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
@@ -126,7 +127,10 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         </Avatar>
                      )}
                     <div>
-                        <p className="text-sm font-semibold">{clientName}</p>
+                        <p className="text-sm font-semibold truncate">
+                           {clientName}
+                           {additionalClientsCount > 0 && ` +${additionalClientsCount}`}
+                        </p>
                         <p className="text-xs text-muted-foreground">Client</p>
                     </div>
                 </div>
@@ -213,6 +217,7 @@ interface RequestRowProps {
 const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestRowProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
+    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     
     return (
      <TableRow>
@@ -228,7 +233,12 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                     <AvatarFallback className="text-xs bg-blue-100 text-blue-800">{clientInitial}</AvatarFallback>
                 </Avatar>
             )}
-            <span>{clientName}</span>
+            <span className="truncate">
+                {clientName}
+                {additionalClientsCount > 0 && (
+                    <span className="text-muted-foreground"> +{additionalClientsCount}</span>
+                )}
+            </span>
             </div>
         </TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
@@ -610,4 +620,3 @@ export default function RequestsPage() {
         </>
     )
 }
-
