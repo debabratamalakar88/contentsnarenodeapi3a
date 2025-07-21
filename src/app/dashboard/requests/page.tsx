@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -163,7 +164,12 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                     <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
                 </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                     {request.status === 'published' ? (
+                     {isArchived ? (
+                        <>
+                            <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
+                            <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                        </>
+                     ) : request.status === 'published' ? (
                         <Button size="sm" className="rounded-full px-8" asChild>
                             <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                         </Button>
@@ -177,7 +183,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
             </CardContent>
             <CardFooter className="p-4 border-t">
                  {isArchived ? (
-                    <Badge variant="destructive" className="capitalize font-semibold">Archived</Badge>
+                    <Badge className="capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100">Archived</Badge>
                 ) : (
                     <Badge 
                         variant="outline" 
@@ -228,7 +234,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
             {isArchived ? (
-                <Badge variant="destructive" className="capitalize font-semibold">Archived</Badge>
+                <Badge className="capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100">Archived</Badge>
             ) : (
                 <Badge 
                     variant="outline"
@@ -604,3 +610,4 @@ export default function RequestsPage() {
         </>
     )
 }
+
