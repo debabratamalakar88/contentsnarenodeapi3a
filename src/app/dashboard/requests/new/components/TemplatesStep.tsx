@@ -88,27 +88,31 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        const targetId = slug ? `category-${slug}` : null;
-        if (targetId) {
-            const section = document.getElementById(targetId);
-            if (section) {
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        } else if (mainRef.current) {
-             mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        const targetId = slug ? `category-${slug}` : 'my-templates';
+        const section = document.getElementById(targetId);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
     
      const filteredTemplates = useMemo(() => {
         if (!Array.isArray(templates)) return [];
-        if (!searchTerm) return templates;
+        let filtered = templates;
+
+        if (activeCategorySlug) {
+            filtered = filtered.filter(tpl => tpl.category?.slug === activeCategorySlug);
+        }
+
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter(tpl => 
+                tpl.title.toLowerCase().includes(searchLower) || 
+                (tpl.description && tpl.description.toLowerCase().includes(searchLower))
+            );
+        }
         
-        const searchLower = searchTerm.toLowerCase();
-        return templates.filter(tpl => 
-            tpl.title.toLowerCase().includes(searchLower) || 
-            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
-        );
-    }, [templates, searchTerm]);
+        return filtered;
+    }, [templates, activeCategorySlug, searchTerm]);
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
@@ -127,10 +131,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
-        if (!Array.isArray(categories)) return [];
-        const templateCategorySlugs = new Set(Object.values(groupedTemplates).map(group => group.slug));
-        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
-    }, [categories, groupedTemplates]);
+        if (!Array.isArray(categories) || !Array.isArray(templates)) return [];
+        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined));
+        return categories.filter(cat => templateCategoryIds.has(cat.id));
+    }, [categories, templates]);
     
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -145,7 +149,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 <a
                                     href="#"
                                     onClick={(e) => handleCategoryClick(e, null)}
-                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
+                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary bg-primary/10' : ''}`}
                                 >
                                     <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}/>
                                     <span>My Templates</span>
@@ -156,25 +160,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <a
                                         href={`#category-${cat.slug}`}
                                         onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary' : ''}`}
+                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary bg-primary/10' : ''}`}
                                     >
                                         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.title}</span>
                                     </a>
                                 </li>
                             ))}
-                            {groupedTemplates['Uncategorized'] && (
-                                <li>
-                                     <a
-                                        href={`#category-uncategorized`}
-                                        onClick={(e) => handleCategoryClick(e, 'uncategorized')}
-                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === 'uncategorized' ? 'text-primary' : ''}`}
-                                    >
-                                        <div className="h-2.5 w-2.5 rounded-full bg-gray-400" />
-                                        <span>Uncategorized</span>
-                                    </a>
-                                </li>
-                            )}
                         </>
                     )}
                 </ul>
@@ -213,7 +205,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     ) : (
                        Object.keys(groupedTemplates).length > 0 ? (
                             Object.entries(groupedTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
-                                if (activeCategorySlug && activeCategorySlug !== data.slug) return null;
                                 return (
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
