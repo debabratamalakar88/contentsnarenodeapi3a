@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen
+    Search, Plus, FolderOpen, Eye
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -30,8 +31,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 };
 
 const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: () => void; }) => (
-  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card" onClick={onSelect}>
-    <div className="flex flex-col flex-grow">
+  <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+    <div className="flex flex-col flex-grow" onClick={onSelect}>
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
         <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
         <div className="flex-grow">
@@ -39,6 +40,12 @@ const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: ()
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
         </div>
       </CardContent>
+    </div>
+    <div className="p-2 border-t flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+            <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+        </Button>
+        <Button size="sm" onClick={onSelect}>Use Template</Button>
     </div>
   </Card>
 );
@@ -94,7 +101,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
      useEffect(() => {
       const templateId = searchParams.get('templateId');
-      if (templateId) {
+      if (templateId && templates.length > 0) {
         const selectedTemplate = templates.find(t => t.id === Number(templateId));
         if (selectedTemplate) {
           onProceed(false, selectedTemplate);
@@ -121,6 +128,14 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         );
     }, [templates, searchTerm]);
 
+    const visibleCategories = useMemo(() => {
+        if (!categories.length || !filteredTemplatesBySearch.length) return [];
+        const templateCategorySlugs = new Set(
+            filteredTemplatesBySearch.map(tpl => tpl.category?.slug).filter(Boolean)
+        );
+        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
+    }, [categories, filteredTemplatesBySearch]);
+    
     const groupedAndFilteredTemplates = useMemo(() => {
         let filteredByCategory = filteredTemplatesBySearch;
         if (activeCategorySlug) {
@@ -141,14 +156,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             return acc;
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplatesBySearch, activeCategorySlug]);
-
-    const visibleCategories = useMemo(() => {
-        if (!categories.length || !filteredTemplatesBySearch.length) return [];
-        const templateCategorySlugs = new Set(
-            filteredTemplatesBySearch.map(tpl => tpl.category?.slug).filter(Boolean)
-        );
-        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
-    }, [categories, filteredTemplatesBySearch]);
     
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
