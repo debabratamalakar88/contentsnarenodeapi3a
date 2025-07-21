@@ -111,7 +111,6 @@ interface TemplatesStepProps {
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const { toast } = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
@@ -156,16 +155,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         fetchData();
 
     }, [token, toast, router]);
-
-     useEffect(() => {
-      const templateId = searchParams.get('templateId');
-      if (templateId && templates.length > 0) {
-        const selectedTemplate = templates.find(t => t.id === Number(templateId));
-        if (selectedTemplate) {
-          onProceed(false, selectedTemplate);
-        }
-      }
-    }, [searchParams, templates, onProceed]);
 
     const handlePreviewClick = async (templateId: number) => {
         if (!token) return;

@@ -1,8 +1,7 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '../components/StepNavigation';
 import TemplatesStep from '../components/TemplatesStep';
@@ -21,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { createRequest, updateRequest, type Page, type Section, type Question, type QuestionOption, type QuestionType } from "@/lib/api";
+import { createRequest, updateRequest, getTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -119,9 +118,11 @@ const questionCategories: {
 export default function NewRequestWizardPage() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'templates');
+    const templateId = searchParams.get('templateId');
 
     const currentStepIndex = useMemo(() => {
         const index = steps.findIndex(s => s.slug === stepSlug);
@@ -130,13 +131,14 @@ export default function NewRequestWizardPage() {
     const currentStep = steps[currentStepIndex].name;
     
     // State for the whole wizard
-    const [requestTitle, setRequestTitle] = useState("New Request");
-    const [requestDescription, setRequestDescription] = useState("Please provide all the necessary documents and information to get you set up in our system.");
+    const [requestTitle, setRequestTitle] = useState("");
+    const [requestDescription, setRequestDescription] = useState("");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
     const [requestId, setRequestId] = useState<number | null>(null);
     const [startedFromScratch, setStartedFromScratch] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
     // State to track wizard progress
     const [maxVisitedStepIndex, setMaxVisitedStepIndex] = useState(currentStepIndex);
@@ -157,19 +159,42 @@ export default function NewRequestWizardPage() {
             setMaxVisitedStepIndex(currentStepIndex);
         }
     }, [currentStepIndex, maxVisitedStepIndex]);
-
-    const handleProceedFromTemplates = (isFromScratch: boolean) => {
-        setStartedFromScratch(isFromScratch);
-        if (maxVisitedStepIndex < 1) {
-            setMaxVisitedStepIndex(1);
+    
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (templateId && !selectedTemplate && token) {
+            getTemplate(token, Number(templateId))
+                .then(templateData => {
+                    setSelectedTemplate(templateData);
+                    setRequestTitle(templateData.title);
+                    setRequestDescription(templateData.description || "");
+                    if (templateData.form_data && templateData.form_data.length > 0) {
+                        setPages(templateData.form_data);
+                        setActivePageId(templateData.form_data[0].id);
+                    }
+                })
+                .catch(err => {
+                    toast({ title: "Failed to load template", description: err.message, variant: "destructive" });
+                });
         }
-        router.push('/dashboard/requests/new/essentials');
+    }, [templateId, selectedTemplate, toast]);
+
+
+    const handleProceedFromTemplates = (isFromScratch: boolean, template?: Template) => {
+        setStartedFromScratch(isFromScratch);
+        if (template) {
+            router.push(`/dashboard/requests/new/essentials?templateId=${template.id}`);
+        } else {
+            setPages(initialPagesData);
+            setRequestTitle("New Request");
+            setRequestDescription("Please provide all the necessary documents and information.");
+            router.push('/dashboard/requests/new/essentials');
+        }
     };
 
     const nextStep = async () => {
         if (currentStepIndex >= steps.length - 1) return;
 
-        // Save logic for Essentials step and beyond
         if (currentStepIndex >= 1) {
              if (currentStepIndex === 1 && !requestTitle.trim()) {
                 toast({
@@ -201,36 +226,35 @@ export default function NewRequestWizardPage() {
                     await updateRequest(token, requestId, payload);
                     toast({ title: "Request draft updated" });
                     const nextStepSlug = steps[currentStepIndex + 1].slug;
-                    router.push(`/dashboard/requests/new/${nextStepSlug}`);
+                    router.push(`/dashboard/requests/edit/${requestId}/${nextStepSlug}`);
                 } else {
                     const newRequest = await createRequest(token, payload);
                     setRequestId(newRequest.id);
                     toast({ title: "Request draft created" });
-                    router.push(`/dashboard/requests/edit/${newRequest.id}/builder`);
-                    return;
+                    router.push(`/dashboard/requests/edit/${newRequest.id}/${steps[currentStepIndex + 1].slug}`);
                 }
 
             } catch (error: any) {
-                const description = error.errors
-                    ? Object.values(error.errors).flat().join("\n")
-                    : error.message || "An unexpected error occurred.";
-                toast({
-                    title: "Save Failed",
-                    description,
-                    variant: "destructive",
-                });
+                const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+                toast({ title: "Save Failed", description, variant: "destructive" });
             } finally {
                 setIsSubmitting(false);
             }
-        } else {
-            // For Templates step, navigation is handled by onProceed
         }
     };
     
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/dashboard/requests/new/${prevStepSlug}`);
+            const url = `/dashboard/requests/new/${prevStepSlug}`;
+            
+            if (templateId && prevStepSlug === 'templates') {
+                 router.push(url);
+            } else if (templateId) {
+                router.push(`${url}?templateId=${templateId}`);
+            } else {
+                router.push(url);
+            }
         } else {
             router.push('/dashboard/requests');
         }
@@ -239,7 +263,11 @@ export default function NewRequestWizardPage() {
     const handleStepClick = (slug: string) => {
         const targetIndex = steps.findIndex(s => s.slug === slug);
         if (targetIndex <= maxVisitedStepIndex) {
-            router.push(`/dashboard/requests/new/${slug}`);
+            let url = `/dashboard/requests/new/${slug}`;
+            if (templateId) {
+                url += `?templateId=${templateId}`;
+            }
+            router.push(url);
         }
     };
 
