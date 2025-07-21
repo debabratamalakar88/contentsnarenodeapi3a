@@ -41,11 +41,11 @@ const initialPagesData: Page[] = [
             questions: [
                 { 
                     id: 1001, 
-                    label: "New Single Line Text Field", 
+                    label: "Single Line Text", 
                     type: 'text', 
-                    instructions: "Enter field instructions here...", 
+                    instructions: "", 
                     placeholder: "", 
-                    options: [], 
+                    options: undefined, 
                     required: false,
                     apiId: "new_single_line_text_field" 
                 },
@@ -265,7 +265,7 @@ export default function NewRequestWizardPage() {
         const targetIndex = steps.findIndex(s => s.slug === slug);
         if (targetIndex <= maxVisitedStepIndex) {
             let url = `/dashboard/requests/new/${slug}`;
-            if (templateId) {
+            if (templateId && slug !== 'templates') {
                 url += `?templateId=${templateId}`;
             }
             router.push(url);
@@ -296,6 +296,15 @@ export default function NewRequestWizardPage() {
 
     const addPage = () => {
         const newPageId = Date.now();
+        const newQuestion: Question = {
+            id: Date.now() + 2, 
+            type: 'text',
+            label: 'Single Line Text',
+            instructions: "",
+            placeholder: "",
+            required: false,
+            apiId: slugify(`single_line_text_${Date.now() + 2}`),
+        };
         const newPage: Page = {
             id: newPageId,
             title: `New Page`,
@@ -304,7 +313,7 @@ export default function NewRequestWizardPage() {
                 id: Date.now() + 1,
                 title: `New Section`,
                 instructions: '',
-                questions: []
+                questions: [newQuestion]
             }]
         };
         const newPages = renumberItems([...pages, newPage]);
@@ -368,11 +377,20 @@ export default function NewRequestWizardPage() {
         setPages(prevPages => {
             const newPages = prevPages.map(page => {
                 if (page.id === pageId) {
+                    const newQuestion: Question = {
+                        id: Date.now() + 1,
+                        type: 'text',
+                        label: 'Single Line Text',
+                        instructions: "",
+                        placeholder: "",
+                        required: false,
+                        apiId: slugify(`single_line_text_${Date.now()}`),
+                    };
                     const newSection: Section = {
                         id: Date.now(),
                         title: `New Section`,
                         instructions: '',
-                        questions: []
+                        questions: [newQuestion]
                     };
                     return { ...page, sections: [...page.sections, newSection] };
                 }

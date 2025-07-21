@@ -601,7 +601,9 @@ export default function EditAdminTemplateWizardPage() {
 
             <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
                 <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader><DialogTitle>Select a field type</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Select a field type</DialogTitle>
+                    </DialogHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />

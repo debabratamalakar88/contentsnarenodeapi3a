@@ -241,7 +241,6 @@ export default function EditRequestWizardPage() {
     };
 
     const handleStepClick = (slug: string) => {
-        if (slug === 'templates') return; // Do not allow going back to templates in edit mode
         router.push(`/dashboard/requests/edit/${id}/${slug}`);
     };
 
@@ -269,6 +268,15 @@ export default function EditRequestWizardPage() {
 
     const addPage = () => {
         const newPageId = Date.now();
+        const newQuestion: Question = {
+            id: Date.now() + 2, 
+            type: 'text',
+            label: 'Single Line Text',
+            instructions: "",
+            placeholder: "",
+            required: false,
+            apiId: slugify(`single_line_text_${Date.now() + 2}`),
+        };
         const newPage: Page = {
             id: newPageId,
             title: `New Page`,
@@ -277,7 +285,7 @@ export default function EditRequestWizardPage() {
                 id: Date.now() + 1,
                 title: `New Section`,
                 instructions: '',
-                questions: []
+                questions: [newQuestion]
             }]
         };
         const newPages = renumberItems([...pages, newPage]);
@@ -328,7 +336,16 @@ export default function EditRequestWizardPage() {
         setPages(prevPages => {
             const newPages = prevPages.map(page => {
                 if (page.id === pageId) {
-                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [] };
+                    const newQuestion: Question = {
+                        id: Date.now() + 1,
+                        type: 'text',
+                        label: 'Single Line Text',
+                        instructions: "",
+                        placeholder: "",
+                        required: false,
+                        apiId: slugify(`single_line_text_${Date.now()}`),
+                    };
+                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [newQuestion] };
                     return { ...page, sections: [...page.sections, newSection] };
                 }
                 return page;
