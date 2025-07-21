@@ -240,13 +240,19 @@ export default function Dashboard() {
               <TableBody>
                 {sortedRequests.slice(0, 5).map((request) => {
                    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+                   const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
                    return (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{request.title}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <User className="h-4 w-4" />
-                            <span>{clientName}</span>
+                            <span className="truncate">
+                                {clientName}
+                                {additionalClientsCount > 0 && (
+                                    <span className="text-muted-foreground"> +{additionalClientsCount}</span>
+                                )}
+                            </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
