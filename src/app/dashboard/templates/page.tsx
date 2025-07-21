@@ -67,7 +67,7 @@ export default function TemplatesPage() {
                     getTemplates(token)
                 ]);
 
-                setCategories(catsResponse || []);
+                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
                 setTemplates(tplsResponse?.data || []);
 
             } catch (err: any) {
@@ -91,22 +91,21 @@ export default function TemplatesPage() {
         }
     };
     
-    const groupedAndFilteredTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return {};
-        
+    const filteredTemplatesBySearch = useMemo(() => {
+        if (!Array.isArray(templates)) return [];
         const searchLower = searchTerm.toLowerCase();
+        if (!searchLower) return templates;
         
-        let filteredBySearch = templates;
-        if (searchTerm) {
-            filteredBySearch = templates.filter(tpl => 
-                tpl.title.toLowerCase().includes(searchLower) || 
-                (tpl.description && tpl.description.toLowerCase().includes(searchLower))
-            );
-        }
+        return templates.filter(tpl => 
+            tpl.title.toLowerCase().includes(searchLower) || 
+            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
+        );
+    }, [templates, searchTerm]);
 
-        let filteredByCategory = filteredBySearch;
+    const groupedAndFilteredTemplates = useMemo(() => {
+        let filteredByCategory = filteredTemplatesBySearch;
         if (activeCategorySlug) {
-            filteredByCategory = filteredBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
+            filteredByCategory = filteredTemplatesBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
         }
         
         return filteredByCategory.reduce((acc, tpl) => {
@@ -122,19 +121,21 @@ export default function TemplatesPage() {
             acc[categoryTitle].items.push(tpl);
             return acc;
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
-    }, [templates, activeCategorySlug, searchTerm]);
+    }, [filteredTemplatesBySearch, activeCategorySlug]);
 
     const visibleCategories = useMemo(() => {
-        if (!Array.isArray(categories) || !Array.isArray(templates)) return [];
-        const templateCategoryIds = new Set(templates.map(tpl => tpl.category?.id).filter(id => id !== undefined && id !== null));
-        return categories.filter(cat => templateCategoryIds.has(cat.id));
-    }, [categories, templates]);
+        if (!categories.length || !filteredTemplatesBySearch.length) return [];
+        const templateCategorySlugs = new Set(
+            filteredTemplatesBySearch.map(tpl => tpl.category?.slug).filter(Boolean)
+        );
+        return categories.filter(cat => templateCategorySlugs.has(cat.slug));
+    }, [categories, filteredTemplatesBySearch]);
     
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
                 <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">TEMPLATE GALLERY</h3>
-                <ul className="space-y-2 flex-grow">
+                <ul className="space-y-1 flex-grow">
                      {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
@@ -143,10 +144,9 @@ export default function TemplatesPage() {
                                 <a
                                     href="#"
                                     onClick={(e) => handleCategoryClick(e, null)}
-                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary bg-primary/10' : ''}`}
+                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
                                 >
-                                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}/>
-                                    <span>All Templates</span>
+                                    My Templates
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (
@@ -154,9 +154,9 @@ export default function TemplatesPage() {
                                     <a
                                         href={`#category-${cat.slug}`}
                                         onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary bg-primary/10' : ''}`}
+                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary' : ''}`}
                                     >
-                                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
+                                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.title}</span>
                                     </a>
                                 </li>
