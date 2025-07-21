@@ -66,10 +66,9 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token)
                 ]);
-                
-                // User-facing API returns a direct array
-                setCategories(catsResponse || []);
-                setTemplates(tplsResponse || []);
+
+                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
+                setTemplates(Array.isArray(tplsResponse) ? tplsResponse : []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -111,20 +110,19 @@ export default function TemplatesPage() {
     }, [templates, searchTerm]);
 
     const groupedTemplates = useMemo(() => {
-        if (!filteredTemplates) return {};
         return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
                     ...tpl.category,
-                    title: categoryName,
+                    name: categoryName,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
                 };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string; title: string}>);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; name?: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
@@ -212,7 +210,7 @@ export default function TemplatesPage() {
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                             <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
-                                            {data.title}
+                                            {data.name}
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                             {data.items.map((template) => (
