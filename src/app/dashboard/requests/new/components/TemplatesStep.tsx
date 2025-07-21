@@ -78,13 +78,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             try {
                 const [catsResponse, tplsResponse] = await Promise.all([
                     getTemplateCategories(token),
-                    getTemplates(token, searchTerm || undefined)
+                    getTemplates(token)
                 ]);
 
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as any)?.data || [];
                 setCategories(Array.isArray(categoriesData) ? categoriesData : []);
                 
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as PaginatedResponse<Template>)?.data || [];
+                const templatesData = (tplsResponse as PaginatedResponse<Template>)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
 
             } catch (err: any) {
@@ -95,38 +95,42 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 setIsLoading(false);
             }
         }
+        
+        fetchData();
 
-        const timer = setTimeout(() => {
-            fetchData();
-        }, 300);
-
-        return () => clearTimeout(timer);
-
-    }, [token, toast, searchTerm]);
+    }, [token, toast]);
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
         setActiveCategorySlug(slug);
-        const targetId = slug ? `category-${slug}` : 'category-uncategorized';
-        const section = document.getElementById(targetId);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (slug) {
+            const section = document.getElementById(`category-${slug}`);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+             mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     
-    const groupedTemplates = useMemo(() => {
-        if (!Array.isArray(templates)) return {};
+     const filteredTemplates = useMemo(() => {
+        if (!Array.isArray(templates)) return [];
+        if (!searchTerm) return templates;
         
-        const filtered = templates.filter(tpl => 
-            tpl.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            (tpl.description && tpl.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        const searchLower = searchTerm.toLowerCase();
+        return templates.filter(tpl => 
+            tpl.title.toLowerCase().includes(searchLower) || 
+            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
         );
+    }, [templates, searchTerm]);
 
-        return filtered.reduce((acc, tpl) => {
+
+    const groupedTemplates = useMemo(() => {
+        return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.title || 'Uncategorized';
             if (!acc[categoryName]) {
                  acc[categoryName] = { 
-                    ...tpl.category, 
+                    ...(tpl.category || {}),
                     title: categoryName,
                     slug: tpl.category?.slug || 'uncategorized',
                     items: [] 
@@ -134,8 +138,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]; slug: string; color?: string; title: string}>);
-    }, [templates, searchTerm]);
+        }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title: string}>);
+    }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
       const categorySlugsInTemplates = new Set(Object.values(groupedTemplates).map(g => g.slug));
@@ -169,7 +173,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                             <span>{cat.title}</span>
                                         </div>
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{cat.template_count}</span>
+                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title]?.items.length || 0}</span>
                                     </a>
                                 </li>
                             ))}
@@ -230,7 +234,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          <div className="text-center py-20">
                             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
                             <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or create one from scratch.</p>
+                            <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
                          </div>
                        )
                     )}
