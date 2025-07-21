@@ -45,7 +45,7 @@ const TemplateCard = ({ template }: { template: Template; }) => (
             <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
         </Button>
         <Button size="sm" asChild>
-            <Link href={`/dashboard/requests/new?templateId=${template.id}`}>Use Template</Link>
+            <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
         </Button>
     </div>
   </Card>
@@ -235,4 +235,3 @@ export default function TemplatesPage() {
     );
 }
 
-    
