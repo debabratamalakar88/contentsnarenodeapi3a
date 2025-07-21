@@ -8,13 +8,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye, RadioGroup } from 'lucide-react';
+import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { iconList } from '@/components/ui/icon-selector';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
