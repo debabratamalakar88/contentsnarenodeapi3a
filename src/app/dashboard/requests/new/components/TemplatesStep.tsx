@@ -82,7 +82,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 ]);
                 
                 const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
-                setAllCategories(categoriesData);
+                setAllCategories(categoriesData.map(c => ({...c, title: c.name} as any)));
                 
                 const templatesData = (tplsResponse as any)?.data || (Array.isArray(tplsResponse) ? tplsResponse : []);
                 setTemplates(Array.isArray(templatesData) ? templatesData : []);
@@ -124,13 +124,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     const groupedTemplates = useMemo(() => {
         return filteredTemplates.reduce((acc, tpl) => {
-            const categoryName = tpl.category?.title || 'Uncategorized';
+            const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
-                acc[categoryName] = { ...tpl.category, items: [] };
+                acc[categoryName] = { ...(tpl.category as any), title: categoryName, items: [] };
             }
             acc[categoryName].items.push(tpl);
             return acc;
-        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory>>);
+        }, {} as Record<string, {items: Template[]} & Partial<TemplateCategory> & {name: string, title: string}>);
     }, [filteredTemplates]);
 
     const visibleCategories = useMemo(() => {
@@ -141,7 +141,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
-            {/* Left Sidebar */}
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 px-2">TEMPLATE GALLERY</h3>
                 <ul className="space-y-1 flex-grow">
@@ -172,7 +171,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 </div>
             </aside>
             
-            {/* Main Content */}
             <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                  <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                     <div className="flex items-center gap-4">
