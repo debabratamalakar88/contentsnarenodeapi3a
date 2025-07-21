@@ -1,4 +1,5 @@
 
+
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -381,6 +382,48 @@ export default function NewRequestWizardPage() {
         });
     };
 
+    const duplicateSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const page = newPages.find(p => p.id === pageId);
+            if (!page) return prevPages;
+
+            const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return prevPages;
+
+            const sectionToDuplicate = page.sections[sectionIndex];
+            const newSection: Section = JSON.parse(JSON.stringify(sectionToDuplicate));
+            
+            newSection.id = Date.now();
+            const originalTitle = newSection.title.replace(/^[0-9\.]+\s*/, '');
+            newSection.title = `${originalTitle.replace(/\s*\(Copy\)/gi, '').trim()} (Copy)`;
+            newSection.questions.forEach(q => {
+                q.id = Date.now() + Math.random();
+                q.apiId = slugify(`${q.label}_${Date.now()}`);
+            });
+            
+            page.sections.splice(sectionIndex + 1, 0, newSection);
+            return renumberItems(newPages);
+        });
+    };
+
+    const deleteSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = prevPages.map(page => {
+                if (page.id === pageId) {
+                    if (page.sections.length <= 1) {
+                         toast({ title: "Action Forbidden", description: "You cannot delete the only section on a page.", variant: "destructive" });
+                         return page;
+                    }
+                    const updatedSections = page.sections.filter(s => s.id !== sectionId);
+                    return { ...page, sections: updatedSections };
+                }
+                return page;
+            });
+            return renumberItems(newPages);
+        });
+    };
+
     const updatePageTitle = (pageId: number, newTitle: string) => {
         setPages(prevPages => prevPages.map(page => {
             if (page.id === pageId) {
@@ -590,6 +633,7 @@ export default function NewRequestWizardPage() {
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
                                         requestTitle={requestTitle}
+                                        requestDescription={requestDescription}
                                         pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}
@@ -603,6 +647,8 @@ export default function NewRequestWizardPage() {
                                         setActivePageId={setActivePageId}
                                         duplicatePage={duplicatePage}
                                         deletePage={deletePage}
+                                        duplicateSection={duplicateSection}
+                                        deleteSection={deleteSection}
                                         reorderQuestions={reorderQuestions}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
