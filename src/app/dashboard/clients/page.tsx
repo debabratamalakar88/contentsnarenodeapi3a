@@ -194,10 +194,8 @@ export default function ClientsPage() {
               </AvatarFallback>
             </Avatar>
             <p className="font-semibold text-lg">{client.full_name}</p>
-            <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-              <p>{client.email}</p>
-              <p className="text-xs">Created by: {client.creator_name || 'Admin'}</p>
-            </div>
+            <p className="text-sm text-muted-foreground h-5">{client.companies?.[0]}</p>
+            <p className="text-sm text-muted-foreground">{client.email}</p>
           </CardContent>
         </Card>
       ))}
