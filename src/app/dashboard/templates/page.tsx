@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Search, Plus, FolderOpen } from "lucide-react";
-import { getTemplateCategories, getTemplates, type TemplateCategory } from '@/lib/api';
+import { getTemplateCategories, getTemplates, type TemplateCategory, type PaginatedResponse } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -59,8 +59,15 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token, activeCategorySlug || undefined, searchTerm || undefined)
                 ]);
-                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
-                setTemplates(Array.isArray(tplsResponse) ? tplsResponse : []);
+                
+                // Handle both direct array and paginated response for categories
+                const categoriesData = Array.isArray(catsResponse) ? catsResponse : (catsResponse as PaginatedResponse<TemplateCategory>).data;
+                setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+                // Handle both direct array and paginated response for templates
+                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : (tplsResponse as PaginatedResponse<any>).data;
+                setTemplates(Array.isArray(templatesData) ? templatesData : []);
+
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
                  setCategories([]);
@@ -102,7 +109,7 @@ export default function TemplatesPage() {
                     {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
-                        categories.map((cat) => (
+                        Array.isArray(categories) && categories.map((cat) => (
                             <li key={cat.id}>
                                 <a
                                     href="#"
