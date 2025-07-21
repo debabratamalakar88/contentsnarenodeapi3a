@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -122,6 +122,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+    const [activePreviewPageIndex, setActivePreviewPageIndex] = useState(0);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -169,6 +170,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handlePreviewClick = async (templateId: number) => {
         if (!token) return;
         setIsPreviewLoading(true);
+        setActivePreviewPageIndex(0);
         setPreviewTemplate({ id: templateId } as Template);
         try {
             const fullTemplate = await getTemplate(token, templateId);
@@ -229,6 +231,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             return acc;
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplatesBySearch, activeCategorySlug]);
+
+    const activePreviewPage = previewTemplate?.form_data?.[activePreviewPageIndex];
     
     return (
         <>
@@ -257,8 +261,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                             href={`#category-${cat.slug}`}
                                             onClick={(e) => handleCategoryClick(e, cat.slug)}
                                             className={cn(
-                                                'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors',
-                                                activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                                                'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:bg-muted',
+                                                activeCategorySlug === cat.slug && 'bg-primary/10 text-primary'
                                             )}
                                         >
                                             <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
@@ -329,8 +333,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 </main>
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
-                <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
-                    <DialogHeader>
+                <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="p-4 border-b">
                         <DialogTitle>Template Preview</DialogTitle>
                         {previewTemplate && <DialogDescription>{previewTemplate.title}</DialogDescription>}
                     </DialogHeader>
@@ -339,33 +343,59 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>
                     ) : (
-                        <>
-                        <div className="flex-grow overflow-y-auto -mx-6 px-6 py-4 border-t border-b">
-                            {previewTemplate.form_data?.map(page => (
-                                <div key={page.id} className="mb-8">
-                                    <h3 className="text-xl font-semibold border-b pb-2 mb-4">{page.title}</h3>
-                                    {page.sections.map(section => (
-                                        <div key={section.id} className="mb-6">
-                                            <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                            <div className="space-y-6">
-                                                {section.questions.map(q => (
-                                                    <div key={q.id} className="grid gap-2">
-                                                        <Label htmlFor={`preview-${q.id}`}>{q.label}</Label>
-                                                        {renderQuestionPreview(q)}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                        <div className="flex flex-1 overflow-hidden">
+                            <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
+                                <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
+                                <ul className="space-y-1">
+                                    {previewTemplate.form_data.map((page, index) => (
+                                        <li key={page.id}>
+                                            <button
+                                                onClick={() => setActivePreviewPageIndex(index)}
+                                                className={cn(
+                                                    "w-full text-left p-2 rounded-md font-semibold text-sm transition-colors text-foreground",
+                                                    activePreviewPageIndex === index ? 'bg-pink-100 text-pink-700' : 'hover:bg-muted'
+                                                )}
+                                            >
+                                                {page.title}
+                                            </button>
+                                        </li>
                                     ))}
+                                </ul>
+                            </aside>
+                            <main className="flex-1 overflow-y-auto p-8">
+                                <div className="max-w-3xl mx-auto">
+                                    <h2 className="text-2xl font-bold">{previewTemplate.title}</h2>
+                                    <p className="text-muted-foreground mb-8">{previewTemplate.description}</p>
+                                    
+                                    {activePreviewPage && (
+                                        <div className="space-y-8">
+                                            <h3 className="text-xl font-bold border-b pb-2 mb-4">{activePreviewPage.title}</h3>
+                                            {activePreviewPage.sections.map(section => (
+                                                <div key={section.id}>
+                                                    <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
+                                                    <div className="space-y-6">
+                                                        {section.questions.map(q => (
+                                                            <div key={q.id} className="grid gap-2">
+                                                                <Label htmlFor={`preview-${q.id}`}>
+                                                                    {q.label}
+                                                                    {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                </Label>
+                                                                {renderQuestionPreview(q)}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
+                            </main>
                         </div>
-                        <div className="flex justify-end gap-2 flex-shrink-0 pt-4">
-                            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
-                            <Button onClick={() => onProceed(false, previewTemplate)}>Use Template</Button>
-                        </div>
-                        </>
                     )}
+                    <DialogFooter className="p-4 border-t bg-background">
+                        <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
+                        <Button onClick={() => previewTemplate && onProceed(false, previewTemplate)}>Use Template</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </>
