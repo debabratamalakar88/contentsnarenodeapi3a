@@ -102,9 +102,9 @@ export default function ManageTemplateCategoriesPage() {
             ? getAdminTemplateCategories
             : getAdminArchivedTemplateCategories
         
-        const fetchedCategories = await fetchFunction(token, searchQuery)
+        const fetchedCategoriesResponse = await fetchFunction(token, searchQuery)
         
-        setCategories(fetchedCategories.data || fetchedCategories || [])
+        setCategories(fetchedCategoriesResponse.data || [])
       } catch (error: any) {
         toast({
           title: `Failed to fetch ${
