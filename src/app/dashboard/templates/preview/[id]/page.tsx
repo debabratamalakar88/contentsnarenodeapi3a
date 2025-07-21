@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
@@ -43,12 +46,12 @@ const renderQuestionPreview = (question: Question) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} disabled className="bg-muted/60" />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'textarea':
-             return <div className="h-20 rounded-md border bg-muted/60" />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'radio':
             return (
-                <RadioGroup disabled>
+                <RadioGroup defaultValue={question.defaultValue}>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -57,8 +60,26 @@ const renderQuestionPreview = (question: Question) => {
                     ))}
                 </RadioGroup>
             )
+        case 'checkbox':
+            return (
+                <div className="space-y-2 pt-2">
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </div>
+            )
+        case 'dropdown':
+            return (
+                <Select defaultValue={question.defaultValue}>
+                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
+                    <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                </Select>
+            )
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} disabled className="bg-muted/60" />;
+            return <Input id={questionId} type="text" placeholder={question.label} />;
     }
 }
 
@@ -151,7 +172,7 @@ export default function PreviewTemplatePage() {
                     </div>
                 </div>
                 <Button size="lg" asChild>
-                    <Link href={`/dashboard/requests/new?templateId=${template.id}`}>Use this template</Link>
+                    <Link href={`/dashboard/requests/new/templates?templateId=${template.id}`}>Use this template</Link>
                 </Button>
             </header>
             <div className="flex flex-1 overflow-hidden">
@@ -180,7 +201,7 @@ export default function PreviewTemplatePage() {
                         
                         {activePage && (
                             <div className="space-y-8">
-                                <h3 className="text-xl font-bold border-b pb-2">{activePage.title}</h3>
+                                <h3 className="text-xl font-bold border-b pb-2 mb-4">{activePage.title}</h3>
                                 {activePage.sections.map(section => (
                                     <div key={section.id}>
                                         <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
