@@ -262,8 +262,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             </>
                         )}
                     </ul>
-                     <div className="mt-4 p-3 rounded-lg bg-primary/10">
-                        <Button variant="ghost" onClick={() => onProceed(true)} className="w-full text-primary hover:text-primary">
+                     <div className="mt-4 p-2">
+                        <Button onClick={() => onProceed(true)} className="w-full">
                             <Plus className="mr-2 h-4 w-4" /> Start From Scratch
                         </Button>
                     </div>
@@ -272,7 +272,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                     <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                         <div className="flex items-center gap-4">
-                            <Button variant="outline" onClick={() => onProceed(true)}>
+                            <Button onClick={() => onProceed(true)}>
                                 <Plus className="mr-2 h-4 w-4" /> Start From Scratch
                             </Button>
                             <div className="relative flex-1">
