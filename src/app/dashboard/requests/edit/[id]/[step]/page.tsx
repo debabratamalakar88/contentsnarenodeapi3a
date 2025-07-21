@@ -218,7 +218,8 @@ export default function EditRequestWizardPage() {
             };
 
             await updateRequest(token, requestId, payload);
-            toast({ title: "Request draft updated" });
+            const isPublished = initialRequestData?.status === 'published';
+            toast({ title: isPublished ? "Request updated" : "Request draft updated" });
 
             const nextStepSlug = steps[currentStepIndex + 1].slug;
             router.push(`/dashboard/requests/edit/${requestId}/${nextStepSlug}`);
