@@ -242,8 +242,14 @@ export default function EditRequestWizardPage() {
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/dashboard/requests/edit/${id}/${slug}`);
+        const targetIndex = steps.findIndex(s => s.slug === slug);
+        const isStepDisabled = disabledSteps.includes(slug);
+        if (!isStepDisabled && targetIndex <= maxVisitedStepIndex) {
+            router.push(`/dashboard/requests/edit/${id}/${slug}`);
+        }
     };
+    
+    const disabledSteps = ['templates'];
 
     const renumberItems = (pagesToRenumber: Page[]): Page[] => {
       return pagesToRenumber.map((page, pageIndex) => {
@@ -576,11 +582,11 @@ export default function EditRequestWizardPage() {
                     currentStepSlug={stepSlug}
                     onStepClick={handleStepClick}
                     maxVisitedStepIndex={maxVisitedStepIndex}
-                    disabledSteps={['templates']}
+                    disabledSteps={disabledSteps}
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {isFinalizeStep && (
-                        <Button variant="outline" asChild>
+                        <Button asChild>
                             <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
                         </Button>
                     )}

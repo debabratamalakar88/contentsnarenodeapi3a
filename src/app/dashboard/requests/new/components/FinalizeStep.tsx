@@ -325,7 +325,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-8">
-                <Button size="lg" className="w-full max-w-xs bg-purple-600 text-white hover:bg-purple-700 font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handleMainAction}>
+                <Button size="lg" className="w-full max-w-xs font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handleMainAction}>
                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                      {isPublished ? 'UPDATE SETTINGS' : 'PUBLISH & SEND'}
                 </Button>
