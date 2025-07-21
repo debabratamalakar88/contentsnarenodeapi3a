@@ -270,7 +270,7 @@ export default function ClientsPage() {
                 {!isArchived && (
                  <TableRow>
                     <TableCell colSpan={5} className="py-4">
-                        <Link href="/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add a client...</Link>
+                        <Link href="/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add new client...</Link>
                     </TableCell>
                 </TableRow>
                 )}
