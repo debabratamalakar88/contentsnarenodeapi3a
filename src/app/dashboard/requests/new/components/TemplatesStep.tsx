@@ -262,11 +262,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             </>
                         )}
                     </ul>
-                    <div className="mt-auto pt-4">
-                    <Button variant="outline" className="w-full" onClick={() => onProceed(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> Start From Scratch
-                    </Button>
-                    </div>
                 </aside>
                 
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
@@ -276,6 +271,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
+                             <Button variant="outline" onClick={() => onProceed(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> Start From Scratch
+                            </Button>
                         </div>
                     </header>
 
