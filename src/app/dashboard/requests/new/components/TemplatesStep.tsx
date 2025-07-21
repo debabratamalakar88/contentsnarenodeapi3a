@@ -135,43 +135,43 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-4 px-2">TEMPLATE GALLERY</h3>
-                <ul className="space-y-1 flex-grow">
+                <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">TEMPLATE GALLERY</h3>
+                <ul className="space-y-2 flex-grow">
                      {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
                     ) : (
                         <>
-                            <a
-                                href="#"
-                                onClick={(e) => handleCategoryClick(e, null)}
-                                className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
-                            >
-                                All Templates
-                            </a>
+                            <li>
+                                <a
+                                    href="#"
+                                    onClick={(e) => handleCategoryClick(e, null)}
+                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
+                                >
+                                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}/>
+                                    <span>My Templates</span>
+                                </a>
+                            </li>
                             {visibleCategories.map((cat) => (
                                 <li key={cat.slug}>
                                     <a
                                         href={`#category-${cat.slug}`}
                                         onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                        className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === cat.slug ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary' : ''}`}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
-                                            <span>{cat.title}</span>
-                                        </div>
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates[cat.title as any]?.items.length || 0}</span>
+                                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
+                                        <span>{cat.title}</span>
                                     </a>
                                 </li>
                             ))}
                             {groupedTemplates['Uncategorized'] && (
                                 <li>
-                                    <a
+                                     <a
                                         href={`#category-uncategorized`}
                                         onClick={(e) => handleCategoryClick(e, 'uncategorized')}
-                                        className={`flex items-center justify-between p-2 rounded-md font-semibold text-sm transition-colors ${activeCategorySlug === 'uncategorized' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
+                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === 'uncategorized' ? 'text-primary' : ''}`}
                                     >
-                                        Uncategorized
-                                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">{groupedTemplates['Uncategorized'].items.length}</span>
+                                        <div className="h-2.5 w-2.5 rounded-full bg-gray-400" />
+                                        <span>Uncategorized</span>
                                     </a>
                                 </li>
                             )}
@@ -217,7 +217,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 return (
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
-                                            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: data.color || 'hsl(var(--muted-foreground))' }} />
                                             {data.title}
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
