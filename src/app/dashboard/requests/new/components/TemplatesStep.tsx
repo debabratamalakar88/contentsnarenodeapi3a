@@ -69,11 +69,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     getTemplates(token)
                 ]);
 
-                const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
-                setCategories(categoriesData);
-                
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
-                setTemplates(templatesData);
+                // User-facing API returns direct array
+                setCategories(catsResponse || []);
+                setTemplates(tplsResponse || []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -233,5 +231,3 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </div>
     );
 }
-
-    

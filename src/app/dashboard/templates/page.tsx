@@ -5,9 +5,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
-    MoreHorizontal, Search, Plus, FolderOpen
+    Search, Plus, FolderOpen
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +30,7 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 
 const TemplateCard = ({ template }: { template: Template; }) => (
   <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card">
-     <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`} className="flex flex-col flex-grow">
+     <Link href={`/dashboard/requests/new?templateId=${template.id}`} className="flex flex-col flex-grow">
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
         <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
         <div className="flex-grow">
@@ -67,12 +66,10 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token)
                 ]);
-
-                const categoriesData = Array.isArray(catsResponse) ? catsResponse : [];
-                setCategories(categoriesData);
                 
-                const templatesData = Array.isArray(tplsResponse) ? tplsResponse : [];
-                setTemplates(templatesData);
+                // User-facing API returns a direct array
+                setCategories(catsResponse || []);
+                setTemplates(tplsResponse || []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -114,6 +111,7 @@ export default function TemplatesPage() {
     }, [templates, searchTerm]);
 
     const groupedTemplates = useMemo(() => {
+        if (!filteredTemplates) return {};
         return filteredTemplates.reduce((acc, tpl) => {
             const categoryName = tpl.category?.name || 'Uncategorized';
             if (!acc[categoryName]) {
@@ -237,5 +235,3 @@ export default function TemplatesPage() {
         </div>
     );
 }
-
-    
