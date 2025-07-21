@@ -725,7 +725,7 @@ export async function getTemplateCategories(token: string): Promise<TemplateCate
     return fetchWithToken(`${API_BASE_URL}/api/templates/categories`, token);
 }
 
-export async function getTemplates(token: string, category?: string, search?: string): Promise<any[]> {
+export async function getTemplates(token: string, category?: string, search?: string): Promise<PaginatedTemplates> {
     const url = new URL(`${API_BASE_URL}/api/templates`);
     if (category) url.searchParams.append('category', category);
     if (search) url.searchParams.append('search', search);

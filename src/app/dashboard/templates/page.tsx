@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -67,8 +68,8 @@ export default function TemplatesPage() {
                     getTemplates(token)
                 ]);
                 
-                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
-                setTemplates(tplsResponse?.data && Array.isArray(tplsResponse.data) ? tplsResponse.data : []);
+                setCategories(catsResponse || []);
+                setTemplates(tplsResponse?.data || []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
