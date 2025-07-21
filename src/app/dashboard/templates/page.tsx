@@ -60,9 +60,10 @@ export default function TemplatesPage() {
                     getTemplates(token, activeCategorySlug || undefined, searchTerm || undefined)
                 ]);
                 setCategories(cats);
-                setTemplates(tpls);
+                setTemplates(Array.isArray(tpls) ? tpls : []);
             } catch (err: any) {
                 toast({ title: 'Error fetching templates', description: err.message, variant: 'destructive' });
+                 setTemplates([]);
             } finally {
                 setIsLoading(false);
             }
