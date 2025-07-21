@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen
+    Search, Plus, FolderOpen, Eye
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -30,8 +30,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 };
 
 const TemplateCard = ({ template }: { template: Template; }) => (
-  <Card className="hover:shadow-lg transition-shadow cursor-pointer group flex flex-col bg-card" >
-     <Link href={`/dashboard/requests/new?templateId=${template.id}`} className="flex flex-col flex-grow">
+  <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+    <Link href={`/dashboard/templates/preview/${template.id}`} className="flex flex-col flex-grow">
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
         <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
         <div className="flex-grow">
@@ -40,13 +40,20 @@ const TemplateCard = ({ template }: { template: Template; }) => (
         </div>
       </CardContent>
     </Link>
+     <div className="p-2 border-t flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+            <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+        </Button>
+        <Button size="sm" asChild>
+            <Link href={`/dashboard/requests/new?templateId=${template.id}`}>Use Template</Link>
+        </Button>
+    </div>
   </Card>
 );
 
 export default function TemplatesPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
@@ -72,7 +79,7 @@ export default function TemplatesPage() {
                     getTemplates(token)
                 ]);
                 
-                setCategories(catsResponse || []);
+                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
                 setTemplates(tplsResponse?.data || []);
 
             } catch (err: any) {
@@ -87,6 +94,14 @@ export default function TemplatesPage() {
         fetchData();
 
     }, [token, toast, router]);
+
+    const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
+        e.preventDefault();
+        setActiveCategorySlug(slug);
+        if (mainRef.current) {
+            mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
     
     const filteredTemplatesBySearch = useMemo(() => {
         if (!Array.isArray(templates)) return [];
@@ -98,15 +113,17 @@ export default function TemplatesPage() {
             (tpl.description && tpl.description.toLowerCase().includes(searchLower))
         );
     }, [templates, searchTerm]);
-
+    
     const visibleCategories = useMemo(() => {
-        if (!categories.length || !filteredTemplatesBySearch.length) return [];
+        if (!Array.isArray(categories) || !Array.isArray(filteredTemplatesBySearch)) return [];
+        
         const templateCategorySlugs = new Set(
             filteredTemplatesBySearch.map(tpl => tpl.category?.slug).filter(Boolean)
         );
+
         return categories.filter(cat => templateCategorySlugs.has(cat.slug));
     }, [categories, filteredTemplatesBySearch]);
-    
+
     const groupedAndFilteredTemplates = useMemo(() => {
         let filteredByCategory = filteredTemplatesBySearch;
         if (activeCategorySlug) {
@@ -128,18 +145,10 @@ export default function TemplatesPage() {
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplatesBySearch, activeCategorySlug]);
     
-    const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
-        e.preventDefault();
-        setActiveCategorySlug(slug);
-        if (mainRef.current) {
-            mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-
     return (
         <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
             <aside className="w-64 bg-background border-r p-4 overflow-y-auto shrink-0 flex flex-col">
-                <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest uppercase">Template Gallery</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">TEMPLATE GALLERY</h3>
                 <ul className="space-y-1 flex-grow">
                      {isLoading ? (
                          [...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)
@@ -174,6 +183,9 @@ export default function TemplatesPage() {
             <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                  <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                     <div className="flex items-center gap-4">
+                        <Button className="bg-primary hover:bg-primary/90" asChild>
+                            <Link href="/dashboard/requests/new/templates"><Plus className="mr-2 h-4 w-4" /> START FROM SCRATCH</Link>
+                        </Button>
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -222,3 +234,5 @@ export default function TemplatesPage() {
         </div>
     );
 }
+
+    

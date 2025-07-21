@@ -721,7 +721,8 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // ===================================
 
 export async function getTemplateCategories(token: string): Promise<TemplateCategory[]> {
-    return fetchWithToken(`${API_BASE_URL}/api/templates/categories`, token);
+    const response = await fetchWithToken(`${API_BASE_URL}/api/templates/categories`, token);
+    return Array.isArray(response) ? response : [];
 }
 
 export async function getTemplates(token: string, category?: string, search?: string): Promise<PaginatedTemplates> {
@@ -730,3 +731,9 @@ export async function getTemplates(token: string, category?: string, search?: st
     if (search) url.searchParams.append('search', search);
     return fetchWithToken(url.toString(), token);
 }
+
+export async function getTemplate(token: string, id: number): Promise<Template> {
+  return fetchWithToken(`${API_BASE_URL}/api/templates/${id}`, token);
+}
+
+    
