@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -44,6 +45,8 @@ const TemplateCard = ({ template }: { template: Template; }) => (
 
 export default function TemplatesPage() {
     const { toast } = useToast();
+    const router = useRouter();
+
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +59,7 @@ export default function TemplatesPage() {
     useEffect(() => {
         if (!token) {
             toast({ title: 'Authentication Error', description: 'Please log in again.', variant: 'destructive' });
+            router.push('/login');
             return;
         }
 
@@ -66,8 +70,8 @@ export default function TemplatesPage() {
                     getTemplateCategories(token),
                     getTemplates(token)
                 ]);
-
-                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
+                
+                setCategories(catsResponse || []);
                 setTemplates(tplsResponse?.data || []);
 
             } catch (err: any) {
@@ -81,7 +85,7 @@ export default function TemplatesPage() {
         
         fetchData();
 
-    }, [token, toast]);
+    }, [token, toast, router]);
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
@@ -146,7 +150,7 @@ export default function TemplatesPage() {
                                     onClick={(e) => handleCategoryClick(e, null)}
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
                                 >
-                                    My Templates
+                                    All Templates
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (

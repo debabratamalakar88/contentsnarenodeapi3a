@@ -64,6 +64,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     useEffect(() => {
         if (!token) {
             toast({ title: 'Authentication Error', description: 'Please log in again.', variant: 'destructive' });
+            router.push('/login');
             return;
         }
 
@@ -75,7 +76,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     getTemplates(token)
                 ]);
                 
-                setCategories(Array.isArray(catsResponse) ? catsResponse : []);
+                setCategories(catsResponse || []);
                 setTemplates(tplsResponse?.data || []);
 
             } catch (err: any) {
@@ -89,7 +90,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         
         fetchData();
 
-    }, [token, toast]);
+    }, [token, toast, router]);
 
      useEffect(() => {
       const templateId = searchParams.get('templateId');
@@ -164,7 +165,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     onClick={(e) => handleCategoryClick(e, null)}
                                     className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
                                 >
-                                    My Templates
+                                    All Templates
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (
