@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -185,10 +186,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         setActivePreviewPageIndex(0);
         setPreviewTemplate(template);
         try {
-            // MyTemplates API doesn't return form_data on list, so we must fetch it.
-            // Gallery templates already have it.
             if ('created_by' in template) { 
-                 const fullTemplate = await getTemplate(token, template.id); // Assuming getTemplate works for my-templates
+                 const fullTemplate = await getMyTemplate(token, template.id);
+                 setPreviewTemplate(fullTemplate);
+            } else {
+                 const fullTemplate = await getTemplate(token, template.id);
                  setPreviewTemplate(fullTemplate);
             }
         } catch (error: any) {
@@ -406,7 +408,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
                                 <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
                                 <ul className="space-y-1">
-                                    {'form_data' in previewTemplate && previewTemplate.form_data.map((page, index) => (
+                                    {'form_data' in previewTemplate && previewTemplate.form_data && previewTemplate.form_data.map((page, index) => (
                                         <li key={page.id}>
                                             <button
                                                 onClick={() => setActivePreviewPageIndex(index)}

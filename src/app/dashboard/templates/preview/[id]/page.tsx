@@ -1,14 +1,15 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getTemplate, type Question, type Page, type Template } from '@/lib/api';
+import { getTemplate, getMyTemplate, type Question, type Page, type Template, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye } from 'lucide-react';
+import { ArrowLeft, Sparkles, CheckCircle2, FolderOpen, Eye, User } from 'lucide-react';
 import Link from 'next/link';
 import { iconList } from '@/components/ui/icon-selector';
 import { cn } from '@/lib/utils';
@@ -20,16 +21,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
-const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
+const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
     const IconComponent = useMemo(() => {
+        if (isMyTemplate) return User;
         if (!iconName) return FolderOpen;
         const foundIcon = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase());
         return foundIcon ? foundIcon.icon : FolderOpen;
-    }, [iconName]);
+    }, [iconName, isMyTemplate]);
+
+    const bgColor = isMyTemplate ? '#e0f2fe' : (categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))');
+    const iconColor = isMyTemplate ? '#0284c7' : (categoryColor || 'hsl(var(--muted-foreground))');
+
 
     return (
-        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))' }}>
-            <IconComponent className="h-6 w-6" style={{ color: categoryColor || 'hsl(var(--muted-foreground))' }} />
+        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: bgColor }}>
+            <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
 };
@@ -91,7 +97,7 @@ export default function PreviewTemplatePage() {
 
     const id = Number(params.id);
 
-    const [template, setTemplate] = useState<Template | null>(null);
+    const [template, setTemplate] = useState<Template | MyTemplate | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activePageIndex, setActivePageIndex] = useState(0);
@@ -104,8 +110,18 @@ export default function PreviewTemplatePage() {
 
         async function fetchTemplateData() {
             try {
-                const templateData = await getTemplate(token!, id);
-                setTemplate(templateData);
+                // Try fetching from public templates first, then from my templates
+                try {
+                    const templateData = await getTemplate(token!, id);
+                    setTemplate(templateData);
+                } catch (publicError: any) {
+                    if (publicError.status === 404 || publicError.error === "Unauthorized") {
+                         const myTemplateData = await getMyTemplate(token!, id);
+                         setTemplate(myTemplateData);
+                    } else {
+                        throw publicError;
+                    }
+                }
             } catch (err: any) {
                 const message = err.message || 'Failed to load template data.';
                 setError(message);
@@ -116,8 +132,12 @@ export default function PreviewTemplatePage() {
         }
         fetchTemplateData();
     }, [id, router, toast]);
+    
+    const isMyTemplate = template && 'created_by' in template;
+    const templateCategory = template && 'category' in template ? template.category : undefined;
+    const formPages = template && 'form_data' in template ? template.form_data : [];
 
-    const activePage = template?.form_data[activePageIndex];
+    const activePage = formPages?.[activePageIndex];
 
     if (isLoading) {
         return (
@@ -164,10 +184,14 @@ export default function PreviewTemplatePage() {
                        <Link href="/dashboard/templates"><ArrowLeft className="h-4 w-4" /></Link>
                     </Button>
                      <div className="flex items-center gap-3">
-                        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+                        <TemplateIconDisplay 
+                            iconName={'icon' in template ? template.icon : undefined} 
+                            categoryColor={templateCategory?.color}
+                            isMyTemplate={isMyTemplate}
+                        />
                         <div>
                             <h1 className="text-lg font-bold">{template.title}</h1>
-                             {template.category && <p className="text-sm text-muted-foreground">{template.category.title}</p>}
+                            <p className="text-sm text-muted-foreground">{isMyTemplate ? 'My Template' : (templateCategory?.title || 'Uncategorized')}</p>
                         </div>
                     </div>
                 </div>
@@ -179,7 +203,7 @@ export default function PreviewTemplatePage() {
                 <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
                      <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
                      <ul className="space-y-1">
-                        {template.form_data.map((page, index) => (
+                        {formPages && formPages.map((page, index) => (
                              <li key={page.id}>
                                 <button
                                     onClick={() => setActivePageIndex(index)}
@@ -219,6 +243,12 @@ export default function PreviewTemplatePage() {
                                     </div>
                                 ))}
                             </div>
+                        )}
+                         {!activePage && formPages && formPages.length > 0 && (
+                            <p className="text-muted-foreground text-center py-10">Select a page to preview its content.</p>
+                        )}
+                        {(!formPages || formPages.length === 0) && (
+                            <p className="text-muted-foreground text-center py-10">This template is empty.</p>
                         )}
                     </div>
                  </main>

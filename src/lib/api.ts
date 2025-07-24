@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -206,6 +207,7 @@ export interface MyTemplate {
     status: 'draft' | 'published';
     created_by: number;
     my_template_code?: string;
+    form_data?: Page[];
 }
 
 export interface PaginatedMyTemplates extends PaginatedResponse<MyTemplate> {}
@@ -758,4 +760,26 @@ export async function getMyTemplates(token: string, search?: string): Promise<Pa
     const url = new URL(`${API_BASE_URL}/api/mytemplates`);
     if (search) url.searchParams.append('search', search);
     return fetchWithToken(url.toString(), token);
+}
+
+export async function createMyTemplate(token: string, data: Partial<MyTemplate>): Promise<MyTemplate> {
+    return fetchWithToken(`${API_BASE_URL}/api/mytemplates`, token, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function getMyTemplate(token: string, id: number): Promise<MyTemplate> {
+    return fetchWithToken(`${API_BASE_URL}/api/mytemplates/${id}`, token);
+}
+
+export async function updateMyTemplate(token: string, id: number, data: Partial<MyTemplate>): Promise<MyTemplate> {
+    return fetchWithToken(`${API_BASE_URL}/api/mytemplates/${id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteMyTemplate(token: string, id: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/mytemplates/${id}`, token, { method: 'DELETE' });
 }
