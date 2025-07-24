@@ -49,16 +49,21 @@ interface TemplatesTableProps {
   onDuplicate: (id: number) => void;
 }
 
-const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
+const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
     const IconComponent = useMemo(() => {
+        if (isMyTemplate) return User;
         if (!iconName) return FolderOpen;
         const foundIcon = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase());
         return foundIcon ? foundIcon.icon : FolderOpen;
-    }, [iconName]);
+    }, [iconName, isMyTemplate]);
+
+    const bgColor = isMyTemplate ? '#e0f2fe' : (categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))');
+    const iconColor = isMyTemplate ? '#0284c7' : (categoryColor || 'hsl(var(--muted-foreground))');
+
 
     return (
-        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))' }}>
-            <IconComponent className="h-6 w-6" style={{ color: categoryColor || 'hsl(var(--muted-foreground))' }} />
+        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: bgColor }}>
+            <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
 };
@@ -69,9 +74,7 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
-            <User className="h-6 w-6 text-blue-600" />
-          </div>
+          <TemplateIconDisplay isMyTemplate={true} />
           <h3 className="font-semibold">{template.title}</h3>
         </div>
         <DropdownMenu>
@@ -152,7 +155,12 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, 
         <TableBody>
           {templates.map((template) => (
             <TableRow key={template.id}>
-              <TableCell className="font-medium">{template.title}</TableCell>
+              <TableCell className="font-medium">
+                 <div className="flex items-center gap-3">
+                    <TemplateIconDisplay isMyTemplate={true} />
+                    <span>{template.title}</span>
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground max-w-sm truncate">{template.description || "No description"}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -185,7 +193,12 @@ export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: 
         <TableBody>
           {templates.map((template) => (
             <TableRow key={template.id}>
-              <TableCell className="font-medium">{template.title}</TableCell>
+              <TableCell className="font-medium">
+                 <div className="flex items-center gap-3">
+                    <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+                    <span>{template.title}</span>
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground max-w-sm truncate">{template.description}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
