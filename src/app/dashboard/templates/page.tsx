@@ -266,7 +266,7 @@ export default function TemplatesPage() {
                                     {filteredMyTemplatesBySearch.map((template) => (
                                         <MyTemplateCard key={template.id} template={template} />
                                     ))}
-                                     <Link href="/dashboard/requests/new/essentials">
+                                     <Link href="/dashboard/templates/new">
                                         <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
                                             <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
                                                 <Plus className="h-8 w-8 text-slate-400" />
