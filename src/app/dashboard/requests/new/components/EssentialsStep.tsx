@@ -30,7 +30,7 @@ interface EssentialsStepProps {
 }
 
 export default function EssentialsStep({ title, setTitle, description, setDescription, categoryId, setCategoryId, icon, setIcon, categories }: EssentialsStepProps) {
-    const isTemplateFlow = typeof window !== 'undefined' && (window.location.pathname.includes('/admin/dashboard/templates') || window.location.pathname.includes('/dashboard/templates'));
+    const isTemplateFlow = typeof window !== 'undefined' && (window.location.pathname.includes('/admin/dashboard/templates') || window.location.pathname.includes('/dashboard/templates/new'));
     const noCategoryValue = "__none__";
 
     return (
@@ -65,27 +65,29 @@ export default function EssentialsStep({ title, setTitle, description, setDescri
                                 placeholder={isTemplateFlow ? 'A short description of what this template is for.' : 'Instructions or a welcome message for your client.'}
                             />
                         </div>
-                        {isTemplateFlow && setCategoryId && setIcon && categories && (
+                        {isTemplateFlow && setIcon && (
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="grid gap-3">
-                                    <Label htmlFor="category">Category</Label>
-                                    <Select 
-                                        value={categoryId ? String(categoryId) : noCategoryValue}
-                                        onValueChange={(value) => setCategoryId(value === noCategoryValue ? null : Number(value))}
-                                    >
-                                        <SelectTrigger id="category">
-                                            <SelectValue placeholder="Select a category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value={noCategoryValue}>No Category</SelectItem>
-                                            {categories.map(cat => (
-                                                <SelectItem key={cat.id} value={String(cat.id)}>
-                                                    {cat.title}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                {setCategoryId && categories && (
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="category">Category</Label>
+                                        <Select 
+                                            value={categoryId ? String(categoryId) : noCategoryValue}
+                                            onValueChange={(value) => setCategoryId(value === noCategoryValue ? null : Number(value))}
+                                        >
+                                            <SelectTrigger id="category">
+                                                <SelectValue placeholder="Select a category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value={noCategoryValue}>No Category</SelectItem>
+                                                {categories.map(cat => (
+                                                    <SelectItem key={cat.id} value={String(cat.id)}>
+                                                        {cat.title}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                                 <div className="grid gap-3">
                                     <Label htmlFor="icon">Icon</Label>
                                     <IconSelector
