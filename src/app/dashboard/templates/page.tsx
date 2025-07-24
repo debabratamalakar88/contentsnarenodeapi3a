@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -100,7 +101,7 @@ export default function TemplatesPage() {
         }
     };
 
-    const handleDuplicateMyTemplate = async (templateId: number) => {
+    const handleDuplicateTemplate = async (templateId: number) => {
         if (!token) return;
         toast({ title: 'Duplicating template...', description: 'Please wait.' });
         try {
@@ -302,7 +303,7 @@ export default function TemplatesPage() {
                                             <MyTemplateCard 
                                                 key={template.id} 
                                                 template={template} 
-                                                onDuplicate={() => handleDuplicateMyTemplate(template.id)}
+                                                onDuplicate={() => handleDuplicateTemplate(template.id)}
                                                 onDelete={() => setTemplateToDelete(template)}
                                                 onPreview={() => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                                 onSelect={() => handleUseMyTemplate(template.id)}
@@ -320,7 +321,7 @@ export default function TemplatesPage() {
                                 ) : (
                                     <MyTemplatesTable 
                                         templates={filteredMyTemplatesBySearch} 
-                                        onDuplicate={handleDuplicateMyTemplate} 
+                                        onDuplicate={handleDuplicateTemplate} 
                                         onDelete={setTemplateToDelete}
                                         onPreview={(template) => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                         onSelect={handleUseMyTemplate}
@@ -346,6 +347,7 @@ export default function TemplatesPage() {
                                                           template={template} 
                                                           onSelect={() => handleUsePublicTemplate(template)}
                                                           onPreview={() => handlePreviewPublicTemplate(template)}
+                                                          onDuplicate={() => handleDuplicateTemplate(template.id)}
                                                         />
                                                     ))}
                                                 </div>
@@ -354,6 +356,7 @@ export default function TemplatesPage() {
                                                   templates={data.items} 
                                                   onSelect={(template) => handleUsePublicTemplate(template)}
                                                   onPreview={(template) => handlePreviewPublicTemplate(template)}
+                                                  onDuplicate={handleDuplicateTemplate}
                                                 />
                                             )}
                                         </section>

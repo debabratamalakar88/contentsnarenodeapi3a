@@ -30,7 +30,9 @@ interface TemplateCardProps {
   template: Template;
   onSelect: () => void;
   onPreview: () => void;
+  onDuplicate: (id: number) => void;
 }
+
 
 interface MyTemplatesTableProps {
   templates: MyTemplate[];
@@ -44,6 +46,7 @@ interface TemplatesTableProps {
   templates: Template[];
   onSelect: (template: Template) => void;
   onPreview: (template: Template) => void;
+  onDuplicate: (id: number) => void;
 }
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
@@ -106,14 +109,26 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
 }
 
 // TemplateCard Component (Public Templates)
-export function TemplateCard({ template, onSelect, onPreview }: TemplateCardProps) {
+export function TemplateCard({ template, onSelect, onPreview, onDuplicate }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-      <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
+       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
           <h3 className="font-semibold">{template.title}</h3>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
+              <Copy className="mr-2 h-4 w-4" /> Duplicate
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
@@ -162,7 +177,7 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, 
 }
 
 // TemplatesTable Component (Public)
-export function TemplatesTable({ templates, onSelect, onPreview }: TemplatesTableProps) {
+export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: TemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -180,6 +195,7 @@ export function TemplatesTable({ templates, onSelect, onPreview }: TemplatesTabl
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onSelect(template)}>Use Template</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Duplicate to My Templates</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
