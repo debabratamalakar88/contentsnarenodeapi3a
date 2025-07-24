@@ -151,13 +151,15 @@ export default function TemplatesPage() {
 
      const filteredMyTemplatesBySearch = useMemo(() => {
         if (!Array.isArray(myTemplates)) return [];
-        const searchLower = searchTerm.toLowerCase();
-        if (!searchLower) return myTemplates;
-        
-        return myTemplates.filter(tpl => 
-            tpl.title.toLowerCase().includes(searchLower) || 
-            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
-        );
+
+        const filtered = myTemplates.filter(tpl => {
+            const searchLower = searchTerm.toLowerCase();
+            if (!searchLower) return true;
+            return tpl.title.toLowerCase().includes(searchLower) || 
+                   (tpl.description && tpl.description.toLowerCase().includes(searchLower));
+        });
+
+        return filtered.sort((a, b) => b.id - a.id);
     }, [myTemplates, searchTerm]);
     
     const visibleCategories = useMemo(() => {
