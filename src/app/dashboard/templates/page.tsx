@@ -67,7 +67,7 @@ interface MyTemplateCardProps {
   onDelete: () => void;
 }
 
-function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCardProps) {
+const MyTemplateCard: React.FC<MyTemplateCardProps> = ({ template, onDuplicate, onDelete }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
@@ -84,7 +84,7 @@ function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCardProps
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</Link></DropdownMenuItem>
+                <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onDelete} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
               </DropdownMenuContent>
@@ -103,40 +103,54 @@ function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCardProps
       </div>
     </Card>
   );
+};
+
+
+interface TemplateCardProps {
+  template: Template;
+  onDuplicate: () => void;
 }
 
-const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => (
-  <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-    <div className="p-4 flex gap-4 items-start flex-grow">
-      <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-      <div className="flex-grow">
-        <div className="flex justify-between items-start">
-            <h3 className="font-semibold">{template.title}</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                    <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</Link></DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onDuplicate }) => {
+  return (
+    <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+      <div className="p-4 flex gap-4 items-start flex-grow">
+        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+        <div className="flex-grow">
+          <div className="flex justify-between items-start">
+              <h3 className="font-semibold">{template.title}</h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</Link></DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
         </div>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
       </div>
-    </div>
-      <div className="p-2 border-t flex items-center justify-between mt-auto">
-          <Button variant="ghost" size="sm" asChild>
-              <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
-          </Button>
-          <Button size="sm" asChild>
-              <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
-          </Button>
-      </div>
-  </Card>
-);
+        <div className="p-2 border-t flex items-center justify-between mt-auto">
+            <Button variant="ghost" size="sm" asChild>
+                <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+            </Button>
+            <Button size="sm" asChild>
+                <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
+            </Button>
+        </div>
+    </Card>
+  );
+};
 
-const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyTemplate[], onDuplicate: (id: number) => void, onDelete: (template: MyTemplate) => void }) => (
+interface MyTemplatesTableProps {
+  templates: MyTemplate[];
+  onDuplicate: (id: number) => void;
+  onDelete: (template: MyTemplate) => void;
+}
+
+const MyTemplatesTable: React.FC<MyTemplatesTableProps> = ({ templates, onDuplicate, onDelete }) => (
     <Card>
         <Table>
             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -178,7 +192,12 @@ const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyT
     </Card>
 )
 
-const TemplatesTable = ({ templates, onDuplicate }: { templates: Template[], onDuplicate: (id: number) => void }) => (
+interface TemplatesTableProps {
+  templates: Template[];
+  onDuplicate: (id: number) => void;
+}
+
+const TemplatesTable: React.FC<TemplatesTableProps> = ({ templates, onDuplicate }) => (
      <Card>
         <Table>
             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
