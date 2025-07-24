@@ -15,6 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket
 } from "lucide-react";
@@ -110,8 +116,12 @@ export default function TemplatesPage() {
       router.push(`/dashboard/requests/new/essentials?myTemplateId=${templateId}`);
     };
 
-    const handleUsePublicTemplate = (templateId: number) => {
-        router.push(`/dashboard/requests/new/essentials?templateId=${templateId}`);
+    const handleUsePublicTemplate = (template: Template) => {
+        router.push(`/dashboard/requests/new/essentials?templateId=${template.id}`);
+    };
+    
+    const handlePreviewPublicTemplate = (template: Template) => {
+      router.push(`/dashboard/templates/preview/${template.id}`);
     };
 
     const handleDelete = async () => {
@@ -334,16 +344,16 @@ export default function TemplatesPage() {
                                                         <TemplateCard 
                                                           key={template.id} 
                                                           template={template} 
-                                                          onSelect={() => handleUsePublicTemplate(template.id)}
-                                                          onPreview={() => router.push(`/dashboard/templates/preview/${template.id}`)} 
+                                                          onSelect={() => handleUsePublicTemplate(template)}
+                                                          onPreview={() => handlePreviewPublicTemplate(template)}
                                                         />
                                                     ))}
                                                 </div>
                                             ) : (
                                                 <TemplatesTable 
                                                   templates={data.items} 
-                                                  onSelect={(template) => handleUsePublicTemplate(template.id)}
-                                                  onPreview={(template) => router.push(`/dashboard/templates/preview/${template.id}`)}
+                                                  onSelect={(template) => handleUsePublicTemplate(template)}
+                                                  onPreview={(template) => handlePreviewPublicTemplate(template)}
                                                 />
                                             )}
                                         </section>
