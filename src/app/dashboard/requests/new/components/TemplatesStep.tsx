@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -7,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, Eye, Loader2
+    Search, Plus, FolderOpen, Eye, Loader2, User
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getTemplate, type Template, type TemplateCategory, type Question, type Page } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -86,6 +85,26 @@ const renderQuestionPreview = (question: Question) => {
 }
 
 
+const MyTemplateCard = ({ template, onSelect, onPreview }: { template: MyTemplate; onSelect: () => void; onPreview: () => void; }) => (
+    <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+      <div className="flex flex-col flex-grow cursor-pointer" onClick={onSelect}>
+        <CardContent className="p-4 flex gap-4 items-start flex-grow">
+           <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
+                <User className="h-6 w-6 text-blue-600" />
+            </div>
+          <div className="flex-grow">
+            <h3 className="font-semibold">{template.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
+          </div>
+        </CardContent>
+      </div>
+      <div className="p-2 border-t flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4"/>Preview</Button>
+          <Button size="sm" onClick={onSelect}>Use Template</Button>
+      </div>
+    </Card>
+);
+
 const TemplateCard = ({ template, onSelect, onPreview }: { template: Template; onSelect: () => void; onPreview: () => void; }) => (
   <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
     <div className="flex flex-col flex-grow cursor-pointer" onClick={onSelect}>
@@ -105,7 +124,7 @@ const TemplateCard = ({ template, onSelect, onPreview }: { template: Template; o
 );
 
 interface TemplatesStepProps {
-    onProceed: (isFromScratch: boolean, selectedTemplate?: Template) => void;
+    onProceed: (isFromScratch: boolean, selectedTemplate?: Template | MyTemplate) => void;
 }
 
 export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
@@ -114,12 +133,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+    const [myTemplates, setMyTemplates] = useState<MyTemplate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const mainRef = useRef<HTMLDivElement>(null);
 
-    const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+    const [previewTemplate, setPreviewTemplate] = useState<Template | MyTemplate | null>(null);
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
     const [activePreviewPageIndex, setActivePreviewPageIndex] = useState(0);
 
@@ -135,18 +155,21 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const [catsResponse, tplsResponse] = await Promise.all([
+                const [catsResponse, tplsResponse, myTplsResponse] = await Promise.all([
                     getTemplateCategories(token!),
-                    getTemplates(token!)
+                    getTemplates(token!),
+                    getMyTemplates(token!)
                 ]);
                 
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
                 setTemplates(tplsResponse?.data || []);
+                setMyTemplates(myTplsResponse?.data || []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
                 setCategories([]);
                 setTemplates([]);
+                setMyTemplates([]);
             } finally {
                 setIsLoading(false);
             }
@@ -156,14 +179,18 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     }, [token, toast, router]);
 
-    const handlePreviewClick = async (templateId: number) => {
+    const handlePreviewClick = async (template: Template | MyTemplate) => {
         if (!token) return;
         setIsPreviewLoading(true);
         setActivePreviewPageIndex(0);
-        setPreviewTemplate({ id: templateId } as Template);
+        setPreviewTemplate(template);
         try {
-            const fullTemplate = await getTemplate(token, templateId);
-            setPreviewTemplate(fullTemplate);
+            // MyTemplates API doesn't return form_data on list, so we must fetch it.
+            // Gallery templates already have it.
+            if ('created_by' in template) { 
+                 const fullTemplate = await getTemplate(token, template.id); // Assuming getTemplate works for my-templates
+                 setPreviewTemplate(fullTemplate);
+            }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
             setPreviewTemplate(null);
@@ -192,17 +219,30 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         );
     }, [templates, searchTerm]);
 
+    const filteredMyTemplatesBySearch = useMemo(() => {
+        if (!Array.isArray(myTemplates)) return [];
+        const searchLower = searchTerm.toLowerCase();
+        if (!searchLower) return myTemplates;
+        
+        return myTemplates.filter(tpl => 
+            tpl.title.toLowerCase().includes(searchLower) || 
+            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
+        );
+    }, [myTemplates, searchTerm]);
+    
     const visibleCategories = useMemo(() => {
-        if (!categories.length || !filteredTemplatesBySearch.length) return [];
+        if (!Array.isArray(categories) || !Array.isArray(filteredTemplatesBySearch)) return [];
+        
         const templateCategorySlugs = new Set(
             filteredTemplatesBySearch.map(tpl => tpl.category?.slug).filter(Boolean)
         );
+
         return categories.filter(cat => templateCategorySlugs.has(cat.slug));
     }, [categories, filteredTemplatesBySearch]);
     
     const groupedAndFilteredTemplates = useMemo(() => {
         let filteredByCategory = filteredTemplatesBySearch;
-        if (activeCategorySlug) {
+        if (activeCategorySlug && activeCategorySlug !== 'my-templates') {
             filteredByCategory = filteredTemplatesBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
         }
         
@@ -221,7 +261,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplatesBySearch, activeCategorySlug]);
 
-    const activePreviewPage = previewTemplate?.form_data?.[activePreviewPageIndex];
+    const activePreviewPage = (previewTemplate && 'form_data' in previewTemplate) ? previewTemplate.form_data?.[activePreviewPageIndex] : undefined;
     
     return (
         <>
@@ -244,6 +284,19 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         All Templates
                                     </a>
                                 </li>
+                                <li>
+                                    <a
+                                        href="#category-my-templates"
+                                        onClick={(e) => handleCategoryClick(e, 'my-templates')}
+                                        className={cn(
+                                            'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:bg-muted',
+                                            activeCategorySlug === 'my-templates' && 'bg-primary/10 text-primary'
+                                        )}
+                                    >
+                                        <div className="h-2 w-2 rounded-full bg-blue-500"/>
+                                        <span>My Templates</span>
+                                    </a>
+                                </li>
                                 {visibleCategories.map((cat) => (
                                     <li key={cat.slug}>
                                         <a
@@ -262,8 +315,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             </>
                         )}
                     </ul>
-                     <div className="mt-4 p-2">
-                        <Button onClick={() => onProceed(true)} className="w-full">
+                     <div className="mt-4 p-2 bg-pink-100 rounded-lg">
+                        <Button onClick={() => onProceed(true)} className="w-full bg-pink-600 hover:bg-pink-700">
                             <Plus className="mr-2 h-4 w-4" /> Start From Scratch
                         </Button>
                     </div>
@@ -272,7 +325,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                     <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                         <div className="flex items-center gap-4">
-                            <Button onClick={() => onProceed(true)}>
+                            <Button onClick={() => onProceed(true)} className="bg-pink-600 hover:bg-pink-700">
                                 <Plus className="mr-2 h-4 w-4" /> Start From Scratch
                             </Button>
                             <div className="relative flex-1">
@@ -295,8 +348,21 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 </section>
                             ))
                         ) : (
-                        Object.keys(groupedAndFilteredTemplates).length > 0 ? (
+                        <>
+                        {(activeCategorySlug === 'my-templates' || activeCategorySlug === null) && (
+                            <section id="category-my-templates">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                    {filteredMyTemplatesBySearch.map((template) => (
+                                        <MyTemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} onPreview={() => handlePreviewClick(template)} />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {Object.keys(groupedAndFilteredTemplates).length > 0 ? (
                                 Object.entries(groupedAndFilteredTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                                    if (activeCategorySlug && activeCategorySlug !== data.slug) return null;
                                     return (
                                         <section key={categoryName} id={`category-${data.slug}`}>
                                             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
@@ -304,19 +370,23 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                             </h2>
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                                 {data.items.map((template) => (
-                                                    <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} onPreview={() => handlePreviewClick(template.id)} />
+                                                    <TemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} onPreview={() => handlePreviewClick(template)} />
                                                 ))}
                                             </div>
                                         </section>
                                     )
                                 })
                         ) : (
-                            <div className="text-center py-20">
-                                <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
-                                <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
-                            </div>
+                            !activeCategorySlug && filteredMyTemplatesBySearch.length === 0 && (
+                                <div className="text-center py-20">
+                                    <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
+                                </div>
+                            )
                         )
+                        }
+                        </>
                         )}
                     </div>
                 </main>
@@ -336,7 +406,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
                                 <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
                                 <ul className="space-y-1">
-                                    {previewTemplate.form_data.map((page, index) => (
+                                    {'form_data' in previewTemplate && previewTemplate.form_data.map((page, index) => (
                                         <li key={page.id}>
                                             <button
                                                 onClick={() => setActivePreviewPageIndex(index)}

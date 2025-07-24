@@ -199,6 +199,18 @@ export interface Template {
     category?: TemplateCategory;
 }
 
+export interface MyTemplate {
+    id: number;
+    title: string;
+    description?: string | null;
+    status: 'draft' | 'published';
+    created_by: number;
+    my_template_code?: string;
+}
+
+export interface PaginatedMyTemplates extends PaginatedResponse<MyTemplate> {}
+
+
 export interface PaginatedTemplates extends PaginatedResponse<Template> {}
 export interface PaginatedTemplateCategories extends PaginatedResponse<TemplateCategory> {}
 
@@ -345,7 +357,8 @@ export async function changePassword(token: string, passwordData: any) {
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  return response.map((client: any) => ({ ...client, creator_name: client.creator?.name || 'Admin' }));
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
@@ -735,4 +748,14 @@ export async function getTemplates(token: string, category?: string, search?: st
 
 export async function getTemplate(token: string, id: number): Promise<Template> {
   return fetchWithToken(`${API_BASE_URL}/api/templates/${id}`, token);
+}
+
+// ===================================
+// MY TEMPLATES API (User-created)
+// ===================================
+
+export async function getMyTemplates(token: string, search?: string): Promise<PaginatedMyTemplates> {
+    const url = new URL(`${API_BASE_URL}/api/mytemplates`);
+    if (search) url.searchParams.append('search', search);
+    return fetchWithToken(url.toString(), token);
 }

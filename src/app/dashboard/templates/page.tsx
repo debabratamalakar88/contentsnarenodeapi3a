@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, Eye
+    Search, Plus, FolderOpen, Eye, User
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, type Template, type TemplateCategory } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -28,6 +29,26 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
         </div>
     );
 };
+
+const MyTemplateCard = ({ template }: { template: MyTemplate }) => (
+    <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+      <Link href={`/dashboard/templates/preview/${template.id}`} className="flex flex-col flex-grow">
+        <CardContent className="p-4 flex gap-4 items-start flex-grow">
+           <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
+                <User className="h-6 w-6 text-blue-600" />
+            </div>
+          <div className="flex-grow">
+            <h3 className="font-semibold">{template.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
+          </div>
+        </CardContent>
+      </Link>
+       <div className="p-2 border-t flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link></Button>
+          <Button size="sm" asChild><Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link></Button>
+      </div>
+    </Card>
+);
 
 const TemplateCard = ({ template }: { template: Template; }) => (
   <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
@@ -57,6 +78,7 @@ export default function TemplatesPage() {
 
     const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+    const [myTemplates, setMyTemplates] = useState<MyTemplate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -74,18 +96,21 @@ export default function TemplatesPage() {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const [catsResponse, tplsResponse] = await Promise.all([
-                    getTemplateCategories(token),
-                    getTemplates(token)
+                const [catsResponse, tplsResponse, myTplsResponse] = await Promise.all([
+                    getTemplateCategories(token!),
+                    getTemplates(token!),
+                    getMyTemplates(token!)
                 ]);
                 
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
                 setTemplates(tplsResponse?.data || []);
+                setMyTemplates(myTplsResponse?.data || []);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
                 setCategories([]);
                 setTemplates([]);
+                setMyTemplates([]);
             } finally {
                 setIsLoading(false);
             }
@@ -113,6 +138,17 @@ export default function TemplatesPage() {
             (tpl.description && tpl.description.toLowerCase().includes(searchLower))
         );
     }, [templates, searchTerm]);
+
+     const filteredMyTemplatesBySearch = useMemo(() => {
+        if (!Array.isArray(myTemplates)) return [];
+        const searchLower = searchTerm.toLowerCase();
+        if (!searchLower) return myTemplates;
+        
+        return myTemplates.filter(tpl => 
+            tpl.title.toLowerCase().includes(searchLower) || 
+            (tpl.description && tpl.description.toLowerCase().includes(searchLower))
+        );
+    }, [myTemplates, searchTerm]);
     
     const visibleCategories = useMemo(() => {
         if (!Array.isArray(categories) || !Array.isArray(filteredTemplatesBySearch)) return [];
@@ -158,9 +194,24 @@ export default function TemplatesPage() {
                                 <a
                                     href="#"
                                     onClick={(e) => handleCategoryClick(e, null)}
-                                    className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === null ? 'text-primary' : ''}`}
+                                    className={cn('flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors',
+                                      activeCategorySlug === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                                    )}
                                 >
                                     All Templates
+                                </a>
+                            </li>
+                             <li>
+                                <a
+                                    href="#category-my-templates"
+                                    onClick={(e) => handleCategoryClick(e, 'my-templates')}
+                                    className={cn(
+                                        'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:bg-muted',
+                                        activeCategorySlug === 'my-templates' && 'bg-primary/10 text-primary'
+                                    )}
+                                >
+                                    <div className="h-2 w-2 rounded-full bg-blue-500"/>
+                                    <span>My Templates</span>
                                 </a>
                             </li>
                             {visibleCategories.map((cat) => (
@@ -168,7 +219,10 @@ export default function TemplatesPage() {
                                     <a
                                         href={`#category-${cat.slug}`}
                                         onClick={(e) => handleCategoryClick(e, cat.slug)}
-                                        className={`flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:text-primary ${activeCategorySlug === cat.slug ? 'text-primary' : ''}`}
+                                        className={cn(
+                                            'flex items-center gap-3 p-2 rounded-md font-semibold text-sm transition-colors text-foreground hover:bg-muted',
+                                            activeCategorySlug === cat.slug && 'bg-primary/10 text-primary'
+                                        )}
                                     >
                                         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color || 'hsl(var(--muted-foreground))' }}/>
                                         <span>{cat.title}</span>
@@ -203,8 +257,30 @@ export default function TemplatesPage() {
                             </section>
                         ))
                     ) : (
-                       Object.keys(groupedAndFilteredTemplates).length > 0 ? (
+                       <>
+                       {(activeCategorySlug === 'my-templates' || activeCategorySlug === null) && (
+                            <section id="category-my-templates">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                    {filteredMyTemplatesBySearch.map((template) => (
+                                        <MyTemplateCard key={template.id} template={template} />
+                                    ))}
+                                     <Link href="/dashboard/requests/new/essentials">
+                                        <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
+                                            <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
+                                                <Plus className="h-8 w-8 text-slate-400" />
+                                            </div>
+                                            <span className="font-semibold text-primary">Create New Template</span>
+                                        </Card>
+                                    </Link>
+                                </div>
+                            </section>
+                        )}
+
+
+                       {Object.keys(groupedAndFilteredTemplates).length > 0 ? (
                             Object.entries(groupedAndFilteredTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
+                                if (activeCategorySlug && activeCategorySlug !== data.slug) return null;
                                 return (
                                     <section key={categoryName} id={`category-${data.slug}`}>
                                         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
@@ -219,12 +295,16 @@ export default function TemplatesPage() {
                                 )
                             })
                        ) : (
-                         <div className="text-center py-20">
-                            <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
-                         </div>
+                         !activeCategorySlug && filteredMyTemplatesBySearch.length === 0 && (
+                            <div className="text-center py-20">
+                                <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <h3 className="mt-4 text-lg font-semibold">No Templates Found</h3>
+                                <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filter.</p>
+                            </div>
+                         )
                        )
+                       }
+                       </>
                     )}
                 </div>
             </main>
