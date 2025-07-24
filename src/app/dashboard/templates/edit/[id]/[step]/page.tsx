@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -20,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, MyTemplate } from "@/lib/api";
+import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -102,7 +103,6 @@ export default function EditMyTemplateWizardPage() {
     }, [stepSlug]);
     const currentStep = steps[currentStepIndex].name;
     
-    // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
     const [templateIcon, setTemplateIcon] = useState<string>("");
@@ -112,12 +112,10 @@ export default function EditMyTemplateWizardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [initialTemplateData, setInitialTemplateData] = useState<MyTemplate | null>(null);
 
-    // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     
-    // Question Settings Dialog State
     const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
@@ -169,11 +167,11 @@ export default function EditMyTemplateWizardPage() {
                 description: templateDescription,
                 form_data: pages,
                 icon: templateIcon,
-                status: initialTemplateData?.status || 'draft'
+                status: 'published'
             };
 
             await updateMyTemplate(token, id, payload);
-            toast({ title: "Template draft saved" });
+            toast({ title: "Template updated" });
             return true;
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -198,41 +196,6 @@ export default function EditMyTemplateWizardPage() {
             router.push(`/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
-
-    const handlePublish = async () => {
-       if (!templateTitle.trim()) {
-           toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
-           return;
-       }
-
-       setIsSubmitting(true);
-       const token = localStorage.getItem('authToken');
-       if (!token) {
-           toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
-           setIsSubmitting(false);
-           return;
-       }
-       
-       const payload: Partial<MyTemplate> = {
-           title: templateTitle,
-           description: templateDescription,
-           form_data: pages,
-           icon: templateIcon,
-           status: 'published',
-       };
-
-       try {
-           await updateMyTemplate(token, id, payload);
-           toast({ title: "Success", description: "Template Published!" });
-           router.push('/dashboard/templates');
-           router.refresh();
-       } catch(error: any) {
-           const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
-           toast({ title: "Action Failed", description, variant: "destructive" });
-       } finally {
-           setIsSubmitting(false);
-       }
-   };
 
     const handleBack = () => {
         if (currentStepIndex > 0) {
@@ -565,16 +528,13 @@ export default function EditMyTemplateWizardPage() {
                         maxVisitedStepIndex={steps.length}
                     />
                     <div className="flex items-center gap-2">
-                        {isLastStep ? (
-                             <Button onClick={handlePublish} disabled={isSubmitting || isLoading}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Publish
-                            </Button>
-                        ) : (
-                            <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
+                        {!isLastStep ? (
+                             <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {steps[currentStepIndex + 1]?.name || 'Next'} <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
+                        ) : (
+                           <Button variant="outline" asChild><Link href="/dashboard/templates">Finish</Link></Button>
                         )}
                     </div>
                 </div>
