@@ -11,9 +11,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, MoreHorizontal, Eye, Edit, Copy, Trash2, FolderOpen } from "lucide-react";
+import { User, MoreHorizontal, Eye, Edit, Copy, Trash2, FolderOpen, Rocket } from "lucide-react";
 import type { Template, MyTemplate } from '@/lib/api';
 import { iconList } from '@/components/ui/icon-selector';
 
@@ -84,6 +86,8 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href={`/dashboard/templates/edit/${template.id}`}>
                 <Edit className="mr-2 h-4 w-4" /> Edit
@@ -104,7 +108,7 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
       <CardFooter className="p-4 border-t flex justify-between">
          <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4"/>Preview</Button>
         <Button size="sm" onClick={onSelect}>
-          Use Template
+          <Rocket className="mr-2 h-4 w-4" /> Use Template
         </Button>
       </CardFooter>
     </Card>
@@ -127,6 +131,8 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate }: Tem
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
               <Copy className="mr-2 h-4 w-4" /> Duplicate
             </DropdownMenuItem>
@@ -139,7 +145,7 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate }: Tem
       <CardFooter className="p-4 border-t flex justify-between">
         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4" /> Preview</Button>
         <Button size="sm" onClick={onSelect}>
-          Use Template
+          <Rocket className="mr-2 h-4 w-4" /> Use Template
         </Button>
       </CardFooter>
     </Card>
@@ -168,11 +174,14 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, 
                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onSelect(template.id)}>Use Template</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}>Edit</Link></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Duplicate</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onSelect(template.id)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -206,9 +215,11 @@ export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: 
                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onSelect(template)}>Use Template</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Duplicate to My Templates</DropdownMenuItem>
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onSelect(template)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate to My Templates</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
