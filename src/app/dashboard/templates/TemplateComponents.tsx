@@ -20,34 +20,38 @@ interface MyTemplateCardProps {
   template: MyTemplate;
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
+  onPreview: () => void;
 }
 
 interface TemplateCardProps {
   template: Template;
-  onDuplicate: (id: number) => void;
+  onSelect: () => void;
+  onPreview: () => void;
 }
 
 interface MyTemplatesTableProps {
   templates: MyTemplate[];
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
+  onPreview: (template: MyTemplate) => void;
 }
 
 interface TemplatesTableProps {
   templates: Template[];
-  onDuplicate: (id: number) => void;
+  onSelect: (template: Template) => void;
+  onPreview: (template: Template) => void;
 }
 
 // MyTemplateCard Component
-export function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCardProps) {
+export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview }: MyTemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
-                <User className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="font-semibold">{template.title}</h3>
+          <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
+            <User className="h-6 w-6 text-blue-600" />
+          </div>
+          <h3 className="font-semibold">{template.title}</h3>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -73,8 +77,9 @@ export function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCa
       <CardContent className="p-4 flex-grow">
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description || "No description provided."}</p>
       </CardContent>
-      <CardFooter className="p-4 border-t">
-        <Button size="sm" className="w-full" asChild>
+      <CardFooter className="p-4 border-t flex justify-between">
+         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4"/>Preview</Button>
+        <Button size="sm" asChild>
           <Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link>
         </Button>
       </CardFooter>
@@ -83,7 +88,7 @@ export function MyTemplateCard({ template, onDuplicate, onDelete }: MyTemplateCa
 }
 
 // TemplateCard Component (Public Templates)
-export function TemplateCard({ template, onDuplicate }: TemplateCardProps) {
+export function TemplateCard({ template, onSelect, onPreview }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -93,11 +98,9 @@ export function TemplateCard({ template, onDuplicate }: TemplateCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
       </CardContent>
       <CardFooter className="p-4 border-t flex justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" /> Preview</Link>
-        </Button>
-        <Button size="sm" onClick={() => onDuplicate(template.id)}>
-          <Copy className="mr-2 h-4 w-4" /> Copy to My Templates
+        <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4" /> Preview</Button>
+        <Button size="sm" onClick={onSelect}>
+          Use Template
         </Button>
       </CardFooter>
     </Card>
@@ -105,7 +108,7 @@ export function TemplateCard({ template, onDuplicate }: TemplateCardProps) {
 }
 
 // MyTemplatesTable Component
-export function MyTemplatesTable({ templates, onDuplicate, onDelete }: MyTemplatesTableProps) {
+export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview }: MyTemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -122,6 +125,7 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete }: MyTemplat
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}>Edit</Link></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
@@ -137,7 +141,7 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete }: MyTemplat
 }
 
 // TemplatesTable Component (Public)
-export function TemplatesTable({ templates, onDuplicate }: TemplatesTableProps) {
+export function TemplatesTable({ templates, onSelect, onPreview }: TemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -153,8 +157,8 @@ export function TemplatesTable({ templates, onDuplicate }: TemplatesTableProps) 
                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}>Preview</Link></DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Copy to My Templates</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSelect(template)}>Use Template</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

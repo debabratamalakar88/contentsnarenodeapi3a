@@ -112,7 +112,7 @@ export default function TemplatesPage() {
         }
     };
 
-    const handleDuplicatePublicTemplate = async (templateId: number) => {
+    const handleUsePublicTemplate = async (templateId: number) => {
         if (!token) return;
         toast({ title: "Copying to My Templates...", description: "Please wait." });
         try {
@@ -304,6 +304,7 @@ export default function TemplatesPage() {
                                                 template={template} 
                                                 onDuplicate={() => handleDuplicateMyTemplate(template.id)}
                                                 onDelete={() => setTemplateToDelete(template)}
+                                                onPreview={() => router.push(`/dashboard/templates/preview/${template.id}`)}
                                             />
                                         ))}
                                         <Link href="/dashboard/templates/new">
@@ -319,7 +320,8 @@ export default function TemplatesPage() {
                                     <MyTemplatesTable 
                                         templates={filteredMyTemplatesBySearch} 
                                         onDuplicate={handleDuplicateMyTemplate} 
-                                        onDelete={setTemplateToDelete} 
+                                        onDelete={setTemplateToDelete}
+                                        onPreview={(template) => router.push(`/dashboard/templates/preview/${template.id}`)}
                                     />
                                 )}
                             </section>
@@ -337,11 +339,20 @@ export default function TemplatesPage() {
                                             {viewMode === 'grid' ? (
                                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                                     {data.items.map((template) => (
-                                                        <TemplateCard key={template.id} template={template} onDuplicate={() => handleDuplicatePublicTemplate(template.id)} />
+                                                        <TemplateCard 
+                                                          key={template.id} 
+                                                          template={template} 
+                                                          onSelect={() => handleUsePublicTemplate(template.id)}
+                                                          onPreview={() => router.push(`/dashboard/templates/preview/${template.id}`)} 
+                                                        />
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <TemplatesTable templates={data.items} onDuplicate={handleDuplicatePublicTemplate} />
+                                                <TemplatesTable 
+                                                  templates={data.items} 
+                                                  onSelect={(template) => handleUsePublicTemplate(template.id)}
+                                                  onPreview={(template) => router.push(`/dashboard/templates/preview/${template.id}`)}
+                                                />
                                             )}
                                         </section>
                                     )
