@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, MoreHorizontal, Eye, Edit, Copy, Trash2, FolderOpen, Rocket } from "lucide-react";
+import { User, MoreHorizontal, Eye, Edit, Copy, Trash2, FolderOpen, Rocket, PlusCircle } from "lucide-react";
 import type { Template, MyTemplate } from '@/lib/api';
 import { iconList } from '@/components/ui/icon-selector';
 
@@ -187,6 +187,16 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, 
               </TableCell>
             </TableRow>
           ))}
+          <TableRow>
+            <TableCell colSpan={3}>
+                <Button variant="link" asChild className="p-0 h-auto font-medium">
+                    <Link href="/dashboard/templates/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Template
+                    </Link>
+                </Button>
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </Card>
