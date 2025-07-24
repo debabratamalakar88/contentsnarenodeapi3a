@@ -75,10 +75,10 @@ export default function NewMyTemplateEssentialsPage() {
                 title,
                 description,
                 icon,
-                status: 'draft',
+                status: 'published',
                 form_data: initialPagesData, 
             });
-            toast({ title: "Template draft created" });
+            toast({ title: "Template created successfully" });
             router.push(`/dashboard/templates/edit/${newTemplate.id}/builder`);
         } catch (error: any) {
             toast({ title: "Failed to create template", description: error.message, variant: "destructive" });
