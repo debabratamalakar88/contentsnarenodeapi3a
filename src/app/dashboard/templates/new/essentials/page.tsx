@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createMyTemplate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import EssentialsStep from "@/app/dashboard/requests/new/components/EssentialsStep";
 
 export default function NewMyTemplateEssentialsPage() {
@@ -36,7 +35,7 @@ export default function NewMyTemplateEssentialsPage() {
                 title,
                 description,
                 status: 'draft',
-                form_data: [], // Start with an empty form
+                form_data: [], 
             });
             toast({ title: "Template draft created" });
             router.push(`/dashboard/templates/edit/${newTemplate.id}/builder`);
@@ -48,17 +47,20 @@ export default function NewMyTemplateEssentialsPage() {
     };
 
     return (
-        <div className="p-6">
-            <EssentialsStep 
-                title={title}
-                setTitle={setTitle}
-                description={description}
-                setDescription={setDescription}
-            />
-            <div className="flex justify-end mt-6 max-w-3xl mx-auto">
+        <div className="p-6 h-full flex flex-col">
+            <div className="flex-1 flex items-center justify-center">
+                 <EssentialsStep 
+                    title={title}
+                    setTitle={setTitle}
+                    description={description}
+                    setDescription={setDescription}
+                />
+            </div>
+            <div className="flex-shrink-0 flex justify-end mt-6">
                  <Button onClick={handleNext} disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save & Continue to Builder
+                    Builder
+                    <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
             </div>
         </div>
