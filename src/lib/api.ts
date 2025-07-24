@@ -784,3 +784,15 @@ export async function updateMyTemplate(token: string, id: number, data: Partial<
 export async function deleteMyTemplate(token: string, id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/mytemplates/${id}`, token, { method: 'DELETE' });
 }
+
+export async function duplicateMyTemplate(token: string, id: number): Promise<MyTemplate> {
+    const originalTemplate = await getMyTemplate(token, id);
+    const newTemplateData = {
+      title: `(Copy) ${originalTemplate.title}`.substring(0, 255),
+      description: originalTemplate.description,
+      form_data: originalTemplate.form_data,
+      icon: originalTemplate.icon,
+      status: 'draft' as const,
+    };
+    return createMyTemplate(token, newTemplateData);
+}
