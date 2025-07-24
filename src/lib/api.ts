@@ -753,12 +753,6 @@ export async function getTemplate(token: string, id: number): Promise<Template> 
   return fetchWithToken(`${API_BASE_URL}/api/templates/${id}`, token);
 }
 
-export async function duplicatePublicTemplateToMyTemplates(token: string, templateId: number): Promise<MyTemplate> {
-  return fetchWithToken(`${API_BASE_URL}/api/templates/${templateId}/duplicate-to-mine`, token, {
-    method: 'POST',
-  });
-}
-
 
 // ===================================
 // MY TEMPLATES API (User-created)
@@ -792,14 +786,10 @@ export async function deleteMyTemplate(token: string, id: number): Promise<{ mes
     return fetchWithToken(`${API_BASE_URL}/api/mytemplates/${id}`, token, { method: 'DELETE' });
 }
 
-export async function duplicateMyTemplate(token: string, id: number): Promise<MyTemplate> {
-    const originalTemplate = await getMyTemplate(token, id);
-    const newTemplateData = {
-      title: `(Copy) ${originalTemplate.title}`.substring(0, 255),
-      description: originalTemplate.description,
-      form_data: originalTemplate.form_data,
-      icon: originalTemplate.icon,
-      status: 'published' as const,
-    };
-    return createMyTemplate(token, newTemplateData);
+export async function duplicateMyTemplate(token: string, templateId: number): Promise<MyTemplate> {
+  // This function can duplicate either a public template or a user's own template into their "My Templates".
+  // The backend should handle the logic based on the provided ID.
+  return fetchWithToken(`${API_BASE_URL}/api/templates/${templateId}/duplicate-to-mine`, token, {
+    method: 'POST',
+  });
 }

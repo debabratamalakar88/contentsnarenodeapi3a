@@ -27,7 +27,7 @@ import {
 import { 
     Search, Plus, FolderOpen, Eye, User, MoreHorizontal, PenSquare, Copy, Trash2
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate, duplicatePublicTemplateToMyTemplates } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -197,7 +197,7 @@ export default function TemplatesPage() {
       if (!token) return;
       toast({ title: "Copying to My Templates...", description: "Please wait." });
       try {
-        await duplicatePublicTemplateToMyTemplates(token, templateId);
+        await duplicateMyTemplate(token, templateId);
         toast({ title: "Success!", description: "Template copied to 'My Templates'." });
         refetchData();
       } catch (err: any) {
