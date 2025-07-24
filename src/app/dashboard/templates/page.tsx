@@ -25,8 +25,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { 
-    Search, Plus, FolderOpen, Eye, User, MoreHorizontal, PenSquare, Copy, Trash2
+    Search, Plus, FolderOpen, Eye, User, MoreHorizontal, PenSquare, Copy, Trash2, LayoutGrid, List, ChevronDown
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,17 +42,23 @@ import { iconList } from '@/components/ui/icon-selector';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
-const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
+const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
     const IconComponent = useMemo(() => {
+        if (isMyTemplate) return User;
         if (!iconName) return FolderOpen;
         const foundIcon = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase());
         return foundIcon ? foundIcon.icon : FolderOpen;
-    }, [iconName]);
+    }, [iconName, isMyTemplate]);
+
+    const bgColor = isMyTemplate ? '#e0f2fe' : (categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))');
+    const iconColor = isMyTemplate ? '#0284c7' : (categoryColor || 'hsl(var(--muted-foreground))');
+
 
     return (
-        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))' }}>
-            <IconComponent className="h-6 w-6" style={{ color: categoryColor || 'hsl(var(--muted-foreground))' }} />
+        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: bgColor }}>
+            <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
 };
@@ -120,6 +134,60 @@ const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplica
   )
 };
 
+const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyTemplate[], onDuplicate: (id: number) => void, onDelete: (template: MyTemplate) => void }) => (
+    <Card>
+        <Table>
+            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableBody>
+                {templates.map(template => (
+                    <TableRow key={template.id}>
+                        <TableCell className="font-medium">{template.title}</TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-sm">{template.description}</TableCell>
+                        <TableCell className="text-right">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    </Card>
+)
+
+const TemplatesTable = ({ templates, onDuplicate }: { templates: Template[], onDuplicate: (id: number) => void }) => (
+     <Card>
+        <Table>
+            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableBody>
+                {templates.map(template => (
+                    <TableRow key={template.id}>
+                        <TableCell className="font-medium">{template.title}</TableCell>
+                        <TableCell><Badge variant="secondary">{template.category?.title || 'Uncategorized'}</Badge></TableCell>
+                        <TableCell className="text-right">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    </Card>
+)
+
+
 export default function TemplatesPage() {
     const { toast } = useToast();
     const router = useRouter();
@@ -133,6 +201,7 @@ export default function TemplatesPage() {
     const mainRef = useRef<HTMLDivElement>(null);
     const [dataVersion, setDataVersion] = useState(0);
 
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
@@ -271,6 +340,8 @@ export default function TemplatesPage() {
         }, {} as Record<string, {items: Template[]; slug: string; color?: string | null; title?: string}>);
     }, [filteredTemplatesBySearch, activeCategorySlug]);
     
+    const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+
     return (
         <>
             <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -328,10 +399,28 @@ export default function TemplatesPage() {
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                     <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                         <div className="flex items-center gap-4">
-                            <div className="relative flex-1">
+                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="flex items-center gap-1">
+                                        <ViewIcon className="h-4 w-4" />
+                                        <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button asChild>
+                                <Link href="/dashboard/templates/new">
+                                    <Plus className="mr-2 h-4 w-4" /> Create New
+                                </Link>
+                            </Button>
                         </div>
                     </header>
 
@@ -350,8 +439,9 @@ export default function TemplatesPage() {
                         ) : (
                         <>
                         {(activeCategorySlug === 'my-templates' || activeCategorySlug === null) && (
-                                <section id="category-my-templates">
-                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
+                            <section id="category-my-templates">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
+                                {viewMode === 'grid' ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                         {filteredMyTemplatesBySearch.map((template) => (
                                             <MyTemplateCard 
@@ -370,8 +460,15 @@ export default function TemplatesPage() {
                                             </Card>
                                         </Link>
                                     </div>
-                                </section>
-                            )}
+                                ) : (
+                                    <MyTemplatesTable 
+                                        templates={filteredMyTemplatesBySearch} 
+                                        onDuplicate={handleDuplicateMyTemplate} 
+                                        onDelete={setTemplateToDelete} 
+                                    />
+                                )}
+                            </section>
+                        )}
 
 
                         {Object.keys(groupedAndFilteredTemplates).length > 0 ? (
@@ -382,11 +479,15 @@ export default function TemplatesPage() {
                                             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                                 {data.title}
                                             </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                                {data.items.map((template) => (
-                                                    <TemplateCard key={template.id} template={template} onDuplicate={() => handleDuplicatePublicTemplate(template.id)} />
-                                                ))}
-                                            </div>
+                                            {viewMode === 'grid' ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                                    {data.items.map((template) => (
+                                                        <TemplateCard key={template.id} template={template} onDuplicate={() => handleDuplicatePublicTemplate(template.id)} />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <TemplatesTable templates={data.items} onDuplicate={handleDuplicatePublicTemplate} />
+                                            )}
                                         </section>
                                     )
                                 })
