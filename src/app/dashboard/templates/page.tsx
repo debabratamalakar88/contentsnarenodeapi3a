@@ -33,7 +33,7 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 
 const MyTemplateCard = ({ template }: { template: MyTemplate }) => (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-      <Link href={`/dashboard/templates/preview/${template.id}`} className="flex flex-col flex-grow">
+      <Link href={`/dashboard/templates/edit/${template.id}`} className="flex flex-col flex-grow">
         <CardContent className="p-4 flex gap-4 items-start flex-grow">
            <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
                 <User className="h-6 w-6 text-blue-600" />
@@ -45,7 +45,7 @@ const MyTemplateCard = ({ template }: { template: MyTemplate }) => (
         </CardContent>
       </Link>
        <div className="p-2 border-t flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link></Button>
+          <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4"/>Preview</Link></Button>
           <Button size="sm" asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link></Button>
       </div>
     </Card>
@@ -163,7 +163,7 @@ export default function TemplatesPage() {
 
     const groupedAndFilteredTemplates = useMemo(() => {
         let filteredByCategory = filteredTemplatesBySearch;
-        if (activeCategorySlug) {
+        if (activeCategorySlug && activeCategorySlug !== 'my-templates') {
             filteredByCategory = filteredTemplatesBySearch.filter(tpl => tpl.category?.slug === activeCategorySlug);
         }
         
