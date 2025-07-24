@@ -1,23 +1,15 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PenTool } from "lucide-react";
+// This is a placeholder that redirects to the edit builder page.
+// The creation flow for a template immediately creates a draft and sends the user to the edit flow.
+// Therefore, /new/builder is not directly used. This file ensures the route exists.
 
-export default function BuilderPlaceholderPage() {
-    return (
-        <div className="p-6 h-full flex flex-col items-center justify-center">
-            <Card className="w-full max-w-2xl text-center">
-                <CardHeader>
-                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
-                       <PenTool className="h-8 w-8 text-primary" />
-                    </div>
-                    <CardTitle>Builder Coming Soon</CardTitle>
-                    <CardDescription>
-                       This is where you will add and configure questions for your template. This functionality is under construction.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-        </div>
-    );
+import { redirect } from 'next/navigation';
+
+export default function BuilderRedirector() {
+    // In a real app, you might look for a draft ID in local storage or a query param,
+    // but for this flow, we'll just redirect to the main templates page as a fallback.
+    redirect('/dashboard/templates');
+    return null;
 }

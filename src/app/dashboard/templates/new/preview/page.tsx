@@ -1,23 +1,13 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye } from "lucide-react";
+// This is a placeholder that redirects to the edit builder page.
+// The creation flow for a template immediately creates a draft and sends the user to the edit flow.
+// Therefore, /new/preview is not directly used. This file ensures the route exists.
 
-export default function PreviewPlaceholderPage() {
-    return (
-        <div className="p-6 h-full flex flex-col items-center justify-center">
-             <Card className="w-full max-w-2xl text-center">
-                <CardHeader>
-                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
-                       <Eye className="h-8 w-8 text-primary" />
-                    </div>
-                    <CardTitle>Preview Coming Soon</CardTitle>
-                    <CardDescription>
-                       This is where you will be able to preview your template before publishing. This functionality is under construction.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-        </div>
-    );
+import { redirect } from 'next/navigation';
+
+export default function PreviewRedirector() {
+    redirect('/dashboard/templates');
+    return null;
 }

@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState } from 'react'
@@ -81,7 +80,7 @@ const questionTypeToIcon: Record<QuestionType, React.ElementType> = {
 };
 
 const QuestionIcon = ({ type }: { type: QuestionType }) => {
-    const iconProps = { className: "h-4 w-4 text-primary" };
+    const iconProps = { className: "h-4 w-4 text-pink-600" };
     const IconComponent = questionTypeToIcon[type] || Type;
     return <IconComponent {...iconProps} />;
 }
@@ -98,7 +97,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
                          <div className={cn(
                             "w-full flex items-center justify-between text-sm p-2 rounded-md font-semibold",
                             activePageId === page.id
-                              ? "bg-primary/10 text-primary"
+                              ? "bg-pink-100 text-pink-700"
                               : "text-foreground hover:bg-accent/50"
                           )}>
                             <button
@@ -142,10 +141,10 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
                             </DropdownMenu>
                         </div>
                         {activePageId === page.id && (
-                           <div className="pl-4 border-l ml-4 mt-2 space-y-2">
+                           <div className="pl-4 border-l ml-4 mt-2 space-y-1">
                                 {page.sections.map(section => (
                                     <div key={section.id}>
-                                        <a href={`#section-${section.id}`} className="block text-sm p-2 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 truncate">
+                                        <a href={`#section-${section.id}`} className="block text-sm p-1.5 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 truncate">
                                             {section.title}
                                         </a>
                                         <div className="pl-4 border-l ml-2 mt-1 space-y-1">
@@ -374,7 +373,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                                         <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move">
                                                                             <GripVertical className="h-full w-full"/>
                                                                         </div>
-                                                                        <div className="flex items-center justify-center h-6 w-6 bg-primary/10 rounded">
+                                                                        <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded">
                                                                             <QuestionIcon type={question.type} />
                                                                         </div>
                                                                         <span className="font-semibold">{question.label}</span>

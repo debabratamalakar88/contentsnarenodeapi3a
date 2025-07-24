@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createMyTemplate } from "@/lib/api";
@@ -10,11 +10,39 @@ import { Loader2, ChevronRight, ArrowLeft } from "lucide-react";
 import EssentialsStep from "@/app/dashboard/requests/new/components/EssentialsStep";
 import StepNavigation from "../components/StepNavigation";
 import Link from "next/link";
+import type { Page } from "@/lib/api";
 
 const steps = [
     { name: "Essentials", slug: "essentials" },
     { name: "Builder", slug: "builder" },
     { name: "Preview", slug: "preview" }
+];
+
+const initialPagesData: Page[] = [
+  {
+    id: 1,
+    title: "1. New Page",
+    instructions: "",
+    sections: [
+        {
+            id: 101,
+            title: "1.1 New Section",
+            instructions: "",
+            questions: [
+                { 
+                    id: 1001, 
+                    label: "Single Line Text", 
+                    type: 'text', 
+                    instructions: "", 
+                    placeholder: "", 
+                    options: undefined, 
+                    required: false,
+                    apiId: "new_single_line_text_field" 
+                },
+            ]
+        }
+    ]
+  },
 ];
 
 export default function NewMyTemplateEssentialsPage() {
@@ -48,7 +76,7 @@ export default function NewMyTemplateEssentialsPage() {
                 description,
                 icon,
                 status: 'draft',
-                form_data: [], 
+                form_data: initialPagesData, 
             });
             toast({ title: "Template draft created" });
             router.push(`/dashboard/templates/edit/${newTemplate.id}/builder`);
