@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { createRequest, updateRequest, getTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template } from "@/lib/api";
+import { createRequest, updateRequest, getTemplate, getMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, MyTemplate } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -124,6 +124,8 @@ export default function NewRequestWizardPage() {
 
     const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'templates');
     const templateId = searchParams.get('templateId');
+    const myTemplateId = searchParams.get('myTemplateId');
+    const sourceTemplateId = templateId || myTemplateId;
 
     const currentStepIndex = useMemo(() => {
         const index = steps.findIndex(s => s.slug === stepSlug);
@@ -139,7 +141,7 @@ export default function NewRequestWizardPage() {
     const [requestId, setRequestId] = useState<number | null>(null);
     const [startedFromScratch, setStartedFromScratch] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+    const [selectedTemplate, setSelectedTemplate] = useState<Template | MyTemplate | null>(null);
 
     // State to track wizard progress
     const [maxVisitedStepIndex, setMaxVisitedStepIndex] = useState(currentStepIndex);
@@ -163,8 +165,9 @@ export default function NewRequestWizardPage() {
     
     useEffect(() => {
         const token = localStorage.getItem('authToken');
-        if (templateId && !selectedTemplate && token) {
-            getTemplate(token, Number(templateId))
+        if (sourceTemplateId && !selectedTemplate && token) {
+            const fetchFunction = templateId ? getTemplate : getMyTemplate;
+            fetchFunction(token, Number(sourceTemplateId))
                 .then(templateData => {
                     setSelectedTemplate(templateData);
                     setRequestTitle(templateData.title);
@@ -178,13 +181,17 @@ export default function NewRequestWizardPage() {
                     toast({ title: "Failed to load template", description: err.message, variant: "destructive" });
                 });
         }
-    }, [templateId, selectedTemplate, toast]);
+    }, [sourceTemplateId, templateId, myTemplateId, selectedTemplate, toast]);
 
 
-    const handleProceedFromTemplates = (isFromScratch: boolean, template?: Template) => {
+    const handleProceedFromTemplates = (isFromScratch: boolean, template?: Template | MyTemplate) => {
         setStartedFromScratch(isFromScratch);
         if (template) {
-            router.push(`/dashboard/requests/new/essentials?templateId=${template.id}`);
+            if ('created_by' in template) { // It's a MyTemplate
+                 router.push(`/dashboard/requests/new/essentials?myTemplateId=${template.id}`);
+            } else { // It's a public Template
+                 router.push(`/dashboard/requests/new/essentials?templateId=${template.id}`);
+            }
         } else {
             setPages(initialPagesData);
             setRequestTitle("New Request");
@@ -247,15 +254,13 @@ export default function NewRequestWizardPage() {
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            const url = `/dashboard/requests/new/${prevStepSlug}`;
+            let url = `/dashboard/requests/new/${prevStepSlug}`;
             
-            if (templateId && prevStepSlug === 'templates') {
-                 router.push(url);
-            } else if (templateId) {
-                router.push(`${url}?templateId=${templateId}`);
-            } else {
-                router.push(url);
+            if (prevStepSlug !== 'templates') {
+                if(templateId) url += `?templateId=${templateId}`;
+                if(myTemplateId) url += `?myTemplateId=${myTemplateId}`;
             }
+            router.push(url);
         } else {
             router.push('/dashboard/requests');
         }
@@ -265,8 +270,9 @@ export default function NewRequestWizardPage() {
         const targetIndex = steps.findIndex(s => s.slug === slug);
         if (targetIndex <= maxVisitedStepIndex) {
             let url = `/dashboard/requests/new/${slug}`;
-            if (templateId && slug !== 'templates') {
-                url += `?templateId=${templateId}`;
+            if (slug !== 'templates') {
+                 if(templateId) url += `?templateId=${templateId}`;
+                 if(myTemplateId) url += `?myTemplateId=${myTemplateId}`;
             }
             router.push(url);
         }
@@ -888,3 +894,4 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
+
