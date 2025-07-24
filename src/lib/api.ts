@@ -792,7 +792,7 @@ export async function duplicateMyTemplate(token: string, id: number): Promise<My
       description: originalTemplate.description,
       form_data: originalTemplate.form_data,
       icon: originalTemplate.icon,
-      status: 'draft' as const,
+      status: 'published' as const,
     };
     return createMyTemplate(token, newTemplateData);
 }
