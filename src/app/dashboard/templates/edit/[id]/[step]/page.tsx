@@ -534,7 +534,7 @@ export default function EditMyTemplateWizardPage() {
                                 {steps[currentStepIndex + 1]?.name || 'Next'} <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
                         ) : (
-                           <Button variant="outline" asChild><Link href="/dashboard/templates">Finish</Link></Button>
+                           <Button asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${id}`}>Use Template</Link></Button>
                         )}
                     </div>
                 </div>
@@ -619,3 +619,4 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
+
