@@ -1,8 +1,8 @@
 
-'use client'
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createMyTemplate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -19,14 +19,14 @@ const steps = [
 
 export default function NewMyTemplateEssentialsPage() {
     const router = useRouter();
-    const pathname = usePathname();
     const { toast } = useToast();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [icon, setIcon] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const currentStepSlug = pathname.split('/').pop() || 'essentials';
-    const currentStepIndex = steps.findIndex(s => s.slug === currentStepSlug);
+    const currentStepSlug = 'essentials';
+    const currentStepIndex = 0;
 
     const handleNext = async () => {
         if (!title.trim()) {
@@ -46,6 +46,7 @@ export default function NewMyTemplateEssentialsPage() {
             const newTemplate = await createMyTemplate(token, {
                 title,
                 description,
+                icon,
                 status: 'draft',
                 form_data: [], 
             });
@@ -92,6 +93,9 @@ export default function NewMyTemplateEssentialsPage() {
                         setTitle={setTitle}
                         description={description}
                         setDescription={setDescription}
+                        icon={icon}
+                        setIcon={setIcon}
+                        categories={[]} 
                     />
                 </div>
             </main>
