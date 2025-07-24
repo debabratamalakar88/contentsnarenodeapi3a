@@ -108,8 +108,11 @@ const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplica
           </div>
         </CardContent>
       </div>
-       <div className="p-2 border-t flex items-center justify-center">
-          <Button size="sm" asChild className='w-full'>
+      <div className="p-2 border-t flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+          </Button>
+          <Button size="sm" asChild>
               <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
           </Button>
       </div>
