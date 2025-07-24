@@ -102,7 +102,7 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
 const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-        <CardContent className="p-4 flex gap-4 items-start flex-grow">
+        <div className="p-4 flex gap-4 items-start flex-grow">
             <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
             <div className="flex-grow">
                 <div className="flex justify-between items-start">
@@ -119,8 +119,8 @@ const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplica
                 </div>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
             </div>
-        </CardContent>
-        <div className="p-2 border-t flex items-center justify-between">
+        </div>
+        <div className="p-2 border-t flex items-center justify-between mt-auto">
              <Button variant="ghost" size="sm" asChild>
                 <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
             </Button>
@@ -160,6 +160,14 @@ const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyT
                         </TableCell>
                     </TableRow>
                 ))}
+                 <TableRow>
+                    <TableCell colSpan={3} className="py-2">
+                        <Link href="/dashboard/templates/new" className="text-primary hover:underline text-sm font-medium flex items-center">
+                            <Plus className="mr-1 h-4 w-4" />
+                            Create New Template
+                        </Link>
+                    </TableCell>
+                </TableRow>
             </TableBody>
         </Table>
     </Card>
