@@ -19,17 +19,11 @@ import {
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { 
   MyTemplateCard, 
   TemplateCard, 
@@ -112,16 +106,12 @@ export default function TemplatesPage() {
         }
     };
 
-    const handleUsePublicTemplate = async (templateId: number) => {
-        if (!token) return;
-        toast({ title: "Copying to My Templates...", description: "Please wait." });
-        try {
-            await duplicateMyTemplate(token, templateId);
-            toast({ title: "Success!", description: "Template copied to 'My Templates'." });
-            refetchData();
-        } catch (err: any) {
-            toast({ variant: "destructive", title: "Error copying template", description: err.message });
-        }
+    const handleUseMyTemplate = (templateId: number) => {
+      router.push(`/dashboard/requests/new/essentials?myTemplateId=${templateId}`);
+    };
+
+    const handleUsePublicTemplate = (templateId: number) => {
+        router.push(`/dashboard/requests/new/essentials?templateId=${templateId}`);
     };
 
     const handleDelete = async () => {
@@ -304,7 +294,8 @@ export default function TemplatesPage() {
                                                 template={template} 
                                                 onDuplicate={() => handleDuplicateMyTemplate(template.id)}
                                                 onDelete={() => setTemplateToDelete(template)}
-                                                onPreview={() => router.push(`/dashboard/templates/preview/${template.id}`)}
+                                                onPreview={() => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
+                                                onSelect={() => handleUseMyTemplate(template.id)}
                                             />
                                         ))}
                                         <Link href="/dashboard/templates/new">
@@ -321,7 +312,8 @@ export default function TemplatesPage() {
                                         templates={filteredMyTemplatesBySearch} 
                                         onDuplicate={handleDuplicateMyTemplate} 
                                         onDelete={setTemplateToDelete}
-                                        onPreview={(template) => router.push(`/dashboard/templates/preview/${template.id}`)}
+                                        onPreview={(template) => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
+                                        onSelect={handleUseMyTemplate}
                                     />
                                 )}
                             </section>

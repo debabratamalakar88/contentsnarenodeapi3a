@@ -21,6 +21,7 @@ interface MyTemplateCardProps {
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
   onPreview: () => void;
+  onSelect: () => void;
 }
 
 interface TemplateCardProps {
@@ -34,6 +35,7 @@ interface MyTemplatesTableProps {
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
   onPreview: (template: MyTemplate) => void;
+  onSelect: (id: number) => void;
 }
 
 interface TemplatesTableProps {
@@ -43,7 +45,7 @@ interface TemplatesTableProps {
 }
 
 // MyTemplateCard Component
-export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview }: MyTemplateCardProps) {
+export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onSelect }: MyTemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -78,9 +80,9 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview }: M
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description || "No description provided."}</p>
       </CardContent>
       <CardFooter className="p-4 border-t flex justify-between">
-         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4"/>Preview</Button>
-        <Button size="sm" asChild>
-          <Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link>
+         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4" />Preview</Button>
+        <Button size="sm" onClick={onSelect}>
+          Use Template
         </Button>
       </CardFooter>
     </Card>
@@ -108,7 +110,7 @@ export function TemplateCard({ template, onSelect, onPreview }: TemplateCardProp
 }
 
 // MyTemplatesTable Component
-export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview }: MyTemplatesTableProps) {
+export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, onSelect }: MyTemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -124,7 +126,7 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview }
                     <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSelect(template.id)}>Use Template</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onPreview(template)}>Preview</DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}>Edit</Link></DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDuplicate(template.id)}>Duplicate</DropdownMenuItem>
