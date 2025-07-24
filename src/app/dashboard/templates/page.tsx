@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -423,8 +422,7 @@ export default function TemplatesPage() {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="flex items-center gap-2 font-semibold h-10 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary">
                                         <ViewIcon className="h-4 w-4" />
-                                        <span>{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
-                                        <ChevronDown className="h-4 w-4" />
+                                        <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
