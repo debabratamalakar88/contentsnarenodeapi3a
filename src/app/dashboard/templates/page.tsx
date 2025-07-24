@@ -16,15 +16,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { 
-    Search, Plus, FolderOpen, Eye, User, MoreHorizontal, PenSquare, Copy, Trash2, LayoutGrid, List, ChevronDown, Rocket
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { MyTemplateCard, TemplateCard, MyTemplatesTable, TemplatesTable } from './TemplateComponents';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  MyTemplateCard, 
+  TemplateCard, 
+  MyTemplatesTable, 
+  TemplatesTable 
+} from './TemplateComponents';
+
 
 export default function TemplatesPage() {
     const { toast } = useToast();
