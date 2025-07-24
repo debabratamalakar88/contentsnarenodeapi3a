@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { 
     Search, Plus, FolderOpen, Eye, Loader2, User
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
