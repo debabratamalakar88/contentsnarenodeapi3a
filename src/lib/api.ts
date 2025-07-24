@@ -789,7 +789,9 @@ export async function deleteMyTemplate(token: string, id: number): Promise<{ mes
 export async function duplicateMyTemplate(token: string, templateId: number): Promise<MyTemplate> {
   // This function can duplicate either a public template or a user's own template into their "My Templates".
   // The backend should handle the logic based on the provided ID.
-  return fetchWithToken(`${API_BASE_URL}/api/templates/${templateId}/duplicate-to-mine`, token, {
+  const payload = { source_template_id: templateId };
+  return fetchWithToken(`${API_BASE_URL}/api/mytemplates`, token, {
     method: 'POST',
+    body: JSON.stringify(payload),
   });
 }
