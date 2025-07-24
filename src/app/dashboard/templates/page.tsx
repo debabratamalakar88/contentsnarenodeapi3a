@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -111,7 +112,7 @@ interface TemplateCardProps {
   onDuplicate: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onDuplicate }) => {
+function TemplateCard({ template, onDuplicate }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <div className="p-4 flex gap-4 items-start flex-grow">
@@ -150,7 +151,8 @@ interface MyTemplatesTableProps {
   onDelete: (template: MyTemplate) => void;
 }
 
-const MyTemplatesTable: React.FC<MyTemplatesTableProps> = ({ templates, onDuplicate, onDelete }) => (
+const MyTemplatesTable: React.FC<MyTemplatesTableProps> = ({ templates, onDuplicate, onDelete }) => {
+    return (
     <Card>
         <Table>
             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -190,14 +192,16 @@ const MyTemplatesTable: React.FC<MyTemplatesTableProps> = ({ templates, onDuplic
             </TableBody>
         </Table>
     </Card>
-)
+    )
+}
 
 interface TemplatesTableProps {
   templates: Template[];
   onDuplicate: (id: number) => void;
 }
 
-const TemplatesTable: React.FC<TemplatesTableProps> = ({ templates, onDuplicate }) => (
+const TemplatesTable: React.FC<TemplatesTableProps> = ({ templates, onDuplicate }) => {
+    return (
      <Card>
         <Table>
             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -226,7 +230,8 @@ const TemplatesTable: React.FC<TemplatesTableProps> = ({ templates, onDuplicate 
             </TableBody>
         </Table>
     </Card>
-)
+    )
+}
 
 export default function TemplatesPage() {
     const { toast } = useToast();
