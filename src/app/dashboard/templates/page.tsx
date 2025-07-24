@@ -46,7 +46,7 @@ const MyTemplateCard = ({ template }: { template: MyTemplate }) => (
       </Link>
        <div className="p-2 border-t flex items-center justify-between">
           <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link></Button>
-          <Button size="sm" asChild><Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link></Button>
+          <Button size="sm" asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link></Button>
       </div>
     </Card>
 );
