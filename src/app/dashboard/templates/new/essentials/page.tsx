@@ -2,19 +2,31 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createMyTemplate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, ArrowLeft } from "lucide-react";
 import EssentialsStep from "@/app/dashboard/requests/new/components/EssentialsStep";
+import StepNavigation from "../components/StepNavigation";
+import Link from "next/link";
+
+const steps = [
+    { name: "Essentials", slug: "essentials" },
+    { name: "Builder", slug: "builder" },
+    { name: "Preview", slug: "preview" }
+];
 
 export default function NewMyTemplateEssentialsPage() {
     const router = useRouter();
+    const pathname = usePathname();
     const { toast } = useToast();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const currentStepSlug = pathname.split('/').pop() || 'essentials';
+    const currentStepIndex = steps.findIndex(s => s.slug === currentStepSlug);
 
     const handleNext = async () => {
         if (!title.trim()) {
@@ -45,24 +57,44 @@ export default function NewMyTemplateEssentialsPage() {
             setIsSubmitting(false);
         }
     };
+    
+    const handleStepClick = () => {
+        // This layout is simple and doesn't handle step saving/validation
+        // so clicking steps is a no-op for now. The button handles navigation.
+    }
 
     return (
-        <div className="p-6 h-full flex flex-col">
-            <div className="flex-1 flex items-center justify-center">
-                 <EssentialsStep 
-                    title={title}
-                    setTitle={setTitle}
-                    description={description}
-                    setDescription={setDescription}
-                />
-            </div>
-            <div className="flex-shrink-0 flex justify-end mt-6">
-                 <Button onClick={handleNext} disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Builder
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-            </div>
+        <div className="flex flex-col h-full bg-muted/40">
+            <header className="flex-shrink-0 bg-background">
+                <div className="flex items-center justify-between gap-4 p-4 border-b">
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                        <Link href="/dashboard/templates">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                    <StepNavigation
+                        steps={steps}
+                        currentStepSlug={currentStepSlug}
+                        onStepClick={handleStepClick}
+                        maxVisitedStepIndex={currentStepIndex}
+                    />
+                    <Button onClick={handleNext} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Builder
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                </div>
+            </header>
+            <main className="flex-1 overflow-y-auto">
+                <div className="p-6 h-full flex flex-col items-center justify-center">
+                    <EssentialsStep 
+                        title={title}
+                        setTitle={setTitle}
+                        description={description}
+                        setDescription={setDescription}
+                    />
+                </div>
+            </main>
         </div>
     );
 }
