@@ -356,7 +356,12 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                     {filteredMyTemplatesBySearch.map((template) => (
-                                        <MyTemplateCard key={template.id} template={template} onSelect={() => onProceed(false, template)} onPreview={() => handlePreviewClick(template)} />
+                                        <MyTemplateCard 
+                                            key={template.id} 
+                                            template={template} 
+                                            onSelect={() => onProceed(false, template)} 
+                                            onPreview={() => handlePreviewClick(template)} 
+                                        />
                                     ))}
                                 </div>
                             </section>
@@ -462,4 +467,3 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </>
     );
 }
-
