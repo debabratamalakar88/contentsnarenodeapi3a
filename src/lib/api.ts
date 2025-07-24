@@ -204,6 +204,7 @@ export interface MyTemplate {
     id: number;
     title: string;
     description?: string | null;
+    icon?: string | null;
     status: 'draft' | 'published';
     created_by: number;
     my_template_code?: string;
