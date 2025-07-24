@@ -219,7 +219,7 @@ export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onSelect(template)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate to My Templates</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
