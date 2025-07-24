@@ -50,7 +50,6 @@ export default function NewMyTemplateEssentialsPage() {
     const { toast } = useToast();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [icon, setIcon] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const currentStepSlug = 'essentials';
@@ -74,7 +73,6 @@ export default function NewMyTemplateEssentialsPage() {
             const newTemplate = await createMyTemplate(token, {
                 title,
                 description,
-                icon,
                 status: 'published',
                 form_data: initialPagesData, 
             });
@@ -121,8 +119,6 @@ export default function NewMyTemplateEssentialsPage() {
                         setTitle={setTitle}
                         description={description}
                         setDescription={setDescription}
-                        icon={icon}
-                        setIcon={setIcon}
                         categories={[]} 
                     />
                 </div>
