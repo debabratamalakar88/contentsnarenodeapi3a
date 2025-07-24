@@ -30,7 +30,7 @@ interface EssentialsStepProps {
 }
 
 export default function EssentialsStep({ title, setTitle, description, setDescription, categoryId, setCategoryId, icon, setIcon, categories }: EssentialsStepProps) {
-    const isTemplateFlow = typeof window !== 'undefined' && window.location.pathname.includes('/admin/dashboard/templates');
+    const isTemplateFlow = typeof window !== 'undefined' && (window.location.pathname.includes('/admin/dashboard/templates') || window.location.pathname.includes('/dashboard/templates'));
     const noCategoryValue = "__none__";
 
     return (
