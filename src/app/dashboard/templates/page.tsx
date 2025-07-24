@@ -102,35 +102,33 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
 const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-      <div className="flex flex-col flex-grow">
-        <CardContent className="p-4 flex gap-4 items-start flex-grow">
-          <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-          <div className="flex-grow">
-             <div className="flex justify-between items-start">
-                <h3 className="font-semibold">{template.title}</h3>
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                      <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                  </DropdownMenuContent>
-              </DropdownMenu>
-             </div>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
-          </div>
-        </CardContent>
-      </div>
-      <div className="p-2 border-t flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
-          </Button>
-          <Button size="sm" asChild>
-              <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
-          </Button>
-      </div>
-    </Card>
+      <CardContent className="p-4 flex gap-4 items-start flex-grow">
+        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+        <div className="flex-grow">
+            <div className="flex justify-between items-start">
+            <h3 className="font-semibold">{template.title}</h3>
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                    <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            </div>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+        </div>
+      </CardContent>
+    <div className="p-2 border-t flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+        </Button>
+        <Button size="sm" asChild>
+            <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
+        </Button>
+    </div>
+  </Card>
   )
 };
 
@@ -141,7 +139,12 @@ const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyT
             <TableBody>
                 {templates.map(template => (
                     <TableRow key={template.id}>
-                        <TableCell className="font-medium">{template.title}</TableCell>
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                                <TemplateIconDisplay isMyTemplate />
+                                <span>{template.title}</span>
+                            </div>
+                        </TableCell>
                         <TableCell className="text-muted-foreground truncate max-w-sm">{template.description}</TableCell>
                         <TableCell className="text-right">
                              <DropdownMenu>
@@ -169,7 +172,12 @@ const TemplatesTable = ({ templates, onDuplicate }: { templates: Template[], onD
             <TableBody>
                 {templates.map(template => (
                     <TableRow key={template.id}>
-                        <TableCell className="font-medium">{template.title}</TableCell>
+                        <TableCell className="font-medium">
+                             <div className="flex items-center gap-3">
+                                <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+                                <span>{template.title}</span>
+                            </div>
+                        </TableCell>
                         <TableCell><Badge variant="secondary">{template.category?.title || 'Uncategorized'}</Badge></TableCell>
                         <TableCell className="text-right">
                              <DropdownMenu>
