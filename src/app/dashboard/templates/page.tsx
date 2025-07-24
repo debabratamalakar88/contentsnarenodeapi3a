@@ -102,33 +102,33 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
 const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-      <CardContent className="p-4 flex gap-4 items-start flex-grow">
-        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-        <div className="flex-grow">
-            <div className="flex justify-between items-start">
-            <h3 className="font-semibold">{template.title}</h3>
-                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                    <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+        <CardContent className="p-4 flex gap-4 items-start flex-grow">
+            <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+            <div className="flex-grow">
+                <div className="flex justify-between items-start">
+                    <h3 className="font-semibold">{template.title}</h3>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                            <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
             </div>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+        </CardContent>
+        <div className="p-2 border-t flex items-center justify-between">
+             <Button variant="ghost" size="sm" asChild>
+                <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+            </Button>
+            <Button size="sm" asChild>
+                <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
+            </Button>
         </div>
-      </CardContent>
-    <div className="p-2 border-t flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
-        </Button>
-        <Button size="sm" asChild>
-            <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
-        </Button>
-    </div>
-  </Card>
+    </Card>
   )
 };
 
@@ -168,7 +168,7 @@ const MyTemplatesTable = ({ templates, onDuplicate, onDelete }: { templates: MyT
 const TemplatesTable = ({ templates, onDuplicate }: { templates: Template[], onDuplicate: (id: number) => void }) => (
      <Card>
         <Table>
-            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
             <TableBody>
                 {templates.map(template => (
                     <TableRow key={template.id}>
@@ -178,7 +178,7 @@ const TemplatesTable = ({ templates, onDuplicate }: { templates: Template[], onD
                                 <span>{template.title}</span>
                             </div>
                         </TableCell>
-                        <TableCell><Badge variant="secondary">{template.category?.title || 'Uncategorized'}</Badge></TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-sm">{template.description}</TableCell>
                         <TableCell className="text-right">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -271,15 +271,15 @@ export default function TemplatesPage() {
     };
 
     const handleDuplicatePublicTemplate = async (templateId: number) => {
-      if (!token) return;
-      toast({ title: "Copying to My Templates...", description: "Please wait." });
-      try {
-        await duplicateMyTemplate(token, templateId);
-        toast({ title: "Success!", description: "Template copied to 'My Templates'." });
-        refetchData();
-      } catch (err: any) {
-        toast({ variant: "destructive", title: "Error copying template", description: err.message });
-      }
+        if (!token) return;
+        toast({ title: "Copying to My Templates...", description: "Please wait." });
+        try {
+            await duplicateMyTemplate(token, templateId);
+            toast({ title: "Success!", description: "Template copied to 'My Templates'." });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: "destructive", title: "Error copying template", description: err.message });
+        }
     };
 
     const handleDelete = async () => {
