@@ -421,10 +421,10 @@ export default function TemplatesPage() {
                             </div>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="flex items-center gap-1">
+                                    <Button variant="outline" className="flex items-center gap-2 font-semibold h-10 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary">
                                         <ViewIcon className="h-4 w-4" />
-                                        <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
-                                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        <span>{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
+                                        <ChevronDown className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
