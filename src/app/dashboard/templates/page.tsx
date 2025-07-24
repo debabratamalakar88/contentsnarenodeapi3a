@@ -51,61 +51,64 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 
 const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTemplate; onDuplicate: () => void; onDelete: () => void; }) => (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-        <CardContent className="p-4 flex gap-4 items-start flex-grow">
-           <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
-                <User className="h-6 w-6 text-blue-600" />
-            </div>
-          <div className="flex-grow">
-            <div className="flex justify-between items-start">
-                <h3 className="font-semibold">{template.title}</h3>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                        <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
-          </div>
-        </CardContent>
-      <div className="p-2 border-t flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link>
-          </Button>
-      </div>
-    </Card>
-);
-
-const TemplateCard = ({ template }: { template: Template; }) => (
-  <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-    <div className="flex flex-col flex-grow cursor-pointer" onClick={() => router.push(`/dashboard/templates/preview/${template.id}`)}>
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
-        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+         <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
+              <User className="h-6 w-6 text-blue-600" />
+          </div>
         <div className="flex-grow">
-          <h3 className="font-semibold">{template.title}</h3>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+          <div className="flex justify-between items-start">
+              <h3 className="font-semibold">{template.title}</h3>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onDelete} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
         </div>
       </CardContent>
-    </div>
-     <div className="p-2 border-t flex items-center justify-between">
+    <div className="p-2 border-t flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
-            <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+          <Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
         </Button>
         <Button size="sm" asChild>
-            <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
+          <Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link>
         </Button>
     </div>
   </Card>
 );
+
+const TemplateCard = ({ template }: { template: Template; }) => {
+  const router = useRouter();
+  return (
+    <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
+      <div className="flex flex-col flex-grow">
+        <CardContent className="p-4 flex gap-4 items-start flex-grow">
+          <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+          <div className="flex-grow">
+            <h3 className="font-semibold">{template.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+          </div>
+        </CardContent>
+      </div>
+       <div className="p-2 border-t flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild>
+              <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+          </Button>
+          <Button size="sm" asChild>
+              <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
+          </Button>
+      </div>
+    </Card>
+  )
+};
 
 export default function TemplatesPage() {
     const { toast } = useToast();
