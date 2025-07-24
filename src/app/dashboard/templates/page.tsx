@@ -102,26 +102,26 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
 const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-        <div className="p-4 flex gap-4 items-start flex-grow">
-            <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-            <div className="flex-grow">
-                <div className="flex justify-between items-start">
-                    <h3 className="font-semibold">{template.title}</h3>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
-                            <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
-            </div>
+      <div className="p-4 flex gap-4 items-start flex-grow">
+        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+        <div className="flex-grow">
+          <div className="flex justify-between items-start">
+              <h3 className="font-semibold">{template.title}</h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
         </div>
+      </div>
         <div className="p-2 border-t flex items-center justify-between mt-auto">
-             <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild>
                 <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
             </Button>
             <Button size="sm" asChild>
