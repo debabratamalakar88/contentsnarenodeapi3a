@@ -27,7 +27,7 @@ import {
 import { 
     Search, Plus, FolderOpen, Eye, User, MoreHorizontal, PenSquare, Copy, Trash2
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate, duplicatePublicTemplateToMyTemplates } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -85,24 +85,31 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
   </Card>
 );
 
-const TemplateCard = ({ template }: { template: Template; }) => {
-  const router = useRouter();
+const TemplateCard = ({ template, onDuplicate }: { template: Template; onDuplicate: () => void; }) => {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <div className="flex flex-col flex-grow">
         <CardContent className="p-4 flex gap-4 items-start flex-grow">
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
           <div className="flex-grow">
-            <h3 className="font-semibold">{template.title}</h3>
+             <div className="flex justify-between items-start">
+                <h3 className="font-semibold">{template.title}</h3>
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2 -mt-1"><MoreHorizontal className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
+                      <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+             </div>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
           </div>
         </CardContent>
       </div>
-       <div className="p-2 border-t flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-              <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
-          </Button>
-          <Button size="sm" asChild>
+       <div className="p-2 border-t flex items-center justify-center">
+          <Button size="sm" asChild className='w-full'>
               <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use Template</Link>
           </Button>
       </div>
@@ -171,7 +178,7 @@ export default function TemplatesPage() {
         }
     };
 
-    const handleDuplicate = async (templateId: number) => {
+    const handleDuplicateMyTemplate = async (templateId: number) => {
         if (!token) return;
         toast({ title: 'Duplicating template...', description: 'Please wait.' });
         try {
@@ -181,6 +188,18 @@ export default function TemplatesPage() {
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error duplicating template', description: err.message });
         }
+    };
+
+    const handleDuplicatePublicTemplate = async (templateId: number) => {
+      if (!token) return;
+      toast({ title: "Copying to My Templates...", description: "Please wait." });
+      try {
+        await duplicatePublicTemplateToMyTemplates(token, templateId);
+        toast({ title: "Success!", description: "Template copied to 'My Templates'." });
+        refetchData();
+      } catch (err: any) {
+        toast({ variant: "destructive", title: "Error copying template", description: err.message });
+      }
     };
 
     const handleDelete = async () => {
@@ -335,7 +354,7 @@ export default function TemplatesPage() {
                                             <MyTemplateCard 
                                                 key={template.id} 
                                                 template={template} 
-                                                onDuplicate={() => handleDuplicate(template.id)}
+                                                onDuplicate={() => handleDuplicateMyTemplate(template.id)}
                                                 onDelete={() => setTemplateToDelete(template)}
                                             />
                                         ))}
@@ -362,7 +381,7 @@ export default function TemplatesPage() {
                                             </h2>
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                                 {data.items.map((template) => (
-                                                    <TemplateCard key={template.id} template={template} />
+                                                    <TemplateCard key={template.id} template={template} onDuplicate={() => handleDuplicatePublicTemplate(template.id)} />
                                                 ))}
                                             </div>
                                         </section>

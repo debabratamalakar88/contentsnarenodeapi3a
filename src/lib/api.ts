@@ -753,6 +753,13 @@ export async function getTemplate(token: string, id: number): Promise<Template> 
   return fetchWithToken(`${API_BASE_URL}/api/templates/${id}`, token);
 }
 
+export async function duplicatePublicTemplateToMyTemplates(token: string, templateId: number): Promise<MyTemplate> {
+  return fetchWithToken(`${API_BASE_URL}/api/templates/${templateId}/duplicate-to-mine`, token, {
+    method: 'POST',
+  });
+}
+
+
 // ===================================
 // MY TEMPLATES API (User-created)
 // ===================================
