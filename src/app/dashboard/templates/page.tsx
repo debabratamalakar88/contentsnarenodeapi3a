@@ -74,15 +74,20 @@ const MyTemplateCard = ({ template, onDuplicate, onDelete }: { template: MyTempl
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
           </div>
         </CardContent>
-      <div className="p-2 border-t">
-          <Button size="sm" className="w-full" asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link></Button>
+      <div className="p-2 border-t flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href={`/dashboard/requests/new/essentials?myTemplateId=${template.id}`}>Use Template</Link>
+          </Button>
       </div>
     </Card>
 );
 
 const TemplateCard = ({ template }: { template: Template; }) => (
   <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
-    <Link href={`/dashboard/templates/preview/${template.id}`} className="flex flex-col flex-grow">
+    <div className="flex flex-col flex-grow cursor-pointer" onClick={() => router.push(`/dashboard/templates/preview/${template.id}`)}>
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
         <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
         <div className="flex-grow">
@@ -90,7 +95,7 @@ const TemplateCard = ({ template }: { template: Template; }) => (
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
         </div>
       </CardContent>
-    </Link>
+    </div>
      <div className="p-2 border-t flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
             <Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4"/>Preview</Link>
