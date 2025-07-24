@@ -200,7 +200,7 @@ export default function PreviewTemplatePage() {
                 </Button>
             </header>
             <div className="flex flex-1 overflow-hidden">
-                <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
+                <aside className="w-60 flex-shrink-0 bg-white border-r p-4">
                      <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
                      <ul className="space-y-1">
                         {formPages && formPages.map((page, index) => (
