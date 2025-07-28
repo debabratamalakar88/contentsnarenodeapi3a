@@ -343,6 +343,99 @@ Permanently delete a client from the database.
 
 ---
 
+## 👥 Team Management API Documentation
+
+**Base URL:** `/api/team-members`  
+**Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+---
+
+#### `GET /team-members`
+
+Retrieve a list of all team members for the authenticated user's account.
+
+**Response:** `200 OK` - Returns an array of team member objects.
+```json
+[
+  {
+    "id": 2,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "role": "Administrator",
+    "status": "active"
+  },
+  {
+    "id": 3,
+    "name": "Bob Williams",
+    "email": "bob@example.com",
+    "role": "Editor",
+    "status": "pending"
+  }
+]
+```
+
+- `role`: Can be one of `Administrator`, `Editor`, `Reviewer`, `Viewer`.
+- `status`: Can be `active` (user has accepted) or `pending` (invitation sent).
+
+---
+
+#### `POST /team-members/invite`
+
+Invite a new member to the team. The backend should handle sending an invitation email.
+
+**Request Body:**
+```json
+{
+  "name": "Charlie Brown",
+  "email": "charlie@example.com",
+  "phone": "(123) 456-7890",
+  "role": "Reviewer",
+  "message": "Welcome to the team!"
+}
+```
+
+**Response:** `201 Created`
+```json
+{ "message": "Invitation sent to charlie@example.com." }
+```
+
+---
+
+#### `PUT /team-members/{id}`
+
+Update an existing team member's role or other details.
+
+**Request Body:**
+```json
+{
+  "role": "Editor"
+}
+```
+
+**Response:** `200 OK` - Returns the updated team member object.
+```json
+{
+  "id": 3,
+  "name": "Bob Williams",
+  "email": "bob@example.com",
+  "role": "Editor",
+  "status": "active"
+}
+```
+
+---
+
+#### `DELETE /team-members/{id}`
+
+Remove a member from the team.
+
+**Response:** `200 OK`
+```json
+{ "message": "Team member removed successfully." }
+```
+
+---
+
 ## 🛡️ System Admin API Documentation
 
 This section outlines API endpoints specifically for the System Admin panel. All endpoints require an admin-level Bearer token for authorization and are prefixed with `/api/admin`.
@@ -837,4 +930,4 @@ The `form_data` column will store an array of page objects, where each object ha
 - **Option Object:**
   - `label`: String
   - `value`: String
-```
+
