@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive, LayoutGrid, List, ChevronDown, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -59,6 +58,7 @@ export default function TeamPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
 
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [memberToArchive, setMemberToArchive] = useState<TeamMember | null>(null);
     const [memberToRestore, setMemberToRestore] = useState<TeamMember | null>(null);
     const [memberToForceDelete, setMemberToForceDelete] = useState<TeamMember | null>(null);
@@ -190,112 +190,73 @@ export default function TeamPage() {
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.email.toLowerCase().includes(searchQuery.toLowerCase())
     ), [teamMembers, searchQuery]);
+    
+    const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
-    const renderContent = () => {
+    const renderContent = (isArchived: boolean) => {
         if (isLoading) {
-            return (
-                <Card>
-                    <Table>
-                        <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-                        <TableBody>{[...Array(5)].map((_, i) => <TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>)}</TableBody>
-                    </Table>
-                </Card>
-            )
+            return <LoadingSkeleton view={viewMode} />;
         }
         if (filteredMembers.length === 0) {
             return (
                 <div className="text-center py-10">
-                    <p className="text-muted-foreground">No {currentTab === "archived" ? "archived" : ""} members found.</p>
+                    <p className="text-muted-foreground">No {isArchived ? "archived" : ""} members found.</p>
                 </div>
             )
         }
-
-        return (
-            <Card>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead className="hidden md:table-cell">Email</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead><span className="sr-only">Actions</span></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredMembers.map((member) => (
-                            <TableRow key={member.id}>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                                        </Avatar>
-                                        {member.name}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
-                                <TableCell>
-                                    <Badge variant={roleVariantMap[member.role]}>{member.role}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {currentTab === 'active' ? (
-                                                <>
-                                                    <DropdownMenuItem onSelect={() => handleEditClick(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                                    <DropdownMenuItem onSelect={() => setMemberToArchive(member)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <DropdownMenuItem onSelect={() => setMemberToRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                                    <DropdownMenuItem onSelect={() => setMemberToForceDelete(member)} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                                                </>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Card>
-        );
+        const viewProps = {
+            members: filteredMembers,
+            isArchived,
+            onEdit: handleEditClick,
+            onArchive: setMemberToArchive,
+            onRestore: setMemberToRestore,
+            onForceDelete: setMemberToForceDelete,
+        };
+        return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
     }
 
     return (
         <>
-            <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Team Management</h1>
-                        <p className="text-muted-foreground">Invite and manage your team members.</p>
-                    </div>
-                    <Button onClick={handleAddClick}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Member
-                    </Button>
-                </div>
-
-                <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                    <div className="flex justify-between items-center mb-4">
+           <div className="flex flex-col h-full bg-muted/40">
+                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
                         <TabsList>
                             <TabsTrigger value="active">Active</TabsTrigger>
                             <TabsTrigger value="archived">Archived</TabsTrigger>
                         </TabsList>
-                        <div className="relative">
+                    </Tabs>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="flex items-center gap-2 font-semibold h-9">
+                                    <ViewIcon className="h-4 w-4" />
+                                    {viewMode === 'grid' ? 'Grid' : 'List'}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search members..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            <Input placeholder="Search members..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         </div>
+                        <Button onClick={handleAddClick} className="h-9">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Member
+                        </Button>
                     </div>
-                    <TabsContent value="active">{renderContent()}</TabsContent>
-                    <TabsContent value="archived">{renderContent()}</TabsContent>
-                </Tabs>
+                </header>
+                 <main className="flex-1 p-6 overflow-y-auto">
+                    <Tabs value={currentTab}>
+                        <TabsContent value="active" className="mt-0">{renderContent(false)}</TabsContent>
+                        <TabsContent value="archived" className="mt-0">{renderContent(true)}</TabsContent>
+                    </Tabs>
+                </main>
             </div>
             
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(isOpen) => { setDialogOpen(isOpen); if(!isOpen) setEditingMember(null); }}>
               <DialogContent className="sm:max-w-[425px]">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleFormSubmit)}>
@@ -341,4 +302,113 @@ export default function TeamPage() {
             </AlertDialog>
         </>
     )
+}
+
+interface UsersViewProps {
+  members: TeamMember[];
+  isArchived: boolean;
+  onEdit: (member: TeamMember) => void;
+  onArchive: (member: TeamMember) => void;
+  onRestore: (member: TeamMember) => void;
+  onForceDelete: (member: TeamMember) => void;
+}
+
+function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {members.map(member => (
+        <Card key={member.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+           <CardHeader className="flex flex-col items-center text-center p-6">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                        {isArchived ? (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                            </>
+                        ) : (
+                            <>
+                                <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <Avatar className="h-16 w-16 mb-2"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
+                <CardTitle className="text-lg">{member.name}</CardTitle>
+                <CardDescription>{member.email}</CardDescription>
+           </CardHeader>
+           <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
+             <Badge variant={roleVariantMap[member.role]}>{member.role}</Badge>
+           </CardContent>
+        </Card>
+      ))}
+      {!isArchived && (
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full">
+            <UserPlus className="h-12 w-12 text-muted-foreground mb-4" />
+            <Button variant="secondary">Invite Teammate</Button>
+          </Card>
+      )}
+    </div>
+  )
+}
+
+function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+  return (
+    <Card>
+      <Table>
+        <TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="hidden md:table-cell">Email</TableHead><TableHead>Role</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+        <TableBody>
+          {members.map((member) => (
+            <TableRow key={member.id}>
+              <TableCell className="font-medium"><div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>{member.name}</div></TableCell>
+              <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
+              <TableCell><Badge variant={roleVariantMap[member.role]}>{member.role}</Badge></TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                    {isArchived ? (
+                        <>
+                            <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                        </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
+    if (view === 'grid') {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i}><CardContent className="flex flex-col items-center p-6 gap-3"><Skeleton className="h-16 w-16 rounded-full" /><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2" /></CardContent></Card>
+          ))}
+        </div>
+      )
+    }
+    return (
+      <Card>
+        <Table>
+          <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+          <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+        </Table>
+      </Card>
+    );
 }
