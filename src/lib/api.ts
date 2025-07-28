@@ -93,6 +93,22 @@ export interface Client {
   updated_at: string;
 }
 
+export interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  username: string;
+  phone: string | null;
+  role: 'Administrator' | 'Editor' | 'Reviewer' | 'Viewer';
+  created_by?: number;
+  updated_by?: number;
+  deleted_by?: number;
+  is_deleted: boolean;
+  deleted_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
 
 export interface QuestionOption {
@@ -687,6 +703,48 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
     form_data: originalRequest.form_data,
   };
   return createRequest(token, newRequestData);
+}
+
+// ===================================
+// TEAM MANAGEMENT API
+// ===================================
+
+export async function getTeamMembers(token: string): Promise<TeamMember[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams`, token);
+}
+
+export async function getArchivedTeamMembers(token: string): Promise<TeamMember[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/archived`, token);
+}
+
+export async function createTeamMember(token: string, memberData: Partial<TeamMember>): Promise<TeamMember> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams`, token, {
+    method: 'POST',
+    body: JSON.stringify(memberData),
+  });
+}
+
+export async function getTeamMember(token: string, id: number): Promise<TeamMember> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}`, token);
+}
+
+export async function updateTeamMember(token: string, id: number, memberData: Partial<TeamMember>): Promise<TeamMember> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(memberData),
+  });
+}
+
+export async function softDeleteTeamMember(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}`, token, { method: 'DELETE' });
+}
+
+export async function restoreTeamMember(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}/restore`, token, { method: 'POST' });
+}
+
+export async function forceDeleteTeamMember(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}/force`, token, { method: 'DELETE' });
 }
 
 // ===================================

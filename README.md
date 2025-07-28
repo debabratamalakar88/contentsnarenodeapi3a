@@ -343,98 +343,119 @@ Permanently delete a client from the database.
 
 ---
 
-## 👥 Team Management API Documentation
+### 👥 **Team Management API Documentation**
 
-**Base URL:** `/api/team-members`  
+**Base URL:** `/api/teams`
 **Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/teams` | List active team members |
+| `POST` | `/teams` | Create/invite a new team member |
+| `GET` | `/teams/{id}` | Show a specific team member's info |
+| `PUT` | `/teams/{id}` | Update a team member's info |
+| `DELETE` | `/teams/{id}` | Soft delete (archive) a team member |
+| `GET` | `/teams/archived` | List archived team members |
+| `POST` | `/teams/{id}/restore` | Restore a soft-deleted member |
+| `DELETE` | `/teams/{id}/force` | Permanently delete a member |
 
 ---
 
-#### `GET /team-members`
-
-Retrieve a list of all team members for the authenticated user's account.
-
-**Response:** `200 OK` - Returns an array of team member objects.
+### 1. **GET `/teams`** (List Active Members)
+**Response `200 OK`**:
 ```json
 [
   {
-    "id": 2,
-    "name": "Alice Johnson",
-    "email": "alice@example.com",
-    "role": "Administrator",
-    "status": "active"
-  },
-  {
-    "id": 3,
-    "name": "Bob Williams",
-    "email": "bob@example.com",
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "username": "john",
+    "phone": "1234567890",
     "role": "Editor",
-    "status": "pending"
+    "created_by": 5,
+    "is_deleted": false
   }
 ]
 ```
 
-- `role`: Can be one of `Administrator`, `Editor`, `Reviewer`, `Viewer`.
-- `status`: Can be `active` (user has accepted) or `pending` (invitation sent).
-
----
-
-#### `POST /team-members/invite`
-
-Invite a new member to the team. The backend should handle sending an invitation email.
-
-**Request Body:**
+### 2. **POST `/teams`** (Invite/Create Member)
+**Request Body**:
 ```json
 {
-  "name": "Charlie Brown",
-  "email": "charlie@example.com",
-  "phone": "(123) 456-7890",
+  "name": "Alice Smith",
+  "email": "alice@example.com",
+  "phone": "9876543210",
+  "role": "Reviewer"
+}
+```
+**Response `201 Created`**:
+```json
+{
+  "id": 12,
+  "name": "Alice Smith",
+  "email": "alice@example.com",
+  "username": "alice",
+  "phone": "9876543210",
   "role": "Reviewer",
-  "message": "Welcome to the team!"
+  "created_by": 5,
+  "is_deleted": false
 }
 ```
 
-**Response:** `201 Created`
-```json
-{ "message": "Invitation sent to charlie@example.com." }
-```
-
----
-
-#### `PUT /team-members/{id}`
-
-Update an existing team member's role or other details.
-
-**Request Body:**
+### 3. **PUT `/teams/{id}`** (Update Member)
+**Request Body (Partial updates allowed)**:
 ```json
 {
+  "name": "Alice M. Smith",
+  "phone": "9998887777",
   "role": "Editor"
 }
 ```
-
-**Response:** `200 OK` - Returns the updated team member object.
+**Response `200 OK`**:
 ```json
 {
-  "id": 3,
-  "name": "Bob Williams",
-  "email": "bob@example.com",
+  "id": 12,
+  "name": "Alice M. Smith",
+  "phone": "9998887777",
   "role": "Editor",
-  "status": "active"
+  "updated_by": 5
 }
 ```
 
----
-
-#### `DELETE /team-members/{id}`
-
-Remove a member from the team.
-
-**Response:** `200 OK`
+### 4. **DELETE `/teams/{id}`** (Archive Member)
+**Response `200 OK`**:
 ```json
-{ "message": "Team member removed successfully." }
+{ "message": "User soft deleted" }
+```
+
+### 5. **GET `/teams/archived`** (List Archived Members)
+**Response `200 OK`**:
+```json
+[
+  {
+    "id": 13,
+    "name": "Bob Gray",
+    "email": "bob@example.com",
+    "is_deleted": true,
+    "deleted_by": 5
+  }
+]
+```
+
+### 6. **POST `/teams/{id}/restore`** (Restore Member)
+**Response `200 OK`**:
+```json
+{ "message": "User restored successfully" }
+```
+
+### 7. **DELETE `/teams/{id}/force`** (Permanently Delete Member)
+**Response `200 OK`**:
+```json
+{ "message": "User permanently deleted" }
 ```
 
 ---
+
 
 ## 🛡️ System Admin API Documentation
 
@@ -930,4 +951,5 @@ The `form_data` column will store an array of page objects, where each object ha
 - **Option Object:**
   - `label`: String
   - `value`: String
+
 
