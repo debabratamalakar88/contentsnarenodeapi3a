@@ -171,16 +171,11 @@ export default function SelectCompanyPage() {
                     )}
                      <Dialog open={isAddCompanyOpen} onOpenChange={setAddCompanyOpen}>
                         <DialogTrigger asChild>
-                             <div className="w-full text-left cursor-pointer" role="button">
-                                <div className="w-full flex items-center gap-4 p-4 rounded-lg">
-                                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                        <Briefcase className="h-5 w-5 text-gray-500" />
-                                    </div>
-                                    <Button variant="default" className="bg-indigo-500 hover:bg-indigo-600">
-                                        <Plus className="h-4 w-4 mr-2"/>
-                                        Add New Company
-                                    </Button>
-                                </div>
+                            <div className="w-full flex justify-center pt-4">
+                                <Button variant="default">
+                                    <Plus className="h-4 w-4 mr-2"/>
+                                    Add New Company
+                                </Button>
                             </div>
                         </DialogTrigger>
                         <DialogContent>
