@@ -41,7 +41,7 @@ export default function LoginPage() {
     if (token && company) {
       router.replace('/dashboard');
     } else if (token) {
-      router.replace('/select-company');
+      router.replace('/companies');
     } else {
       setIsChecking(false);
     }
@@ -73,7 +73,7 @@ export default function LoginPage() {
             title: "Success",
             description: "Logged in successfully.",
           });
-          router.push('/select-company');
+          router.push('/companies');
         }
       } else {
         throw new Error("Invalid response from server.");

@@ -54,8 +54,8 @@ export default function DashboardLayout({
       return;
     }
 
-    if (!companyData && pathname !== '/select-company') {
-        router.replace('/select-company');
+    if (!companyData && pathname !== '/companies') {
+        router.replace('/companies');
         return;
     }
     
@@ -94,7 +94,7 @@ export default function DashboardLayout({
 
   const handleSwitchCompany = () => {
     localStorage.removeItem('selectedCompany');
-    router.push('/select-company');
+    router.push('/companies');
   }
 
   if (isChecking) {
@@ -106,7 +106,7 @@ export default function DashboardLayout({
   }
 
   // Render children directly for the select-company page without the main layout
-  if (pathname === '/select-company') {
+  if (pathname === '/companies') {
     return <>{children}</>;
   }
   
