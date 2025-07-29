@@ -7,11 +7,11 @@ import { getCompanies, createCompany, selectCompany, type Company } from '@/lib/
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Briefcase, Plus } from 'lucide-react';
+import { Loader2, Briefcase, Plus, HelpCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -21,14 +21,20 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
+const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
 export default function SelectCompanyPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [companies, setCompanies] = useState<Company[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [newCompanyName, setNewCompanyName] = useState('');
-    const [isAddCompanyOpen, setAddCompanyOpen] = useState(false);
+    
+    // State for the new company form
+    const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
+    const [companyName, setCompanyName] = useState('');
+    const [companySubdomain, setCompanySubdomain] = useState('');
+    const [companyLogo, setCompanyLogo] = useState<File | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -54,6 +60,10 @@ export default function SelectCompanyPage() {
 
         fetchCompanies();
     }, [router, toast]);
+    
+    useEffect(() => {
+        setCompanySubdomain(slugify(companyName));
+    }, [companyName]);
 
     const handleSelectCompany = async (company: Company) => {
         setIsSubmitting(true);
@@ -66,7 +76,7 @@ export default function SelectCompanyPage() {
 
         try {
             const response = await selectCompany(token, company.id);
-            localStorage.setItem('authToken', response.token); // Store new scoped token
+            localStorage.setItem('authToken', response.token); 
             localStorage.setItem('selectedCompany', JSON.stringify(company));
             router.push('/dashboard');
         } catch (error: any) {
@@ -81,7 +91,7 @@ export default function SelectCompanyPage() {
 
     const handleCreateCompany = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newCompanyName.trim()) {
+        if (!companyName.trim()) {
             toast({ title: 'Company name is required', variant: 'destructive' });
             return;
         }
@@ -94,9 +104,16 @@ export default function SelectCompanyPage() {
         }
 
         try {
-            const response = await createCompany(token, { company_name: newCompanyName });
+            // NOTE: The API expects `company_logo` to be a URL string, but we are collecting a File object.
+            // In a real application, you would upload the file first to get a URL.
+            // For now, we will pass a placeholder or null.
+            const response = await createCompany(token, { 
+              company_name: companyName,
+              company_subdomain: companySubdomain,
+              company_logo: null // Placeholder for logo URL
+            });
             toast({ title: 'Company created successfully' });
-            localStorage.setItem('authToken', response.token); // Store new scoped token
+            localStorage.setItem('authToken', response.token); 
             localStorage.setItem('selectedCompany', JSON.stringify(response.company));
             router.push('/dashboard');
         } catch (error: any) {
@@ -107,8 +124,6 @@ export default function SelectCompanyPage() {
             });
         } finally {
             setIsSubmitting(false);
-            setNewCompanyName('');
-            setAddCompanyOpen(false);
         }
     };
     
@@ -118,6 +133,80 @@ export default function SelectCompanyPage() {
     }
     
     const avatarColors = ['bg-orange-200 text-orange-800', 'bg-green-200 text-green-800', 'bg-purple-200 text-purple-800', 'bg-blue-200 text-blue-800', 'bg-red-200 text-red-800'];
+
+    if (viewMode === 'form') {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+             {isSubmitting && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-50">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                </div>
+            )}
+            <div className="w-full max-w-md">
+                <form onSubmit={handleCreateCompany} className="space-y-8">
+                    <div className="text-center">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-6">Configure your company</h1>
+                        <div className="flex flex-col items-center gap-2">
+                             <Avatar className="h-28 w-28">
+                                <AvatarFallback className="bg-yellow-100 text-yellow-800 text-5xl font-bold border">
+                                    {getInitials(companyName) || '?'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <Button variant="link" type="button" className="text-pink-600 font-semibold text-sm">Add Company Logo</Button>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-6">
+                        <div>
+                            <Label htmlFor="companyName" className="font-semibold text-gray-700">Company Name</Label>
+                            <Input
+                                id="companyName"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder="Your Company Inc."
+                                className="bg-gray-100 mt-1"
+                            />
+                        </div>
+                        <div>
+                             <Label htmlFor="companySubdomain" className="font-semibold text-gray-700 flex items-center gap-1.5">
+                                Company Subdomain
+                                 <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This will be your unique URL for your company.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </Label>
+                             <div className="flex items-center mt-1">
+                                <Input
+                                    id="companySubdomain"
+                                    value={companySubdomain}
+                                    onChange={(e) => setCompanySubdomain(e.target.value)}
+                                    placeholder="your-company"
+                                    className="bg-gray-100 rounded-r-none border-r-0"
+                                />
+                                <span className="px-3 h-10 flex items-center bg-gray-100 text-muted-foreground border border-input rounded-r-md text-sm">.contentsnare.com</span>
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center gap-4">
+                        <Button size="lg" type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-base font-bold rounded-full">
+                           START USING CONTENT SNARE
+                        </Button>
+                        <Button variant="link" onClick={() => setViewMode('list')} className="text-muted-foreground">
+                            Back to company selection
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      );
+    }
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 relative">
@@ -169,44 +258,15 @@ export default function SelectCompanyPage() {
                             </button>
                         ))
                     )}
-                     <Dialog open={isAddCompanyOpen} onOpenChange={setAddCompanyOpen}>
-                        <DialogTrigger asChild>
-                            <div className="w-full flex justify-center pt-4">
-                                <Button variant="default">
-                                    <Plus className="h-4 w-4 mr-2"/>
-                                    Add New Company
-                                </Button>
-                            </div>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <form onSubmit={handleCreateCompany}>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Company</DialogTitle>
-                                    <DialogDescription>
-                                        Enter the name of your new company below.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="py-4">
-                                    <Label htmlFor="company-name" className="sr-only">Company Name</Label>
-                                    <Input
-                                        id="company-name"
-                                        value={newCompanyName}
-                                        onChange={(e) => setNewCompanyName(e.target.value)}
-                                        placeholder="Your Company Name"
-                                    />
-                                </div>
-                                <DialogFooter>
-                                    <Button type="button" variant="ghost" onClick={() => setAddCompanyOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Create Company
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <div className="w-full flex justify-center pt-4">
+                        <Button onClick={() => setViewMode('form')} className="bg-pink-600 hover:bg-pink-700">
+                            <Plus className="h-4 w-4 mr-2"/>
+                            Add New Company
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
