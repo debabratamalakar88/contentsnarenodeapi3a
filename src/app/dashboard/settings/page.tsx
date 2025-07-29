@@ -31,7 +31,6 @@ const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   phone: z.string().optional().nullable(),
   bio: z.string().optional().nullable(),
-  company: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
@@ -74,7 +73,6 @@ export default function SettingsPage() {
       name: "",
       phone: "",
       bio: "",
-      company: "",
       address: "",
       city: "",
       state: "",
@@ -267,19 +265,6 @@ export default function SettingsPage() {
                                             <FormLabel>Phone</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                 <FormField
-                                    control={form.control}
-                                    name="company"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Company</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Acme Inc." {...field} value={field.value ?? ''} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
