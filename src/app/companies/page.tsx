@@ -195,8 +195,8 @@ export default function SelectCompanyPage() {
                     </div>
                     
                     <div className="flex flex-col items-center gap-4">
-                        <Button size="lg" type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-base font-bold rounded-full">
-                           START USING CONTENT SNARE
+                        <Button size="lg" type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-base font-bold rounded-full">
+                           Start Using This Company
                         </Button>
                         <Button variant="link" onClick={() => setViewMode('list')} className="text-muted-foreground">
                             Back to company selection
@@ -269,4 +269,3 @@ export default function SelectCompanyPage() {
         </div>
     );
 }
-
