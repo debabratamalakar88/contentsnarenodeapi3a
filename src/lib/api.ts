@@ -379,7 +379,8 @@ export async function changePassword(token: string, passwordData: any) {
 // ===================================
 
 export async function getCompanies(token: string): Promise<Company[]> {
-    return fetchWithToken(`${API_BASE_URL}/api/companies`, token);
+    const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
+    return Array.isArray(response) ? response : [];
 }
 
 export async function createCompany(token: string, companyData: { name: string }): Promise<Company> {
