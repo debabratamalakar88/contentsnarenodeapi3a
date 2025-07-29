@@ -24,7 +24,6 @@ const formSchema = z.object({
   password_confirmation: z.string(),
   phone: z.string().optional(),
   bio: z.string().optional(),
-  company: z.string().optional(),
 }).refine(data => data.password === data.password_confirmation, {
   message: "Passwords do not match.",
   path: ["password_confirmation"],
@@ -46,7 +45,6 @@ export default function NewUserPage() {
       password_confirmation: "",
       phone: "",
       bio: "",
-      company: "",
     },
   });
   
@@ -136,10 +134,7 @@ export default function NewUserPage() {
                       <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (Optional)</FormLabel><FormControl><Input placeholder="Acme Inc." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio (Optional)</FormLabel><FormControl><Textarea placeholder="A little bit about the user..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               </div>
           </div>
