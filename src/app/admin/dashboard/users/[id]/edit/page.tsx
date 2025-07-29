@@ -26,7 +26,6 @@ const formSchema = z.object({
   password_confirmation: z.string().optional(),
   phone: z.string().optional().nullable(),
   bio: z.string().optional().nullable(),
-  company: z.string().optional().nullable(),
 }).refine(data => {
     if (data.password && data.password.length > 0) {
         return data.password.length >= 8 && data.password === data.password_confirmation;
@@ -56,7 +55,6 @@ export default function EditUserPage() {
       password_confirmation: "",
       phone: "",
       bio: "",
-      company: "",
     },
   });
 
@@ -75,7 +73,6 @@ export default function EditUserPage() {
           username: userData.username ?? '',
           phone: userData.phone,
           bio: userData.bio,
-          company: userData.company,
         });
       } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error fetching user', description: error.message });
@@ -136,7 +133,7 @@ export default function EditUserPage() {
     return (
         <div className="flex flex-col h-full bg-white">
           <header className="sticky top-0 bg-white z-10"><div className="h-16 flex items-center justify-between px-6 border-b"><Skeleton className="h-8 w-48" /><div className="flex items-center gap-2"><Skeleton className="h-9 w-24" /><Skeleton className="h-9 w-24" /></div></div></header>
-            <main className="flex-1 overflow-y-auto p-8"><div className="max-w-xl mx-auto space-y-8"><Skeleton className="h-24 w-24 rounded-full mx-auto" /><div className="space-y-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div></div></main>
+            <main className="flex-1 overflow-y-auto p-8"><div className="max-w-xl mx-auto space-y-8"><Skeleton className="h-24 w-24 rounded-full mx-auto" /><div className="space-y-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div></div></main>
         </div>
     )
   }
@@ -185,10 +182,7 @@ export default function EditUserPage() {
                       <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} placeholder="Leave blank to keep current" /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (Optional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (Optional)</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio (Optional)</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               </div>
           </div>
