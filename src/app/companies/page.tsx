@@ -21,7 +21,7 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export default function SelectCompanyPage() {
     const router = useRouter();
