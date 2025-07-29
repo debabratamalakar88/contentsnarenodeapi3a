@@ -41,7 +41,6 @@ export interface AdminProfile {
   phone?: string | null;
   profile_picture?: string | null;
   bio?: string | null;
-  company?: string | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
@@ -379,12 +378,12 @@ export async function changePassword(token: string, passwordData: any) {
 // ===================================
 
 export async function getCompanies(token: string): Promise<Company[]> {
-    const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
+    const response = await fetchWithToken(`${API_BASE_URL}/companies`, token);
     return Array.isArray(response) ? response : [];
 }
 
 export async function createCompany(token: string, companyData: { name: string }): Promise<Company> {
-    return fetchWithToken(`${API_BASE_URL}/api/companies`, token, {
+    return fetchWithToken(`${API_BASE_URL}/companies`, token, {
         method: 'POST',
         body: JSON.stringify(companyData),
     });
@@ -729,11 +728,13 @@ export async function duplicateRequest(token: string, id: number): Promise<Reque
 // ===================================
 
 export async function getTeamMembers(token: string): Promise<TeamMember[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/teams`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/teams`, token);
+  return Array.isArray(response) ? response : [];
 }
 
 export async function getArchivedTeamMembers(token: string): Promise<TeamMember[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/teams/archived`, token);
+    const response = await fetchWithToken(`${API_BASE_URL}/api/teams/archived`, token);
+    return Array.isArray(response) ? response : [];
 }
 
 export async function createTeamMember(token: string, memberData: Partial<TeamMember>): Promise<TeamMember> {
