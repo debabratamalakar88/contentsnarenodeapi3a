@@ -229,6 +229,57 @@ This document outlines the API endpoints the frontend application expects for us
   ```
 
 ---
+
+### 🏢 **Company API Documentation**
+
+**Base URL:** `/api/companies`  
+**Auth:** Requires Bearer token via `auth:sanctum` middleware
+
+---
+
+#### `GET /companies`
+
+Retrieve a list of companies the authenticated user belongs to.
+
+**Response:** `200 OK` - Returns an array of company objects.
+```json
+[
+  {
+    "id": 1,
+    "name": "Example Corp",
+    "domain": "examplecorp.contentsnare.com"
+  },
+  {
+    "id": 2,
+    "name": "Another Inc",
+    "domain": "anotherinc.contentsnare.com"
+  }
+]
+```
+
+---
+
+#### `POST /companies`
+
+Create a new company.
+
+**Request Body:**
+```json
+{
+  "name": "My New Company"
+}
+```
+
+**Response:** `201 Created` - Returns the created company object.
+```json
+{
+  "id": 3,
+  "name": "My New Company",
+  "domain": "mynewcompany.contentsnare.com"
+}
+```
+---
+
 ### 🧾 **Client Resource API Documentation**
 
 **Base URL:** `/api/clients`  
@@ -951,5 +1002,3 @@ The `form_data` column will store an array of page objects, where each object ha
 - **Option Object:**
   - `label`: String
   - `value`: String
-
-

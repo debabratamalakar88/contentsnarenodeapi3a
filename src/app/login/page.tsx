@@ -37,12 +37,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
+    const company = localStorage.getItem('selectedCompany');
+    if (token && company) {
       router.replace('/dashboard');
+    } else if (token) {
+      router.replace('/select-company');
     } else {
       setIsChecking(false);
     }
-  }, []);
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,7 +73,7 @@ export default function LoginPage() {
             title: "Success",
             description: "Logged in successfully.",
           });
-          router.push('/dashboard');
+          router.push('/select-company');
         }
       } else {
         throw new Error("Invalid response from server.");

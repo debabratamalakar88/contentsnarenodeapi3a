@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -11,7 +10,6 @@ export interface User {
   username?: string;
   phone?: string | null;
   bio?: string | null;
-  company?: string | null;
   email_verified_at: string | null;
   created_at?: string;
   updated_at?: string;
@@ -71,6 +69,11 @@ interface AdminAuthResponse {
     token: string;
 }
 
+export interface Company {
+    id: number;
+    name: string;
+    domain: string;
+}
 
 export interface Client {
   id: number;
@@ -369,6 +372,21 @@ export async function changePassword(token: string, passwordData: any) {
     method: 'POST',
     body: JSON.stringify(passwordData),
   });
+}
+
+// ===================================
+// COMPANY API
+// ===================================
+
+export async function getCompanies(token: string): Promise<Company[]> {
+    return fetchWithToken(`${API_BASE_URL}/api/companies`, token);
+}
+
+export async function createCompany(token: string, companyData: { name: string }): Promise<Company> {
+    return fetchWithToken(`${API_BASE_URL}/api/companies`, token, {
+        method: 'POST',
+        body: JSON.stringify(companyData),
+    });
 }
 
 

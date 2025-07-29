@@ -2,14 +2,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from "next/link"
 import {
   Bell,
   HelpCircle,
   User,
   ChevronDown,
-  Loader2
+  Loader2,
+  LogOut,
+  Building
 } from "lucide-react"
 
 import {
@@ -23,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/icons"
 import { NavLinks } from "./NavLinks"
-import { logoutUser } from '@/lib/api';
+import { logoutUser, type Company } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
@@ -32,26 +34,39 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
+  const [company, setCompany] = useState<Company | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const userToken = localStorage.getItem('authToken');
     const adminToken = localStorage.getItem('adminAuthToken');
+    const companyData = localStorage.getItem('selectedCompany');
+
+    if (adminToken) {
+      router.replace('/admin/dashboard');
+      return;
+    }
     
     if (!userToken) {
-      if (adminToken) {
-        // An admin is logged in, redirect them to their dashboard.
-        router.replace('/admin/dashboard');
-      } else {
-        // No one is logged in, redirect to user login.
-        router.replace('/login');
-      }
-    } else {
-      // User is logged in.
-      setIsChecking(false);
+      router.replace('/login');
+      return;
     }
-  }, [router]);
+
+    if (!companyData && pathname !== '/select-company') {
+        router.replace('/select-company');
+        return;
+    }
+    
+    if (companyData) {
+        setCompany(JSON.parse(companyData));
+    }
+    
+    setIsChecking(false);
+
+  }, [router, pathname]);
+  
 
   const handleLogout = async () => {
     const token = localStorage.getItem('authToken');
@@ -72,9 +87,15 @@ export default function DashboardLayout({
       });
     } finally {
         localStorage.removeItem('authToken');
+        localStorage.removeItem('selectedCompany');
         router.push('/login');
     }
   };
+
+  const handleSwitchCompany = () => {
+    localStorage.removeItem('selectedCompany');
+    router.push('/select-company');
+  }
 
   if (isChecking) {
     return (
@@ -82,6 +103,11 @@ export default function DashboardLayout({
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
+  }
+
+  // Render children directly for the select-company page without the main layout
+  if (pathname === '/select-company') {
+    return <>{children}</>;
   }
   
   return (
@@ -114,22 +140,21 @@ export default function DashboardLayout({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
+               {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.name}</DropdownMenuLabel>}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/support">Support</Link>
+              <DropdownMenuItem onClick={handleSwitchCompany} className="cursor-pointer">
+                <Building className="mr-2 h-4 w-4"/> Switch Company
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button className="gap-1 bg-primary hover:bg-primary/90">
-            Quick Actions <ChevronDown className="h-4 w-4" />
-          </Button>
         </div>
       </header>
       <main className="flex flex-1 flex-col">
