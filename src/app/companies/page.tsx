@@ -74,8 +74,7 @@ export default function SelectCompanyPage() {
         }
 
         try {
-            const response = await selectCompany(token, company.id);
-            localStorage.setItem('authToken', response.token); 
+            await selectCompany(token, company.id);
             localStorage.setItem('selectedCompany', JSON.stringify(company));
             router.push('/dashboard');
         } catch (error: any) {
@@ -112,17 +111,15 @@ export default function SelectCompanyPage() {
             toast({ title: 'Company created successfully' });
 
             const newCompanyId = createResponse.selected_company_id;
-            const selectResponse = await selectCompany(token, newCompanyId);
-            
-            localStorage.setItem('authToken', selectResponse.token);
+            await selectCompany(token, newCompanyId);
             
             const newCompanyDetails = {
                 id: newCompanyId,
                 company_name: companyName,
                 company_subdomain: companySubdomain,
                 company_logo: null,
-                created_by: 0, // Placeholder, not returned by API
-                updated_by: 0, // Placeholder, not returned by API
+                created_by: 0, 
+                updated_by: 0, 
             };
 
             localStorage.setItem('selectedCompany', JSON.stringify(newCompanyDetails));

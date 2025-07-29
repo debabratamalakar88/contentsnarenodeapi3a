@@ -386,7 +386,7 @@ export async function getCompanies(token: string): Promise<Company[]> {
     return response.companies || [];
 }
 
-export async function selectCompany(token: string, company_id: number): Promise<{ message: string, token: string }> {
+export async function selectCompany(token: string, company_id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/selectCompany`, token, {
         method: 'POST',
         body: JSON.stringify({ company_id }),
@@ -400,7 +400,7 @@ export async function createCompany(token: string, companyData: { company_name: 
     });
 }
 
-export async function switchCompany(token: string, company_id: number): Promise<{ message: string, token: string, selected_company_id: number }> {
+export async function switchCompany(token: string, company_id: number): Promise<{ message: string, selected_company_id: number }> {
     return fetchWithToken(`${API_BASE_URL}/api/switchCompany`, token, {
         method: 'POST',
         body: JSON.stringify({ company_id }),
