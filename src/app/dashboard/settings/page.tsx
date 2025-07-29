@@ -270,8 +270,7 @@ export default function SettingsPage() {
                                         </FormItem>
                                     )}
                                 />
-                                <div className="md:col-span-2">
-                                <FormField
+                                 <FormField
                                     control={form.control}
                                     name="bio"
                                     render={({ field }) => (
@@ -284,7 +283,6 @@ export default function SettingsPage() {
                                         </FormItem>
                                     )}
                                 />
-                                </div>
                             </div>
                              {/* Address Information */}
                             <div className="space-y-4">
