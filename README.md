@@ -230,54 +230,113 @@ This document outlines the API endpoints the frontend application expects for us
 
 ---
 
-### 🏢 **Company API Documentation**
+### 🏢 **Company Selection API – Documentation**
 
-**Base URL:** `/api/companies`  
-**Auth:** Requires Bearer token via `auth:sanctum` middleware
+API Base URL : /api/
+
+| **Endpoint** | **Method** | **Auth** | **Description** |
+|--------------|------------|----------|------------------|
+| `/companies` | `GET` | ✅ `auth:sanctum` | Get all companies the user belongs to |
+| `/selectCompany` | `POST` | ✅ `auth:sanctum` | Select a company and rotate token with scoped context |
+| `/createCompany` | `POST` | ✅ `auth:sanctum` | Create a new company and auto-select it |
+| `/switchCompany` | `POST` | ✅ `auth:sanctum` | Switch to a different company and generate new token |
 
 ---
 
-#### `GET /companies`
+#### 🔍 1. `GET /companies`
 
-Retrieve a list of companies the authenticated user belongs to.
+Fetch all companies linked to the authenticated user.
 
-**Response:** `200 OK` - Returns an array of company objects.
+**Headers:**
+```http
+Authorization: Bearer <sanctum_token>
+Accept: application/json
+```
+
+**Response:**
 ```json
-[
-  {
-    "id": 1,
-    "name": "Example Corp",
-    "domain": "examplecorp.contentsnare.com"
-  },
-  {
-    "id": 2,
-    "name": "Another Inc",
-    "domain": "anotherinc.contentsnare.com"
-  }
-]
+{
+  "companies": [
+    {
+      "id": 1,
+      "company_name": "TechNova",
+      "company_subdomain": "technova",
+      "company_logo": null,
+      "created_by": 2,
+      "updated_by": 2
+    },
+    ...
+  ]
+}
 ```
 
 ---
 
-#### `POST /companies`
+#### 🏷️ 2. `POST /selectCompany`
 
-Create a new company.
+Select one company and rotate token to scope user access.
 
 **Request Body:**
 ```json
 {
-  "name": "My New Company"
+  "company_id": 2
 }
 ```
 
-**Response:** `201 Created` - Returns the created company object.
+**Response:**
 ```json
 {
-  "id": 3,
-  "name": "My New Company",
-  "domain": "mynewcompany.contentsnare.com"
+  "message": "Company selected successfully.",
+  "token": "<new_token>"
 }
 ```
+
+---
+
+#### 🏗️ 3. `POST /createCompany`
+
+Create a new company and automatically select it for the user.
+
+**Request Body:**
+```json
+{
+  "company_name": "PixelWorks",
+  "company_subdomain": "pixelworks",
+  "company_logo": "logo_url"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Company created and selected successfully.",
+  "company": { ... },
+  "token": "<new_token>"
+}
+```
+
+---
+
+#### 🔁 4. `POST /switchCompany`
+
+Switch the user's active company context via token rotation.
+
+**Request Body:**
+```json
+{
+  "company_id": 3
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Switched to selected company successfully.",
+  "token": "<new_token>",
+  "selected_company_id": 3
+}
+```   
+
 ---
 
 ### 🧾 **Client Resource API Documentation**

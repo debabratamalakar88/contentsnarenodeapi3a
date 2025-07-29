@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/icons"
 import { NavLinks } from "./NavLinks"
-import { logoutUser, type Company } from '@/lib/api';
+import { logoutUser, switchCompany, type Company } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
@@ -93,8 +93,8 @@ export default function DashboardLayout({
   };
 
   const handleSwitchCompany = () => {
-    localStorage.removeItem('selectedCompany');
-    router.push('/companies');
+    localStorage.removeItem('selectedCompany'); // Remove old company context
+    router.push('/companies'); // Go back to company selection
   }
 
   if (isChecking) {
@@ -140,7 +140,7 @@ export default function DashboardLayout({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-               {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.name}</DropdownMenuLabel>}
+               {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.company_name}</DropdownMenuLabel>}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">Settings</Link>

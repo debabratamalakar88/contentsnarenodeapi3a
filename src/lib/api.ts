@@ -70,8 +70,11 @@ interface AdminAuthResponse {
 
 export interface Company {
     id: number;
-    name: string;
-    domain: string;
+    company_name: string;
+    company_subdomain: string;
+    company_logo: string | null;
+    created_by: number;
+    updated_by: number;
 }
 
 export interface Client {
@@ -378,14 +381,28 @@ export async function changePassword(token: string, passwordData: any) {
 // ===================================
 
 export async function getCompanies(token: string): Promise<Company[]> {
-    const response = await fetchWithToken(`${API_BASE_URL}/companies`, token);
-    return Array.isArray(response) ? response : [];
+    const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
+    return response.companies || [];
 }
 
-export async function createCompany(token: string, companyData: { name: string }): Promise<Company> {
-    return fetchWithToken(`${API_BASE_URL}/companies`, token, {
+export async function selectCompany(token: string, company_id: number): Promise<{ message: string, token: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/selectCompany`, token, {
+        method: 'POST',
+        body: JSON.stringify({ company_id }),
+    });
+}
+
+export async function createCompany(token: string, companyData: { company_name: string, company_subdomain?: string, company_logo?: string }): Promise<{ message: string, company: Company, token: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/createCompany`, token, {
         method: 'POST',
         body: JSON.stringify(companyData),
+    });
+}
+
+export async function switchCompany(token: string, company_id: number): Promise<{ message: string, token: string, selected_company_id: number }> {
+    return fetchWithToken(`${API_BASE_URL}/api/switchCompany`, token, {
+        method: 'POST',
+        body: JSON.stringify({ company_id }),
     });
 }
 
@@ -641,28 +658,28 @@ export async function updateAdminTemplate(token: string, id: number, data: Parti
 }
 
 export async function duplicateAdminTemplate(token: string, id: number): Promise<Template> {
-    const originalTemplate = await getAdminTemplate(token, id);
-    const newTemplateData = {
-      title: `(Copy) ${originalTemplate.title}`.substring(0, 255),
-      description: originalTemplate.description,
-      form_data: originalTemplate.form_data,
-      category_id: originalTemplate.category_id,
-      icon: originalTemplate.icon,
-      status: 'draft' as const,
-    };
-    return createAdminTemplate(token, newTemplateData);
+  const originalTemplate = await getAdminTemplate(token, id);
+  const newTemplateData = {
+    title: `(Copy) ${originalTemplate.title}`.substring(0, 255),
+    description: originalTemplate.description,
+    form_data: originalTemplate.form_data,
+    category_id: originalTemplate.category_id,
+    icon: originalTemplate.icon,
+    status: 'draft' as const,
+  };
+  return createAdminTemplate(token, newTemplateData);
 }
 
 export async function softDeleteAdminTemplate(token: string, id: number): Promise<{ message: string }> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token, { method: 'DELETE' });
+  return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreAdminTemplate(token: string, id: number): Promise<{ message: string }> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/restore`, token, { method: 'POST' });
+  return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/restore`, token, { method: 'POST' });
 }
 
 export async function forceDeleteAdminTemplate(token: string, id: number): Promise<{ message: string }> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/force`, token, { method: 'DELETE' });
+  return fetchWithToken(`${API_BASE_URL}/api/admin/templates/${id}/force`, token, { method: 'DELETE' });
 }
 
 

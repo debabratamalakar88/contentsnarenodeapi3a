@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCompanies, createCompany, type Company } from '@/lib/api';
+import { getCompanies, createCompany, selectCompany, type Company } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -26,7 +26,7 @@ export default function SelectCompanyPage() {
     const { toast } = useToast();
     const [companies, setCompanies] = useState<Company[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isCreating, setIsCreating] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [newCompanyName, setNewCompanyName] = useState('');
     const [isAddCompanyOpen, setAddCompanyOpen] = useState(false);
 
@@ -55,9 +55,28 @@ export default function SelectCompanyPage() {
         fetchCompanies();
     }, [router, toast]);
 
-    const handleSelectCompany = (company: Company) => {
-        localStorage.setItem('selectedCompany', JSON.stringify(company));
-        router.push('/dashboard');
+    const handleSelectCompany = async (company: Company) => {
+        setIsSubmitting(true);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            toast({ title: "Authentication error", variant: "destructive" });
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            const response = await selectCompany(token, company.id);
+            localStorage.setItem('authToken', response.token); // Store new scoped token
+            localStorage.setItem('selectedCompany', JSON.stringify(company));
+            router.push('/dashboard');
+        } catch (error: any) {
+            toast({
+                title: 'Error selecting company',
+                description: error.message,
+                variant: 'destructive',
+            });
+            setIsSubmitting(false);
+        }
     };
 
     const handleCreateCompany = async (e: React.FormEvent) => {
@@ -66,12 +85,20 @@ export default function SelectCompanyPage() {
             toast({ title: 'Company name is required', variant: 'destructive' });
             return;
         }
-        setIsCreating(true);
+        setIsSubmitting(true);
         const token = localStorage.getItem('authToken');
+        if (!token) {
+            toast({ title: "Authentication error", variant: "destructive" });
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            const newCompany = await createCompany(token!, { name: newCompanyName });
+            const response = await createCompany(token, { company_name: newCompanyName });
             toast({ title: 'Company created successfully' });
-            handleSelectCompany(newCompany);
+            localStorage.setItem('authToken', response.token); // Store new scoped token
+            localStorage.setItem('selectedCompany', JSON.stringify(response.company));
+            router.push('/dashboard');
         } catch (error: any) {
             toast({
                 title: 'Error creating company',
@@ -79,7 +106,7 @@ export default function SelectCompanyPage() {
                 variant: 'destructive',
             });
         } finally {
-            setIsCreating(false);
+            setIsSubmitting(false);
             setNewCompanyName('');
             setAddCompanyOpen(false);
         }
@@ -94,6 +121,11 @@ export default function SelectCompanyPage() {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 relative">
+             {isSubmitting && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-50">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                </div>
+            )}
             <Button
                 variant="outline"
                 className="absolute top-6 right-6 rounded-full border-pink-300 text-pink-600 hover:bg-pink-50 hover:text-pink-700"
@@ -123,15 +155,16 @@ export default function SelectCompanyPage() {
                                 key={company.id}
                                 onClick={() => handleSelectCompany(company)}
                                 className="w-full flex items-center gap-4 p-4 rounded-lg bg-white border hover:border-primary hover:shadow-sm transition-all text-left"
+                                disabled={isSubmitting}
                             >
                                 <Avatar className="h-10 w-10">
                                     <AvatarFallback className={`font-bold ${avatarColors[index % avatarColors.length]}`}>
-                                        {getInitials(company.name)}
+                                        {getInitials(company.company_name)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold text-gray-800">{company.name}</p>
-                                    <p className="text-sm text-muted-foreground">{company.domain || `${company.name.toLowerCase().replace(/\s/g, '')}.contentsnare.com`}</p>
+                                    <p className="font-semibold text-gray-800">{company.company_name}</p>
+                                    <p className="text-sm text-muted-foreground">{company.company_subdomain}.contentsnare.com</p>
                                 </div>
                             </button>
                         ))
@@ -169,8 +202,8 @@ export default function SelectCompanyPage() {
                                 </div>
                                 <DialogFooter>
                                     <Button type="button" variant="ghost" onClick={() => setAddCompanyOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={isCreating}>
-                                        {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Create Company
                                     </Button>
                                 </DialogFooter>
