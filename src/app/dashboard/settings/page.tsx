@@ -239,38 +239,40 @@ export default function SettingsPage() {
                      ) : (
                         <>
                             {/* Personal Information */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/>
+                                    </FormItem>
+                                    <FormField
+                                        control={form.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Phone</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-                                    <Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/>
-                                </FormItem>
-                                <FormField
-                                    control={form.control}
-                                    name="phone"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Phone</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                 <FormField
                                     control={form.control}
                                     name="bio"
                                     render={({ field }) => (
