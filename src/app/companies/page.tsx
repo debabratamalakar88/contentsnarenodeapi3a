@@ -30,7 +30,6 @@ export default function SelectCompanyPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    // State for the new company form
     const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
     const [companyName, setCompanyName] = useState('');
     const [companySubdomain, setCompanySubdomain] = useState('');
@@ -104,18 +103,31 @@ export default function SelectCompanyPage() {
         }
 
         try {
-            // NOTE: The API expects `company_logo` to be a URL string, but we are collecting a File object.
-            // In a real application, you would upload the file first to get a URL.
-            // For now, we will pass a placeholder or null.
-            const response = await createCompany(token, { 
+            const createResponse = await createCompany(token, { 
               company_name: companyName,
               company_subdomain: companySubdomain,
-              company_logo: null // Placeholder for logo URL
+              company_logo: null
             });
+            
             toast({ title: 'Company created successfully' });
-            localStorage.setItem('authToken', response.token); 
-            localStorage.setItem('selectedCompany', JSON.stringify(response.company));
+
+            const newCompanyId = createResponse.selected_company_id;
+            const selectResponse = await selectCompany(token, newCompanyId);
+            
+            localStorage.setItem('authToken', selectResponse.token);
+            
+            const newCompanyDetails = {
+                id: newCompanyId,
+                company_name: companyName,
+                company_subdomain: companySubdomain,
+                company_logo: null,
+                created_by: 0, // Placeholder, not returned by API
+                updated_by: 0, // Placeholder, not returned by API
+            };
+
+            localStorage.setItem('selectedCompany', JSON.stringify(newCompanyDetails));
             router.push('/dashboard');
+
         } catch (error: any) {
             toast({
                 title: 'Error creating company',
