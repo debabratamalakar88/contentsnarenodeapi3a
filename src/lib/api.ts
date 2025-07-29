@@ -14,6 +14,7 @@ export interface User {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;
+  company?: string | null;
 }
 
 export interface Profile extends User {
@@ -392,7 +393,7 @@ export async function selectCompany(token: string, company_id: number): Promise<
     });
 }
 
-export async function createCompany(token: string, companyData: { company_name: string, company_subdomain?: string, company_logo?: string }): Promise<{ message: string, company: Company, token: string }> {
+export async function createCompany(token: string, companyData: { company_name: string, company_subdomain?: string, company_logo?: string | null }): Promise<{ message: string, company: Company, token: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/createCompany`, token, {
         method: 'POST',
         body: JSON.stringify(companyData),
