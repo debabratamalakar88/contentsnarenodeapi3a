@@ -138,7 +138,7 @@ export default function SelectCompanyPage() {
                     )}
                      <Dialog open={isAddCompanyOpen} onOpenChange={setAddCompanyOpen}>
                         <DialogTrigger asChild>
-                            <button className="w-full flex items-center gap-4 p-4 rounded-lg text-left">
+                            <div className="w-full flex items-center gap-4 p-4 rounded-lg text-left cursor-pointer">
                                 <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
                                     <Briefcase className="h-5 w-5 text-gray-500" />
                                 </div>
@@ -146,7 +146,7 @@ export default function SelectCompanyPage() {
                                     <Plus className="h-4 w-4 mr-2"/>
                                     Add New Company
                                 </Button>
-                            </button>
+                            </div>
                         </DialogTrigger>
                         <DialogContent>
                             <form onSubmit={handleCreateCompany}>
@@ -180,4 +180,3 @@ export default function SelectCompanyPage() {
         </div>
     );
 }
-
