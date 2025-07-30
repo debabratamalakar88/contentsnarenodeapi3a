@@ -21,7 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { getProfile, updateProfile, changePassword } from "@/lib/api";
+import { getProfile, updateProfile, changePassword, updateCompany, type Company } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
@@ -60,12 +60,20 @@ const passwordFormSchema = z.object({
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
+const companyFormSchema = z.object({
+    company_name: z.string().min(1, "Company name is required."),
+    company_subdomain: z.string().min(1, "Subdomain is required."),
+    company_logo: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
+});
+
+type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -98,9 +106,18 @@ export default function SettingsPage() {
       new_password_confirmation: "",
     },
   });
+  
+  const companyForm = useForm<CompanyFormValues>({
+    resolver: zodResolver(companyFormSchema),
+    defaultValues: {
+        company_name: "",
+        company_subdomain: "",
+        company_logo: "",
+    },
+  });
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadProfileAndCompany() {
       const token = localStorage.getItem("authToken");
       if (!token) {
         toast({
@@ -110,6 +127,17 @@ export default function SettingsPage() {
         });
         setIsLoading(false);
         return;
+      }
+      
+      const companyData = localStorage.getItem('selectedCompany');
+      if (companyData) {
+        const company = JSON.parse(companyData);
+        setSelectedCompany(company);
+        companyForm.reset({
+            company_name: company.company_name,
+            company_subdomain: company.company_subdomain,
+            company_logo: company.company_logo || "",
+        });
       }
 
       try {
@@ -131,10 +159,10 @@ export default function SettingsPage() {
       }
     }
 
-    loadProfile();
-  }, [form, toast]);
+    loadProfileAndCompany();
+  }, [form, companyForm, toast]);
   
-  async function onSubmit(data: ProfileFormValues) {
+  async function onProfileSubmit(data: ProfileFormValues) {
     const token = localStorage.getItem("authToken");
     if (!token) {
         toast({
@@ -193,6 +221,24 @@ export default function SettingsPage() {
     }
   }
 
+  async function onCompanySubmit(data: CompanyFormValues) {
+    const token = localStorage.getItem("authToken");
+    if (!token || !selectedCompany) {
+      toast({ title: "Error", description: "Authentication or company selection error.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+        const response = await updateCompany(token, selectedCompany.id, data);
+        localStorage.setItem('selectedCompany', JSON.stringify(response.company));
+        setSelectedCompany(response.company);
+        toast({ title: "Company Updated", description: "Your company details have been saved." });
+    } catch (error: any) {
+         const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "Could not update company details.";
+        toast({ title: "Update Failed", description: description, variant: "destructive" });
+    }
+  }
+
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -204,7 +250,7 @@ export default function SettingsPage() {
       </div>
 
     <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onProfileSubmit)}>
             <Card>
                 <CardHeader>
                     <CardTitle>Profile</CardTitle>
@@ -214,156 +260,16 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-8">
                      {isLoading ? (
-                        <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                            <Skeleton className="h-24 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                        </div>
+                        <div className="space-y-6"><Skeleton className="h-24 w-full" /></div>
                      ) : (
                         <>
-                            {/* Personal Information */}
                              <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="John Doe" {...field} value={field.value ?? ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/>
-                                    </FormItem>
-                                    <FormField
-                                        control={form.control}
-                                        name="phone"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Phone</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormItem><FormLabel>Email</FormLabel><Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/></FormItem>
+                                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField
-                                    control={form.control}
-                                    name="bio"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Bio</FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''}/>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                             {/* Address Information */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium">Address</h3>
-                                <FormField
-                                    control={form.control}
-                                    name="address"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Street Address</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="123 Main St" {...field} value={field.value ?? ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="Anytown" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State / Province</FormLabel><FormControl><Input placeholder="CA" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip / Postal Code</FormLabel><FormControl><Input placeholder="90210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="country_name" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="United States" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="country_code" render={({ field }) => (<FormItem><FormLabel>Country Code</FormLabel><FormControl><Input placeholder="US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="country_phone_code" render={({ field }) => (<FormItem><FormLabel>Phone Code</FormLabel><FormControl><Input placeholder="+1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                                <FormField control={form.control} name="country_flag" render={({ field }) => (<FormItem><FormLabel>Country Flag</FormLabel><FormControl><Input placeholder="🇺🇸" {...field} value={field.value ?? ''} /></FormControl><FormMessage />
-                                </FormItem>)} />
-                            </div>
-
-                             {/* Regional Settings */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium">Regional Settings</h3>
-                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                     <FormField control={form.control} name="language" render={({ field }) => (<FormItem><FormLabel>Language</FormLabel><FormControl><Input placeholder="English" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="currency" render={({ field }) => (<FormItem><FormLabel>Currency</FormLabel><FormControl><Input placeholder="USD" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField control={form.control} name="timezone" render={({ field }) => (<FormItem><FormLabel>Timezone</FormLabel><FormControl><Input placeholder="Pacific Time (US & Canada)" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                     <FormField
-                                        control={form.control}
-                                        name="date_format"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Date Format</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value ?? undefined}>
-                                                    <FormControl>
-                                                    <SelectTrigger><SelectValue placeholder="Select a format" /></SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                                                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                                                        <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                     />
-                                    <FormField
-                                        control={form.control}
-                                        name="time_format"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Time Format</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value ?? undefined}>
-                                                    <FormControl>
-                                                        <SelectTrigger><SelectValue placeholder="Select a format" /></SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="12-hour">12-hour</SelectItem>
-                                                        <SelectItem value="24-hour">24-hour</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                     />
-                                     <FormField control={form.control} name="locale" render={({ field }) => (<FormItem><FormLabel>Locale</FormLabel><FormControl><Input placeholder="en_US" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                 </div>
+                                <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         </>
                      )}
@@ -371,12 +277,36 @@ export default function SettingsPage() {
                 <CardFooter className="border-t px-6 py-4">
                     <Button type="submit" disabled={form.formState.isSubmitting || isLoading}>
                         {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        Save Profile
                     </Button>
                 </CardFooter>
             </Card>
         </form>
     </Form>
+    
+    {selectedCompany && (
+      <Form {...companyForm}>
+        <form onSubmit={companyForm.handleSubmit(onCompanySubmit)}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Company Settings</CardTitle>
+                    <CardDescription>Manage your currently selected company details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <FormField control={companyForm.control} name="company_name" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={companyForm.control} name="company_subdomain" render={({ field }) => (<FormItem><FormLabel>Company Subdomain</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={companyForm.control} name="company_logo" render={({ field }) => (<FormItem><FormLabel>Logo URL (Optional)</FormLabel><FormControl><Input {...field} placeholder="https://example.com/logo.png" /></FormControl><FormMessage /></FormItem>)} />
+                </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading}>
+                        {companyForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Company
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
+      </Form>
+    )}
 
     <Form {...passwordForm}>
         <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
@@ -388,45 +318,9 @@ export default function SettingsPage() {
                 </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <FormField
-                        control={passwordForm.control}
-                        name="current_password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Current Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={passwordForm.control}
-                        name="new_password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>New Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={passwordForm.control}
-                        name="new_password_confirmation"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Confirm New Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={passwordForm.control} name="current_password" render={({ field }) => (<FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={passwordForm.control} name="new_password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={passwordForm.control} name="new_password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
                     <Button type="submit" disabled={passwordForm.formState.isSubmitting}>

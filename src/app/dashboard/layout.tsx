@@ -93,15 +93,20 @@ export default function DashboardLayout({
     }
   };
 
-  const handleSwitchCompany = () => {
+  const handleSwitchCompany = async () => {
     const token = localStorage.getItem('authToken');
-    if (!token) {
+    if (!token || !company) {
         toast({ title: "Authentication error", variant: "destructive" });
         return;
     }
-    // We don't need to call the API, just clear local state and redirect
-    localStorage.removeItem('selectedCompany');
-    router.push('/companies');
+    
+    try {
+      await switchCompany(token, company.id);
+      localStorage.removeItem('selectedCompany');
+      router.push('/companies');
+    } catch (error: any) {
+       toast({ title: 'Error switching company', description: error.message, variant: 'destructive' });
+    }
   }
 
   if (isChecking) {

@@ -400,7 +400,14 @@ export async function createCompany(token: string, companyData: { company_name: 
     });
 }
 
-export async function switchCompany(token: string, company_id: number): Promise<{ message: string, selected_company_id: number }> {
+export async function updateCompany(token: string, id: number, companyData: Partial<Company>): Promise<{ message: string, company: Company }> {
+    return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(companyData),
+    });
+}
+
+export async function switchCompany(token: string, company_id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/switchCompany`, token, {
         method: 'POST',
         body: JSON.stringify({ company_id }),
