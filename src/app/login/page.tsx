@@ -21,7 +21,7 @@ import { Logo } from "@/components/icons"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser } from "@/lib/api";
+import { loginUser, getProfile, getCompany } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -57,24 +57,37 @@ export default function LoginPage() {
   
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const data = await loginUser(values);
-      if (data.token && data.user) {
-        if (data.user.email_verified_at === null) {
-          localStorage.setItem('authToken', data.token);
+      const loginData = await loginUser(values);
+      if (loginData.token && loginData.user) {
+        
+        localStorage.setItem('authToken', loginData.token);
+        
+        if (loginData.user.email_verified_at === null) {
           toast({
             title: "Verification Required",
             description: "Please check your email to verify your account.",
             variant: "destructive"
           });
           router.push('/verify-email');
+          return;
+        } 
+        
+        // After successful login, get the full profile to check for selected_company_id
+        const profileResponse = await getProfile(loginData.token);
+        const profile = profileResponse.user || profileResponse.data || profileResponse;
+
+        if (profile.selected_company_id) {
+            // If a company is selected, fetch its details and store it
+            const companyDetails = await getCompany(loginData.token, profile.selected_company_id);
+            localStorage.setItem('selectedCompany', JSON.stringify(companyDetails));
+            toast({ title: "Success", description: "Logged in successfully." });
+            router.push('/dashboard');
         } else {
-          localStorage.setItem('authToken', data.token);
-          toast({
-            title: "Success",
-            description: "Logged in successfully.",
-          });
-          router.push('/companies');
+            // If no company is selected, go to the selection page
+            toast({ title: "Success", description: "Logged in successfully." });
+            router.push('/companies');
         }
+
       } else {
         throw new Error("Invalid response from server.");
       }

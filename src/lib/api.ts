@@ -15,6 +15,7 @@ export interface User {
   updated_at?: string;
   deleted_at?: string | null;
   company?: string | null;
+  selected_company_id?: number | null;
 }
 
 export interface Profile extends User {
@@ -384,6 +385,10 @@ export async function changePassword(token: string, passwordData: any) {
 export async function getCompanies(token: string): Promise<Company[]> {
     const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
     return response.companies || [];
+}
+
+export async function getCompany(token: string, id: number): Promise<Company> {
+    return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token);
 }
 
 export async function selectCompany(token: string, company_id: number): Promise<{ message: string }> {
