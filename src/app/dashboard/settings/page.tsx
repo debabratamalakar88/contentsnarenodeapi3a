@@ -16,16 +16,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { getProfile, updateProfile, changePassword, updateCompany, type Company } from "@/lib/api";
+import { getProfile, updateProfile, changePassword, updateCompany, switchCompany, type Company } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -67,6 +66,14 @@ const companyFormSchema = z.object({
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -161,6 +168,22 @@ export default function SettingsPage() {
 
     loadProfileAndCompany();
   }, [form, companyForm, toast]);
+
+  const handleSwitchCompany = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token || !selectedCompany) {
+        toast({ title: "Authentication error", variant: "destructive" });
+        return;
+    }
+    
+    try {
+      await switchCompany(token, selectedCompany.id);
+      localStorage.removeItem('selectedCompany');
+      router.push('/companies');
+    } catch (error: any) {
+       toast({ title: 'Error switching company', description: error.message, variant: 'destructive' });
+    }
+  }
   
   async function onProfileSubmit(data: ProfileFormValues) {
     const token = localStorage.getItem("authToken");
@@ -285,27 +308,57 @@ export default function SettingsPage() {
     </Form>
     
     {selectedCompany && (
-      <Form {...companyForm}>
-        <form onSubmit={companyForm.handleSubmit(onCompanySubmit)}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Company Settings</CardTitle>
-                    <CardDescription>Manage your currently selected company details.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <FormField control={companyForm.control} name="company_name" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={companyForm.control} name="company_subdomain" render={({ field }) => (<FormItem><FormLabel>Company Subdomain</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={companyForm.control} name="company_logo" render={({ field }) => (<FormItem><FormLabel>Logo URL (Optional)</FormLabel><FormControl><Input {...field} placeholder="https://example.com/logo.png" /></FormControl><FormMessage /></FormItem>)} />
-                </CardContent>
-                <CardFooter className="border-t px-6 py-4">
-                    <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading}>
+      <div className="bg-card rounded-lg border p-6">
+          <Form {...companyForm}>
+            <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-8">
+                <div className="flex justify-between items-center border-b pb-4">
+                    <h2 className="text-2xl font-bold">Details</h2>
+                    <Button type="button" variant="outline" onClick={handleSwitchCompany}>Switch Company</Button>
+                </div>
+
+                <div className="flex items-center gap-6">
+                    <Avatar className="h-20 w-20">
+                        <AvatarFallback className="text-3xl bg-pink-100 text-pink-700">{getInitials(companyForm.getValues("company_name"))}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="text-xl font-semibold">{companyForm.getValues("company_name")}</p>
+                        <Button variant="link" type="button" className="text-primary p-0 h-auto font-semibold">Change Image</Button>
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    <FormField control={companyForm.control} name="company_name" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Company Name</FormLabel>
+                            <FormControl><Input {...field} className="bg-muted/50" /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={companyForm.control} name="company_subdomain" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Company Subdomain</FormLabel>
+                            <div className="flex items-center">
+                                <FormControl><Input {...field} className="bg-muted/50 rounded-r-none border-r-0" /></FormControl>
+                                <span className="px-3 h-10 flex items-center bg-muted/50 text-muted-foreground border border-input rounded-r-md text-sm">.contentsnare.com</span>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <div>
+                        <p className="text-sm text-muted-foreground">Your subdomain appears in links when you send them to clients. If you're not sure what to type for your subdomain, it is typically your company name in lower case with no spaces.</p>
+                        <p className="text-sm text-muted-foreground mt-2">You can change your subdomain later in the company settings menu.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading} className="bg-purple-200 text-purple-800 hover:bg-purple-300">
                         {companyForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Company
+                        Save
                     </Button>
-                </CardFooter>
-            </Card>
-        </form>
-      </Form>
+                </div>
+            </form>
+          </Form>
+      </div>
     )}
 
     <Form {...passwordForm}>
