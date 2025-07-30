@@ -315,7 +315,7 @@ export default function SettingsPage() {
             <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-8">
                 <div className="flex justify-between items-center border-b pb-4">
                     <h2 className="text-2xl font-bold">Company Details</h2>
-                    <Button type="button" onClick={handleSwitchCompany}>Switch Company</Button>
+                    <Button type="button" variant="outline" onClick={handleSwitchCompany}>Switch Company</Button>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -346,16 +346,12 @@ export default function SettingsPage() {
                             <FormMessage />
                         </FormItem>
                     )} />
-                    <div>
-                        <p className="text-sm text-muted-foreground">Your subdomain appears in links when you send them to clients. If you're not sure what to type for your subdomain, it is typically your company name in lower case with no spaces.</p>
-                        <p className="text-sm text-muted-foreground mt-2">You can change your subdomain later in the company settings menu.</p>
-                    </div>
                 </div>
 
                 <div>
                     <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading}>
                         {companyForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        Update Company
                     </Button>
                 </div>
             </form>
