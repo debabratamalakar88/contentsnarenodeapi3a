@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Loader2,
   LogOut,
-  Building
+  Building,
+  Settings
 } from "lucide-react"
 
 import {
@@ -93,8 +94,14 @@ export default function DashboardLayout({
   };
 
   const handleSwitchCompany = () => {
-    localStorage.removeItem('selectedCompany'); // Remove old company context
-    router.push('/companies'); // Go back to company selection
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        toast({ title: "Authentication error", variant: "destructive" });
+        return;
+    }
+    // We don't need to call the API, just clear local state and redirect
+    localStorage.removeItem('selectedCompany');
+    router.push('/companies');
   }
 
   if (isChecking) {
@@ -142,8 +149,11 @@ export default function DashboardLayout({
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
                {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.company_name}</DropdownMenuLabel>}
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Settings</Link>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/dashboard/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSwitchCompany} className="cursor-pointer">
                 <Building className="mr-2 h-4 w-4"/> Switch Company
