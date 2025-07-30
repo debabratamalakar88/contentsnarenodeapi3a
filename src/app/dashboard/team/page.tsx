@@ -353,7 +353,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
               <UserPlus className="h-8 w-8 text-slate-400" />
             </div>
             <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
-                Invite Teammate
+                ADD TEAM MEMBER
             </Button>
           </Card>
       )}
