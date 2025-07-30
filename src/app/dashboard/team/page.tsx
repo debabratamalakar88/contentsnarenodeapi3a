@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMember, softDeleteTeamMember, restoreTeamMember, forceDeleteTeamMember, type TeamMember } from "@/lib/api";
+import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMember, softDeleteTeamMember, restoreTeamMember, forceDeleteTeamMember, type TeamMember, getProfile, type User } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -50,6 +50,7 @@ type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;
 
 export default function TeamPage() {
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const [currentTab, setCurrentTab] = useState("active");
@@ -97,8 +98,12 @@ export default function TeamPage() {
             setIsLoading(true);
             try {
                 const fetchFunction = currentTab === 'active' ? getTeamMembers : getArchivedTeamMembers;
-                const members = await fetchFunction(token);
+                const [members, profileResponse] = await Promise.all([
+                    fetchFunction(token),
+                    getProfile(token)
+                ]);
                 setTeamMembers(members);
+                setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
             } catch (error: any) {
                 toast({
                     title: `Failed to fetch team`,
@@ -211,7 +216,8 @@ export default function TeamPage() {
             onArchive: setMemberToArchive,
             onRestore: setMemberToRestore,
             onForceDelete: setMemberToForceDelete,
-            onAdd: handleAddClick
+            onAdd: handleAddClick,
+            currentUser,
         };
         return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
     }
@@ -310,9 +316,10 @@ interface UsersViewProps {
   onRestore: (member: TeamMember) => void;
   onForceDelete: (member: TeamMember) => void;
   onAdd: () => void;
+  currentUser: User | null;
 }
 
-function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd }: UsersViewProps) {
+function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser }: UsersViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {members.map(member => (
@@ -336,7 +343,10 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <Avatar className="h-16 w-16 mb-2"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
-                <CardTitle className="text-lg">{member.name}</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    {member.name}
+                    {currentUser?.id === member.id && <Badge variant="secondary">You</Badge>}
+                </CardTitle>
                 <CardDescription>{member.email}</CardDescription>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
@@ -361,7 +371,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
   )
 }
 
-function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd }: UsersViewProps) {
+function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser }: UsersViewProps) {
   return (
     <Card>
       <Table>
@@ -369,7 +379,13 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
         <TableBody>
           {members.map((member) => (
             <TableRow key={member.id}>
-              <TableCell className="font-medium"><div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>{member.name}</div></TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
+                  <span>{member.name}</span>
+                  {currentUser?.id === member.id && <Badge variant="secondary">You</Badge>}
+                </div>
+              </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
               <TableCell><Badge variant={roleVariantMap[member.role]}>{member.role}</Badge></TableCell>
               <TableCell>
