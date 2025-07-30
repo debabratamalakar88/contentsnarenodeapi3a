@@ -211,6 +211,7 @@ export default function TeamPage() {
             onArchive: setMemberToArchive,
             onRestore: setMemberToRestore,
             onForceDelete: setMemberToForceDelete,
+            onAdd: handleAddClick
         };
         return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
     }
@@ -228,10 +229,10 @@ export default function TeamPage() {
                     <div className="flex items-center gap-2 ml-auto">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2 font-semibold h-9">
+                                <Button variant="outline" className="flex items-center gap-1 text-primary border-primary bg-primary/10 hover:bg-primary/10 hover:text-primary">
                                     <ViewIcon className="h-4 w-4" />
-                                    {viewMode === 'grid' ? 'Grid' : 'List'}
-                                    <ChevronDown className="h-4 w-4" />
+                                    <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -241,11 +242,8 @@ export default function TeamPage() {
                         </DropdownMenu>
                          <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search members..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            <Input placeholder="Search members..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         </div>
-                        <Button onClick={handleAddClick} className="h-9">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Member
-                        </Button>
                     </div>
                 </header>
                  <main className="flex-1 p-6 overflow-y-auto">
@@ -311,11 +309,12 @@ interface UsersViewProps {
   onArchive: (member: TeamMember) => void;
   onRestore: (member: TeamMember) => void;
   onForceDelete: (member: TeamMember) => void;
+  onAdd: () => void;
 }
 
-function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd }: UsersViewProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {members.map(member => (
         <Card key={member.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
            <CardHeader className="flex flex-col items-center text-center p-6">
@@ -346,16 +345,23 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
         </Card>
       ))}
       {!isArchived && (
-          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full">
-            <UserPlus className="h-12 w-12 text-muted-foreground mb-4" />
-            <Button variant="secondary">Invite Teammate</Button>
+          <Card 
+            onClick={onAdd}
+            className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full"
+          >
+            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+              <UserPlus className="h-8 w-8 text-slate-400" />
+            </div>
+            <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
+                Invite Teammate
+            </Button>
           </Card>
       )}
     </div>
   )
 }
 
-function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd }: UsersViewProps) {
   return (
     <Card>
       <Table>
@@ -387,6 +393,15 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
               </TableCell>
             </TableRow>
           ))}
+           {!isArchived && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-4">
+                  <button onClick={onAdd} className="text-primary hover:underline text-sm font-medium flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4"/> Add new member...
+                  </button>
+                </TableCell>
+              </TableRow>
+            )}
         </TableBody>
       </Table>
     </Card>

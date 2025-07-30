@@ -206,7 +206,7 @@ export default function ClientsPage() {
               <Layers className="h-8 w-8 text-slate-400" />
             </div>
             <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
-              ADD NEW CLIENT
+              Add New Client
             </Button>
           </Card>
         </Link>
