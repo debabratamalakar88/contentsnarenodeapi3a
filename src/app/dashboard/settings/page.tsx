@@ -314,8 +314,8 @@ export default function SettingsPage() {
           <Form {...companyForm}>
             <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-8">
                 <div className="flex justify-between items-center border-b pb-4">
-                    <h2 className="text-2xl font-bold">Details</h2>
-                    <Button type="button" variant="outline" onClick={handleSwitchCompany}>Switch Company</Button>
+                    <h2 className="text-2xl font-bold">Company Details</h2>
+                    <Button type="button" onClick={handleSwitchCompany}>Switch Company</Button>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -353,7 +353,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                    <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading} className="bg-purple-200 text-purple-800 hover:bg-purple-300">
+                    <Button type="submit" disabled={companyForm.formState.isSubmitting || isLoading}>
                         {companyForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save
                     </Button>
