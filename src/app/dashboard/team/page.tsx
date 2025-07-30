@@ -345,7 +345,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                 <Avatar className="h-16 w-16 mb-2"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
                 <CardTitle className="text-lg flex items-center gap-2">
                     {member.name}
-                    {currentUser?.id === member.id && <Badge variant="secondary">You</Badge>}
+                    {currentUser?.id === member.id && <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">You</Badge>}
                 </CardTitle>
                 <CardDescription>{member.email}</CardDescription>
            </CardHeader>
@@ -383,7 +383,7 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
                   <span>{member.name}</span>
-                  {currentUser?.id === member.id && <Badge variant="secondary">You</Badge>}
+                  {currentUser?.id === member.id && <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">You</Badge>}
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
