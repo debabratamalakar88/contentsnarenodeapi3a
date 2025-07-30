@@ -315,7 +315,7 @@ export default function SettingsPage() {
             <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-8">
                 <div className="flex justify-between items-center border-b pb-4">
                     <h2 className="text-2xl font-bold">Company Details</h2>
-                    <Button type="button" variant="outline" onClick={handleSwitchCompany}>Switch Company</Button>
+                    <Button type="button" onClick={handleSwitchCompany}>Switch Company</Button>
                 </div>
 
                 <div className="flex items-center gap-6">
