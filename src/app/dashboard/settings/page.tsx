@@ -123,6 +123,8 @@ export default function SettingsPage() {
     },
   });
 
+  const watchedCompanyName = companyForm.watch("company_name");
+
   useEffect(() => {
     async function loadProfileAndCompany() {
       const token = localStorage.getItem("authToken");
@@ -318,10 +320,10 @@ export default function SettingsPage() {
 
                 <div className="flex items-center gap-6">
                     <Avatar className="h-20 w-20">
-                        <AvatarFallback className="text-3xl bg-pink-100 text-pink-700">{getInitials(companyForm.getValues("company_name"))}</AvatarFallback>
+                        <AvatarFallback className="text-3xl bg-pink-100 text-pink-700">{getInitials(watchedCompanyName || "")}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-xl font-semibold">{companyForm.getValues("company_name")}</p>
+                        <p className="text-xl font-semibold">{watchedCompanyName}</p>
                         <Button variant="link" type="button" className="text-primary p-0 h-auto font-semibold">Change Image</Button>
                     </div>
                 </div>
