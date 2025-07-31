@@ -332,37 +332,42 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {members.map(member => (
         <Card key={member.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
-           <CardHeader className="flex flex-col items-center text-center p-6">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
-                        {isArchived ? (
-                            <>
-                                <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                            </>
-                        ) : (
-                            <>
-                                <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                            </>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Avatar className="h-16 w-16 mb-2"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
-                <CardTitle className="text-lg flex items-center gap-2">
-                    {member.name}
-                    {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
-                </CardTitle>
-                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground mt-5">
-                    <Building className="h-4 w-4" />
-                    <span className="text-base">{companyName}</span>
+           {currentUser?.id === member.id && <Badge className="absolute top-2 left-2 border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                    {isArchived ? (
+                        <>
+                            <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <CardContent className="flex flex-col items-center text-center p-6 space-y-4">
+                <Avatar className="h-20 w-20 mb-2">
+                    <AvatarFallback className="text-2xl">{getInitials(member.name)}</AvatarFallback>
+                </Avatar>
+                
+                <div className="space-y-1">
+                  <p className="text-xl font-semibold">{member.name}</p>
+                  <div className="flex items-center justify-center gap-2 text-md font-semibold text-muted-foreground mt-5">
+                      <Building className="h-4 w-4" />
+                      <span>{companyName}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground pt-1">{member.email}</p>
                 </div>
-                <CardDescription className="mt-1">{member.email}</CardDescription>
-           </CardHeader>
-           <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
-             <Badge variant={roleVariantMap[member.role]}>{member.role}</Badge>
+
+                <Badge variant={roleVariantMap[member.role]} className="text-base mt-2 py-1 px-3 text-pink-600 bg-pink-100 border-pink-200">{member.role}</Badge>
            </CardContent>
         </Card>
       ))}
