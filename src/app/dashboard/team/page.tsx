@@ -390,7 +390,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
 
                 <Badge variant={roleVariantMap[member.role]} className={cn(
                     "text-base mt-2 py-1 px-3",
-                    member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200 hover:bg-pink-100'
+                    member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200'
                 )}>{member.role}</Badge>
            </CardContent>
         </Card>

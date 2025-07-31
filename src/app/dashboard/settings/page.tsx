@@ -54,7 +54,7 @@ const passwordFormSchema = z.object({
   new_password_confirmation: z.string(),
 }).refine(data => data.new_password === data.new_password_confirmation, {
   message: "New passwords do not match.",
-  path: ["new_password_confirmation"],
+  path: ["password_confirmation"],
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
