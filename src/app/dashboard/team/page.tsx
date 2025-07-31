@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -23,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMember, softDeleteTeamMember, restoreTeamMember, forceDeleteTeamMember, type TeamMember, getProfile, type User } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 const roleVariantMap: Record<TeamMember['role'], 'default' | 'destructive' | 'secondary' | 'outline'> = {
   Administrator: "destructive",
@@ -360,14 +362,17 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                 
                 <div className="space-y-1">
                   <p className="text-xl font-semibold">{member.name}</p>
-                  <div className="flex items-center justify-center gap-2 text-md font-semibold text-muted-foreground mt-5">
+                  <div className="flex items-center justify-center gap-2 text-md font-semibold text-muted-foreground mt-[20px]">
                       <Building className="h-4 w-4" />
                       <span>{companyName}</span>
                   </div>
                   <p className="text-sm text-muted-foreground pt-1">{member.email}</p>
                 </div>
 
-                <Badge variant={roleVariantMap[member.role]} className="text-base mt-2 py-1 px-3 text-pink-600 bg-pink-100 border-pink-200">{member.role}</Badge>
+                <Badge variant={roleVariantMap[member.role]} className={cn(
+                    "text-base mt-2 py-1 px-3",
+                    member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200 hover:bg-pink-100'
+                )}>{member.role}</Badge>
            </CardContent>
         </Card>
       ))}
@@ -400,7 +405,7 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
                   <span>{member.name}</span>
-                  {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
+                  {currentUser?.id === member.id && <Badge className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
@@ -410,7 +415,11 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                     <span>{companyName}</span>
                 </div>
               </TableCell>
-              <TableCell><Badge variant={roleVariantMap[member.role]}>{member.role}</Badge></TableCell>
+              <TableCell>
+                <Badge variant={roleVariantMap[member.role]} className={cn(member.role === 'Administrator' && 'hover:bg-destructive')}>
+                    {member.role}
+                </Badge>
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
