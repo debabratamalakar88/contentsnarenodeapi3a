@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useEffect, useState } from "react";
@@ -25,10 +26,14 @@ export default function ClientViewPage() {
     const { toast } = useToast();
     const [client, setClient] = useState<Client | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const id = Number(params.id);
 
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+        
         if (!id) return;
 
         async function fetchClient() {
@@ -54,6 +59,8 @@ export default function ClientViewPage() {
         }
         fetchClient();
     }, [id, router, toast]);
+
+    const canManageClients = userRole === 'Administrator' || userRole === 'Editor';
 
     if (isLoading) {
         return (
@@ -118,11 +125,13 @@ export default function ClientViewPage() {
                         </Button>
                         <h1 className="text-lg font-semibold">Client Details</h1>
                     </div>
-                    <Button asChild>
-                        <Link href={`/dashboard/clients/${client.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit Client
-                        </Link>
-                    </Button>
+                    {canManageClients && (
+                        <Button asChild>
+                            <Link href={`/dashboard/clients/${client.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit Client
+                            </Link>
+                        </Button>
+                    )}
                 </div>
             </header>
             <main className="flex-1 overflow-y-auto p-8">
