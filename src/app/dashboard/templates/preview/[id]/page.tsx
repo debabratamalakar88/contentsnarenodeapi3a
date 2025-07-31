@@ -101,9 +101,13 @@ export default function PreviewTemplatePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activePageIndex, setActivePageIndex] = useState(0);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+
         if (!id) { router.push('/dashboard/templates'); return; }
         const token = localStorage.getItem('authToken');
         if (!token) { router.push('/login'); return; }
@@ -133,6 +137,7 @@ export default function PreviewTemplatePage() {
         fetchTemplateData();
     }, [id, router, toast]);
     
+    const canUseTemplate = userRole === 'Administrator' || userRole === 'Editor';
     const isMyTemplate = template && 'created_by' in template;
     const templateCategory = template && 'category' in template ? template.category : undefined;
     const formPages = template && 'form_data' in template ? template.form_data : [];
@@ -195,9 +200,11 @@ export default function PreviewTemplatePage() {
                         </div>
                     </div>
                 </div>
-                <Button size="lg" asChild>
-                    <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use this template</Link>
-                </Button>
+                {canUseTemplate && (
+                    <Button size="lg" asChild>
+                        <Link href={`/dashboard/requests/new/essentials?templateId=${template.id}`}>Use this template</Link>
+                    </Button>
+                )}
             </header>
             <div className="flex flex-1 overflow-hidden">
                 <aside className="w-60 flex-shrink-0 bg-white border-r p-4">

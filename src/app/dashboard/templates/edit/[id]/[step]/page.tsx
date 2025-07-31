@@ -111,6 +111,7 @@ export default function EditMyTemplateWizardPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [initialTemplateData, setInitialTemplateData] = useState<MyTemplate | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
@@ -121,6 +122,9 @@ export default function EditMyTemplateWizardPage() {
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
     
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+        
         const token = localStorage.getItem('authToken');
         if (!token || !id) {
             toast({ title: "Error", description: "Invalid template or not logged in.", variant: "destructive" });
@@ -513,6 +517,8 @@ export default function EditMyTemplateWizardPage() {
     };
 
     const isLastStep = currentStepIndex === steps.length - 1;
+    const canUseTemplate = userRole === 'Administrator' || userRole === 'Editor';
+
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -533,9 +539,9 @@ export default function EditMyTemplateWizardPage() {
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {steps[currentStepIndex + 1]?.name || 'Next'} <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
-                        ) : (
+                        ) : canUseTemplate ? (
                            <Button asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${id}`}>Use Template</Link></Button>
-                        )}
+                        ) : <div className="w-24"/>}
                     </div>
                 </div>
             </header>
