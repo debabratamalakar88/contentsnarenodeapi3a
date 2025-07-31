@@ -34,6 +34,7 @@ interface TemplateCardProps {
   onSelect: () => void;
   onPreview: () => void;
   onDuplicate: (id: number) => void;
+  canManage: boolean;
 }
 
 
@@ -51,6 +52,7 @@ interface TemplatesTableProps {
   onSelect: (template: Template) => void;
   onPreview: (template: Template) => void;
   onDuplicate: (id: number) => void;
+  canManage: boolean;
 }
 
 const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
@@ -122,7 +124,7 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
 }
 
 // TemplateCard Component (Public Templates)
-export function TemplateCard({ template, onSelect, onPreview, onDuplicate }: TemplateCardProps) {
+export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canManage }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
        <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -130,29 +132,33 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate }: Tem
           <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
           <h3 className="font-semibold">{template.title}</h3>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
-              <Copy className="mr-2 h-4 w-4" /> Duplicate
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canManage && (
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
+                <Copy className="mr-2 h-4 w-4" /> Duplicate
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        )}
       </CardHeader>
       <CardContent className="p-4 flex-grow">
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
       </CardContent>
       <CardFooter className="p-4 border-t flex justify-between">
         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4" /> Preview</Button>
-        <Button size="sm" onClick={onSelect}>
-          <Rocket className="mr-2 h-4 w-4" /> Use Template
-        </Button>
+        {canManage && (
+            <Button size="sm" onClick={onSelect}>
+                <Rocket className="mr-2 h-4 w-4" /> Use Template
+            </Button>
+        )}
       </CardFooter>
     </Card>
   );
@@ -216,7 +222,7 @@ export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, 
 }
 
 // TemplatesTable Component (Public)
-export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: TemplatesTableProps) {
+export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate, canManage }: TemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -239,9 +245,9 @@ export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate }: 
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onSelect(template)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>
+                    {canManage && <DropdownMenuItem onClick={() => onSelect(template)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>}
                     <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                    {canManage && <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

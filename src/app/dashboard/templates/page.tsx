@@ -96,7 +96,7 @@ export default function TemplatesPage() {
 
     }, [token, toast, router, dataVersion]);
 
-    const canManageMyTemplates = userRole === 'Administrator' || userRole === 'Editor';
+    const canManageTemplates = userRole === 'Administrator' || userRole === 'Editor';
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
@@ -252,11 +252,13 @@ export default function TemplatesPage() {
                             </>
                         )}
                     </ul>
-                     <div className="mt-4">
-                        <Button onClick={() => router.push('/dashboard/requests/new/essentials')} className="w-full">
-                            <Plus className="mr-2 h-4 w-4" /> Start From Scratch
-                        </Button>
-                    </div>
+                     {canManageTemplates && (
+                         <div className="mt-4">
+                            <Button onClick={() => router.push('/dashboard/requests/new/essentials')} className="w-full">
+                                <Plus className="mr-2 h-4 w-4" /> Start From Scratch
+                            </Button>
+                        </div>
+                     )}
                 </aside>
                 
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
@@ -279,7 +281,7 @@ export default function TemplatesPage() {
                                     <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            {canManageMyTemplates && (
+                            {canManageTemplates && (
                                 <Button asChild>
                                     <Link href="/dashboard/templates/new">
                                         <Plus className="mr-2 h-4 w-4" /> Create New
@@ -316,10 +318,10 @@ export default function TemplatesPage() {
                                                 onDelete={() => setTemplateToDelete(template)}
                                                 onPreview={() => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                                 onSelect={() => handleUseMyTemplate(template.id)}
-                                                canManage={canManageMyTemplates}
+                                                canManage={canManageTemplates}
                                             />
                                         ))}
-                                        {canManageMyTemplates && (
+                                        {canManageTemplates && (
                                             <Link href="/dashboard/templates/new">
                                                 <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
                                                     <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
@@ -337,7 +339,7 @@ export default function TemplatesPage() {
                                         onDelete={setTemplateToDelete}
                                         onPreview={(template) => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                         onSelect={handleUseMyTemplate}
-                                        canManage={canManageMyTemplates}
+                                        canManage={canManageTemplates}
                                     />
                                 )}
                             </section>
@@ -361,6 +363,7 @@ export default function TemplatesPage() {
                                                           onSelect={() => handleUsePublicTemplate(template)}
                                                           onPreview={() => handlePreviewPublicTemplate(template)}
                                                           onDuplicate={() => handleDuplicateTemplate(template.id)}
+                                                          canManage={canManageTemplates}
                                                         />
                                                     ))}
                                                 </div>
@@ -370,6 +373,7 @@ export default function TemplatesPage() {
                                                   onSelect={(template) => handleUsePublicTemplate(template)}
                                                   onPreview={(template) => handlePreviewPublicTemplate(template)}
                                                   onDuplicate={handleDuplicateTemplate}
+                                                  canManage={canManageTemplates}
                                                 />
                                             )}
                                         </section>
