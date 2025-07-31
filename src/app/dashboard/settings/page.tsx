@@ -81,6 +81,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -126,6 +127,9 @@ export default function SettingsPage() {
   const watchedCompanyName = companyForm.watch("company_name");
 
   useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
+
     async function loadProfileAndCompany() {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -309,7 +313,7 @@ export default function SettingsPage() {
         </form>
     </Form>
     
-    {selectedCompany && (
+    {userRole === 'Administrator' && selectedCompany && (
       <div className="bg-card rounded-lg border p-6">
           <Form {...companyForm}>
             <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-8">
