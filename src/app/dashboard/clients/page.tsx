@@ -177,12 +177,7 @@ export default function ClientsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/clients/${client.id}`}>
-                      <Eye className="mr-2 h-4 w-4" /> View Client
-                  </Link>
-              </DropdownMenuItem>
-              {canManageClients && (
+              {canManageClients ? (
                 isArchived ? (
                   <>
                     <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
@@ -190,14 +185,13 @@ export default function ClientsPage() {
                   </>
                 ) : (
                   <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/clients/${client.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                      </Link>
-                    </DropdownMenuItem>
+                     <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
                   </>
                 )
+              ) : (
+                <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -260,12 +254,7 @@ export default function ClientsPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                  <DropdownMenuContent align="end">
-                                  <DropdownMenuItem asChild>
-                                      <Link href={`/dashboard/clients/${client.id}`}>
-                                          <Eye className="mr-2 h-4 w-4" /> View Client
-                                      </Link>
-                                  </DropdownMenuItem>
-                                  {canManageClients && (
+                                  {canManageClients ? (
                                     isArchived ? (
                                       <>
                                         <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
@@ -273,14 +262,13 @@ export default function ClientsPage() {
                                       </>
                                     ) : (
                                       <>
-                                        <DropdownMenuItem asChild>
-                                          <Link href={`/dashboard/clients/${client.id}/edit`}>
-                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                          </Link>
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
                                       </>
                                     )
+                                  ) : (
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
