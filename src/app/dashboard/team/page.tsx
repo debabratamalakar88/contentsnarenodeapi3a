@@ -355,9 +355,9 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                     {member.name}
                     {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </CardTitle>
-                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground mt-1">
+                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground mt-2">
                     <Building className="h-4 w-4" />
-                    <span>{companyName}</span>
+                    <span className="text-base">{companyName}</span>
                 </div>
                 <CardDescription className="mt-1">{member.email}</CardDescription>
            </CardHeader>
