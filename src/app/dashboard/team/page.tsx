@@ -355,7 +355,10 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                     {member.name}
                     {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </CardTitle>
-                <p className="text-sm font-semibold text-muted-foreground mt-1">{companyName}</p>
+                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground mt-1">
+                    <Building className="h-4 w-4" />
+                    <span>{companyName}</span>
+                </div>
                 <CardDescription className="mt-1">{member.email}</CardDescription>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
@@ -396,7 +399,12 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
-              <TableCell className="text-muted-foreground">{companyName}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building className="h-4 w-4" />
+                    <span>{companyName}</span>
+                </div>
+              </TableCell>
               <TableCell><Badge variant={roleVariantMap[member.role]}>{member.role}</Badge></TableCell>
               <TableCell>
                 <DropdownMenu>
