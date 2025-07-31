@@ -355,14 +355,11 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                     {member.name}
                     {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </CardTitle>
-                <CardDescription>{member.email}</CardDescription>
+                <p className="text-sm font-semibold text-muted-foreground mt-1">{companyName}</p>
+                <CardDescription className="mt-1">{member.email}</CardDescription>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
              <Badge variant={roleVariantMap[member.role]}>{member.role}</Badge>
-             <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
-                <Building className="h-3 w-3"/>
-                {companyName}
-             </div>
            </CardContent>
         </Card>
       ))}
