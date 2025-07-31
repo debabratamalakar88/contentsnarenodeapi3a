@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2 } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye } from "lucide-react";
 import { getClients, getArchivedClients, deleteClient, restoreClient, forceDeleteClient, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,10 +60,16 @@ export default function ClientsPage() {
   const [currentTab, setCurrentTab] = useState('active');
   const [dataVersion, setDataVersion] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   const refetchData = () => setDataVersion(v => v + 1);
+  
+  useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
+  }, []);
 
   useEffect(() => {
     async function fetchClientsData() {
@@ -97,6 +103,8 @@ export default function ClientsPage() {
     }
     fetchClientsData();
   }, [toast, token, router, currentTab, dataVersion]);
+  
+  const canManageClients = userRole === 'Administrator' || userRole === 'Editor';
 
   const handleArchive = async (clientId: number) => {
     if (!token) {
@@ -169,21 +177,25 @@ export default function ClientsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {isArchived ? (
-                <>
-                  <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
-                </>
+              <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/clients/${client.id}`}>
+                      <Eye className="mr-2 h-4 w-4" /> View Client
+                  </Link>
+              </DropdownMenuItem>
+              {canManageClients && (
+                isArchived ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                  </>
+                )
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -199,7 +211,7 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       ))}
-      {!isArchived && (
+      {!isArchived && canManageClients && (
         <Link href="/dashboard/clients/new">
           <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[240px]">
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
@@ -246,28 +258,32 @@ export default function ClientsPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                  <DropdownMenuContent align="end">
-                                  {isArchived ? (
-                                    <>
-                                      <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <DropdownMenuItem asChild>
-                                        <Link href={`/dashboard/clients/${client.id}`}>View Client</Link>
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem asChild>
-                                        <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
-                                    </>
+                                  <DropdownMenuItem asChild>
+                                      <Link href={`/dashboard/clients/${client.id}`}>
+                                          <Eye className="mr-2 h-4 w-4" /> View Client
+                                      </Link>
+                                  </DropdownMenuItem>
+                                  {canManageClients && (
+                                    isArchived ? (
+                                      <>
+                                        <DropdownMenuItem onSelect={() => handleRestore(client.id)}>Restore</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive">Delete Permanently</DropdownMenuItem>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <DropdownMenuItem asChild>
+                                          <Link href={`/dashboard/clients/${client.id}/edit`}>Edit</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setClientToArchive(client)}>Archive</DropdownMenuItem>
+                                      </>
+                                    )
                                   )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 ))}
-                {!isArchived && (
+                {!isArchived && canManageClients && (
                  <TableRow>
                     <TableCell colSpan={5} className="py-4">
                         <Link href="/dashboard/clients/new" className="text-primary hover:underline text-sm font-medium">Add new client...</Link>
@@ -353,6 +369,14 @@ export default function ClientsPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                   </div>
+                  {canManageClients && (
+                      <Button asChild>
+                          <Link href="/dashboard/clients/new">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Client
+                          </Link>
+                      </Button>
+                  )}
               </div>
           </div>
 
@@ -373,10 +397,14 @@ export default function ClientsPage() {
                   ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
                           <p className="text-lg font-semibold mb-2">No active clients yet.</p>
-                          <p>Get started by adding your first client.</p>
-                          <Button asChild className="mt-4">
-                              <Link href="/dashboard/clients/new">Add New Client</Link>
-                          </Button>
+                          {canManageClients && (
+                            <>
+                                <p>Get started by adding your first client.</p>
+                                <Button asChild className="mt-4">
+                                    <Link href="/dashboard/clients/new">Add New Client</Link>
+                                </Button>
+                            </>
+                          )}
                       </div>
                   )}
                 </TabsContent>
@@ -435,3 +463,4 @@ export default function ClientsPage() {
     </>
   );
 }
+
