@@ -61,6 +61,7 @@ export default function TeamPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [memberToArchive, setMemberToArchive] = useState<TeamMember | null>(null);
@@ -90,6 +91,9 @@ export default function TeamPage() {
     }, [editingMember, form]);
 
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+
         async function fetchMembers() {
             if (!token) {
                 toast({ title: "Authentication Error", variant: "destructive" });
@@ -136,7 +140,7 @@ export default function TeamPage() {
             } else {
                 await createTeamMember(token, values);
                 toast({ title: "Team member added" });
-                form.reset();
+                form.reset({ name: '', email: '', phone: '', role: 'Viewer' });
             }
             refetchData();
             setDialogOpen(false);
@@ -207,6 +211,7 @@ export default function TeamPage() {
     ), [teamMembers, searchQuery]);
     
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
+    const isAdministrator = userRole === 'Administrator';
 
     const renderContent = (isArchived: boolean) => {
         if (isLoading) {
@@ -229,6 +234,7 @@ export default function TeamPage() {
             onAdd: handleAddClick,
             currentUser,
             companyName,
+            isAdministrator,
         };
         return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
     }
@@ -337,33 +343,36 @@ interface UsersViewProps {
   onAdd: () => void;
   currentUser: User | null;
   companyName: string;
+  isAdministrator: boolean;
 }
 
-function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName }: UsersViewProps) {
+function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName, isAdministrator }: UsersViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {members.map(member => (
         <Card key={member.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
            {currentUser?.id === member.id && <Badge className="absolute top-2 left-2 border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
-                    {isArchived ? (
-                        <>
-                            <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                        </>
-                    ) : (
-                        <>
-                            <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                        </>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {isAdministrator && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                        {isArchived ? (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                            </>
+                        ) : (
+                            <>
+                                <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
 
             <CardContent className="flex flex-col items-center text-center p-6 space-y-4">
                 <Avatar className="h-20 w-20 mb-2">
@@ -386,7 +395,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
            </CardContent>
         </Card>
       ))}
-      {!isArchived && (
+      {!isArchived && isAdministrator && (
           <Card 
             onClick={onAdd}
             className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[224px] h-full"
@@ -403,7 +412,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
   )
 }
 
-function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName }: UsersViewProps) {
+function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName, isAdministrator }: UsersViewProps) {
   return (
     <Card>
       <Table>
@@ -431,27 +440,29 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 </Badge>
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
-                    {isArchived ? (
-                        <>
-                            <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                        </>
-                    ) : (
-                        <>
-                            <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                        </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {isAdministrator && (
+                    <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                        {isArchived ? (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(member)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                            </>
+                        ) : (
+                            <>
+                                <DropdownMenuItem onSelect={() => onEdit(member)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onArchive(member)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
               </TableCell>
             </TableRow>
           ))}
-           {!isArchived && (
+           {!isArchived && isAdministrator && (
               <TableRow>
                 <TableCell colSpan={6} className="py-4">
                   <button onClick={onAdd} className="text-primary hover:underline text-sm font-medium flex items-center gap-2">
