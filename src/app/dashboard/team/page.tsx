@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive, LayoutGrid, List, ChevronDown, UserPlus, Building } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive, LayoutGrid, List, ChevronDown, UserPlus, Building, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMem
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Alert } from "@/components/ui/alert";
 
 const roleVariantMap: Record<TeamMember['role'], 'default' | 'destructive' | 'secondary' | 'outline'> = {
   Administrator: "destructive",
@@ -285,6 +286,14 @@ export default function TeamPage() {
                         <FormField control={form.control} name="email" render={({ field }) => (<FormItem><Label>Email</Label><FormControl><Input type="email" placeholder="ada@example.com" {...field} readOnly={!!editingMember} className={!!editingMember ? "bg-muted/50" : ""}/></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><Label>Phone (Optional)</Label><FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} readOnly={!!editingMember} className={!!editingMember ? "bg-muted/50" : ""}/></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="role" render={({ field }) => (<FormItem><Label>Role</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Administrator">Administrator</SelectItem><SelectItem value="Editor">Editor</SelectItem><SelectItem value="Reviewer">Reviewer</SelectItem><SelectItem value="Viewer">Viewer</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                        {editingMember && (
+                            <Alert className="mt-4">
+                                <Info className="h-4 w-4" />
+                                <AlertDescription>
+                                    You can only edit a team member’s role. All other properties are under the control of your team member within their own settings page.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                     </div>
                     <DialogFooter>
                       <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <PlusCircle className="mr-2 h-4 w-4 animate-spin" />}{editingMember ? 'Save Changes' : 'Send Invitation'}</Button>
