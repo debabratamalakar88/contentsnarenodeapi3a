@@ -24,7 +24,7 @@ import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMem
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Alert } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const roleVariantMap: Record<TeamMember['role'], 'default' | 'destructive' | 'secondary' | 'outline'> = {
   Administrator: "destructive",
