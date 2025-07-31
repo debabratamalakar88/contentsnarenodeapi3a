@@ -157,6 +157,7 @@ export default function TeamPage() {
     
     const handleAddClick = () => {
         setEditingMember(null);
+        form.reset({ name: '', email: '', phone: '', role: 'Viewer' });
         setDialogOpen(true);
     }
     
@@ -280,9 +281,9 @@ export default function TeamPage() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><Label>Name</Label><FormControl><Input placeholder="Ada Lovelace" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><Label>Email</Label><FormControl><Input type="email" placeholder="ada@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><Label>Phone (Optional)</Label><FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><Label>Name</Label><FormControl><Input placeholder="Ada Lovelace" {...field} readOnly={!!editingMember} className={!!editingMember ? "bg-muted/50" : ""}/></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><Label>Email</Label><FormControl><Input type="email" placeholder="ada@example.com" {...field} readOnly={!!editingMember} className={!!editingMember ? "bg-muted/50" : ""}/></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><Label>Phone (Optional)</Label><FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} readOnly={!!editingMember} className={!!editingMember ? "bg-muted/50" : ""}/></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="role" render={({ field }) => (<FormItem><Label>Role</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Administrator">Administrator</SelectItem><SelectItem value="Editor">Editor</SelectItem><SelectItem value="Reviewer">Reviewer</SelectItem><SelectItem value="Viewer">Viewer</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                     </div>
                     <DialogFooter>
