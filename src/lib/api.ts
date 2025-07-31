@@ -391,14 +391,14 @@ export async function getCompany(token: string, id: number): Promise<Company> {
     return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token);
 }
 
-export async function selectCompany(token: string, company_id: number): Promise<{ message: string }> {
+export async function selectCompany(token: string, company_id: number): Promise<{ message: string; selected_company_id: string; role: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/selectCompany`, token, {
         method: 'POST',
         body: JSON.stringify({ company_id }),
     });
 }
 
-export async function createCompany(token: string, companyData: { company_name: string, company_subdomain?: string, company_logo?: string | null }): Promise<{ message: string, selected_company_id: number }> {
+export async function createCompany(token: string, companyData: { company_name: string, company_subdomain?: string, company_logo?: string | null }): Promise<{ message: string; selected_company_id: number }> {
     return fetchWithToken(`${API_BASE_URL}/api/createCompany`, token, {
         method: 'POST',
         body: JSON.stringify(companyData),

@@ -74,8 +74,11 @@ export default function SelectCompanyPage() {
         }
 
         try {
-            await selectCompany(token, company.id);
+            const response = await selectCompany(token, company.id);
             localStorage.setItem('selectedCompany', JSON.stringify(company));
+            if (response.role) {
+                localStorage.setItem('userRole', response.role);
+            }
             router.push('/dashboard');
         } catch (error: any) {
             toast({
@@ -111,7 +114,7 @@ export default function SelectCompanyPage() {
             toast({ title: 'Company created successfully' });
 
             const newCompanyId = createResponse.selected_company_id;
-            await selectCompany(token, newCompanyId);
+            const selectResponse = await selectCompany(token, newCompanyId);
             
             const newCompanyDetails = {
                 id: newCompanyId,
@@ -121,14 +124,18 @@ export default function SelectCompanyPage() {
                 created_by: 0, 
                 updated_by: 0, 
             };
-
+            
             localStorage.setItem('selectedCompany', JSON.stringify(newCompanyDetails));
+            if (selectResponse.role) {
+                localStorage.setItem('userRole', selectResponse.role);
+            }
             router.push('/dashboard');
 
         } catch (error: any) {
+            const description = error.errors ? Object.values(error.errors).flat().join('\n') : "An unexpected error occurred.";
             toast({
                 title: 'Error creating company',
-                description: error.message,
+                description: description,
                 variant: 'destructive',
             });
         } finally {
