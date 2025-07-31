@@ -24,12 +24,12 @@ import { getTeamMembers, getArchivedTeamMembers, createTeamMember, updateTeamMem
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const roleVariantMap = {
+const roleVariantMap: Record<TeamMember['role'], 'default' | 'destructive' | 'secondary' | 'outline'> = {
   Administrator: "destructive",
   Editor: "default",
   Reviewer: "secondary",
   Viewer: "outline",
-} as const;
+};
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -362,7 +362,7 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
             <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
               <UserPlus className="h-8 w-8 text-slate-400" />
             </div>
-            <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
+            <Button variant="secondary" className="pointer-events-none bg-primary/10 text-primary hover:bg-primary/20">
                 ADD TEAM MEMBER
             </Button>
           </Card>
