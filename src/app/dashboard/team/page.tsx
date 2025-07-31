@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive, LayoutGrid, List, ChevronDown, UserPlus } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, Edit, Trash2, ArchiveRestore, Archive, LayoutGrid, List, ChevronDown, UserPlus, Building } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;
 export default function TeamPage() {
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [companyName, setCompanyName] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const [currentTab, setCurrentTab] = useState("active");
@@ -93,6 +94,11 @@ export default function TeamPage() {
                 setIsLoading(false);
                 router.push('/login');
                 return;
+            }
+
+            const companyData = localStorage.getItem('selectedCompany');
+            if (companyData) {
+                setCompanyName(JSON.parse(companyData).company_name);
             }
 
             setIsLoading(true);
@@ -218,6 +224,7 @@ export default function TeamPage() {
             onForceDelete: setMemberToForceDelete,
             onAdd: handleAddClick,
             currentUser,
+            companyName,
         };
         return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
     }
@@ -317,9 +324,10 @@ interface UsersViewProps {
   onForceDelete: (member: TeamMember) => void;
   onAdd: () => void;
   currentUser: User | null;
+  companyName: string;
 }
 
-function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser }: UsersViewProps) {
+function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName }: UsersViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {members.map(member => (
@@ -345,12 +353,16 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                 <Avatar className="h-16 w-16 mb-2"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
                 <CardTitle className="text-lg flex items-center gap-2">
                     {member.name}
-                    {currentUser?.id === member.id && <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">You</Badge>}
+                    {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </CardTitle>
                 <CardDescription>{member.email}</CardDescription>
            </CardHeader>
            <CardContent className="flex flex-col items-center gap-2 p-4 pt-0">
              <Badge variant={roleVariantMap[member.role]}>{member.role}</Badge>
+             <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+                <Building className="h-3 w-3"/>
+                {companyName}
+             </div>
            </CardContent>
         </Card>
       ))}
@@ -371,11 +383,11 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
   )
 }
 
-function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser }: UsersViewProps) {
+function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForceDelete, onAdd, currentUser, companyName }: UsersViewProps) {
   return (
     <Card>
       <Table>
-        <TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="hidden md:table-cell">Email</TableHead><TableHead>Role</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="hidden md:table-cell">Email</TableHead><TableHead>Company</TableHead><TableHead>Role</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
         <TableBody>
           {members.map((member) => (
             <TableRow key={member.id}>
@@ -383,10 +395,11 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8"><AvatarFallback>{getInitials(member.name)}</AvatarFallback></Avatar>
                   <span>{member.name}</span>
-                  {currentUser?.id === member.id && <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">You</Badge>}
+                  {currentUser?.id === member.id && <Badge variant="secondary" className="border-blue-200 bg-blue-100 text-blue-800">You</Badge>}
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">{member.email}</TableCell>
+              <TableCell className="text-muted-foreground">{companyName}</TableCell>
               <TableCell><Badge variant={roleVariantMap[member.role]}>{member.role}</Badge></TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -437,8 +450,8 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
     return (
       <Card>
         <Table>
-          <TableHeader><TableRow>{[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
-          <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
+          <TableHeader><TableRow>{[...Array(5)].map((_, i) => <TableHead key={i}><Skeleton className="h-5 w-full" /></TableHead>)}</TableRow></TableHeader>
+          <TableBody>{[...Array(5)].map((_, i) => (<TableRow key={i}>{[...Array(5)].map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>))}</TableBody>
         </Table>
       </Card>
     );
