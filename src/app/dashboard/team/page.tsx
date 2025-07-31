@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -136,6 +135,7 @@ export default function TeamPage() {
             } else {
                 await createTeamMember(token, values);
                 toast({ title: "Team member added" });
+                form.reset();
             }
             refetchData();
             setDialogOpen(false);
@@ -416,7 +416,7 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={roleVariantMap[member.role]} className={cn(member.role === 'Administrator' && 'hover:bg-destructive')}>
+                <Badge variant={roleVariantMap[member.role]} className={cn(member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200 hover:bg-pink-100')}>
                     {member.role}
                 </Badge>
               </TableCell>
