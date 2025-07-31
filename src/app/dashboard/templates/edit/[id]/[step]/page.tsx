@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -202,6 +201,10 @@ export default function EditMyTemplateWizardPage() {
     };
 
     const handleBack = () => {
+        if (isViewerRole) {
+            router.push('/dashboard/templates');
+            return;
+        }
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/dashboard/templates/edit/${id}/${prevStepSlug}`);
@@ -518,7 +521,8 @@ export default function EditMyTemplateWizardPage() {
 
     const isLastStep = currentStepIndex === steps.length - 1;
     const canUseTemplate = userRole === 'Administrator' || userRole === 'Editor';
-
+    const isViewerRole = userRole === 'Reviewer' || userRole === 'Viewer';
+    const isPreviewForViewer = isViewerRole && currentStep === 'Preview';
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -527,21 +531,26 @@ export default function EditMyTemplateWizardPage() {
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <StepNavigation
-                        steps={steps}
-                        currentStepSlug={stepSlug}
-                        onStepClick={handleStepClick}
-                        maxVisitedStepIndex={steps.length}
-                    />
-                    <div className="flex items-center gap-2">
-                        {!isLastStep ? (
+                    
+                    {!isPreviewForViewer && (
+                        <StepNavigation
+                            steps={steps}
+                            currentStepSlug={stepSlug}
+                            onStepClick={handleStepClick}
+                            maxVisitedStepIndex={steps.length}
+                        />
+                    )}
+                    
+                    <div className="flex items-center gap-2 min-w-[150px] justify-end">
+                        {!isPreviewForViewer && !isLastStep && (
                              <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {steps[currentStepIndex + 1]?.name || 'Next'} <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
-                        ) : canUseTemplate ? (
+                        )}
+                        {!isPreviewForViewer && isLastStep && canUseTemplate && (
                            <Button asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${id}`}>Use Template</Link></Button>
-                        ) : <div className="w-24"/>}
+                        )}
                     </div>
                 </div>
             </header>
@@ -625,4 +634,3 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
-
