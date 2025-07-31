@@ -170,31 +170,33 @@ export default function ClientsPage() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => (
         <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isArchived ? (
-                 canManageClients && (
+          {(!isArchived || canManageClients) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isArchived ? (
+                  canManageClients && (
+                    <>
+                      <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                    </>
+                  )
+                ) : canManageClients ? (
                   <>
-                    <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                   </>
-                 )
-              ) : canManageClients ? (
-                <>
-                   <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ) : (
+                  <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <CardContent className="flex flex-col items-center text-center p-6 pt-8">
             <Avatar className="h-16 w-16 mb-4">
               <AvatarFallback className="bg-pink-100 text-pink-700 font-bold text-xl">
@@ -247,6 +249,7 @@ export default function ClientsPage() {
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone_number}</TableCell>
                         <TableCell>
+                          {(!isArchived || canManageClients) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
@@ -272,6 +275,7 @@ export default function ClientsPage() {
                                   )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                          )}
                         </TableCell>
                     </TableRow>
                 ))}
@@ -455,3 +459,4 @@ export default function ClientsPage() {
     </>
   );
 }
+
