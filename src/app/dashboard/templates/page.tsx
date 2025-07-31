@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -54,12 +53,16 @@ export default function TemplatesPage() {
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     const refetchData = () => setDataVersion(v => v + 1);
 
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+
         if (!token) {
             toast({ title: 'Authentication Error', description: 'Please log in again.', variant: 'destructive' });
             router.push('/login');
@@ -92,6 +95,8 @@ export default function TemplatesPage() {
         fetchData();
 
     }, [token, toast, router, dataVersion]);
+
+    const canManageMyTemplates = userRole === 'Administrator' || userRole === 'Editor';
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
@@ -274,11 +279,13 @@ export default function TemplatesPage() {
                                     <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button asChild>
-                                <Link href="/dashboard/templates/new">
-                                    <Plus className="mr-2 h-4 w-4" /> Create New
-                                </Link>
-                            </Button>
+                            {canManageMyTemplates && (
+                                <Button asChild>
+                                    <Link href="/dashboard/templates/new">
+                                        <Plus className="mr-2 h-4 w-4" /> Create New
+                                    </Link>
+                                </Button>
+                            )}
                         </div>
                     </header>
 
@@ -309,16 +316,19 @@ export default function TemplatesPage() {
                                                 onDelete={() => setTemplateToDelete(template)}
                                                 onPreview={() => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                                 onSelect={() => handleUseMyTemplate(template.id)}
+                                                canManage={canManageMyTemplates}
                                             />
                                         ))}
-                                        <Link href="/dashboard/templates/new">
-                                            <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
-                                                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                                                    <Plus className="h-8 w-8 text-slate-400" />
-                                                </div>
-                                                <span className="font-semibold text-primary">Create New Template</span>
-                                            </Card>
-                                        </Link>
+                                        {canManageMyTemplates && (
+                                            <Link href="/dashboard/templates/new">
+                                                <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
+                                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
+                                                        <Plus className="h-8 w-8 text-slate-400" />
+                                                    </div>
+                                                    <span className="font-semibold text-primary">Create New Template</span>
+                                                </Card>
+                                            </Link>
+                                        )}
                                     </div>
                                 ) : (
                                     <MyTemplatesTable 
@@ -327,6 +337,7 @@ export default function TemplatesPage() {
                                         onDelete={setTemplateToDelete}
                                         onPreview={(template) => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
                                         onSelect={handleUseMyTemplate}
+                                        canManage={canManageMyTemplates}
                                     />
                                 )}
                             </section>
