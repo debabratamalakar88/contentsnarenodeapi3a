@@ -24,7 +24,7 @@ import {
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -50,6 +50,7 @@ export default function TemplatesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const mainRef = useRef<HTMLDivElement>(null);
     const [dataVersion, setDataVersion] = useState(0);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
@@ -72,15 +73,17 @@ export default function TemplatesPage() {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const [catsResponse, tplsResponse, myTplsResponse] = await Promise.all([
+                const [catsResponse, tplsResponse, myTplsResponse, profileResponse] = await Promise.all([
                     getTemplateCategories(token!),
                     getTemplates(token!),
-                    getMyTemplates(token!)
+                    getMyTemplates(token!),
+                    getProfile(token!)
                 ]);
                 
                 setCategories(Array.isArray(catsResponse) ? catsResponse : []);
                 setTemplates(tplsResponse?.data || []);
                 setMyTemplates(myTplsResponse?.data || []);
+                setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
 
             } catch (err: any) {
                 toast({ title: 'Error fetching data', description: err.message, variant: 'destructive' });
@@ -314,6 +317,7 @@ export default function TemplatesPage() {
                                             <MyTemplateCard 
                                                 key={template.id} 
                                                 template={template} 
+                                                currentUser={currentUser}
                                                 onDuplicate={() => handleDuplicateTemplate(template.id)}
                                                 onDelete={() => setTemplateToDelete(template)}
                                                 onPreview={() => router.push(`/dashboard/templates/edit/${template.id}/preview`)}
@@ -335,6 +339,7 @@ export default function TemplatesPage() {
                                 ) : (
                                     <MyTemplatesTable 
                                         templates={filteredMyTemplatesBySearch} 
+                                        currentUser={currentUser}
                                         onDuplicate={handleDuplicateTemplate} 
                                         onDelete={setTemplateToDelete}
                                         onPreview={(template) => router.push(`/dashboard/templates/edit/${template.id}/preview`)}

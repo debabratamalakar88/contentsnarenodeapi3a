@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User, MoreHorizontal, Eye, Edit, Copy, Trash2, FolderOpen, Rocket, PlusCircle } from "lucide-react";
-import type { Template, MyTemplate } from '@/lib/api';
+import type { Template, MyTemplate, User as UserType } from '@/lib/api';
 import { iconList } from '@/components/ui/icon-selector';
 
 // Props Interfaces
 interface MyTemplateCardProps {
   template: MyTemplate;
+  currentUser: UserType | null;
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
   onPreview: () => void;
@@ -40,6 +41,7 @@ interface TemplateCardProps {
 
 interface MyTemplatesTableProps {
   templates: MyTemplate[];
+  currentUser: UserType | null;
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
   onPreview: (template: MyTemplate) => void;
@@ -75,7 +77,9 @@ const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconNa
 };
 
 // MyTemplateCard Component
-export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplateCardProps) {
+export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplateCardProps) {
+  const canDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === template.created_by);
+
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -101,9 +105,11 @@ export function MyTemplateCard({ template, onDuplicate, onDelete, onPreview, onS
                 <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
                 <Copy className="mr-2 h-4 w-4" /> Duplicate
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
+                {canDelete && (
+                    <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
             </DropdownMenu>
         )}
@@ -165,44 +171,49 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canMa
 }
 
 // MyTemplatesTable Component
-export function MyTemplatesTable({ templates, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplatesTableProps) {
+export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplatesTableProps) {
   return (
     <Card>
       <Table>
         <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
         <TableBody>
-          {templates.map((template) => (
-            <TableRow key={template.id}>
-              <TableCell className="font-medium">
-                 <div className="flex items-center gap-3">
-                    <TemplateIconDisplay isMyTemplate={true} />
-                    <span>{template.title}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground max-w-sm truncate">{template.description || "No description"}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {canManage && <DropdownMenuItem onClick={() => onSelect(template.id)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>}
-                    <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
-                    {canManage && (
-                        <>
-                            <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                        </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
+          {templates.map((template) => {
+             const canDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === template.created_by);
+            return (
+                <TableRow key={template.id}>
+                <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                        <TemplateIconDisplay isMyTemplate={true} />
+                        <span>{template.title}</span>
+                    </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground max-w-sm truncate">{template.description || "No description"}</TableCell>
+                <TableCell className="text-right">
+                    <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {canManage && <DropdownMenuItem onClick={() => onSelect(template.id)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
+                        {canManage && (
+                            <>
+                                <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {canDelete && (
+                                     <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                )}
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                    </DropdownMenu>
+                </TableCell>
+                </TableRow>
+            )
+          })}
           {canManage && (
             <TableRow>
                 <TableCell colSpan={3}>
