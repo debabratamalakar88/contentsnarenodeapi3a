@@ -77,20 +77,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-const FilterButton = ({ label, value }: { label: string; value: string }) => (
-    <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2 font-normal h-9">
-                {label}: <span className="font-semibold">{value}</span> <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-            <DropdownMenuItem>{value}</DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
-)
-
 const getInitials = (name: string): string => {
     if (!name) return '';
     const words = name.trim().split(' ').filter(Boolean);
@@ -224,8 +210,8 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                 )}
             </CardFooter>
         </Card>
-    )
-}
+    );
+};
 
 interface RequestRowProps {
     request: Request;
@@ -315,63 +301,8 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
             )}
         </TableCell>
     </TableRow>
-    )
-}
-
-const RequestsTable = ({ requests, clientMap, ...props }: Omit<RequestRowProps, 'request' | 'clientMap'> & { requests: Request[], clientMap: Map<number, string> }) => {
-    return (
-        <Card>
-            <Table>
-                <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Request Name</TableHead>
-                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Client Name</TableHead>
-                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Due Date</TableHead>
-                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
-                        <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {requests.map((request) => (
-                       <RequestRow key={request.id} request={request} clientMap={clientMap} {...props} />
-                    ))}
-                    {!props.isArchived && props.canManage && (
-                        <TableRow>
-                            <TableCell colSpan={5} className="py-2">
-                                <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
-                                    Add new request...
-                                </Link>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </Card>
-    )
-}
-
-const RequestsGrid = ({ requests, clientMap, ...props }: Omit<RequestCardProps, 'request' | 'clientMap'> & { requests: Request[], clientMap: Map<number, string> }) => {
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-            {requests.map(request => (
-                <RequestCard key={request.id} request={request} clientMap={clientMap} {...props} />
-            ))}
-            {!props.isArchived && props.canManage && (
-              <Link href="/dashboard/requests/new">
-                  <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[290px] h-full">
-                    <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
-                        <Layers className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
-                        ADD NEW REQUEST
-                    </Button>
-                  </Card>
-              </Link>
-            )}
-        </div>
-    )
-}
-
+    );
+};
 
 export default function RequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -587,9 +518,51 @@ export default function RequestsPage() {
             currentUser: currentUser,
         };
         return viewMode === 'grid' ? (
-            <RequestsGrid {...viewProps} />
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {requests.map(request => (
+                    <RequestCard key={request.id} {...viewProps} request={request} />
+                ))}
+                {!isArchivedTab && canManageRequests && (
+                  <Link href="/dashboard/requests/new">
+                      <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[290px] h-full">
+                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                            <Layers className="h-8 w-8 text-slate-400" />
+                        </div>
+                        <Button variant="ghost" className="pointer-events-none text-primary bg-primary/10 hover:bg-primary/20">
+                            ADD NEW REQUEST
+                        </Button>
+                      </Card>
+                  </Link>
+                )}
+            </div>
         ) : (
-            <RequestsTable {...viewProps} />
+            <Card>
+                <Table>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Request Name</TableHead>
+                            <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Client Name</TableHead>
+                            <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Due Date</TableHead>
+                            <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
+                            <TableHead><span className="sr-only">Actions</span></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {requests.map((request) => (
+                           <RequestRow key={request.id} {...viewProps} request={request} />
+                        ))}
+                        {!isArchivedTab && canManageRequests && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="py-2">
+                                    <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
+                                        Add new request...
+                                    </Link>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </Card>
         );
     }
 
