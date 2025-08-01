@@ -86,7 +86,7 @@ export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, o
           <TemplateIconDisplay isMyTemplate={true} />
           <h3 className="font-semibold">{template.title}</h3>
         </div>
-        {canManage && (
+        {(canManage || canDelete) && (
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -96,14 +96,14 @@ export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, o
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                <Link href={`/dashboard/templates/edit/${template.id}`}>
-                    <Edit className="mr-2 h-4 w-4" /> Edit
-                </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
+                {canManage && <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/templates/edit/${template.id}`}>
+                      <Edit className="mr-2 h-4 w-4" /> Edit
+                  </Link>
+                </DropdownMenuItem>}
+                {canManage && <DropdownMenuItem onClick={() => onDuplicate(template.id)}>
                 <Copy className="mr-2 h-4 w-4" /> Duplicate
-                </DropdownMenuItem>
+                </DropdownMenuItem>}
                 {canDelete && (
                     <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
