@@ -598,6 +598,11 @@ export default function RequestsPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                         {canManageRequests && (
+                            <Button asChild className="h-9">
+                                <Link href="/dashboard/requests/new"><PlusCircle className="h-4 w-4 mr-2"/>New Request</Link>
+                            </Button>
+                        )}
                     </div>
                 </header>
 
