@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { 
@@ -114,8 +113,9 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     
-    // Disable hover effects for viewers on archived cards
     const enableHoverEffect = canManage || !isArchived;
+
+    const showActions = canManage || (!isArchived && request.status === 'draft');
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -138,7 +138,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         <p className="text-xs text-muted-foreground">Client</p>
                     </div>
                 </div>
-                {canManage && (
+                {showActions && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -148,17 +148,25 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         <DropdownMenuContent align="end">
                              <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
                              {isArchived ? (
+                                canManage && (
                                 <>
                                     <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
                                 </>
-                             ) : (
+                                )
+                             ) : canManage ? (
                                 <>
                                     {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
                                     <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                                 </>
+                             ) : (
+                                request.status === 'draft' && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
+                                    </DropdownMenuItem>
+                                )
                              )}
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -186,11 +194,15 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                                 <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                             </Button>
                          ) : (
-                            canManage && (
+                            canManage ? (
                                 <>
                                     <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
                                     <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
                                 </>
+                            ) : (
+                                <Button size="sm" className="rounded-full px-8" asChild>
+                                    <Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link>
+                                </Button>
                             )
                          )}
                     </div>
@@ -230,6 +242,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
+    const showActions = canManage || (!isArchived && request.status === 'draft');
     
     return (
      <TableRow>
@@ -270,7 +283,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
             )}
         </TableCell>
         <TableCell>
-            {canManage && (
+            {showActions && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -279,17 +292,25 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {isArchived ? (
-                        <>
-                            <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                        </>
-                     ) : (
+                         canManage && (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                            </>
+                         )
+                     ) : canManage ? (
                         <>
                             {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
                             <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                         </>
+                     ) : (
+                        request.status === 'draft' && (
+                            <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
+                            </DropdownMenuItem>
+                        )
                      )}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -647,3 +668,4 @@ export default function RequestsPage() {
     )
 }
 
+    
