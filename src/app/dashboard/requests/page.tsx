@@ -105,7 +105,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const enableHoverEffect = canManage || !isArchived;
 
     const showActions = canManage || !isArchived;
-    const canForceDelete = (currentUser?.role === 'Administrator') || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -230,7 +230,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
-    const canForceDelete = (currentUser?.role === 'Administrator') || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
     
     return (
      <TableRow>
@@ -643,5 +643,3 @@ export default function RequestsPage() {
         </>
     )
 }
-
-    
