@@ -111,7 +111,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
             <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
-                <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                      {clientName === "(No Client)" ? (
                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
                             <Users className="h-5 w-5 text-muted-foreground" />
@@ -128,7 +128,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         </p>
                         <p className="text-xs text-muted-foreground">Client</p>
                     </div>
-                </div>
+                 </div>
                 {showActions && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -341,14 +341,12 @@ export default function RequestsPage() {
             setIsLoading(true);
             setError(null);
             try {
-                if (clients.length === 0) {
-                    const [clientsResponse, profileResponse] = await Promise.all([
-                        getClients(token),
-                        getProfile(token),
-                    ]);
-                    setClients(clientsResponse || []);
-                    setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
-                }
+                const [clientsResponse, profileResponse] = await Promise.all([
+                    getClients(token),
+                    getProfile(token),
+                ]);
+                setClients(clientsResponse || []);
+                setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
                 
                 if (currentTab === 'active') {
                     const requestsResponse = await getRequests(token);
@@ -371,7 +369,7 @@ export default function RequestsPage() {
             }
         }
         loadData();
-    }, [router, toast, currentTab, dataVersion, clients.length]);
+    }, [router, toast, currentTab, dataVersion]);
     
     const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
 
@@ -644,3 +642,5 @@ export default function RequestsPage() {
         </>
     )
 }
+
+    
