@@ -119,7 +119,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const enableHoverEffect = canManage || !isArchived;
 
     const showActions = canManage || !isArchived;
-    const canForceDelete = currentUser?.role === 'Administrator';
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -152,35 +152,20 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         <DropdownMenuContent align="end">
                              <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
                              {isArchived ? (
-                                canManage && (
                                 <>
-                                    <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
                                     {canForceDelete && (
                                         <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                                             <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                                         </DropdownMenuItem>
                                     )}
                                 </>
-                                )
-                             ) : canManage ? (
-                                <>
-                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
-                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                                </>
                              ) : (
                                 <>
-                                    {request.status === 'draft' && (
-                                        <DropdownMenuItem asChild>
-                                            <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
-                                        </DropdownMenuItem>
-                                    )}
-                                    {request.status === 'published' && (
-                                        <DropdownMenuItem asChild>
-                                            <Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link>
-                                        </DropdownMenuItem>
-                                    )}
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    {canManage && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                    {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
+                                    {canManage && <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>}
                                 </>
                              )}
                         </DropdownMenuContent>
@@ -198,14 +183,12 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                 {enableHoverEffect && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                          {isArchived ? (
-                            canManage && (
-                                <>
-                                    <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
-                                    {canForceDelete && (
-                                        <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
-                                    )}
-                                </>
-                            )
+                            <>
+                                <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
+                                {canForceDelete && (
+                                    <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                                )}
+                            </>
                          ) : request.status === 'published' ? (
                             <Button size="sm" className="rounded-full px-8" asChild>
                                 <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
@@ -261,7 +244,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
-    const canForceDelete = currentUser?.role === 'Administrator';
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
     
     return (
      <TableRow>
@@ -311,35 +294,20 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                      {isArchived ? (
-                         canManage && (
-                            <>
-                                <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                {canForceDelete && (
-                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
-                                    </DropdownMenuItem>
-                                )}
-                            </>
-                         )
-                     ) : canManage ? (
-                        <>
-                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                        </>
+                         <>
+                            <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                            {canForceDelete && (
+                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                </DropdownMenuItem>
+                            )}
+                         </>
                      ) : (
                         <>
-                            {request.status === 'draft' && (
-                                <DropdownMenuItem asChild>
-                                    <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
-                                </DropdownMenuItem>
-                            )}
-                            {request.status === 'published' && (
-                                <DropdownMenuItem asChild>
-                                    <Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link>
-                                </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                            {canManage && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                            {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
+                            {canManage && <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>}
                         </>
                      )}
                   </DropdownMenuContent>
