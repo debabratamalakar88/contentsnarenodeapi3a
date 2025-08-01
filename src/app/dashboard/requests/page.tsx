@@ -106,9 +106,10 @@ interface RequestCardProps {
     onRestore: (request: Request) => void;
     onForceDelete: (request: Request) => void;
     isArchived: boolean;
+    canManage: boolean;
 }
 
-const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage }: RequestCardProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
@@ -134,30 +135,31 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                         <p className="text-xs text-muted-foreground">Client</p>
                     </div>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                         <DropdownMenuSeparator />
-                         {isArchived ? (
-                            <>
-                                <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                            </>
-                         ) : (
-                            <>
-                                {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
-                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                            </>
-                         )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {canManage && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                             <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                             {isArchived ? (
+                                <>
+                                    <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                </>
+                             ) : (
+                                <>
+                                    {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                </>
+                             )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </CardHeader>
             <CardContent className="p-4 pt-0 flex-grow flex flex-col relative min-h-[120px]">
                 <div className="transition-opacity duration-200 group-hover:opacity-0">
@@ -169,19 +171,23 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                 </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                      {isArchived ? (
-                        <>
-                            <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
-                            <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
-                        </>
+                        canManage && (
+                            <>
+                                <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
+                                <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                            </>
+                        )
                      ) : request.status === 'published' ? (
                         <Button size="sm" className="rounded-full px-8" asChild>
                             <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                         </Button>
                      ) : (
-                        <>
-                            <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
-                            <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
-                        </>
+                        canManage && (
+                            <>
+                                <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                                <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                            </>
+                        )
                      )}
                 </div>
             </CardContent>
@@ -212,9 +218,10 @@ interface RequestRowProps {
     onRestore: (request: Request) => void;
     onForceDelete: (request: Request) => void;
     isArchived: boolean;
+    canManage: boolean;
 }
 
-const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: RequestRowProps) => {
+const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage }: RequestRowProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
@@ -258,28 +265,30 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
             )}
         </TableCell>
         <TableCell>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {isArchived ? (
-                    <>
-                        <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                    </>
-                 ) : (
-                    <>
-                        {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
-                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                    </>
-                 )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {canManage && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isArchived ? (
+                        <>
+                            <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                        </>
+                     ) : (
+                        <>
+                            {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                        </>
+                     )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </TableCell>
     </TableRow>
     )
@@ -302,7 +311,7 @@ const RequestsTable = ({ requests, clientMap, ...props }: Omit<RequestRowProps, 
                     {requests.map((request) => (
                        <RequestRow key={request.id} request={request} clientMap={clientMap} {...props} />
                     ))}
-                    {!props.isArchived && (
+                    {!props.isArchived && props.canManage && (
                         <TableRow>
                             <TableCell colSpan={5} className="py-2">
                                 <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
@@ -323,7 +332,7 @@ const RequestsGrid = ({ requests, clientMap, ...props }: Omit<RequestCardProps, 
             {requests.map(request => (
                 <RequestCard key={request.id} request={request} clientMap={clientMap} {...props} />
             ))}
-            {!props.isArchived && (
+            {!props.isArchived && props.canManage && (
               <Link href="/dashboard/requests/new">
                   <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[290px] h-full">
                     <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
@@ -353,6 +362,7 @@ export default function RequestsPage() {
     const [currentTab, setCurrentTab] = useState('active');
     const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
@@ -361,6 +371,9 @@ export default function RequestsPage() {
     const refetchData = () => setDataVersion(v => v + 1);
 
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+
         const token = localStorage.getItem('authToken');
         if (!token) {
             router.push('/login');
@@ -400,6 +413,8 @@ export default function RequestsPage() {
         loadData();
     }, [router, toast, currentTab, dataVersion, clients.length]);
     
+    const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
+
     const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
@@ -524,7 +539,7 @@ export default function RequestsPage() {
                     <p className="text-sm mb-4">
                        {description}
                     </p>
-                    {!isArchivedTab && !searchQuery && (
+                    {!isArchivedTab && !searchQuery && canManageRequests && (
                         <Button asChild>
                             <Link href="/dashboard/requests/new"><PlusCircle className="mr-2 h-4 w-4"/>Create Request</Link>
                         </Button>
@@ -540,6 +555,7 @@ export default function RequestsPage() {
             onRestore: setRequestToRestore,
             onForceDelete: setRequestToForceDelete,
             isArchived: isArchivedTab,
+            canManage: canManageRequests
         };
         return viewMode === 'grid' ? (
             <RequestsGrid {...viewProps} />
