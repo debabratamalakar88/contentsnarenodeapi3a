@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -96,9 +97,10 @@ interface RequestCardProps {
     isArchived: boolean;
     canManage: boolean;
     currentUser: UserType | null;
+    userRole: string | null;
 }
 
-const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestCardProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
@@ -106,7 +108,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const enableHoverEffect = canManage || !isArchived;
 
     const showActions = canManage || !isArchived;
-    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -141,7 +143,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                              {isArchived ? (
                                 <>
                                     <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                    {canForceDelete && (
+                                    {canDeletePermanently && (
                                         <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                                             <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                                         </DropdownMenuItem>
@@ -172,7 +174,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                          {isArchived ? (
                             <>
                                 <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
-                                {canForceDelete && (
+                                {canDeletePermanently && (
                                     <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
                                 )}
                             </>
@@ -224,14 +226,15 @@ interface RequestRowProps {
     isArchived: boolean;
     canManage: boolean;
     currentUser: UserType | null;
+    userRole: string | null;
 }
 
-const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser }: RequestRowProps) => {
+const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestRowProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
-    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
     
     return (
      <TableRow>
@@ -283,7 +286,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                      {isArchived ? (
                          <>
                             <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                            {canForceDelete && (
+                            {canDeletePermanently && (
                                 <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                                 </DropdownMenuItem>
@@ -515,6 +518,7 @@ export default function RequestsPage() {
             isArchived: isArchivedTab,
             canManage: canManageRequests,
             currentUser: currentUser,
+            userRole: userRole,
         };
         return viewMode === 'grid' ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
