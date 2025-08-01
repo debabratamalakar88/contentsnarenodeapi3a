@@ -201,9 +201,11 @@ export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete
                             <>
                                 <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 {canDelete && (
-                                     <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => onDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                    </>
                                 )}
                             </>
                         )}
