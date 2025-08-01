@@ -115,7 +115,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     
     const enableHoverEffect = canManage || !isArchived;
 
-    const showActions = canManage || (!isArchived && request.status === 'draft');
+    const showActions = canManage || !isArchived;
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -156,17 +156,24 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                                 )
                              ) : canManage ? (
                                 <>
-                                    {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                                     <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                                 </>
                              ) : (
-                                request.status === 'draft' && (
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
-                                    </DropdownMenuItem>
-                                )
+                                <>
+                                    {request.status === 'draft' && (
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                    {request.status === 'published' && (
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
                              )}
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -242,7 +249,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
-    const showActions = canManage || (!isArchived && request.status === 'draft');
+    const showActions = canManage || !isArchived;
     
     return (
      <TableRow>
@@ -291,7 +298,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {isArchived ? (
+                     {isArchived ? (
                          canManage && (
                             <>
                                 <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
@@ -300,17 +307,24 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                          )
                      ) : canManage ? (
                         <>
-                            {request.status === 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>}
+                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                         </>
                      ) : (
-                        request.status === 'draft' && (
-                            <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
-                            </DropdownMenuItem>
-                        )
+                        <>
+                            {request.status === 'draft' && (
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/dashboard/requests/edit/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link>
+                                </DropdownMenuItem>
+                            )}
+                            {request.status === 'published' && (
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link>
+                                </DropdownMenuItem>
+                            )}
+                        </>
                      )}
                   </DropdownMenuContent>
                 </DropdownMenu>
