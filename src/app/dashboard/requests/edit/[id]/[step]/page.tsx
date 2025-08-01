@@ -117,6 +117,7 @@ export default function EditRequestWizardPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [initialRequestData, setInitialRequestData] = useState<Request | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     // State to track wizard progress
     const [maxVisitedStepIndex, setMaxVisitedStepIndex] = useState(steps.length - 1); // Allow all steps in edit mode
@@ -132,6 +133,9 @@ export default function EditRequestWizardPage() {
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
 
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+        
         const token = localStorage.getItem('authToken');
         const requestId = id;
         if (!token || !requestId) {
@@ -160,6 +164,8 @@ export default function EditRequestWizardPage() {
 
         fetchRequestData();
     }, [id, router, toast]);
+    
+    const isViewerRole = userRole === 'Reviewer' || userRole === 'Viewer';
 
     const handleFinalSave = async (settings: any, status: 'published' | 'draft') => {
       setIsSubmitting(true);
@@ -233,6 +239,10 @@ export default function EditRequestWizardPage() {
     };
     
     const handleBack = () => {
+        if (isViewerRole) {
+            router.push('/dashboard/requests');
+            return;
+        }
         if (currentStepIndex > 1) { // If on builder or later, go back one step
             const prevStepSlug = steps[currentStepIndex - 1].slug;
             router.push(`/dashboard/requests/edit/${id}/${prevStepSlug}`);
@@ -343,7 +353,7 @@ export default function EditRequestWizardPage() {
         setPages(prevPages => {
             const newPages = prevPages.map(page => {
                 if (page.id === pageId) {
-                    const newQuestion: Question = {
+                     const newQuestion: Question = {
                         id: Date.now() + 1,
                         type: 'text',
                         label: 'Single Line Text',
@@ -577,26 +587,30 @@ export default function EditRequestWizardPage() {
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <StepNavigation
-                    steps={steps}
-                    currentStepSlug={stepSlug}
-                    onStepClick={handleStepClick}
-                    maxVisitedStepIndex={maxVisitedStepIndex}
-                    disabledSteps={disabledSteps}
-                />
-                <div className="ml-auto flex items-center gap-2">
-                    {isFinalizeStep && (
-                        <Button asChild>
-                            <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
-                        </Button>
-                    )}
-                    {currentStepIndex < steps.length - 1 && (
-                        <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    )}
-                </div>
+                {!isViewerRole && (
+                     <>
+                        <StepNavigation
+                            steps={steps}
+                            currentStepSlug={stepSlug}
+                            onStepClick={handleStepClick}
+                            maxVisitedStepIndex={maxVisitedStepIndex}
+                            disabledSteps={disabledSteps}
+                        />
+                        <div className="ml-auto flex items-center gap-2">
+                            {isFinalizeStep && (
+                                <Button asChild>
+                                    <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
+                                </Button>
+                            )}
+                            {currentStepIndex < steps.length - 1 && (
+                                <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                                </Button>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
             
             <div className={cn("flex-grow overflow-y-scroll", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
