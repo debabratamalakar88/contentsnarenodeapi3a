@@ -59,7 +59,9 @@ import {
   forceDeleteRequest,
   duplicateRequest,
   type Request, 
-  type Client 
+  type Client,
+  getProfile,
+  type User as UserType
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -106,9 +108,10 @@ interface RequestCardProps {
     onForceDelete: (request: Request) => void;
     isArchived: boolean;
     canManage: boolean;
+    currentUser: UserType | null;
 }
 
-const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser }: RequestCardProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
@@ -116,6 +119,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const enableHoverEffect = canManage || !isArchived;
 
     const showActions = canManage || !isArchived;
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -151,7 +155,11 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                                 canManage && (
                                 <>
                                     <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                    {canForceDelete && (
+                                        <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                        </DropdownMenuItem>
+                                    )}
                                 </>
                                 )
                              ) : canManage ? (
@@ -193,7 +201,9 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                             canManage && (
                                 <>
                                     <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
-                                    <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                                    {canForceDelete && (
+                                        <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                                    )}
                                 </>
                             )
                          ) : request.status === 'published' ? (
@@ -243,13 +253,15 @@ interface RequestRowProps {
     onForceDelete: (request: Request) => void;
     isArchived: boolean;
     canManage: boolean;
+    currentUser: UserType | null;
 }
 
-const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage }: RequestRowProps) => {
+const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser }: RequestRowProps) => {
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
+    const canForceDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === request.created_by);
     
     return (
      <TableRow>
@@ -302,7 +314,11 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                          canManage && (
                             <>
                                 <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                {canForceDelete && (
+                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                    </DropdownMenuItem>
+                                )}
                             </>
                          )
                      ) : canManage ? (
@@ -340,10 +356,10 @@ const RequestsTable = ({ requests, clientMap, ...props }: Omit<RequestRowProps, 
             <Table>
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Request Name</TableHead>
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Client Name</TableHead>
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Due Date</TableHead>
-                        <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Status</TableHead>
+                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Request Name</TableHead>
+                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Client Name</TableHead>
+                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Due Date</TableHead>
+                        <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
                         <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -403,6 +419,7 @@ export default function RequestsPage() {
     const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<UserType | null>(null);
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
@@ -424,10 +441,14 @@ export default function RequestsPage() {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch clients only once
+                // Fetch clients and profile only once
                 if (clients.length === 0) {
-                    const clientsResponse = await getClients(token);
+                    const [clientsResponse, profileResponse] = await Promise.all([
+                        getClients(token),
+                        getProfile(token),
+                    ]);
                     setClients(clientsResponse || []);
+                    setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
                 }
                 
                 if (currentTab === 'active') {
@@ -595,7 +616,8 @@ export default function RequestsPage() {
             onRestore: setRequestToRestore,
             onForceDelete: setRequestToForceDelete,
             isArchived: isArchivedTab,
-            canManage: canManageRequests
+            canManage: canManageRequests,
+            currentUser: currentUser,
         };
         return viewMode === 'grid' ? (
             <RequestsGrid {...viewProps} />
@@ -681,5 +703,7 @@ export default function RequestsPage() {
         </>
     )
 }
+
+    
 
     
