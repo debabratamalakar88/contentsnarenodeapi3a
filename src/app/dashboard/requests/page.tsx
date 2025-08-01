@@ -114,8 +114,11 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     
+    // Disable hover effects for viewers on archived cards
+    const enableHoverEffect = canManage || !isArchived;
+
     return (
-        <Card className="bg-white hover:shadow-md transition-shadow flex flex-col group">
+        <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
             <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
                 <div className="flex items-center gap-2">
                      {clientName === "(No Client)" ? (
@@ -162,34 +165,36 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                 )}
             </CardHeader>
             <CardContent className="p-4 pt-0 flex-grow flex flex-col relative min-h-[120px]">
-                <div className="transition-opacity duration-200 group-hover:opacity-0">
+                <div className={cn("transition-opacity duration-200", enableHoverEffect && "group-hover:opacity-0")}>
                     <h3 className="font-bold mb-1 mt-4">{request.title}</h3>
                     <p className="text-xs text-muted-foreground mb-4">
                       Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'Not set'}
                     </p>
                     <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                     {isArchived ? (
-                        canManage && (
-                            <>
-                                <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
-                                <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
-                            </>
-                        )
-                     ) : request.status === 'published' ? (
-                        <Button size="sm" className="rounded-full px-8" asChild>
-                            <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
-                        </Button>
-                     ) : (
-                        canManage && (
-                            <>
-                                <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
-                                <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
-                            </>
-                        )
-                     )}
-                </div>
+                {enableHoverEffect && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                         {isArchived ? (
+                            canManage && (
+                                <>
+                                    <Button size="sm" className="rounded-full px-8" onClick={() => onRestore(request)}>RESTORE</Button>
+                                    <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                                </>
+                            )
+                         ) : request.status === 'published' ? (
+                            <Button size="sm" className="rounded-full px-8" asChild>
+                                <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
+                            </Button>
+                         ) : (
+                            canManage && (
+                                <>
+                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                                    <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                                </>
+                            )
+                         )}
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="p-4 border-t">
                  {isArchived ? (
@@ -641,3 +646,4 @@ export default function RequestsPage() {
         </>
     )
 }
+
