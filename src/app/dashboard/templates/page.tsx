@@ -15,12 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket
 } from "lucide-react";
