@@ -441,7 +441,6 @@ export default function RequestsPage() {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch clients and profile only once
                 if (clients.length === 0) {
                     const [clientsResponse, profileResponse] = await Promise.all([
                         getClients(token),
@@ -703,7 +702,3 @@ export default function RequestsPage() {
         </>
     )
 }
-
-    
-
-    
