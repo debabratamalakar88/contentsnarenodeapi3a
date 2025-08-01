@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye, Edit, Archive, ArchiveRestore, Trash2 } from "lucide-react";
-import { getClients, getArchivedClients, deleteClient, restoreClient, forceDeleteClient, type Client } from "@/lib/api";
+import { getClients, getArchivedClients, deleteClient, restoreClient, forceDeleteClient, type Client, getProfile, type User } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -61,6 +61,7 @@ export default function ClientsPage() {
   const [dataVersion, setDataVersion] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -83,13 +84,18 @@ export default function ClientsPage() {
         setIsLoading(true);
         setError(null);
         try {
+            const fetchClientsFn = currentTab === 'active' ? getClients : getArchivedClients;
+            const [clientsData, profileData] = await Promise.all([
+                fetchClientsFn(token),
+                getProfile(token),
+            ]);
+            
             if (currentTab === 'active') {
-                const data = await getClients(token);
-                setActiveClients(data);
+                setActiveClients(clientsData);
             } else {
-                const data = await getArchivedClients(token);
-                setArchivedClients(data);
+                setArchivedClients(clientsData);
             }
+            setCurrentUser(profileData.user || profileData.data || profileData);
         } catch (err: any) {
             setError(err.message || `Failed to fetch ${currentTab} clients.`);
             toast({
@@ -168,47 +174,51 @@ export default function ClientsPage() {
   
   const renderClientGrid = (clientList: Client[], isArchived: boolean) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-      {clientList.map((client) => (
-        <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
-          {(!isArchived || canManageClients) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isArchived ? (
-                  canManageClients && (
+      {clientList.map((client) => {
+        const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && client.created_by === currentUser?.id);
+        
+        return (
+            <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+            {(!isArchived || canManageClients) && (
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-muted-foreground">
+                    <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    {isArchived ? (
+                    canManageClients && (
+                        <>
+                        <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                        {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
+                        </>
+                    )
+                    ) : canManageClients ? (
                     <>
-                      <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                     </>
-                  )
-                ) : canManageClients ? (
-                  <>
+                    ) : (
                     <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <CardContent className="flex flex-col items-center text-center p-6 pt-8">
-            <Avatar className="h-16 w-16 mb-4">
-              <AvatarFallback className="bg-pink-100 text-pink-700 font-bold text-xl">
-                {getInitials(client.full_name)}
-              </AvatarFallback>
-            </Avatar>
-            <p className="font-semibold text-lg">{client.full_name}</p>
-            <p className="text-sm text-muted-foreground h-5">{client.companies?.[0]}</p>
-            <p className="text-sm text-muted-foreground mt-2">{client.email}</p>
-          </CardContent>
-        </Card>
-      ))}
+                    )}
+                </DropdownMenuContent>
+                </DropdownMenu>
+            )}
+            <CardContent className="flex flex-col items-center text-center p-6 pt-8">
+                <Avatar className="h-16 w-16 mb-4">
+                <AvatarFallback className="bg-pink-100 text-pink-700 font-bold text-xl">
+                    {getInitials(client.full_name)}
+                </AvatarFallback>
+                </Avatar>
+                <p className="font-semibold text-lg">{client.full_name}</p>
+                <p className="text-sm text-muted-foreground h-5">{client.companies?.[0]}</p>
+                <p className="text-sm text-muted-foreground mt-2">{client.email}</p>
+            </CardContent>
+            </Card>
+        );
+      })}
       {!isArchived && canManageClients && (
         <Link href="/dashboard/clients/new">
           <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[240px]">
@@ -242,43 +252,46 @@ export default function ClientsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {clientList.map((client) => (
-                    <TableRow key={client.id}>
-                        <TableCell className="font-medium">{client.full_name}</TableCell>
-                        <TableCell>{client.companies?.[0]}</TableCell>
-                        <TableCell>{client.email}</TableCell>
-                        <TableCell>{client.phone_number}</TableCell>
-                        <TableCell>
-                          {(!isArchived || canManageClients) && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                        <MoreHorizontal className="h-5 w-5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                 <DropdownMenuContent align="end">
-                                  {isArchived ? (
-                                     canManageClients && (
-                                      <>
-                                        <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>
-                                      </>
-                                     )
-                                  ) : canManageClients ? (
-                                    <>
-                                      <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                                      <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                    </>
-                                  ) : (
-                                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </TableCell>
-                    </TableRow>
-                ))}
+                {clientList.map((client) => {
+                    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && client.created_by === currentUser?.id);
+                    return (
+                        <TableRow key={client.id}>
+                            <TableCell className="font-medium">{client.full_name}</TableCell>
+                            <TableCell>{client.companies?.[0]}</TableCell>
+                            <TableCell>{client.email}</TableCell>
+                            <TableCell>{client.phone_number}</TableCell>
+                            <TableCell>
+                            {(!isArchived || canManageClients) && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                            <MoreHorizontal className="h-5 w-5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    {isArchived ? (
+                                        canManageClients && (
+                                        <>
+                                            <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                            {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
+                                        </>
+                                        )
+                                    ) : canManageClients ? (
+                                        <>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                        </>
+                                    ) : (
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                    )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                            </TableCell>
+                        </TableRow>
+                    );
+                })}
                 {!isArchived && canManageClients && (
                  <TableRow>
                     <TableCell colSpan={5} className="py-4">
@@ -459,4 +472,3 @@ export default function ClientsPage() {
     </>
   );
 }
-
