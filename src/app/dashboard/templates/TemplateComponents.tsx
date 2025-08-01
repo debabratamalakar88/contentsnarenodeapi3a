@@ -77,7 +77,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconNa
 
 // MyTemplateCard Component
 export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplateCardProps) {
-  const canDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === template.created_by);
+    const userRole = localStorage.getItem('userRole');
+    const canDelete = userRole === 'Administrator' || (userRole === 'Editor' && currentUser?.id === template.created_by);
 
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
@@ -171,13 +172,15 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canMa
 
 // MyTemplatesTable Component
 export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplatesTableProps) {
+  const userRole = localStorage.getItem('userRole');
+
   return (
     <Card>
       <Table>
         <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
         <TableBody>
           {templates.map((template) => {
-             const canDelete = currentUser?.role === 'Administrator' || (currentUser?.role === 'Editor' && currentUser?.id === template.created_by);
+             const canDelete = userRole === 'Administrator' || (userRole === 'Editor' && currentUser?.id === template.created_by);
             return (
                 <TableRow key={template.id}>
                 <TableCell className="font-medium">
