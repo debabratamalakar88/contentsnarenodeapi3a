@@ -171,14 +171,19 @@ export default function ClientsPage() {
     }
     
     const headers = ['Full Name', 'Email', 'Companies', 'Phone Number'];
-    const rows = clientsToExport.map(client => [
-      `"${client.full_name}"`,
-      `"${client.email}"`,
-      `"${(client.companies || []).join(', ')}"`,
-      `"${client.phone_number || ''}"`
-    ]);
+    const rows = clientsToExport.map(client => {
+      // Ensure values are properly quoted and escaped for CSV
+      const escapeCsv = (val: string) => `"${String(val || '').replace(/"/g, '""')}"`;
+      
+      const fullName = escapeCsv(client.full_name);
+      const email = escapeCsv(client.email);
+      const companies = escapeCsv((client.companies || []).join(', '));
+      const phoneNumber = escapeCsv(client.phone_number || '');
+
+      return [fullName, email, companies, phoneNumber].join(',');
+    });
     
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const csvContent = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
@@ -203,7 +208,7 @@ export default function ClientsPage() {
         const lines = text.split('\n').filter(line => line.trim() !== '');
         
         const headerLine = lines.shift()?.trim() || '';
-        const headers = headerLine.split(',').map(h => h.toLowerCase().replace(/"/g, '').replace(/ /g, '_'));
+        const headers = headerLine.split(',').map(h => h.toLowerCase().replace(/"/g, '').replace(/ /g, '_').replace(/\r/g, ''));
 
         const requiredHeaders = ['full_name', 'email'];
         if (!requiredHeaders.every(h => headers.includes(h))) {
@@ -218,24 +223,16 @@ export default function ClientsPage() {
         for (const line of lines) {
             if (!line.trim()) continue;
             
-            // Regex to handle commas inside quoted fields
-            const values = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
-
+            const values = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g)?.map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"')) || [];
+            
             const clientData: any = {};
             
             headers.forEach((header, index) => {
-                if (index < values.length) {
-                    let value = values[index].trim();
-                    // Remove surrounding quotes if they exist and unescape double quotes
-                    if (value.startsWith('"') && value.endsWith('"')) {
-                        value = value.substring(1, value.length - 1).replace(/""/g, '"');
-                    }
-                    
-                    if (header === 'companies') {
-                        clientData[header] = value.split(',').map(s => s.trim()).filter(Boolean);
-                    } else {
-                        clientData[header] = value;
-                    }
+                const value = values[index] || '';
+                if (header === 'companies') {
+                    clientData[header] = value.split(',').map(s => s.trim()).filter(Boolean);
+                } else {
+                    clientData[header] = value;
                 }
             });
 
