@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,8 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye, Edit, Archive, ArchiveRestore, Trash2 } from "lucide-react";
-import { getClients, getArchivedClients, deleteClient, restoreClient, forceDeleteClient, type Client, getProfile, type User } from "@/lib/api";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye, Edit, Archive, ArchiveRestore, Trash2, Upload, Download } from "lucide-react";
+import { getClients, getArchivedClients, createClient, deleteClient, restoreClient, forceDeleteClient, type Client, getProfile, type User } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -36,7 +36,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -62,6 +64,9 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  const [isImporting, setIsImporting] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -157,6 +162,91 @@ export default function ClientsPage() {
           setClientToPermanentlyDelete(null);
       }
   };
+
+  const handleExport = () => {
+    const clientsToExport = currentTab === 'active' ? filteredActiveClients : filteredArchivedClients;
+    if (clientsToExport.length === 0) {
+      toast({ title: "No clients to export", description: "There are no clients in the current view to export.", variant: "destructive" });
+      return;
+    }
+    
+    const headers = ['Full Name', 'Email', 'Companies', 'Phone Number'];
+    const rows = clientsToExport.map(client => [
+      `"${client.full_name}"`,
+      `"${client.email}"`,
+      `"${(client.companies || []).join(', ')}"`,
+      `"${client.phone_number || ''}"`
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `clients-export-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const headers = lines.shift()?.trim().split(',').map(h => h.toLowerCase().replace(/"/g, '').replace(/ /g, '_')) || [];
+      
+      const requiredHeaders = ['full_name', 'email'];
+      if (!requiredHeaders.every(h => headers.includes(h))) {
+        toast({ title: 'Invalid CSV', description: `CSV must contain the following headers: ${requiredHeaders.join(', ')}`, variant: 'destructive' });
+        setIsImporting(false);
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const line of lines) {
+        const values = line.trim().split(',');
+        const clientData: any = {};
+        
+        headers.forEach((header, index) => {
+          const value = values[index]?.replace(/"/g, '') || '';
+          if (header === 'companies') {
+            clientData[header] = value.split(';').map(s => s.trim()).filter(Boolean);
+          } else {
+            clientData[header] = value;
+          }
+        });
+
+        try {
+          await createClient(token, clientData);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error("Failed to import client:", clientData, error);
+        }
+      }
+      
+      toast({
+        title: "Import Complete",
+        description: `${successCount} clients imported successfully. ${errorCount} clients failed.`
+      });
+      
+      refetchData();
+      setIsImporting(false);
+      setIsImportDialogOpen(false);
+    };
+
+    reader.readAsText(file);
+  }
 
   const filteredActiveClients = activeClients.filter(
     (client) =>
@@ -358,7 +448,7 @@ export default function ClientsPage() {
               <div className="ml-auto flex items-center gap-2 mb-2">
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="flex items-center gap-1 text-primary border-primary bg-primary/10 hover:bg-primary/10 hover:text-primary">
+                          <Button variant="outline" className="flex items-center gap-1">
                               <ViewIcon className="h-4 w-4" />
                               <span>View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</span>
                               <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -379,12 +469,31 @@ export default function ClientsPage() {
                       />
                   </div>
                   {canManageClients && (
-                      <Button asChild>
-                          <Link href="/dashboard/clients/new">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Client
-                          </Link>
-                      </Button>
+                      <>
+                        <Button variant="outline" onClick={handleExport}><Download className="mr-2 h-4 w-4" />Export</Button>
+                        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline"><Upload className="mr-2 h-4 w-4" />Import</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Import Clients</DialogTitle>
+                              <DialogDescription>Upload a CSV file to import clients. The file must have 'full_name' and 'email' columns.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid w-full max-w-sm items-center gap-1.5">
+                              <Label htmlFor="csv-file">CSV File</Label>
+                              <Input id="csv-file" type="file" accept=".csv" onChange={handleImport} disabled={isImporting} />
+                              {isImporting && <p className="text-sm text-muted-foreground flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Importing clients, please wait...</p>}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Button asChild>
+                            <Link href="/dashboard/clients/new">
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Add Client
+                            </Link>
+                        </Button>
+                      </>
                   )}
               </div>
           </div>
