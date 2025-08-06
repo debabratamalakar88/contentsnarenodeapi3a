@@ -1,5 +1,5 @@
 
-'use client'
+'use client';
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
@@ -199,54 +199,70 @@ export default function ClientsPage() {
     setIsImporting(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split('\n').filter(line => line.trim() !== '');
-      const headers = lines.shift()?.trim().split(',').map(h => h.toLowerCase().replace(/"/g, '').replace(/ /g, '_')) || [];
-      
-      const requiredHeaders = ['full_name', 'email'];
-      if (!requiredHeaders.every(h => headers.includes(h))) {
-        toast({ title: 'Invalid CSV', description: `CSV must contain the following headers: ${requiredHeaders.join(', ')}`, variant: 'destructive' });
-        setIsImporting(false);
-        return;
-      }
-
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const line of lines) {
-        const values = line.trim().split(',');
-        const clientData: any = {};
+        const text = e.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim() !== '');
         
-        headers.forEach((header, index) => {
-          const value = values[index]?.replace(/"/g, '') || '';
-          if (header === 'companies') {
-            clientData[header] = value.split(';').map(s => s.trim()).filter(Boolean);
-          } else {
-            clientData[header] = value;
-          }
-        });
+        const headerLine = lines.shift()?.trim() || '';
+        const headers = headerLine.split(',').map(h => h.toLowerCase().replace(/"/g, '').replace(/ /g, '_'));
 
-        try {
-          await createClient(token, clientData);
-          successCount++;
-        } catch (error) {
-          errorCount++;
-          console.error("Failed to import client:", clientData, error);
+        const requiredHeaders = ['full_name', 'email'];
+        if (!requiredHeaders.every(h => headers.includes(h))) {
+            toast({ title: 'Invalid CSV', description: `CSV must contain the following headers: ${requiredHeaders.join(', ')}`, variant: 'destructive' });
+            setIsImporting(false);
+            return;
         }
-      }
-      
-      toast({
-        title: "Import Complete",
-        description: `${successCount} clients imported successfully. ${errorCount} clients failed.`
-      });
-      
-      refetchData();
-      setIsImporting(false);
-      setIsImportDialogOpen(false);
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            // Regex to handle commas inside quoted fields
+            const values = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
+
+            const clientData: any = {};
+            
+            headers.forEach((header, index) => {
+                if (index < values.length) {
+                    let value = values[index].trim();
+                    // Remove surrounding quotes if they exist and unescape double quotes
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.substring(1, value.length - 1).replace(/""/g, '"');
+                    }
+                    
+                    if (header === 'companies') {
+                        clientData[header] = value.split(',').map(s => s.trim()).filter(Boolean);
+                    } else {
+                        clientData[header] = value;
+                    }
+                }
+            });
+
+            if (Object.keys(clientData).length > 0 && clientData.full_name) {
+                try {
+                    await createClient(token, clientData);
+                    successCount++;
+                } catch (error) {
+                    errorCount++;
+                    console.error("Failed to import client:", clientData, error);
+                }
+            }
+        }
+        
+        toast({
+            title: "Import Complete",
+            description: `${successCount} clients imported successfully. ${errorCount} clients failed.`
+        });
+        
+        refetchData();
+        setIsImporting(false);
+        setIsImportDialogOpen(false);
     };
 
     reader.readAsText(file);
   }
+
 
   const filteredActiveClients = activeClients.filter(
     (client) =>
@@ -347,7 +363,7 @@ export default function ClientsPage() {
                     return (
                         <TableRow key={client.id}>
                             <TableCell className="font-medium">{client.full_name}</TableCell>
-                            <TableCell>{client.companies?.[0]}</TableCell>
+                            <TableCell>{client.companies?.join(', ')}</TableCell>
                             <TableCell>{client.email}</TableCell>
                             <TableCell>{client.phone_number}</TableCell>
                             <TableCell>
