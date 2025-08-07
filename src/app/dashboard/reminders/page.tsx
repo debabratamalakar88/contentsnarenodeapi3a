@@ -191,10 +191,10 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
-             {pagination.total > 0 && (
+             {pagination.total > 10 && (
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
-                        Showing <strong>{(pagination.current_page - 1) * 15 + 1}-{(pagination.current_page - 1) * 15 + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
+                        Showing <strong>{(pagination.current_page - 1) * 10 + 1}-{(pagination.current_page - 1) * 10 + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <Button
