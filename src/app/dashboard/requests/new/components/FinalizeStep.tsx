@@ -131,7 +131,23 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     };
 
     const handleMainAction = () => {
-        if (!canPublish && !isPublished) return;
+        if (!canPublish && !isPublished) {
+             toast({
+                title: "Client Required",
+                description: "A request must be assigned to at least one client before it can be published.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!dueDate) {
+            toast({
+                title: "Due Date Required",
+                description: "Please select a due date before publishing.",
+                variant: "destructive",
+            });
+            return;
+        }
         onPublish(gatherSettings());
     };
 
@@ -284,7 +300,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                 {sendOption === 'later' && (
                     <div className="animate-in fade-in-50">
                         <Label className="block font-semibold text-gray-700 mb-2">
-                            Select the publish date
+                           Select the publish date
                         </Label>
                         <div className="flex items-center gap-2">
                             <Popover>
@@ -315,7 +331,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
 
                 <div>
                     <Label htmlFor="due-date" className="block font-semibold text-gray-700 mb-2">
-                        When is the request due?
+                        When is the request due? <span className="text-destructive">*</span>
                     </Label>
                     <Popover>
                         <PopoverTrigger asChild>
@@ -351,7 +367,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             </div>
 
             <div className="flex flex-col items-center gap-4 mt-8">
-                <Button size="lg" className="w-full max-w-xs font-bold text-base" disabled={!canPublish || isSubmitting} onClick={handleMainAction}>
+                <Button size="lg" className="w-full max-w-xs font-bold text-base" disabled={isSubmitting} onClick={handleMainAction}>
                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                      {isPublished ? 'UPDATE SETTINGS' : 'PUBLISH & SEND'}
                 </Button>
