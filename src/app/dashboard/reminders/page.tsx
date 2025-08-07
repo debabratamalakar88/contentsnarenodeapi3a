@@ -191,7 +191,7 @@ export default function RemindersPage() {
                                 </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                {!reminder.sent && canDelete && (
+                                {!reminder.sent && canDelete ? (
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -200,6 +200,8 @@ export default function RemindersPage() {
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground">N/A</span>
                                 )}
                                 </TableCell>
                             </TableRow>
