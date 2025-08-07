@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -727,6 +728,21 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // ===================================
 export async function getRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
   return fetchWithToken(`${API_BASE_URL}/api/requests?page=${page}`, token);
+}
+
+export async function getAllRequests(token: string): Promise<Request[]> {
+  let allRequests: Request[] = [];
+  let page = 1;
+  let lastPage = 1;
+
+  do {
+    const response: PaginatedRequests = await getRequests(token, page);
+    allRequests = allRequests.concat(response.data);
+    lastPage = response.last_page;
+    page++;
+  } while (page <= lastPage);
+
+  return allRequests;
 }
 
 export async function getArchivedRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
