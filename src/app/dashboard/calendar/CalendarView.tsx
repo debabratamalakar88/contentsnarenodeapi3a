@@ -109,6 +109,19 @@ export default function CalendarView() {
     fetchData();
   }, [token, router, toast]);
 
+  const getEventStyles = (type: CalendarEvent['type']) => {
+    switch (type) {
+        case 'request-due':
+            return 'bg-red-100 text-red-800';
+        case 'request-scheduled':
+            return 'bg-blue-100 text-blue-800';
+        case 'reminder':
+            return 'bg-yellow-100 text-yellow-800';
+        default:
+            return 'bg-primary/10 text-primary-foreground';
+    }
+  }
+
   const DayContent = ({ date }: { date: Date }) => {
     const dayEvents = events.filter(event => isSameDay(event.date, date));
     return (
@@ -116,7 +129,7 @@ export default function CalendarView() {
         <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
         <div className="pt-5 flex flex-col gap-1">
           {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className="text-xs p-1 rounded-sm bg-primary/10 text-primary-foreground flex items-center gap-1.5 truncate">
+              <div key={event.id} className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
                 {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
                 <span className="truncate">{event.title} - {event.clientName}</span>
               </div>
