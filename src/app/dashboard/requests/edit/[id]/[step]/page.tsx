@@ -1,5 +1,4 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -167,7 +166,7 @@ export default function EditRequestWizardPage() {
     
     const isViewerRole = userRole === 'Reviewer' || userRole === 'Viewer';
 
-    const handleFinalSave = async (settings: any, status: 'published' | 'draft') => {
+    const handleFinalSave = async (settings: any, status: 'published' | 'draft' | 'scheduled') => {
       setIsSubmitting(true);
       const token = localStorage.getItem('authToken');
       if (!token || !id) {
@@ -176,19 +175,25 @@ export default function EditRequestWizardPage() {
         return;
       }
     
+      let finalStatus = initialRequestData?.status === 'published' ? 'published' : status;
+
+      if (settings.send_option === 'later' && status === 'published') {
+          finalStatus = 'scheduled';
+      }
+
       const payload = {
         title: requestTitle,
         description: requestDescription,
         form_data: pages,
         ...settings,
-        status: initialRequestData?.status === 'published' ? 'published' : status,
+        status: finalStatus,
       };
     
       try {
         await updateRequest(token, id, payload);
         const successMessage = initialRequestData?.status === 'published' 
             ? 'Request settings have been updated.'
-            : `Request has been successfully ${status === 'published' ? 'published and sent' : 'saved as a draft'}.`
+            : `Request has been successfully ${finalStatus === 'published' ? 'published and sent' : (finalStatus === 'scheduled' ? 'scheduled' : 'saved as a draft')}.`
         
         toast({
           title: "Success",
