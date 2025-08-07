@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from "react";
-import { format, parseISO, setHours, setMinutes } from "date-fns";
+import { format, parseISO, setHours, setMinutes, addDays } from "date-fns";
 import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, Mail, Phone, PlusCircle, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation";
 
@@ -202,6 +202,11 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
         )
       }
     }
+    
+    const dueDateDisabledBefore = useMemo(() => {
+        const baseDate = sendOption === 'later' && scheduledAt ? scheduledAt : new Date();
+        return addDays(baseDate, 1);
+    }, [sendOption, scheduledAt]);
 
 
     return (
@@ -278,7 +283,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                 
                 {sendOption === 'later' && (
                     <div className="animate-in fade-in-50">
-                        <Label htmlFor="schedule-date" className="block font-semibold text-gray-700 mb-2">
+                        <Label className="block font-semibold text-gray-700 mb-2">
                             Select the publish date
                         </Label>
                         <div className="flex items-center gap-2">
@@ -329,6 +334,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                                 selected={dueDate}
                                 onSelect={setDueDate}
                                 initialFocus
+                                disabled={{ before: dueDateDisabledBefore }}
                             />
                         </PopoverContent>
                     </Popover>
