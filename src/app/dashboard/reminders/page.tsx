@@ -76,7 +76,7 @@ export default function RemindersPage() {
                 current_page: response.meta.current_page,
                 last_page: response.meta.last_page,
                 total: response.meta.total,
-                per_page: 10, // Assuming 10 per page based on API
+                per_page: 10,
             });
         }
       } catch (error: any) {
@@ -193,7 +193,7 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
-             {pagination.total > pagination.per_page && (
+             {pagination.last_page > 1 && (
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
                         Showing <strong>{(pagination.current_page - 1) * pagination.per_page + 1}-{(pagination.current_page - 1) * pagination.per_page + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
