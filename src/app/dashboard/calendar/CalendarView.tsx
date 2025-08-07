@@ -133,7 +133,7 @@ export default function CalendarView() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 h-full">
         <div className="flex justify-between items-center">
             <div className="flex gap-2">
                 <Skeleton className="h-9 w-32" />
@@ -147,14 +147,14 @@ export default function CalendarView() {
                 <Skeleton className="h-9 w-20" />
             </div>
         </div>
-        <Skeleton className="h-[70vh] w-full" />
+        <Skeleton className="h-[calc(100%-4rem)] w-full" />
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-       <header className="flex items-center justify-between pb-4">
+    <div className="flex flex-col h-full">
+       <header className="flex items-center justify-between p-4 border-b">
          <div className="flex items-center gap-2">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="outline">View: Month <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -186,21 +186,23 @@ export default function CalendarView() {
             <Button variant="outline" onClick={() => setDate(new Date())}>TODAY</Button>
          </div>
        </header>
-       <div className="border rounded-lg bg-card">
+       <div className="flex-1 border-t">
          <Calendar
             mode="single"
             selected={date}
             onSelect={(day) => day && setDate(day)}
             month={date}
             onMonthChange={handleMonthChange}
-            className="h-auto"
+            className="h-full w-full"
             classNames={{
-                root: 'h-full',
-                table: 'w-full h-full border-collapse',
+                root: 'h-full flex flex-col',
+                months: 'flex-1',
+                month: 'h-full flex flex-col',
+                table: 'w-full h-full border-collapse flex flex-col',
                 head_row: 'flex border-b',
                 head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
-                row: 'flex w-full border-b last:border-b-0',
-                cell: 'h-32 w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-r last:border-r-0',
+                row: 'flex w-full border-b last:border-b-0 flex-1',
+                cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-r last:border-r-0',
                 day: 'h-full w-full p-2 text-left align-top font-medium aria-selected:opacity-100',
                 day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
                 day_today: 'text-primary font-bold',
@@ -212,4 +214,3 @@ export default function CalendarView() {
     </div>
   );
 }
-

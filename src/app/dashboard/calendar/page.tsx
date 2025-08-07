@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import CalendarView from './CalendarView';
 
 export default function CalendarPage() {
