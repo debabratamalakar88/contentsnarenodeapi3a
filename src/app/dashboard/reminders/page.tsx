@@ -96,15 +96,26 @@ export default function RemindersPage() {
   const refetchReminders = async () => {
     const token = localStorage.getItem('authToken');
     if (!token) return;
-    const response = await getReminders(token, pagination.current_page);
-    setReminders(response.data || []);
-     if (response.meta) {
-        setPagination({
-            current_page: response.meta.current_page,
-            last_page: response.meta.last_page,
-            total: response.meta.total,
-            per_page: 10,
+    setIsLoading(true);
+    try {
+        const response = await getReminders(token, pagination.current_page);
+        setReminders(response.data || []);
+        if (response.meta) {
+            setPagination({
+                current_page: response.meta.current_page,
+                last_page: response.meta.last_page,
+                total: response.meta.total,
+                per_page: 10,
+            });
+        }
+    } catch (error: any) {
+        toast({
+          title: 'Error fetching reminders',
+          description: error.message || 'An unknown error occurred.',
+          variant: 'destructive',
         });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -193,7 +204,7 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
-             {pagination.last_page > 1 && (
+            {pagination.last_page > 1 && (
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
                         Showing <strong>{(pagination.current_page - 1) * pagination.per_page + 1}-{(pagination.current_page - 1) * pagination.per_page + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
