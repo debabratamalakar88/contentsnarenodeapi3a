@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -50,6 +51,13 @@ export default function RemindersPage() {
     const role = localStorage.getItem('userRole');
     setUserRole(role);
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.last_page) {
+      return;
+    }
+    setPagination(prev => ({ ...prev, current_page: newPage }));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -183,6 +191,31 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
+             {pagination.total > 0 && (
+                <CardFooter>
+                    <div className="text-xs text-muted-foreground">
+                        Showing <strong>{(pagination.current_page - 1) * 15 + 1}-{(pagination.current_page - 1) * 15 + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </CardFooter>
+            )}
         </Card>
         </div>
         <AlertDialog open={!!reminderToDelete} onOpenChange={(isOpen) => !isOpen && setReminderToDelete(null)}>
@@ -202,4 +235,3 @@ export default function RemindersPage() {
     </>
   );
 }
-
