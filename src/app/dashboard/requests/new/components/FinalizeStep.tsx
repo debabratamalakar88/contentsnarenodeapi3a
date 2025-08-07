@@ -279,7 +279,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                 {sendOption === 'later' && (
                     <div className="animate-in fade-in-50">
                         <Label htmlFor="schedule-date" className="block font-semibold text-gray-700 mb-2">
-                            Schedule Date & Time
+                            Select the publish date
                         </Label>
                         <div className="flex items-center gap-2">
                             <Popover>
