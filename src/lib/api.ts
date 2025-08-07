@@ -201,6 +201,7 @@ export interface Reminder {
     id: number;
     title: string;
     request_code: string;
+    created_by: number;
   };
 }
 

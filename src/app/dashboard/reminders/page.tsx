@@ -32,7 +32,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getReminders, deleteReminder, type Reminder, type PaginatedReminders } from '@/lib/api';
+import { getReminders, deleteReminder, getProfile, type Reminder, type PaginatedReminders, type User } from '@/lib/api';
 import { format, parseISO } from 'date-fns';
 import { BellRing, CheckCircle, Clock, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,6 +46,7 @@ export default function RemindersPage() {
   const router = useRouter();
 
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
@@ -58,38 +59,6 @@ export default function RemindersPage() {
     }
     setPagination(prev => ({ ...prev, current_page: newPage }));
   };
-
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    async function fetchReminders() {
-      setIsLoading(true);
-      try {
-        const response = await getReminders(token, pagination.current_page);
-        setReminders(response.data || []);
-        setPagination({
-            current_page: response.current_page,
-            last_page: response.last_page,
-            total: response.total,
-            per_page: response.per_page,
-        });
-      } catch (error: any) {
-        toast({
-          title: 'Error fetching reminders',
-          description: error.message || 'An unknown error occurred.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchReminders();
-  }, [pagination.current_page, router, toast]);
   
   const refetchReminders = async () => {
     const token = localStorage.getItem('authToken');
@@ -115,6 +84,45 @@ export default function RemindersPage() {
     }
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        const [remindersResponse, profileResponse] = await Promise.all([
+            getReminders(token, pagination.current_page),
+            getProfile(token),
+        ]);
+        
+        setReminders(remindersResponse.data || []);
+        setPagination({
+            current_page: remindersResponse.current_page,
+            last_page: remindersResponse.last_page,
+            total: remindersResponse.total,
+            per_page: remindersResponse.per_page,
+        });
+        setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
+
+      } catch (error: any) {
+        toast({
+          title: 'Error fetching reminders',
+          description: error.message || 'An unknown error occurred.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [pagination.current_page, router, toast]);
+  
+
   const handleDeleteReminder = async () => {
     const token = localStorage.getItem('authToken');
     if (!token || !reminderToDelete) return;
@@ -129,8 +137,6 @@ export default function RemindersPage() {
         setReminderToDelete(null);
     }
   }
-  
-  const canDelete = userRole === 'Administrator' || userRole === 'Editor';
 
   return (
     <>
@@ -171,31 +177,34 @@ export default function RemindersPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {reminders.map((reminder) => (
-                    <TableRow key={reminder.id}>
-                        <TableCell className="font-medium">{reminder.client.full_name}</TableCell>
-                        <TableCell>{reminder.request.title}</TableCell>
-                        <TableCell>{format(parseISO(reminder.reminder_date), 'PPP')}</TableCell>
-                        <TableCell>
-                        <Badge variant={reminder.sent ? 'default' : 'secondary'} className={reminder.sent ? 'bg-green-100 text-green-800' : ''}>
-                            {reminder.sent ? <CheckCircle className="mr-1 h-3 w-3" /> : <Clock className="mr-1 h-3 w-3" />}
-                            {reminder.sent ? 'Sent' : 'Pending'}
-                        </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                        {!reminder.sent && canDelete && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                onClick={() => setReminderToDelete(reminder)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        )}
-                        </TableCell>
-                    </TableRow>
-                    ))}
+                    {reminders.map((reminder) => {
+                        const canDelete = userRole === 'Administrator' || (userRole === 'Editor' && currentUser?.id === reminder.request.created_by);
+                        return (
+                            <TableRow key={reminder.id}>
+                                <TableCell className="font-medium">{reminder.client.full_name}</TableCell>
+                                <TableCell>{reminder.request.title}</TableCell>
+                                <TableCell>{format(parseISO(reminder.reminder_date), 'PPP')}</TableCell>
+                                <TableCell>
+                                <Badge variant={reminder.sent ? 'default' : 'secondary'} className={reminder.sent ? 'bg-green-100 text-green-800' : ''}>
+                                    {reminder.sent ? <CheckCircle className="mr-1 h-3 w-3" /> : <Clock className="mr-1 h-3 w-3" />}
+                                    {reminder.sent ? 'Sent' : 'Pending'}
+                                </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                {!reminder.sent && canDelete && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                        onClick={() => setReminderToDelete(reminder)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
                 </Table>
             )}
