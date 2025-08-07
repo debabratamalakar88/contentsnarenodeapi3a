@@ -3,27 +3,30 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { getAllRequests, getReminders, type Request, type Reminder, type PaginatedReminders } from '@/lib/api';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CalendarCheck, Clock } from 'lucide-react';
+import { getAllRequests, getReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChevronDown, ChevronLeft, ChevronRight, Mail, FileText, User as UserIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CalendarEvent {
   id: string;
   type: 'request-due' | 'request-scheduled' | 'reminder';
   date: Date;
   title: string;
+  clientName: string;
   data: Request | Reminder;
 }
 
 export default function CalendarView() {
   const [date, setDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
@@ -39,22 +42,32 @@ export default function CalendarView() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [requestsData, remindersResponse] = await Promise.all([
+        const [requestsData, remindersResponse, clientsData, profileData] = await Promise.all([
           getAllRequests(token!),
-          getReminders(token!)
+          getReminders(token!),
+          getClients(token!),
+          getProfile(token!),
         ]);
 
+        setClients(clientsData || []);
+        // For now, we only have the current user for the "Owner" filter
+        if (profileData.user) {
+            setUsers([profileData.user]);
+        }
+
+        const clientMap = new Map(clientsData.map(c => [c.id, c.full_name]));
         const remindersData = remindersResponse.data || [];
-        
         const allEvents: CalendarEvent[] = [];
 
         requestsData.forEach((req) => {
+          const clientName = req.client_id?.[0] ? clientMap.get(req.client_id[0]) || 'Unknown Client' : 'No Client Assigned';
           if (req.status === 'published' && req.due_date) {
             allEvents.push({
               id: `req-due-${req.id}`,
               type: 'request-due',
               date: parseISO(req.due_date),
-              title: `Due: ${req.title}`,
+              title: req.title,
+              clientName,
               data: req,
             });
           }
@@ -63,7 +76,8 @@ export default function CalendarView() {
               id: `req-sch-${req.id}`,
               type: 'request-scheduled',
               date: parseISO(req.scheduled_at),
-              title: `Scheduled: ${req.title}`,
+              title: req.title,
+              clientName,
               data: req,
             });
           }
@@ -75,7 +89,8 @@ export default function CalendarView() {
               id: `rem-${rem.id}`,
               type: 'reminder',
               date: parseISO(rem.reminder_date),
-              title: `Reminder for ${rem.request.title}`,
+              title: `Reminder: ${rem.request.title}`,
+              clientName: rem.client.full_name,
               data: rem,
             });
           }
@@ -95,112 +110,106 @@ export default function CalendarView() {
     fetchData();
   }, [token, router, toast]);
 
-  const selectedDayEvents = useMemo(() => {
-    return events.filter((event) => isSameDay(event.date, date)).sort((a,b) => a.date.getTime() - b.date.getTime());
-  }, [events, date]);
-
-  const chartData = useMemo(() => {
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-    return daysInMonth.map(day => ({
-      date: format(day, 'dd'),
-      count: events.filter(event => isSameDay(event.date, day)).length
-    }));
-  }, [events, date]);
+  const DayContent = ({ date }: { date: Date }) => {
+    const dayEvents = events.filter(event => isSameDay(event.date, date));
+    return (
+      <div className="relative w-full h-full p-1 pt-6 flex flex-col gap-1 overflow-hidden">
+        {dayEvents.slice(0, 2).map(event => (
+            <div key={event.id} className="text-xs p-1 rounded-sm bg-primary/10 text-primary-foreground flex items-center gap-1.5 truncate">
+              {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
+              <span className="truncate">{event.title} - {event.clientName}</span>
+            </div>
+        ))}
+        {dayEvents.length > 2 && (
+            <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
+        )}
+      </div>
+    );
+  };
+  
+  const handleMonthChange = (month: Date) => {
+    setDate(month);
+  }
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="lg:col-span-2 h-96" />
-          <Skeleton className="h-96" />
+      <div className="p-6 space-y-4">
+        <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+                <Skeleton className="h-9 w-32" />
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-9 w-24" />
+            </div>
+            <div className="flex gap-2 items-center">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-9 w-20" />
+            </div>
         </div>
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-[70vh] w-full" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-       <div>
-        <h1 className="text-2xl font-bold">Calendar</h1>
-        <p className="text-muted-foreground">
-          View your upcoming deadlines and schedule.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>{format(date, 'MMMM yyyy')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={chartData}>
-                        <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: '0.5rem',
-                            borderColor: 'hsl(var(--border))',
-                            backgroundColor: 'hsl(var(--background))',
-                          }}
-                          labelFormatter={(value) => format(new Date(date.getFullYear(), date.getMonth(), parseInt(value)), 'PPP')}
-                        />
-                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-        <div className="row-start-1 lg:row-auto">
-            <Card>
-                <CardContent className="p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(day) => day && setDate(day)}
-                        className="w-full"
-                        modifiers={{
-                            hasEvent: events.map(e => e.date)
-                        }}
-                        modifiersClassNames={{
-                            hasEvent: "bg-primary/20 text-primary-foreground rounded-full",
-                        }}
-                    />
-                </CardContent>
-            </Card>
-        </div>
-      </div>
-       <Card>
-          <CardHeader>
-            <CardTitle>Events for {format(date, 'PPP')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedDayEvents.length > 0 ? (
-              <ul className="space-y-3">
-                {selectedDayEvents.map(event => (
-                  <li key={event.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                    <div className="flex-shrink-0">
-                      {event.type === 'request-due' && <Badge variant="destructive"><AlertCircle className="mr-2 h-4 w-4" />Due</Badge>}
-                      {event.type === 'request-scheduled' && <Badge variant="secondary"><CalendarCheck className="mr-2 h-4 w-4" />Scheduled</Badge>}
-                      {event.type === 'reminder' && <Badge><Clock className="mr-2 h-4 w-4"/>Reminder</Badge>}
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-semibold">{event.title}</p>
-                      {event.type === 'reminder' && 'client' in event.data && (
-                         <p className="text-sm text-muted-foreground">For: {event.data.client.full_name}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">No events for this day.</p>
-            )}
-          </CardContent>
-       </Card>
+    <div className="p-6">
+       <header className="flex items-center justify-between pb-4">
+         <div className="flex items-center gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline">View: Month <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent><DropdownMenuItem>Month</DropdownMenuItem></DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline">Owner <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {users.map(user => (
+                     <DropdownMenuItem key={user.id}>{user.name}</DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline">Client <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {clients.map(client => (
+                     <DropdownMenuItem key={client.id}>{client.full_name}</DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+         </div>
+         <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => handleMonthChange(new Date(date.getFullYear(), date.getMonth() - 1, 1))}><ChevronLeft className="h-5 w-5"/></Button>
+                <span className="text-lg font-semibold">{format(date, 'MMMM yyyy')}</span>
+                <Button variant="ghost" size="icon" onClick={() => handleMonthChange(new Date(date.getFullYear(), date.getMonth() + 1, 1))}><ChevronRight className="h-5 w-5"/></Button>
+            </div>
+            <Button variant="outline" onClick={() => setDate(new Date())}>TODAY</Button>
+         </div>
+       </header>
+       <div className="border rounded-lg bg-card">
+         <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(day) => day && setDate(day)}
+            month={date}
+            onMonthChange={handleMonthChange}
+            className="h-auto"
+            classNames={{
+                root: 'h-full',
+                table: 'w-full h-full border-collapse',
+                head_row: 'flex border-b',
+                head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
+                row: 'flex w-full border-b last:border-b-0',
+                cell: 'h-32 w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-r last:border-r-0',
+                day: 'h-full w-full p-2 text-left align-top font-medium aria-selected:opacity-100',
+                day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
+                day_today: 'text-primary font-bold',
+                day_outside: 'text-muted-foreground opacity-50',
+            }}
+            components={{ DayContent }}
+        />
+       </div>
     </div>
   );
 }
+
