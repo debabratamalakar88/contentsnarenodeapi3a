@@ -597,7 +597,7 @@ export default function EditRequestWizardPage() {
                             disabledSteps={disabledSteps}
                         />
                         <div className="ml-auto flex items-center gap-2">
-                            {isFinalizeStep && (
+                             {isFinalizeStep && initialRequestData?.status === 'published' && (
                                 <Button asChild>
                                     <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
                                 </Button>
