@@ -191,7 +191,7 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
-             {pagination.total > 10 && (
+             {pagination.last_page > 1 && (
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
                         Showing <strong>{(pagination.current_page - 1) * 10 + 1}-{(pagination.current_page - 1) * 10 + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
