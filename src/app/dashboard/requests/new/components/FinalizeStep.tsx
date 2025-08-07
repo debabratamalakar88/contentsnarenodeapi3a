@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { AlertTriangle, Calendar as CalendarIcon, HelpCircle, Info, Loader2, Mail, Phone, PlusCircle, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation";
 
@@ -30,6 +30,7 @@ import { getClients, type Request, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 
 interface FinalizeStepProps {
   initialData: Request | null;
@@ -62,6 +63,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     const [sendOption, setSendOption] = useState<'immediately' | 'later'>('immediately');
     const [communicationMode, setCommunicationMode] = useState('none');
     const [scheduledAt, setScheduledAt] = useState<Date | undefined>();
+    const [scheduledTime, setScheduledTime] = useState('09:00');
 
     const isPublished = initialData?.status === 'published';
 
@@ -99,22 +101,32 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             setAllowComments(initialData.allow_comments);
             setSendOption(initialData.send_option);
             setCommunicationMode(initialData.communication_mode);
-            setScheduledAt(initialData.scheduled_at ? parseISO(initialData.scheduled_at) : undefined);
-            // Note: `protectWithPin` and `allowNoLogin` are not in the current Request type.
-            // They are managed as UI state but not saved.
+            if (initialData.scheduled_at) {
+                const date = parseISO(initialData.scheduled_at);
+                setScheduledAt(date);
+                setScheduledTime(format(date, 'HH:mm'));
+            }
         }
     }, [initialData]);
 
     const canPublish = selectedClients.length > 0;
     
     const gatherSettings = () => {
+        let combinedScheduledAt: Date | null = null;
+        if (sendOption === 'later' && scheduledAt) {
+            const [hours, minutes] = scheduledTime.split(':').map(Number);
+            let date = setHours(scheduledAt, hours);
+            date = setMinutes(date, minutes);
+            combinedScheduledAt = date;
+        }
+
         return {
             client_id: selectedClients.map(Number),
             due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
             allow_comments: allowComments,
             send_option: sendOption,
             communication_mode: communicationMode,
-            scheduled_at: sendOption === 'later' && scheduledAt ? format(scheduledAt, "yyyy-MM-dd'T'HH:mm:ss") : null,
+            scheduled_at: combinedScheduledAt ? combinedScheduledAt.toISOString() : null,
         };
     };
 
@@ -269,21 +281,29 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                         <Label htmlFor="schedule-date" className="block font-semibold text-gray-700 mb-2">
                             Schedule Date & Time
                         </Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="schedule-date"
-                                    variant={"outline"}
-                                    className={cn("w-[280px] justify-start text-left font-normal", !scheduledAt && "text-muted-foreground")}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {scheduledAt ? format(scheduledAt, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={scheduledAt} onSelect={setScheduledAt} initialFocus />
-                            </PopoverContent>
-                        </Popover>
+                        <div className="flex items-center gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="schedule-date"
+                                        variant={"outline"}
+                                        className={cn("w-[240px] justify-start text-left font-normal", !scheduledAt && "text-muted-foreground")}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {scheduledAt ? format(scheduledAt, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar mode="single" selected={scheduledAt} onSelect={setScheduledAt} initialFocus disabled={{ before: new Date() }} />
+                                </PopoverContent>
+                            </Popover>
+                            <Input
+                                type="time"
+                                value={scheduledTime}
+                                onChange={(e) => setScheduledTime(e.target.value)}
+                                className="w-[120px]"
+                            />
+                        </div>
                     </div>
                 )}
 
