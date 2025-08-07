@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { getAllRequests, getReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval } from 'date-fns';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChevronDown, ChevronLeft, ChevronRight, Mail, FileText, User as UserIcon } from 'lucide-react';
@@ -50,7 +50,6 @@ export default function CalendarView() {
         ]);
 
         setClients(clientsData || []);
-        // For now, we only have the current user for the "Owner" filter
         if (profileData.user) {
             setUsers([profileData.user]);
         }
@@ -113,16 +112,19 @@ export default function CalendarView() {
   const DayContent = ({ date }: { date: Date }) => {
     const dayEvents = events.filter(event => isSameDay(event.date, date));
     return (
-      <div className="relative w-full h-full p-1 pt-6 flex flex-col gap-1 overflow-hidden">
-        {dayEvents.slice(0, 2).map(event => (
-            <div key={event.id} className="text-xs p-1 rounded-sm bg-primary/10 text-primary-foreground flex items-center gap-1.5 truncate">
-              {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
-              <span className="truncate">{event.title} - {event.clientName}</span>
-            </div>
-        ))}
-        {dayEvents.length > 2 && (
-            <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
-        )}
+      <div className="relative w-full h-full p-1 flex flex-col gap-1 overflow-hidden">
+        <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
+        <div className="pt-5 flex flex-col gap-1">
+          {dayEvents.slice(0, 2).map(event => (
+              <div key={event.id} className="text-xs p-1 rounded-sm bg-primary/10 text-primary-foreground flex items-center gap-1.5 truncate">
+                {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
+                <span className="truncate">{event.title} - {event.clientName}</span>
+              </div>
+          ))}
+          {dayEvents.length > 2 && (
+              <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -203,7 +205,7 @@ export default function CalendarView() {
                 head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
                 row: 'flex w-full border-b last:border-b-0 flex-1',
                 cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-r last:border-r-0',
-                day: 'h-full w-full p-2 text-left align-top font-medium aria-selected:opacity-100',
+                day: 'h-full w-full p-0 text-left align-top font-medium aria-selected:opacity-100',
                 day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
                 day_today: 'text-primary font-bold',
                 day_outside: 'text-muted-foreground opacity-50',
