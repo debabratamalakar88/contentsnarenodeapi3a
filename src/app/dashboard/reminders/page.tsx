@@ -39,7 +39,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RemindersPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
+  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 10 });
   const [isLoading, setIsLoading] = useState(true);
   const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
   const { toast } = useToast();
@@ -69,13 +69,14 @@ export default function RemindersPage() {
     async function fetchReminders() {
       setIsLoading(true);
       try {
-        const response: PaginatedReminders = await getReminders(token, pagination.current_page);
+        const response = await getReminders(token, pagination.current_page);
         setReminders(response.data || []);
         if (response.meta) {
             setPagination({
                 current_page: response.meta.current_page,
                 last_page: response.meta.last_page,
                 total: response.meta.total,
+                per_page: 10, // Assuming 10 per page based on API
             });
         }
       } catch (error: any) {
@@ -102,6 +103,7 @@ export default function RemindersPage() {
             current_page: response.meta.current_page,
             last_page: response.meta.last_page,
             total: response.meta.total,
+            per_page: 10,
         });
     }
   };
@@ -191,10 +193,10 @@ export default function RemindersPage() {
                 </Table>
             )}
             </CardContent>
-             {pagination.last_page > 1 && (
+             {pagination.total > pagination.per_page && (
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
-                        Showing <strong>{(pagination.current_page - 1) * 10 + 1}-{(pagination.current_page - 1) * 10 + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
+                        Showing <strong>{(pagination.current_page - 1) * pagination.per_page + 1}-{(pagination.current_page - 1) * pagination.per_page + reminders.length}</strong> of <strong>{pagination.total}</strong> reminders
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <Button
