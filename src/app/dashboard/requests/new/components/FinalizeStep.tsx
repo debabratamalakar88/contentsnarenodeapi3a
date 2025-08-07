@@ -63,7 +63,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     const [sendOption, setSendOption] = useState<'immediately' | 'later'>('immediately');
     const [communicationMode, setCommunicationMode] = useState('none');
     const [scheduledAt, setScheduledAt] = useState<Date | undefined>();
-    const [scheduledTime, setScheduledTime] = useState('09:00');
+    const [scheduledTime, setScheduledTime] = useState(format(new Date(), 'HH:mm'));
 
     const isPublished = initialData?.status === 'published';
 
