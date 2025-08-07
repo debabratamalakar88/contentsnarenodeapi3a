@@ -177,7 +177,7 @@ export default function EditRequestWizardPage() {
     
       let finalStatus = initialRequestData?.status === 'published' ? 'published' : status;
 
-      if (settings.send_option === 'later' && status === 'published') {
+      if (settings.send_option === 'scheduled' && status === 'published') {
           finalStatus = 'scheduled';
       }
 

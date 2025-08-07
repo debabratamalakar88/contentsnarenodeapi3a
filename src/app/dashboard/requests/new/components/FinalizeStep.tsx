@@ -60,7 +60,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
     const [allowComments, setAllowComments] = useState(true);
     const [allowNoLogin, setAllowNoLogin] = useState(true);
-    const [sendOption, setSendOption] = useState<'immediately' | 'later'>('immediately');
+    const [sendOption, setSendOption] = useState<'immediately' | 'scheduled'>('immediately');
     const [communicationMode, setCommunicationMode] = useState('none');
     const [scheduledAt, setScheduledAt] = useState<Date | undefined>();
     const [scheduledTime, setScheduledTime] = useState(format(new Date(), 'HH:mm'));
@@ -99,7 +99,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             setDueDate(initialData.due_date ? parseISO(initialData.due_date) : undefined);
             setSelectedClients(initialData.client_id?.map(String) || []);
             setAllowComments(initialData.allow_comments);
-            setSendOption(initialData.send_option);
+            setSendOption(initialData.send_option === 'later' ? 'scheduled' : initialData.send_option);
             setCommunicationMode(initialData.communication_mode);
             if (initialData.scheduled_at) {
                 const date = parseISO(initialData.scheduled_at);
@@ -113,7 +113,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     
     const gatherSettings = () => {
         let combinedScheduledAt: Date | null = null;
-        if (sendOption === 'later' && scheduledAt) {
+        if (sendOption === 'scheduled' && scheduledAt) {
             const [hours, minutes] = scheduledTime.split(':').map(Number);
             let date = setHours(scheduledAt, hours);
             date = setMinutes(date, minutes);
@@ -220,7 +220,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     }
     
     const dueDateDisabledBefore = useMemo(() => {
-        const baseDate = sendOption === 'later' && scheduledAt ? scheduledAt : new Date();
+        const baseDate = sendOption === 'scheduled' && scheduledAt ? scheduledAt : new Date();
         return addDays(baseDate, 1);
     }, [sendOption, scheduledAt]);
 
@@ -286,18 +286,18 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                      <Label htmlFor="send-time" className="block font-semibold text-gray-700 mb-2">
                         When do you want to send this request?
                     </Label>
-                    <Select value={sendOption} onValueChange={(value) => setSendOption(value as 'immediately' | 'later')}>
+                    <Select value={sendOption} onValueChange={(value) => setSendOption(value as 'immediately' | 'scheduled')}>
                         <SelectTrigger id="send-time">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="immediately">Immediately</SelectItem>
-                            <SelectItem value="later">Schedule for later</SelectItem>
+                            <SelectItem value="scheduled">Schedule for later</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 
-                {sendOption === 'later' && (
+                {sendOption === 'scheduled' && (
                     <div className="animate-in fade-in-50">
                         <Label className="block font-semibold text-gray-700 mb-2">
                            Select the publish date
@@ -369,7 +369,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             <div className="flex flex-col items-center gap-4 mt-8">
                 <Button size="lg" className="w-full max-w-xs font-bold text-base" disabled={isSubmitting} onClick={handleMainAction}>
                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     {isPublished ? 'UPDATE SETTINGS' : (sendOption === 'later' ? 'SCHEDULE' : 'PUBLISH & SEND')}
+                     {isPublished ? 'UPDATE SETTINGS' : (sendOption === 'scheduled' ? 'SCHEDULE' : 'PUBLISH & SEND')}
                 </Button>
                 {!isPublished && (
                     <Button variant="link" className="text-pink-600 font-medium" disabled={isSubmitting} onClick={handleSaveDraft}>
