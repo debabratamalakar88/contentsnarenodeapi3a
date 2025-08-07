@@ -159,9 +159,9 @@ export interface Request {
   form_code: string;
   form_data: Page[];
   client_id: number[] | null;
-  status: 'draft' | 'published' | 'completed' | 'archived';
+  status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   allow_comments: boolean;
-  send_option: 'immediately' | 'later';
+  send_option: 'immediately' | 'scheduled';
   scheduled_at?: string | null;
   communication_mode: string;
   started_from_scratch: boolean;
@@ -184,6 +184,26 @@ export interface Submission {
   updated_at: string;
 }
 
+export interface Reminder {
+  id: number;
+  request_id: number;
+  client_id: number;
+  reminder_date: string;
+  sent: boolean;
+  created_at: string;
+  updated_at: string;
+  client: {
+    id: number;
+    full_name: string;
+    email: string;
+  };
+  request: {
+    id: number;
+    title: string;
+    request_code: string;
+  };
+}
+
 export interface PaginatedResponse<T> {
     data: T[];
     meta?: {
@@ -194,6 +214,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface PaginatedRequests extends PaginatedResponse<Request> {}
+export interface PaginatedReminders extends PaginatedResponse<Reminder> {}
 
 
 export interface TemplateCategory {
@@ -913,4 +934,18 @@ export async function duplicateMyTemplate(token: string, templateId: number): Pr
   };
   
   return createMyTemplate(token, newTemplateData);
+}
+
+// ===================================
+// REMINDERS API
+// ===================================
+
+export async function getReminders(token: string, page: number = 1): Promise<PaginatedReminders> {
+    return fetchWithToken(`${API_BASE_URL}/api/reminders?page=${page}`, token);
+}
+
+export async function deleteReminder(token: string, id: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/reminders/${id}`, token, {
+        method: 'DELETE',
+    });
 }
