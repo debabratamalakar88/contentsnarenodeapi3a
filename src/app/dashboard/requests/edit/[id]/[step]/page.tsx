@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
-import { countries } from '@/lib/countries';
+import { countries } from "@/lib/countries";
 import { IconSelector } from '@/components/ui/icon-selector';
 import PreviewStep from "../../../new/components/PreviewStep";
 
@@ -191,9 +191,22 @@ export default function EditRequestWizardPage() {
     
       try {
         await updateRequest(token, id, payload);
-        const successMessage = initialRequestData?.status === 'published' 
-            ? 'Request settings have been updated.'
-            : `Request has been successfully ${finalStatus === 'published' ? 'published and sent' : (finalStatus === 'scheduled' ? 'scheduled' : 'saved as a draft')}.`
+        let successMessage = '';
+        if (initialRequestData?.status === 'published') {
+            successMessage = 'Request settings have been updated.';
+        } else {
+            switch(finalStatus) {
+                case 'published':
+                    successMessage = 'Request has been successfully published and sent.';
+                    break;
+                case 'scheduled':
+                    successMessage = 'Request has been successfully scheduled.';
+                    break;
+                case 'draft':
+                    successMessage = 'Request has been successfully saved as a draft.';
+                    break;
+            }
+        }
         
         toast({
           title: "Success",
