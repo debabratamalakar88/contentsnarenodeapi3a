@@ -369,7 +369,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             <div className="flex flex-col items-center gap-4 mt-8">
                 <Button size="lg" className="w-full max-w-xs font-bold text-base" disabled={isSubmitting} onClick={handleMainAction}>
                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                     {isPublished ? 'UPDATE SETTINGS' : 'PUBLISH & SEND'}
+                     {isPublished ? 'UPDATE SETTINGS' : (sendOption === 'later' ? 'SCHEDULE' : 'PUBLISH & SEND')}
                 </Button>
                 {!isPublished && (
                     <Button variant="link" className="text-pink-600 font-medium" disabled={isSubmitting} onClick={handleSaveDraft}>
