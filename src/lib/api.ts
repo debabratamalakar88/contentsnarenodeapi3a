@@ -206,6 +206,10 @@ export interface Reminder {
 
 export interface PaginatedResponse<T> {
     data: T[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
     meta?: {
         current_page: number;
         last_page: number;

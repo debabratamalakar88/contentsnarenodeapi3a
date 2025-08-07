@@ -71,14 +71,12 @@ export default function RemindersPage() {
       try {
         const response = await getReminders(token, pagination.current_page);
         setReminders(response.data || []);
-        if (response.meta) {
-            setPagination({
-                current_page: response.meta.current_page,
-                last_page: response.meta.last_page,
-                total: response.meta.total,
-                per_page: 10,
-            });
-        }
+        setPagination({
+            current_page: response.current_page,
+            last_page: response.last_page,
+            total: response.total,
+            per_page: response.per_page,
+        });
       } catch (error: any) {
         toast({
           title: 'Error fetching reminders',
@@ -100,14 +98,12 @@ export default function RemindersPage() {
     try {
         const response = await getReminders(token, pagination.current_page);
         setReminders(response.data || []);
-        if (response.meta) {
-            setPagination({
-                current_page: response.meta.current_page,
-                last_page: response.meta.last_page,
-                total: response.meta.total,
-                per_page: 10,
-            });
-        }
+        setPagination({
+            current_page: response.current_page,
+            last_page: response.last_page,
+            total: response.total,
+            per_page: response.per_page,
+        });
     } catch (error: any) {
         toast({
           title: 'Error fetching reminders',
