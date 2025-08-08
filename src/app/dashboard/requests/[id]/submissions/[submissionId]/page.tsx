@@ -269,22 +269,64 @@ export default function SubmissionDetailPage() {
 
   const handleExportPdf = async () => {
     const contentToPrint = submissionContentRef.current;
-    if (!contentToPrint) return;
+    if (!contentToPrint || !submission || !request) return;
     setIsExporting(true);
-
+  
     try {
-      const canvas = await html2canvas(contentToPrint, {
+      // Create a temporary container for the PDF content
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.width = '800px'; 
+      pdfContainer.style.padding = '40px';
+      pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
+      pdfContainer.style.color = '#333';
+  
+      // Build header HTML
+      const headerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 32px;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 16px 0;">Submission for "${request.title}"</h1>
+            <table style="font-size: 14px; border-spacing: 0 8px; border-collapse: separate;">
+              <tbody>
+                <tr>
+                  <td style="font-weight: 600; padding-right: 16px;">Submission Code:</td>
+                  <td style="font-family: monospace; background-color: #f3f4f6; padding: 4px 8px; border-radius: 6px;">${submission.submission_code}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; padding-right: 16px;">Submitted On:</td>
+                  <td>${submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          ${submission.status === 'completed' ? `
+          <div style="background-color: #dcfce7; color: #166534; font-weight: 600; font-size: 14px; padding: 6px 16px; border-radius: 9999px;">
+            Completed
+          </div>` : ''}
+        </div>
+      `;
+  
+      // Build body HTML from accordion content
+      const bodyHTML = contentToPrint.querySelector('div:last-child')?.innerHTML || '';
+  
+      pdfContainer.innerHTML = headerHTML + bodyHTML;
+      document.body.appendChild(pdfContainer);
+  
+      const canvas = await html2canvas(pdfContainer, {
         scale: 2,
         useCORS: true,
       });
-
+  
+      document.body.removeChild(pdfContainer);
+  
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
           orientation: 'p',
           unit: 'px',
           format: 'a4',
       });
-
+  
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasWidth = canvas.width;
@@ -297,17 +339,17 @@ export default function SubmissionDetailPage() {
       
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
-
+  
       while (heightLeft > 0) {
           position = position - pdfHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
           heightLeft -= pdfHeight;
       }
-
+  
       pdf.save(`submission-${submission?.submission_code}.pdf`);
       toast({ title: 'PDF Exported Successfully' });
-
+  
     } catch (error) {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: 'Failed to export PDF.', variant: 'destructive' });
@@ -445,4 +487,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
