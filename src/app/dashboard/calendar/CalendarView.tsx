@@ -57,9 +57,13 @@ const DayContent = ({ date, events, setDate, setViewMode }: { date: Date, events
               </div>
           ))}
           {dayEvents.length > 2 && (
-              <button onClick={handleMoreClick} className="text-xs text-primary hover:underline font-semibold mt-1 text-left">
+              <div
+                role="button"
+                onClick={handleMoreClick}
+                className="text-xs text-primary hover:underline font-semibold mt-1 text-left cursor-pointer"
+              >
                 + {dayEvents.length - 2} more
-              </button>
+              </div>
           )}
         </div>
       </div>
