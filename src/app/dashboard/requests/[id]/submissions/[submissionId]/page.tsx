@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -273,11 +273,36 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(contentToPrint, {
-            scale: 2,
-            allowTaint: true,
-            useCORS: true, 
+        const contentClone = contentToPrint.cloneNode(true) as HTMLElement;
+        document.body.appendChild(contentClone);
+
+        const images = Array.from(contentClone.getElementsByTagName('img'));
+        const imagePromises = images.map(img => {
+            if (img.src.startsWith('data:')) return Promise.resolve();
+            return fetch(img.src)
+                .then(response => response.blob())
+                .then(blob => new Promise<void>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        img.src = reader.result as string;
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                }))
+                .catch(e => console.error("Could not load image for PDF:", img.src, e));
         });
+
+        await Promise.all(imagePromises);
+        
+        const canvas = await html2canvas(contentClone, {
+            scale: 2,
+            logging: true,
+            allowTaint: false,
+            useCORS: true,
+        });
+
+        document.body.removeChild(contentClone);
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
@@ -287,26 +312,22 @@ export default function SubmissionDetailPage() {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        
         const ratio = canvasHeight / canvasWidth;
-        
         const imgHeight = pdfWidth * ratio;
-        let heightLeft = imgHeight;
         
+        let heightLeft = imgHeight;
         let position = 0;
         
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pdfHeight;
+        heightLeft -= pdf.internal.pageSize.getHeight();
 
         while (heightLeft > 0) {
-            position -= pdfHeight;
+            position -= pdf.internal.pageSize.getHeight();
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-            heightLeft -= pdfHeight;
+            heightLeft -= pdf.internal.pageSize.getHeight();
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
