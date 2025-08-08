@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -373,26 +374,10 @@ export default function SubmissionDetailPage() {
         </div>
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-6">
-            <header className="mb-8">
-                <div className="flex justify-between items-start flex-wrap gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                         <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
-                            {submission.submission_code && (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-foreground">Submission Code:</span>
-                                    <Badge variant="secondary">{submission.submission_code}</Badge>
-                                </div>
-                            )}
-                            {submission.updated_at && (
-                                <div className="flex items-center gap-2 mt-1 md:mt-0">
-                                    <span className="font-semibold text-foreground">Submitted On:</span>
-                                    <span className="text-muted-foreground">{format(parseISO(submission.updated_at), 'PPP p')}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <Badge
+            <header className="mb-8 space-y-4">
+                <div className="flex justify-between items-start gap-4">
+                    <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                     <Badge
                         variant={'outline'}
                         className={cn(
                             "capitalize h-fit text-base px-4 py-1",
@@ -402,6 +387,20 @@ export default function SubmissionDetailPage() {
                         {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
                         {submission.status}
                     </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    {submission.submission_code && (
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">Submission Code:</span>
+                            <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
+                        </div>
+                    )}
+                    {submission.updated_at && (
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">Submitted On:</span>
+                            <span className="text-muted-foreground">{format(parseISO(submission.updated_at), 'PPP p')}</span>
+                        </div>
+                    )}
                 </div>
             </header>
             <div>
@@ -415,14 +414,14 @@ export default function SubmissionDetailPage() {
                                     {page.sections.map((section, sectionIndex) => (
                                         <div key={sectionIndex}>
                                         <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
-                                        <dl className="space-y-6">
+                                        <div className="space-y-6">
                                             {section.answers.map((item, itemIndex) => (
-                                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                                <dt className="font-medium text-sm text-muted-foreground md:col-span-1">{item.question.label}</dt>
-                                                <dd className="text-sm text-foreground md:col-span-3">{renderAnswer(item.question, item.answer)}</dd>
+                                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-2">
+                                                <div className="font-medium text-sm text-muted-foreground md:col-span-4">{item.question.label}</div>
+                                                <div className="text-sm text-foreground md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
                                             </div>
                                             ))}
-                                        </dl>
+                                        </div>
                                         </div>
                                     ))}
                                 </div>
