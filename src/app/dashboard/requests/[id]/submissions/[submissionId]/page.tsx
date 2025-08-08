@@ -294,18 +294,14 @@ export default function SubmissionDetailPage() {
         const ratio = canvasHeight / canvasWidth;
         
         let imgHeight = pdfWidth * ratio;
-        
-        if (imgHeight < pdfHeight) {
-          imgHeight = pdfHeight;
-        }
-
         let heightLeft = imgHeight;
+        
         let position = 0;
 
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pdfHeight;
 
-        while (heightLeft > 0.1) {
+        while (heightLeft > 0) {
             position -= pdfHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
@@ -313,7 +309,7 @@ export default function SubmissionDetailPage() {
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
-        toast({ title: 'Success', description: 'PDF Exported Successfully' });
+        toast({ title: 'PDF Exported Successfully' });
 
     } catch (error) {
         console.error("PDF Export Error: ", error);
