@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -266,14 +267,18 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
-  const handleExportPdf = async () => {
+ const handleExportPdf = async () => {
     const contentToPrint = submissionContentRef.current;
     if (!contentToPrint) return;
     setIsExporting(true);
 
-    const imageToDataUri = async (url: string) => {
+    const imageToDataUri = async (url: string): Promise<string | null> => {
         try {
             const response = await fetch(url);
+            if (!response.ok) {
+                 console.error(`Failed to fetch image: ${url}, status: ${response.status}`);
+                 return null;
+            }
             const blob = await response.blob();
             return new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
@@ -282,7 +287,7 @@ export default function SubmissionDetailPage() {
                 reader.readAsDataURL(blob);
             });
         } catch (error) {
-            console.error(`Failed to fetch image: ${url}`, error);
+            console.error(`Error in imageToDataUri for ${url}:`, error);
             return null;
         }
     };
@@ -295,6 +300,7 @@ export default function SubmissionDetailPage() {
         clonedContent.style.display = 'block';
         clonedContent.style.position = 'absolute';
         clonedContent.style.left = '-9999px';
+        clonedContent.style.backgroundColor = 'white';
 
 
         const images = Array.from(clonedContent.getElementsByTagName('img'));
@@ -302,17 +308,28 @@ export default function SubmissionDetailPage() {
             if (img.src && !img.src.startsWith('data:')) {
                 const dataUri = await imageToDataUri(img.src);
                 if (dataUri) {
-                    img.src = dataUri;
+                    return new Promise<void>((resolve) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => {
+                            console.error(`Failed to load image from data URI for ${img.src}`);
+                            resolve(); // Resolve even if load fails to not block PDF generation
+                        };
+                        img.src = dataUri;
+                    });
                 }
             }
         });
         await Promise.all(imagePromises);
-
+        
+        // Add a short delay to allow the browser to render the new image sources
+        await new Promise((r) => setTimeout(r, 300));
+        
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
-            useCORS: true, 
+            useCORS: true,
             allowTaint: true,
             logging: false,
+            backgroundColor: 'white'
         });
         
         document.body.removeChild(clonedContent);
@@ -481,3 +498,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
