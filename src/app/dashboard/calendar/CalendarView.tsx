@@ -328,7 +328,7 @@ export default function CalendarView() {
             <Button variant="outline" onClick={() => setDate(new Date())}>TODAY</Button>
          </div>
        </header>
-       <div className="flex-1 border-t overflow-y-auto">
+       <div className="flex-1 border-t overflow-auto">
         {viewMode === 'month' && (
              <Calendar
                 mode="single"
