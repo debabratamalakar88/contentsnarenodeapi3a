@@ -271,7 +271,6 @@ export default function SubmissionDetailPage() {
     if (!contentToPrint) return;
     setIsExporting(true);
 
-    // Helper to convert image URLs to data URIs
     const imageToDataUri = async (url: string) => {
         try {
             const response = await fetch(url);
@@ -289,39 +288,29 @@ export default function SubmissionDetailPage() {
     };
 
     try {
-        const canvas = await html2canvas(contentToPrint, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            onclone: async (document) => {
-                const clonedContent = document.querySelector('[data-pdf-content]');
-                if (clonedContent) {
-                    // Open all accordions
-                    clonedContent.querySelectorAll('[data-radix-accordion-content]').forEach((el) => {
-                        el.removeAttribute('hidden');
-                        el.setAttribute('style', 'overflow: visible !important;');
-                    });
-                    clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
+        const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
+        document.body.appendChild(clonedContent);
+        
+        clonedContent.style.width = `${contentToPrint.offsetWidth}px`;
 
-                    // Remove truncation
-                     clonedContent.querySelectorAll('.truncate, .break-all, .line-clamp-2, .line-clamp-3').forEach(el => {
-                        el.classList.remove('truncate', 'break-all', 'line-clamp-2', 'line-clamp-3');
-                    });
-                    
-                    // Convert images to Base64
-                    const images = Array.from(clonedContent.getElementsByTagName('img'));
-                    const imagePromises = images.map(async (img) => {
-                        if (img.src && !img.src.startsWith('data:')) {
-                            const dataUri = await imageToDataUri(img.src);
-                            if (dataUri) {
-                                img.src = dataUri;
-                            }
-                        }
-                    });
-                    await Promise.all(imagePromises);
+        const images = Array.from(clonedContent.getElementsByTagName('img'));
+        const imagePromises = images.map(async (img) => {
+            if (img.src && !img.src.startsWith('data:')) {
+                const dataUri = await imageToDataUri(img.src);
+                if (dataUri) {
+                    img.src = dataUri;
                 }
             }
         });
+        await Promise.all(imagePromises);
+
+        const canvas = await html2canvas(clonedContent, {
+            scale: 2,
+            useCORS: true, 
+            allowTaint: true
+        });
+        
+        document.body.removeChild(clonedContent);
   
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -410,9 +399,8 @@ export default function SubmissionDetailPage() {
                 Export as PDF
             </Button>
         </div>
-        <Card className="bg-card shadow-sm w-full">
-           <div ref={submissionContentRef} data-pdf-content>
-            <div className="p-8">
+        <Card className="bg-card shadow-sm w-full" ref={submissionContentRef}>
+           <div className="p-8">
                 <header className="mb-8 pb-4 border-b">
                     <div className="flex justify-between items-start">
                         <div>
@@ -483,9 +471,10 @@ export default function SubmissionDetailPage() {
                     )}
                 </div>
             </div>
-           </div>
         </Card>
       </div>
     </div>
   );
 }
+
+    
