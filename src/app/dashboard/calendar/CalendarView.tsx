@@ -76,11 +76,11 @@ const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => 
     const days = eachDayOfWeek({ start: weekStart, end: weekEnd });
 
     return (
-        <div className="grid grid-cols-7 divide-x border-t border-b">
+        <div className="grid grid-cols-1 md:grid-cols-7 md:divide-x border-t border-b">
             {days.map(day => {
                 const dayEvents = events.filter(event => isSameDay(event.date, day));
                 return (
-                    <div key={day.toString()} className="p-2 min-h-[60vh]">
+                    <div key={day.toString()} className="p-2 min-h-[60vh] md:border-b-0 border-b">
                         <div className="text-center mb-2">
                             <p className="text-sm font-medium">{format(day, 'EEE')}</p>
                             <p className="text-2xl font-bold">{format(day, 'd')}</p>
@@ -328,7 +328,7 @@ export default function CalendarView() {
             <Button variant="outline" onClick={() => setDate(new Date())}>TODAY</Button>
          </div>
        </header>
-       <div className="flex-1 border-t overflow-auto">
+       <div className="flex-1 overflow-auto">
         {viewMode === 'month' && (
              <Calendar
                 mode="single"
