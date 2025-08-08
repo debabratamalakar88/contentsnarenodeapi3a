@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -275,7 +274,7 @@ export default function SubmissionDetailPage() {
     try {
         const canvas = await html2canvas(contentToPrint, {
             scale: 2,
-            useCORS: true,
+            useCORS: true, 
             onclone: (document) => {
                 const clonedContent = document.querySelector('[data-pdf-content]');
                 if (clonedContent) {
@@ -284,6 +283,7 @@ export default function SubmissionDetailPage() {
                       el.setAttribute('style', 'overflow: visible !important;');
                   });
                   clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
+                  clonedContent.querySelectorAll('.truncate').forEach(el => el.classList.remove('truncate'));
                 }
             }
         });
