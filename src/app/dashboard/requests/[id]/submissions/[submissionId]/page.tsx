@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} />
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} crossOrigin="anonymous"/>
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -271,38 +271,21 @@ export default function SubmissionDetailPage() {
     const contentToPrint = submissionContentRef.current;
     if (!contentToPrint) return;
     setIsExporting(true);
-    
-    const clone = contentToPrint.cloneNode(true) as HTMLElement;
-    
+
     try {
-        const imageElements = Array.from(clone.querySelectorAll('img'));
-        
-        const imagePromises = imageElements.map(async (img) => {
-            const originalSrc = img.dataset.src || img.src;
-            if (originalSrc.startsWith('http')) {
-                try {
-                    const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(originalSrc)}`);
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(`Failed to proxy image: ${errorData.error}`);
-                    }
-                    const dataUri = await response.text();
-                    img.src = dataUri;
-                } catch(e) {
-                    console.error("Could not load image for PDF via proxy:", originalSrc, e);
-                }
-            }
+        const canvas = await html2canvas(contentToPrint, { 
+            scale: 2,
+            useCORS: true, // Attempt to use CORS to load images
+            allowTaint: true // Allow tainting the canvas for cross-origin images
         });
-
-        await Promise.all(imagePromises);
-
-        const canvas = await html2canvas(clone, { scale: 2 });
+        
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'px',
             format: 'a4',
         });
+
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -315,14 +298,17 @@ export default function SubmissionDetailPage() {
         
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pageHeight;
+
         while (heightLeft > 0) {
             position -= pageHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
             heightLeft -= pageHeight;
         }
+
         pdf.save(`submission-${submission?.submission_code}.pdf`);
         toast({ title: 'PDF Exported Successfully' });
+
     } catch (error) {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: 'Failed to export PDF.', variant: 'destructive' });
