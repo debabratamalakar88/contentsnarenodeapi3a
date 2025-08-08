@@ -19,6 +19,7 @@ import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Image from 'next/image';
 
 const isImageFile = (filename: string) => {
     if (!filename) return false;
@@ -92,7 +93,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -271,22 +272,47 @@ export default function SubmissionDetailPage() {
     const contentToPrint = submissionContentRef.current;
     if (!contentToPrint) return;
     setIsExporting(true);
-
+    
+    // Create a clone of the node to modify image sources
+    const clone = contentToPrint.cloneNode(true) as HTMLElement;
+    
     try {
-        const canvas = await html2canvas(contentToPrint, {
-            scale: 2,
-            useCORS: true, 
-            allowTaint: true,
-            logging: true,
+        const imageElements = Array.from(clone.querySelectorAll('img'));
+        
+        const imagePromises = imageElements.map(async (img) => {
+            const originalSrc = img.src;
+            // Prevent browser from trying to fetch from cache with a different origin policy
+            if (originalSrc.startsWith('http')) { 
+                try {
+                    const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(originalSrc)}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to proxy image: ${response.statusText}`);
+                    }
+                    const blob = await response.blob();
+                    const dataUri = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    img.src = dataUri;
+                } catch(e) {
+                    console.error("Could not load image for PDF via proxy:", originalSrc, e);
+                    // Optionally, replace with a placeholder if it fails
+                    // img.src = "path/to/placeholder.png"; 
+                }
+            }
         });
 
+        await Promise.all(imagePromises);
+
+        const canvas = await html2canvas(clone, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'px',
             format: 'a4',
         });
-
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -297,19 +323,16 @@ export default function SubmissionDetailPage() {
         let heightLeft = imgHeight;
         let position = 0;
         
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pageHeight;
-
         while (heightLeft > 0) {
             position -= pageHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
             heightLeft -= pageHeight;
         }
-        
         pdf.save(`submission-${submission?.submission_code}.pdf`);
         toast({ title: 'PDF Exported Successfully' });
-
     } catch (error) {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: 'Failed to export PDF.', variant: 'destructive' });
@@ -317,7 +340,6 @@ export default function SubmissionDetailPage() {
         setIsExporting(false);
     }
   };
-
 
   if (isLoading) {
     return (
