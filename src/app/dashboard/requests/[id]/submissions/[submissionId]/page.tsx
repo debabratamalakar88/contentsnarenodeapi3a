@@ -276,9 +276,11 @@ export default function SubmissionDetailPage() {
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
+            scrollX: 0,
+            scrollY: -window.scrollY,
         });
+
         const imgData = canvas.toDataURL('image/png');
-        
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'px',
@@ -287,30 +289,23 @@ export default function SubmissionDetailPage() {
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = imgWidth / imgHeight;
         
-        let finalImgWidth = pdfWidth;
-        let finalImgHeight = pdfWidth / ratio;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
         
-        if (finalImgHeight > pdfHeight) {
-            finalImgHeight = pdfHeight;
-            finalImgWidth = pdfHeight * ratio;
-        }
-
-        let heightLeft = imgHeight;
-        let position = 0;
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        pdf.addImage(imgData, 'PNG', 0, position, finalImgWidth, finalImgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
+        const ratio = canvasWidth / canvasHeight;
         
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, finalImgWidth, finalImgHeight, undefined, 'FAST');
-            heightLeft -= pageHeight;
+        const imgWidth = pdfWidth;
+        const imgHeight = imgWidth / ratio;
+        
+        const totalPages = Math.ceil(imgHeight / pdfHeight);
+        
+        for (let i = 0; i < totalPages; i++) {
+            const yPosition = - (i * pdfHeight);
+            if (i > 0) {
+                pdf.addPage();
+            }
+            pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight, undefined, 'FAST');
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
@@ -373,11 +368,12 @@ export default function SubmissionDetailPage() {
                 Export as PDF
             </Button>
         </div>
-        <Card className="bg-card shadow-sm w-full" ref={submissionContentRef}>
-            <CardHeader>
+        <Card className="bg-card shadow-sm w-full">
+           <div ref={submissionContentRef} className="p-6">
+            <header className="mb-8">
                 <div className="flex justify-between items-start flex-wrap gap-4">
                     <div>
-                        <CardTitle className="text-2xl">Submission for "{request.title}"</CardTitle>
+                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
                          <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-sm mt-2">
                             {submission.submission_code && (
                                 <div className="flex items-center gap-2">
@@ -404,8 +400,8 @@ export default function SubmissionDetailPage() {
                         {submission.status}
                     </Badge>
                 </div>
-            </CardHeader>
-            <CardContent>
+            </header>
+            <div>
                 {processedData.length > 0 ? (
                     <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
                     {processedData.map((page, pageIndex) => (
@@ -438,7 +434,8 @@ export default function SubmissionDetailPage() {
                         <p className="text-sm">It seems this submission is empty or could not be parsed.</p>
                     </div>
                 )}
-            </CardContent>
+            </div>
+           </div>
         </Card>
       </div>
     </div>
