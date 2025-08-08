@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -273,41 +274,52 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(contentToPrint, { 
-            scale: 2,
-            useCORS: true,
-            allowTaint: true
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: 'a4',
-        });
+      const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
+      
+      // We need to append the clone to the body to ensure styles are applied
+      // but we can make it invisible
+      clonedContent.style.position = 'absolute';
+      clonedContent.style.left = '-9999px';
+      clonedContent.style.top = '-9999px';
+      document.body.appendChild(clonedContent);
+      
+      const canvas = await html2canvas(clonedContent, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true, // This is important for cross-origin images
+      });
+      
+      document.body.removeChild(clonedContent);
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasHeight / canvasWidth;
-        const imgHeight = pdfWidth * ratio;
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        
-        let heightLeft = imgHeight;
-        let position = 0;
-        
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+          orientation: 'p',
+          unit: 'px',
+          format: 'a4',
+      });
 
-        while (heightLeft > 0) {
-            position -= pageHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasHeight / canvasWidth;
+      const imgHeight = pdfWidth * ratio;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-        pdf.save(`submission-${submission?.submission_code}.pdf`);
-        toast({ title: 'PDF Exported Successfully' });
+      while (heightLeft > 0) {
+          position -= pageHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pageHeight;
+      }
+
+      pdf.save(`submission-${submission?.submission_code}.pdf`);
+      toast({ title: 'PDF Exported Successfully' });
 
     } catch (error) {
         console.error("PDF Export Error: ", error);
