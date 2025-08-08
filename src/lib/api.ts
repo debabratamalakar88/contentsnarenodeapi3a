@@ -2,6 +2,7 @@
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_ASSETS_BASE_URL = 'http://contentsnare.technovosac.com';
 
 export interface User {
   id: number;

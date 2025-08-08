@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_ASSETS_BASE_URL = 'http://contentsnare.technovosac.com';
 
     switch (question.type) {
         case 'date':
@@ -297,6 +297,8 @@ export default function SubmissionDetailPage() {
         
         const canvas = await html2canvas(contentClone, {
             scale: 2,
+            allowTaint: true,
+            useCORS: true,
             logging: true,
         });
 
@@ -314,18 +316,19 @@ export default function SubmissionDetailPage() {
         const canvasHeight = canvas.height;
         const ratio = canvasHeight / canvasWidth;
         const imgHeight = pdfWidth * ratio;
+        const pageHeight = pdf.internal.pageSize.getHeight();
         
         let heightLeft = imgHeight;
         let position = 0;
         
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        heightLeft -= pageHeight;
 
         while (heightLeft > 0) {
-            position -= pdf.internal.pageSize.getHeight();
+            position -= pageHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-            heightLeft -= pdf.internal.pageSize.getHeight();
+            heightLeft -= pageHeight;
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
@@ -391,35 +394,39 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-8">
             <header className="mb-8 pb-4 border-b">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                        <table className="text-sm">
-                            <tbody>
-                                <tr>
-                                    <td className="font-semibold text-foreground pr-4 py-1">Submission Code:</td>
-                                    <td className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-semibold text-foreground pr-4 py-1">Submitted On:</td>
-                                    <td className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                     <div className="flex justify-end items-start">
-                         <Badge
-                            variant={'outline'}
-                            className={cn(
-                                "capitalize h-fit text-base px-4 py-1",
-                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                            )}
-                        >
-                            {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                            {submission.status}
-                        </Badge>
-                     </div>
-                </div>
+                <table className="w-full">
+                    <tbody>
+                        <tr>
+                            <td className="w-1/2 pr-4 align-top">
+                                <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                                <table className="text-sm mt-4">
+                                    <tbody>
+                                        <tr>
+                                            <td className="font-semibold text-foreground pr-4 py-1">Submission Code:</td>
+                                            <td className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold text-foreground pr-4 py-1">Submitted On:</td>
+                                            <td className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td className="w-1/2 pl-4 align-top text-right">
+                                <Badge
+                                    variant={'outline'}
+                                    className={cn(
+                                        "capitalize h-fit text-base px-4 py-1",
+                                        submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                                    )}
+                                >
+                                    {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
+                                    {submission.status}
+                                </Badge>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </header>
             <div>
                 {processedData.length > 0 ? (
@@ -434,9 +441,9 @@ export default function SubmissionDetailPage() {
                                             <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
                                             <div className="space-y-6">
                                                 {section.answers.map((item, itemIndex) => (
-                                                    <div key={itemIndex} className="grid md:grid-cols-12 gap-x-6 gap-y-2">
-                                                        <div className="font-medium text-sm text-muted-foreground md:col-span-4">{item.question.label}</div>
-                                                        <div className="text-sm text-foreground md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
+                                                    <div key={itemIndex} className="grid grid-cols-12 gap-x-6 gap-y-2">
+                                                        <div className="font-medium text-sm text-muted-foreground col-span-12 md:col-span-4">{item.question.label}</div>
+                                                        <div className="text-sm text-foreground col-span-12 md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
                                                     </div>
                                                 ))}
                                             </div>
