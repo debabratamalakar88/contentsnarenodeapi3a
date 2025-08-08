@@ -2,7 +2,7 @@
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
+const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || 'http://localhost/projects/laravel/laravel12/contentsnare_api/public';
 
 export interface User {
   id: number;
@@ -290,6 +290,14 @@ async function handleResponse(response: Response) {
   try {
     data = JSON.parse(responseText);
   } catch (error) {
+    // If parsing fails, it's not a JSON response.
+    // If the request was not successful, we throw the raw text as the error message.
+    if (!response.ok) {
+        throw { message: responseText, status: response.status };
+    }
+
+    // If the request was successful but the response is not JSON, it might be an issue.
+    // Log it and decide if you want to throw or return the text. For now, let's throw.
     const errorMessage = `A backend communication error occurred (Status: ${response.status} ${response.statusText}). The server sent back an unexpected response, likely an HTML error page instead of JSON data.
 
 Possible causes:
