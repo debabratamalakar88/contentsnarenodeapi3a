@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || '';
 
     switch (question.type) {
         case 'date':
@@ -292,7 +292,6 @@ export default function SubmissionDetailPage() {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -302,18 +301,7 @@ export default function SubmissionDetailPage() {
         const imgWidth = pdfWidth;
         const imgHeight = imgWidth / ratio;
         
-        let position = 0;
-        let pageCount = 0;
-
-        while (position < imgHeight) {
-          const pageHeight = Math.min(pdfHeight, imgHeight - position);
-          if (pageCount > 0) {
-              pdf.addPage();
-          }
-          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight, undefined, 'FAST');
-          position += pageHeight;
-          pageCount++;
-        }
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
         toast({ title: 'Success', description: 'PDF Exported Successfully' });
