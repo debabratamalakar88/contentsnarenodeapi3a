@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -275,13 +275,7 @@ export default function SubmissionDetailPage() {
     try {
         const canvas = await html2canvas(contentToPrint, {
             scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            scrollX: -window.scrollX,
-            scrollY: -window.scrollY,
-            windowWidth: contentToPrint.scrollWidth,
-            windowHeight: contentToPrint.scrollHeight,
+            useCORS: true, 
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -299,15 +293,19 @@ export default function SubmissionDetailPage() {
         
         const ratio = canvasHeight / canvasWidth;
         
-        const imgHeight = pdfWidth * ratio;
+        let imgHeight = pdfWidth * ratio;
         
+        if (imgHeight < pdfHeight) {
+          imgHeight = pdfHeight;
+        }
+
         let heightLeft = imgHeight;
         let position = 0;
 
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pdfHeight;
 
-        while (heightLeft > 0) {
+        while (heightLeft > 0.1) {
             position -= pdfHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
