@@ -302,18 +302,21 @@ export default function SubmissionDetailPage() {
         const imgWidth = pdfWidth;
         const imgHeight = imgWidth / ratio;
         
-        const totalPages = Math.ceil(imgHeight / pdfHeight);
-        
-        for (let i = 0; i < totalPages; i++) {
-            const yPosition = - (i * pdfHeight);
-            if (i > 0) {
-                pdf.addPage();
-            }
-            pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight, undefined, 'FAST');
+        let position = 0;
+        let pageCount = 0;
+
+        while (position < imgHeight) {
+          const pageHeight = Math.min(pdfHeight, imgHeight - position);
+          if (pageCount > 0) {
+              pdf.addPage();
+          }
+          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight, undefined, 'FAST');
+          position += pageHeight;
+          pageCount++;
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
-        toast({ title: 'Success', description: 'PDF export has started.' });
+        toast({ title: 'Success', description: 'PDF Exported Successfully' });
 
     } catch (error) {
         console.error("PDF Export Error: ", error);
@@ -375,7 +378,7 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-6">
             <header className="mb-8 space-y-4">
-                <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
                      <Badge
                         variant={'outline'}
@@ -388,19 +391,15 @@ export default function SubmissionDetailPage() {
                         {submission.status}
                     </Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                    {submission.submission_code && (
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">Submission Code:</span>
-                            <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
-                        </div>
-                    )}
-                    {submission.updated_at && (
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">Submitted On:</span>
-                            <span className="text-muted-foreground">{format(parseISO(submission.updated_at), 'PPP p')}</span>
-                        </div>
-                    )}
+                <div className="flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                   <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">Submission Code:</span>
+                        <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">Submitted On:</span>
+                        <span className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</span>
+                    </div>
                 </div>
             </header>
             <div>
