@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -159,7 +158,7 @@ export interface Request {
   request_code: string;
   form_code: string;
   form_data: Page[];
-  client_id: number[] | null;
+  client_id: number[] | number | null;
   status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   allow_comments: boolean;
   send_option: 'immediately' | 'scheduled';

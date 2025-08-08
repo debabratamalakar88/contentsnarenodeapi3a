@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { getAllRequests, getCalendarReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
+import { getAllRequests, getCalendarReminders, type Request, type Reminder, type Client, getClients, getTeamMembers, type TeamMember } from '@/lib/api';
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate, startOfWeek, endOfWeek, eachDayOfInterval as eachDayOfWeek, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ChevronDown, ChevronLeft, ChevronRight, Mail, FileText, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,8 @@ interface CalendarEvent {
   date: Date;
   title: string;
   clientName: string;
+  clientId: number;
+  ownerId: number;
   data: Request | Reminder;
 }
 
@@ -117,11 +119,13 @@ const DayView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
 
 export default function CalendarView() {
   const [date, setDate] = useState<Date>(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedOwnerId, setSelectedOwnerId] = useState('all');
+  const [selectedClientId, setSelectedClientId] = useState('all');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -136,59 +140,68 @@ export default function CalendarView() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [requestsData, remindersData, clientsData, profileData] = await Promise.all([
+        const [requestsData, remindersData, clientsData, teamMembersData] = await Promise.all([
           getAllRequests(token!),
           getCalendarReminders(token!),
           getClients(token!),
-          getProfile(token!),
+          getTeamMembers(token!),
         ]);
 
         setClients(clientsData || []);
-        if (profileData.user) {
-            setUsers([profileData.user]);
-        }
+        setTeamMembers(teamMembersData || []);
 
         const clientMap = new Map(clientsData.map(c => [c.id, c.full_name]));
-        const allEvents: CalendarEvent[] = [];
+        const fetchedEvents: CalendarEvent[] = [];
 
         requestsData.forEach((req) => {
-          const clientName = req.client_id?.[0] ? clientMap.get(req.client_id[0]) || 'Unknown Client' : 'No Client Assigned';
-          if (req.status === 'published' && req.due_date) {
-            allEvents.push({
-              id: `req-due-${req.id}`,
-              type: 'request-due',
-              date: parseISO(req.due_date),
-              title: req.title,
-              clientName,
-              data: req,
-            });
-          }
-          if (req.status === 'scheduled' && req.scheduled_at) {
-            allEvents.push({
-              id: `req-sch-${req.id}`,
-              type: 'request-scheduled',
-              date: parseISO(req.scheduled_at),
-              title: req.title,
-              clientName,
-              data: req,
-            });
-          }
+          const clientIds = Array.isArray(req.client_id) ? req.client_id : (req.client_id ? [req.client_id] : []);
+          const ownerId = req.created_by;
+
+          clientIds.forEach(clientId => {
+            const clientName = clientMap.get(clientId) || 'Unknown Client';
+            if (req.status === 'published' && req.due_date) {
+                fetchedEvents.push({
+                  id: `req-due-${req.id}-${clientId}`,
+                  type: 'request-due',
+                  date: parseISO(req.due_date),
+                  title: req.title,
+                  clientName,
+                  clientId,
+                  ownerId,
+                  data: req,
+                });
+            }
+            if (req.status === 'scheduled' && req.scheduled_at) {
+                fetchedEvents.push({
+                  id: `req-sch-${req.id}-${clientId}`,
+                  type: 'request-scheduled',
+                  date: parseISO(req.scheduled_at),
+                  title: req.title,
+                  clientName,
+                  clientId,
+                  ownerId,
+                  data: req,
+                });
+            }
+          });
         });
 
         remindersData.forEach((rem: Reminder) => {
           if (!rem.sent) {
-            allEvents.push({
+            fetchedEvents.push({
               id: `rem-${rem.id}`,
               type: 'reminder',
               date: parseISO(rem.reminder_date),
               title: `Reminder: ${rem.request.title}`,
               clientName: rem.client.full_name,
+              clientId: rem.client.id,
+              ownerId: rem.request.created_by,
               data: rem,
             });
           }
         });
 
-        setEvents(allEvents);
+        setAllEvents(fetchedEvents);
       } catch (err: any) {
         toast({
           title: 'Error fetching calendar data',
@@ -201,6 +214,14 @@ export default function CalendarView() {
     }
     fetchData();
   }, [token, router, toast]);
+
+  const filteredEvents = useMemo(() => {
+    return allEvents.filter(event => {
+      const ownerMatch = selectedOwnerId === 'all' || event.ownerId === Number(selectedOwnerId);
+      const clientMatch = selectedClientId === 'all' || event.clientId === Number(selectedClientId);
+      return ownerMatch && clientMatch;
+    });
+  }, [allEvents, selectedOwnerId, selectedClientId]);
   
   const handleDateChange = (increment: number) => {
     if (viewMode === 'month') {
@@ -264,17 +285,25 @@ export default function CalendarView() {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="outline">Owner <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {users.map(user => (
-                     <DropdownMenuItem key={user.id}>{user.name}</DropdownMenuItem>
-                  ))}
+                  <DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}>
+                    <DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem>
+                    <DropdownMenuSeparator />
+                    {teamMembers.map(member => (
+                        <DropdownMenuRadioItem key={member.id} value={String(member.id)}>{member.name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="outline">Client <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {clients.map(client => (
-                     <DropdownMenuItem key={client.id}>{client.full_name}</DropdownMenuItem>
-                  ))}
+                  <DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}>
+                    <DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem>
+                    <DropdownMenuSeparator />
+                    {clients.map(client => (
+                        <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
          </div>
@@ -311,12 +340,12 @@ export default function CalendarView() {
                     day_outside: 'text-muted-foreground opacity-50',
                 }}
                 components={{
-                    DayContent: (props) => <DayContent {...props} events={events} />
+                    DayContent: (props) => <DayContent {...props} events={filteredEvents} />
                 }}
             />
         )}
-        {viewMode === 'week' && <WeekView date={date} events={events} />}
-        {viewMode === 'day' && <DayView date={date} events={events} />}
+        {viewMode === 'week' && <WeekView date={date} events={filteredEvents} />}
+        {viewMode === 'day' && <DayView date={date} events={filteredEvents} />}
        </div>
     </div>
   );
