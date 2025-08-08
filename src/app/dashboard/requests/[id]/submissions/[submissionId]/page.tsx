@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -439,10 +440,14 @@ export default function SubmissionDetailPage() {
                                             <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
                                             <div className="space-y-6">
                                                 {section.answers.map((item, itemIndex) => (
-                                                    <div key={itemIndex} className="grid grid-cols-12 gap-x-6 gap-y-2">
-                                                        <div className="font-medium text-sm text-muted-foreground col-span-12 md:col-span-4">{item.question.label}</div>
-                                                        <div className="text-sm text-foreground col-span-12 md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
-                                                    </div>
+                                                    <table key={itemIndex} className="w-full">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="font-medium text-sm text-muted-foreground align-top w-1/3 pr-4">{item.question.label}</td>
+                                                                <td className="text-sm text-foreground align-top w-2/3">{renderAnswer(item.question, item.answer)}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 ))}
                                             </div>
                                         </div>
