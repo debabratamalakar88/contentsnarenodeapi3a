@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -19,7 +18,6 @@ import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import Image from 'next/image';
 
 const isImageFile = (filename: string) => {
     if (!filename) return false;
@@ -93,7 +91,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200}/>
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
