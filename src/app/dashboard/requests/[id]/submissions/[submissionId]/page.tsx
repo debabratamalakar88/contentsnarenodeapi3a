@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || 'http://localhost/projects/laravel/laravel12/contentsnare_api/public';
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
 
     switch (question.type) {
         case 'date':
@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -273,10 +273,24 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(contentToPrint, {
+        const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
+        document.body.appendChild(clonedContent);
+        
+        clonedContent.style.position = 'absolute';
+        clonedContent.style.left = '-9999px';
+        clonedContent.style.width = `${contentToPrint.offsetWidth}px`;
+
+        const images = clonedContent.getElementsByTagName('img');
+        for (let i = 0; i < images.length; i++) {
+            images[i].setAttribute('crossOrigin', 'anonymous');
+        }
+
+        const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true, 
         });
+
+        document.body.removeChild(clonedContent);
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
@@ -286,26 +300,25 @@ export default function SubmissionDetailPage() {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         
         const ratio = canvasHeight / canvasWidth;
         
-        let imgHeight = pdfWidth * ratio;
+        const imgHeight = pdfWidth * ratio;
         let heightLeft = imgHeight;
         
         let position = 0;
 
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pdfHeight;
+        heightLeft -= pdf.internal.pageSize.getHeight();
 
         while (heightLeft > 0) {
-            position -= pdfHeight;
+            position -= pdf.internal.pageSize.getHeight();
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-            heightLeft -= pdfHeight;
+            heightLeft -= pdf.internal.pageSize.getHeight();
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
@@ -384,7 +397,7 @@ export default function SubmissionDetailPage() {
                         {submission.status}
                     </Badge>
                 </div>
-                <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                 <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                    <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground">Submission Code:</span>
                         <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
@@ -405,15 +418,15 @@ export default function SubmissionDetailPage() {
                                 <div className="space-y-6">
                                     {page.sections.map((section, sectionIndex) => (
                                         <div key={sectionIndex}>
-                                        <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
-                                        <div className="space-y-6">
-                                            {section.answers.map((item, itemIndex) => (
-                                            <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-2">
-                                                <div className="font-medium text-sm text-muted-foreground md:col-span-4">{item.question.label}</div>
-                                                <div className="text-sm text-foreground md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
+                                            <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
+                                            <div className="space-y-6">
+                                                {section.answers.map((item, itemIndex) => (
+                                                    <div key={itemIndex} className="grid md:grid-cols-12 gap-x-6 gap-y-2">
+                                                        <div className="font-medium text-sm text-muted-foreground md:col-span-4">{item.question.label}</div>
+                                                        <div className="text-sm text-foreground md:col-span-8">{renderAnswer(item.question, item.answer)}</div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                            ))}
-                                        </div>
                                         </div>
                                     ))}
                                 </div>
