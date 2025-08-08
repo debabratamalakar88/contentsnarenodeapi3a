@@ -1,9 +1,9 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -269,56 +269,19 @@ export default function SubmissionDetailPage() {
 
   const handleExportPdf = async () => {
     const contentToPrint = submissionContentRef.current;
-    if (!contentToPrint || !request || !submission) return;
+    if (!contentToPrint) return;
     setIsExporting(true);
-  
-    const clone = contentToPrint.cloneNode(true) as HTMLElement;
-    clone.style.width = `${contentToPrint.offsetWidth}px`;
-    clone.style.padding = '0'; // Remove any outer padding for direct capture
-    
-    // Create header element
-    const header = document.createElement('div');
-    header.style.padding = '32px';
-    header.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
-            <div>
-                <h2 style="font-size: 1.5rem; font-weight: 700;">Submission for "${request.title}"</h2>
-                <table style="font-size: 0.875rem; margin-top: 1rem; border-collapse: collapse;">
-                    <tbody>
-                        <tr>
-                            <td style="font-weight: 600; color: #374151; padding-right: 1rem; padding-bottom: 0.5rem;">Submission Code:</td>
-                            <td style="font-family: monospace; background-color: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 0.375rem; color: #4b5563;">${submission.submission_code}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: 600; color: #374151; padding-right: 1rem;">Submitted On:</td>
-                            <td style="color: #4b5563;">${submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div style="font-size: 0.875rem; padding: 0.25rem 1rem; border-radius: 9999px; display: flex; align-items: center; gap: 0.5rem; border: 1px solid #bbf7d0; background-color: #f0fdf4; color: #166534;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.05V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span>Completed</span>
-            </div>
-        </div>
-    `;
-
-    // Prepend header to the cloned content
-    clone.insertBefore(header, clone.firstChild);
-
-    // Append to body to render for html2canvas
-    document.body.appendChild(clone);
 
     try {
-        const canvas = await html2canvas(clone, {
+        const canvas = await html2canvas(contentToPrint, {
             scale: 2,
             useCORS: true,
             onclone: (document) => {
-                // Open accordions for printing
-                document.querySelectorAll('[data-state="closed"]').forEach((el) => {
-                    const content = el.querySelector('[data-radix-accordion-content]');
-                    if (content) content.removeAttribute('hidden');
+                document.querySelectorAll('[data-radix-accordion-content]').forEach((el) => {
+                    el.removeAttribute('hidden');
+                    el.removeAttribute('style');
                 });
+                document.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
             }
         });
   
@@ -356,7 +319,6 @@ export default function SubmissionDetailPage() {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: 'Failed to export PDF.', variant: 'destructive' });
     } finally {
-        document.body.removeChild(clone);
         setIsExporting(false);
     }
   };
@@ -409,74 +371,76 @@ export default function SubmissionDetailPage() {
                 Export as PDF
             </Button>
         </div>
-        <Card className="bg-card shadow-sm w-full" ref={submissionContentRef}>
-           <div className="p-8">
-            <header className="mb-8 pb-4 border-b">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                        <table className="text-sm mt-4">
-                            <tbody>
-                                <tr>
-                                    <td className="font-semibold text-gray-700 pr-4 py-1">Submission Code:</td>
-                                    <td className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-semibold text-gray-700 pr-4 py-1">Submitted On:</td>
-                                    <td className="text-gray-600">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <Card className="bg-card shadow-sm w-full">
+           <div ref={submissionContentRef}>
+            <div className="p-8">
+                <header className="mb-8 pb-4 border-b">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                            <table className="text-sm mt-4">
+                                <tbody>
+                                    <tr>
+                                        <td className="font-semibold text-gray-700 pr-4 py-1">Submission Code:</td>
+                                        <td className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="font-semibold text-gray-700 pr-4 py-1">Submitted On:</td>
+                                        <td className="text-gray-600">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <Badge
+                            variant={'outline'}
+                            className={cn(
+                                "capitalize h-fit text-base px-4 py-1",
+                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                            )}
+                        >
+                            {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
+                            {submission.status}
+                        </Badge>
                     </div>
-                    <Badge
-                        variant={'outline'}
-                        className={cn(
-                            "capitalize h-fit text-base px-4 py-1",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                        )}
-                    >
-                        {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                        {submission.status}
-                    </Badge>
-                </div>
-            </header>
-            <div>
-                {processedData.length > 0 ? (
-                    <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
-                    {processedData.map((page, pageIndex) => (
-                        <AccordionItem key={pageIndex} value={page.title}>
-                            <AccordionTrigger className="text-xl font-semibold hover:no-underline">{page.title}</AccordionTrigger>
-                            <AccordionContent className="pt-4 px-2">
-                                <div className="space-y-6">
-                                    {page.sections.map((section, sectionIndex) => (
-                                        <div key={sectionIndex}>
-                                            <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
-                                            <div className="space-y-6">
-                                                {section.answers.map((item, itemIndex) => (
-                                                    <table key={itemIndex} className="w-full">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td className="font-medium text-sm text-muted-foreground align-top w-1/3 pr-4">{item.question.label}</td>
-                                                                <td className="text-sm text-foreground align-top w-2/3">{renderAnswer(item.question, item.answer)}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                ))}
+                </header>
+                <div>
+                    {processedData.length > 0 ? (
+                        <Accordion type="multiple" defaultValue={processedData.map(p => p.title)} className="w-full">
+                        {processedData.map((page, pageIndex) => (
+                            <AccordionItem key={pageIndex} value={page.title}>
+                                <AccordionTrigger className="text-xl font-semibold hover:no-underline">{page.title}</AccordionTrigger>
+                                <AccordionContent className="pt-4 px-2">
+                                    <div className="space-y-6">
+                                        {page.sections.map((section, sectionIndex) => (
+                                            <div key={sectionIndex}>
+                                                <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
+                                                <div className="space-y-6">
+                                                    {section.answers.map((item, itemIndex) => (
+                                                        <table key={itemIndex} className="w-full">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td className="font-medium text-sm text-muted-foreground align-top w-1/3 pr-4">{item.question.label}</td>
+                                                                    <td className="text-sm text-foreground align-top w-2/3">{renderAnswer(item.question, item.answer)}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                    </Accordion>
-                ) : (
-                    <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
-                        <FileText className="mx-auto h-12 w-12 mb-4" />
-                        <h3 className="text-xl font-semibold">No submission data found to display.</h3>
-                        <p className="text-sm">It seems this submission is empty or could not be parsed.</p>
-                    </div>
-                )}
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                        </Accordion>
+                    ) : (
+                        <div className="text-center py-16 text-muted-foreground bg-background rounded-lg border-2 border-dashed">
+                            <FileText className="mx-auto h-12 w-12 mb-4" />
+                            <h3 className="text-xl font-semibold">No submission data found to display.</h3>
+                            <p className="text-sm">It seems this submission is empty or could not be parsed.</p>
+                        </div>
+                    )}
+                </div>
             </div>
            </div>
         </Card>
@@ -484,5 +448,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
-
