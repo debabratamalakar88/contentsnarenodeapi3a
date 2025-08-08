@@ -1,9 +1,9 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -277,11 +277,14 @@ export default function SubmissionDetailPage() {
             scale: 2,
             useCORS: true,
             onclone: (document) => {
-                document.querySelectorAll('[data-radix-accordion-content]').forEach((el) => {
-                    el.removeAttribute('hidden');
-                    el.removeAttribute('style');
-                });
-                document.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
+                const clonedContent = document.querySelector('[data-pdf-content]');
+                if (clonedContent) {
+                  clonedContent.querySelectorAll('[data-radix-accordion-content]').forEach((el) => {
+                      el.removeAttribute('hidden');
+                      el.setAttribute('style', 'overflow: visible !important;');
+                  });
+                  clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
+                }
             }
         });
   
@@ -290,6 +293,7 @@ export default function SubmissionDetailPage() {
           orientation: 'p',
           unit: 'px',
           format: 'a4',
+          hotfixes: ['px_scaling'],
       });
   
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -306,7 +310,7 @@ export default function SubmissionDetailPage() {
       heightLeft -= pdfHeight;
   
       while (heightLeft > 0) {
-          position = position - pdfHeight;
+          position -= pdfHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
           heightLeft -= pdfHeight;
@@ -372,7 +376,7 @@ export default function SubmissionDetailPage() {
             </Button>
         </div>
         <Card className="bg-card shadow-sm w-full">
-           <div ref={submissionContentRef}>
+           <div ref={submissionContentRef} data-pdf-content>
             <div className="p-8">
                 <header className="mb-8 pb-4 border-b">
                     <div className="flex justify-between items-start">
@@ -448,3 +452,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
