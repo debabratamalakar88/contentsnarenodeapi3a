@@ -267,17 +267,20 @@ export default function SubmissionDetailPage() {
 }, [submission, request]);
 
   const handleExportPdf = async () => {
-    if (!submissionContentRef.current) return;
+    const contentToPrint = submissionContentRef.current;
+    if (!contentToPrint) return;
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(submissionContentRef.current, {
+        const canvas = await html2canvas(contentToPrint, {
             scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            scrollX: 0,
+            scrollX: -window.scrollX,
             scrollY: -window.scrollY,
+            windowWidth: contentToPrint.scrollWidth,
+            windowHeight: contentToPrint.scrollHeight,
         });
 
         const imgData = canvas.toDataURL('image/png');
