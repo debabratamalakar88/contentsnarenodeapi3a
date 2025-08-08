@@ -36,7 +36,7 @@ const getEventStyles = (type: CalendarEvent['type']) => {
     }
 };
 
-const DayContent = ({ date }: { date: Date, events: CalendarEvent[] }) => {
+const DayContent = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
     const dayEvents = events.filter(event => isSameDay(event.date, date));
     return (
       <div className="relative w-full h-full p-1 flex flex-col gap-1 overflow-hidden">
@@ -305,7 +305,7 @@ export default function CalendarView() {
                     head_row: 'flex border-b',
                     head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
                     row: 'flex w-full flex-1',
-                    cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-t border-l first:border-l-0',
+                    cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-r border-b',
                     day: 'h-full w-full p-0 text-left align-top font-medium aria-selected:opacity-100',
                     day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
                     day_today: 'text-primary font-bold',
@@ -322,4 +322,3 @@ export default function CalendarView() {
     </div>
   );
 }
-
