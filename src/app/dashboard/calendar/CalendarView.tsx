@@ -13,6 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown, ChevronLeft, ChevronRight, Mail, FileText, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 interface CalendarEvent {
   id: string;
@@ -51,10 +53,21 @@ const DayContent = ({ date, events, setDate, setViewMode }: { date: Date, events
         <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
         <div className="pt-5 flex flex-col gap-1">
           {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
-                {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
-                <span className="truncate">{event.title} - {event.clientName}</span>
-              </div>
+            <TooltipProvider key={event.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
+                      {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
+                      <span className="truncate">{event.title} - {event.clientName}</span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-bold">{event.title}</p>
+                  <p>Client: {event.clientName}</p>
+                  <p>Time: {format(event.date, 'p')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ))}
           {dayEvents.length > 2 && (
               <div
@@ -87,13 +100,24 @@ const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => 
                         </div>
                         <div className="space-y-2">
                              {dayEvents.map(event => (
-                                <div key={event.id} className={cn("text-xs p-2 rounded-md flex items-center gap-2", getEventStyles(event.type))}>
-                                    {event.type === 'reminder' ? <Mail className="h-4 w-4 flex-shrink-0" /> : <FileText className="h-4 w-4 flex-shrink-0" />}
-                                    <div>
-                                        <p className="font-semibold">{event.title}</p>
-                                        <p>{event.clientName}</p>
-                                    </div>
-                                </div>
+                                <TooltipProvider key={event.id}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className={cn("text-xs p-2 rounded-md flex items-center gap-2", getEventStyles(event.type))}>
+                                            {event.type === 'reminder' ? <Mail className="h-4 w-4 flex-shrink-0" /> : <FileText className="h-4 w-4 flex-shrink-0" />}
+                                            <div>
+                                                <p className="font-semibold">{event.title}</p>
+                                                <p>{event.clientName}</p>
+                                            </div>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="font-bold">{event.title}</p>
+                                      <p>Client: {event.clientName}</p>
+                                      <p>Time: {format(event.date, 'p')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                             ))}
                             {dayEvents.length === 0 && <p className="text-xs text-muted-foreground text-center pt-4">No events</p>}
                         </div>
