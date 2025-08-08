@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || '';
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || 'http://localhost/projects/laravel/laravel12/contentsnare_api/public';
 
     switch (question.type) {
         case 'date':
@@ -292,16 +292,27 @@ export default function SubmissionDetailPage() {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         
-        const ratio = canvasWidth / canvasHeight;
+        const ratio = canvasHeight / canvasWidth;
         
-        const imgWidth = pdfWidth;
-        const imgHeight = imgWidth / ratio;
+        const imgHeight = pdfWidth * ratio;
         
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position -= pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
+            heightLeft -= pdfHeight;
+        }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
         toast({ title: 'Success', description: 'PDF Exported Successfully' });
@@ -364,8 +375,8 @@ export default function SubmissionDetailPage() {
             </Button>
         </div>
         <Card className="bg-card shadow-sm w-full">
-           <div ref={submissionContentRef} className="p-6">
-            <header className="mb-8 space-y-4">
+           <div ref={submissionContentRef} className="p-8">
+            <header className="mb-8 pb-4 border-b">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
                      <Badge
@@ -379,7 +390,7 @@ export default function SubmissionDetailPage() {
                         {submission.status}
                     </Badge>
                 </div>
-                <div className="flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                    <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground">Submission Code:</span>
                         <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
