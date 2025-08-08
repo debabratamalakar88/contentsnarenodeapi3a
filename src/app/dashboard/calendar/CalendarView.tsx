@@ -91,7 +91,7 @@ const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => 
 }
 
 const DayView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
-    const dayEvents = events.filter(event => isSameDay(event.date, day));
+    const dayEvents = events.filter(event => isSameDay(event.date, date));
     return (
         <Card className="m-6">
             <CardHeader>
