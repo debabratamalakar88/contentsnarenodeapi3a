@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -273,24 +273,11 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-        const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
-        document.body.appendChild(clonedContent);
-        
-        clonedContent.style.position = 'absolute';
-        clonedContent.style.left = '-9999px';
-        clonedContent.style.width = `${contentToPrint.offsetWidth}px`;
-
-        const images = clonedContent.getElementsByTagName('img');
-        for (let i = 0; i < images.length; i++) {
-            images[i].setAttribute('crossOrigin', 'anonymous');
-        }
-
-        const canvas = await html2canvas(clonedContent, {
+        const canvas = await html2canvas(contentToPrint, {
             scale: 2,
+            allowTaint: true,
             useCORS: true, 
         });
-
-        document.body.removeChild(clonedContent);
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
@@ -300,6 +287,7 @@ export default function SubmissionDetailPage() {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -310,15 +298,15 @@ export default function SubmissionDetailPage() {
         let heightLeft = imgHeight;
         
         let position = 0;
-
+        
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position -= pdf.internal.pageSize.getHeight();
+            position -= pdfHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-            heightLeft -= pdf.internal.pageSize.getHeight();
+            heightLeft -= pdfHeight;
         }
         
         pdf.save(`submission-${submission?.submission_code}.pdf`);
@@ -384,28 +372,32 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-8">
             <header className="mb-8 pb-4 border-b">
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                    <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                     <Badge
-                        variant={'outline'}
-                        className={cn(
-                            "capitalize h-fit text-base px-4 py-1",
-                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                        )}
-                    >
-                        {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                        {submission.status}
-                    </Badge>
-                </div>
-                 <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                   <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">Submission Code:</span>
-                        <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                        <div className="mt-4 flex flex-col gap-2 text-sm">
+                           <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground w-32">Submission Code:</span>
+                                <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground w-32">Submitted On:</span>
+                                <span className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">Submitted On:</span>
-                        <span className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</span>
-                    </div>
+                     <div className="flex justify-end items-start">
+                         <Badge
+                            variant={'outline'}
+                            className={cn(
+                                "capitalize h-fit text-base px-4 py-1",
+                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                            )}
+                        >
+                            {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
+                            {submission.status}
+                        </Badge>
+                     </div>
                 </div>
             </header>
             <div>
