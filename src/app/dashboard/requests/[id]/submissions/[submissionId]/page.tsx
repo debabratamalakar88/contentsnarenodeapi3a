@@ -91,9 +91,9 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous" />
                                    </div>
-                                    <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
+                                    <div className="text-xs text-center p-2 bg-muted break-all" title={file.filename}>
                                         {file.filename || 'View Image'}
                                     </div>
                                 </a>
@@ -102,7 +102,7 @@ const renderAnswer = (question: Question, answer: any) => {
                          return (
                             <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted">
                                 <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                <span className="text-primary hover:underline break-all block text-sm truncate" title={file.filename}>
+                                <span className="text-primary hover:underline break-all block text-sm" title={file.filename}>
                                     {file.filename || 'Download File'}
                                 </span>
                             </a>
@@ -284,6 +284,10 @@ export default function SubmissionDetailPage() {
                   });
                   clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => el.setAttribute('data-state', 'open'));
                   clonedContent.querySelectorAll('.truncate').forEach(el => el.classList.remove('truncate'));
+                  clonedContent.querySelectorAll('.break-all').forEach(el => el.classList.remove('break-all'));
+                  
+                  clonedContent.querySelectorAll('tr').forEach(el => el.setAttribute('style', 'background-color: transparent !important;'));
+
                 }
             }
         });
@@ -386,7 +390,9 @@ export default function SubmissionDetailPage() {
                                 <tbody>
                                     <tr>
                                         <td className="font-semibold text-gray-700 pr-4 py-1">Submission Code:</td>
-                                        <td className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</td>
+                                        <td>
+                                            <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</span>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td className="font-semibold text-gray-700 pr-4 py-1">Submitted On:</td>
@@ -399,7 +405,7 @@ export default function SubmissionDetailPage() {
                             variant={'outline'}
                             className={cn(
                                 "capitalize h-fit text-base px-4 py-1",
-                                submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                                submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
                             )}
                         >
                             {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
@@ -422,7 +428,7 @@ export default function SubmissionDetailPage() {
                                                     {section.answers.map((item, itemIndex) => (
                                                         <table key={itemIndex} className="w-full">
                                                             <tbody>
-                                                                <tr>
+                                                                <tr className="bg-transparent even:bg-transparent hover:bg-transparent">
                                                                     <td className="font-medium text-sm text-muted-foreground align-top w-1/3 pr-4">{item.question.label}</td>
                                                                     <td className="text-sm text-foreground align-top w-2/3">{renderAnswer(item.question, item.answer)}</td>
                                                                 </tr>
@@ -452,4 +458,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
