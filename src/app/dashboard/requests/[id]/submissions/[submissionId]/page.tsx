@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || '';
 
     switch (question.type) {
         case 'date':
@@ -269,56 +269,25 @@ export default function SubmissionDetailPage() {
 
   const handleExportPdf = async () => {
     const contentToPrint = submissionContentRef.current;
-    if (!contentToPrint || !submission || !request) return;
+    if (!contentToPrint) return;
     setIsExporting(true);
   
     try {
-      // Create a temporary container for the PDF content
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.position = 'absolute';
-      pdfContainer.style.left = '-9999px';
-      pdfContainer.style.width = '800px'; 
-      pdfContainer.style.padding = '40px';
-      pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
-      pdfContainer.style.color = '#333';
-  
-      // Build header HTML
-      const headerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 32px;">
-          <div>
-            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 16px 0;">Submission for "${request.title}"</h1>
-            <table style="font-size: 14px; border-spacing: 0 8px; border-collapse: separate;">
-              <tbody>
-                <tr>
-                  <td style="font-weight: 600; padding-right: 16px;">Submission Code:</td>
-                  <td style="font-family: monospace; background-color: #f3f4f6; padding: 4px 8px; border-radius: 6px;">${submission.submission_code}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; padding-right: 16px;">Submitted On:</td>
-                  <td>${submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          ${submission.status === 'completed' ? `
-          <div style="background-color: #dcfce7; color: #166534; font-weight: 600; font-size: 14px; padding: 6px 16px; border-radius: 9999px;">
-            Completed
-          </div>` : ''}
-        </div>
-      `;
-  
-      // Build body HTML from accordion content
-      const bodyHTML = contentToPrint.querySelector('div:last-child')?.innerHTML || '';
-  
-      pdfContainer.innerHTML = headerHTML + bodyHTML;
-      document.body.appendChild(pdfContainer);
-  
-      const canvas = await html2canvas(pdfContainer, {
-        scale: 2,
-        useCORS: true,
-      });
-  
-      document.body.removeChild(pdfContainer);
+        const canvas = await html2canvas(contentToPrint, {
+            scale: 2,
+            useCORS: true,
+            logging: true,
+            onclone: (document) => {
+                // Ensure accordions are open for printing
+                document.querySelectorAll('[data-state="closed"]').forEach((el) => {
+                    // This is a bit of a hack, but it works for html2canvas's clone
+                    const trigger = el.querySelector('[data-radix-collection-item]');
+                    if (trigger) trigger.setAttribute('data-state', 'open');
+                    const content = el.querySelector('[data-radix-accordion-content]');
+                    if (content) content.setAttribute('data-state', 'open');
+                });
+            }
+        });
   
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -409,39 +378,33 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-8">
             <header className="mb-8 pb-4 border-b">
-                <table className="w-full">
-                    <tbody>
-                        <tr>
-                            <td className="w-1/2 pr-4 align-top">
-                                <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                                <table className="text-sm mt-4">
-                                    <tbody>
-                                        <tr>
-                                            <td className="font-semibold text-foreground pr-4 py-1">Submission Code:</td>
-                                            <td className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="font-semibold text-foreground pr-4 py-1">Submitted On:</td>
-                                            <td className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                            <td className="w-1/2 pl-4 align-top text-right">
-                                <Badge
-                                    variant={'outline'}
-                                    className={cn(
-                                        "capitalize h-fit text-base px-4 py-1",
-                                        submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                                    )}
-                                >
-                                    {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                                    {submission.status}
-                                </Badge>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                        <table className="text-sm mt-4">
+                            <tbody>
+                                <tr>
+                                    <td className="font-semibold text-foreground pr-4 py-1">Submission Code:</td>
+                                    <td className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</td>
+                                </tr>
+                                <tr>
+                                    <td className="font-semibold text-foreground pr-4 py-1">Submitted On:</td>
+                                    <td className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Badge
+                        variant={'outline'}
+                        className={cn(
+                            "capitalize h-fit text-base px-4 py-1",
+                            submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                        )}
+                    >
+                        {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
+                        {submission.status}
+                    </Badge>
+                </div>
             </header>
             <div>
                 {processedData.length > 0 ? (
@@ -487,3 +450,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
