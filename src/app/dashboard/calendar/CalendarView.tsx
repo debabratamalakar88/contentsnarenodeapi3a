@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -8,11 +7,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { getAllRequests, getReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate } from 'date-fns';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate, startOfWeek, endOfWeek, eachDayOfInterval as eachDayOfWeek, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChevronDown, ChevronLeft, ChevronRight, Mail, FileText, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CalendarEvent {
   id: string;
@@ -23,12 +23,105 @@ interface CalendarEvent {
   data: Request | Reminder;
 }
 
+const getEventStyles = (type: CalendarEvent['type']) => {
+    switch (type) {
+        case 'request-due':
+            return 'bg-red-100 text-red-800';
+        case 'request-scheduled':
+            return 'bg-blue-100 text-blue-800';
+        case 'reminder':
+            return 'bg-yellow-100 text-yellow-800';
+        default:
+            return 'bg-primary/10 text-primary-foreground';
+    }
+};
+
+const DayContent = ({ date }: { date: Date, events: CalendarEvent[] }) => {
+    const dayEvents = events.filter(event => isSameDay(event.date, date));
+    return (
+      <div className="relative w-full h-full p-1 flex flex-col gap-1 overflow-hidden">
+        <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
+        <div className="pt-5 flex flex-col gap-1">
+          {dayEvents.slice(0, 2).map(event => (
+              <div key={event.id} className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
+                {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
+                <span className="truncate">{event.title} - {event.clientName}</span>
+              </div>
+          ))}
+          {dayEvents.length > 2 && (
+              <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
+          )}
+        </div>
+      </div>
+    );
+};
+
+const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+    const days = eachDayOfWeek({ start: weekStart, end: weekEnd });
+
+    return (
+        <div className="grid grid-cols-7 divide-x border-t border-b">
+            {days.map(day => {
+                const dayEvents = events.filter(event => isSameDay(event.date, day));
+                return (
+                    <div key={day.toString()} className="p-2 min-h-[60vh]">
+                        <div className="text-center mb-2">
+                            <p className="text-sm font-medium">{format(day, 'EEE')}</p>
+                            <p className="text-2xl font-bold">{format(day, 'd')}</p>
+                        </div>
+                        <div className="space-y-2">
+                             {dayEvents.map(event => (
+                                <div key={event.id} className={cn("text-xs p-2 rounded-md flex items-center gap-2", getEventStyles(event.type))}>
+                                    {event.type === 'reminder' ? <Mail className="h-4 w-4 flex-shrink-0" /> : <FileText className="h-4 w-4 flex-shrink-0" />}
+                                    <div>
+                                        <p className="font-semibold">{event.title}</p>
+                                        <p>{event.clientName}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {dayEvents.length === 0 && <p className="text-xs text-muted-foreground text-center pt-4">No events</p>}
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
+const DayView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
+    const dayEvents = events.filter(event => isSameDay(event.date, date));
+    return (
+        <Card className="m-6">
+            <CardHeader>
+                <CardTitle>{format(date, 'PPPP')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    {dayEvents.length > 0 ? dayEvents.map(event => (
+                        <div key={event.id} className={cn("p-4 rounded-lg flex items-center gap-4", getEventStyles(event.type))}>
+                            {event.type === 'reminder' ? <Mail className="h-5 w-5 flex-shrink-0" /> : <FileText className="h-5 w-5 flex-shrink-0" />}
+                            <div>
+                                <p className="font-bold">{event.title}</p>
+                                <p className="text-sm">{event.clientName}</p>
+                                <p className="text-xs mt-1">Time: {format(event.date, 'p')}</p>
+                            </div>
+                        </div>
+                    )) : <p className="text-muted-foreground text-center py-10">No events scheduled for this day.</p>}
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default function CalendarView() {
   const [date, setDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -109,42 +202,27 @@ export default function CalendarView() {
     }
     fetchData();
   }, [token, router, toast]);
-
-  const getEventStyles = (type: CalendarEvent['type']) => {
-    switch (type) {
-        case 'request-due':
-            return 'bg-red-100 text-red-800';
-        case 'request-scheduled':
-            return 'bg-blue-100 text-blue-800';
-        case 'reminder':
-            return 'bg-yellow-100 text-yellow-800';
-        default:
-            return 'bg-primary/10 text-primary-foreground';
+  
+  const handleDateChange = (increment: number) => {
+    if (viewMode === 'month') {
+        setDate(current => new Date(current.getFullYear(), current.getMonth() + increment, 1));
+    } else if (viewMode === 'week') {
+        setDate(current => addWeeks(current, increment));
+    } else {
+        setDate(current => addDays(current, increment));
     }
   }
 
-  const DayContent = ({ date }: { date: Date }) => {
-    const dayEvents = events.filter(event => isSameDay(event.date, date));
-    return (
-      <div className="relative w-full h-full p-1 flex flex-col gap-1 overflow-hidden">
-        <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
-        <div className="pt-5 flex flex-col gap-1">
-          {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
-                {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
-                <span className="truncate">{event.title} - {event.clientName}</span>
-              </div>
-          ))}
-          {dayEvents.length > 2 && (
-              <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-  
-  const handleMonthChange = (month: Date) => {
-    setDate(month);
+  const getHeaderText = () => {
+    switch(viewMode) {
+      case 'month': return format(date, 'MMMM yyyy');
+      case 'week': 
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+        return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
+      case 'day': return format(date, 'PPPP');
+      default: return '';
+    }
   }
 
   if (isLoading) {
@@ -173,8 +251,16 @@ export default function CalendarView() {
        <header className="flex items-center justify-between p-4 border-b">
          <div className="flex items-center gap-2">
             <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button variant="outline">View: Month <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent><DropdownMenuItem>Month</DropdownMenuItem></DropdownMenuContent>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                        View: {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => setViewMode('month')}>Month</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setViewMode('week')}>Week</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setViewMode('day')}>Day</DropdownMenuItem>
+                </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="outline">Owner <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -195,38 +281,45 @@ export default function CalendarView() {
          </div>
          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => handleMonthChange(new Date(date.getFullYear(), date.getMonth() - 1, 1))}><ChevronLeft className="h-5 w-5"/></Button>
-                <span className="text-lg font-semibold">{format(date, 'MMMM yyyy')}</span>
-                <Button variant="ghost" size="icon" onClick={() => handleMonthChange(new Date(date.getFullYear(), date.getMonth() + 1, 1))}><ChevronRight className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)}><ChevronLeft className="h-5 w-5"/></Button>
+                <span className="text-lg font-semibold w-48 text-center">{getHeaderText()}</span>
+                <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)}><ChevronRight className="h-5 w-5"/></Button>
             </div>
             <Button variant="outline" onClick={() => setDate(new Date())}>TODAY</Button>
          </div>
        </header>
-       <div className="flex-1 border-t">
-         <Calendar
-            mode="single"
-            selected={date}
-            onSelect={(day) => day && setDate(day)}
-            month={date}
-            onMonthChange={handleMonthChange}
-            className="h-full w-full"
-            classNames={{
-                root: 'h-full flex flex-col',
-                months: 'flex-1',
-                month: 'h-full flex flex-col',
-                table: 'w-full h-full border-collapse',
-                head_row: 'flex border-b',
-                head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
-                row: 'flex w-full flex-1',
-                cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border',
-                day: 'h-full w-full p-0 text-left align-top font-medium aria-selected:opacity-100',
-                day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
-                day_today: 'text-primary font-bold',
-                day_outside: 'text-muted-foreground opacity-50',
-            }}
-            components={{ DayContent }}
-        />
+       <div className="flex-1 border-t overflow-y-auto">
+        {viewMode === 'month' && (
+             <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(day) => day && setDate(day)}
+                month={date}
+                onMonthChange={(month) => setDate(month)}
+                className="h-full w-full"
+                classNames={{
+                    root: 'h-full flex flex-col',
+                    months: 'flex-1',
+                    month: 'h-full flex flex-col',
+                    table: 'w-full h-full border-collapse',
+                    head_row: 'flex border-b',
+                    head_cell: 'w-full text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
+                    row: 'flex w-full flex-1',
+                    cell: 'h-full w-full text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border-t border-l first:border-l-0',
+                    day: 'h-full w-full p-0 text-left align-top font-medium aria-selected:opacity-100',
+                    day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
+                    day_today: 'text-primary font-bold',
+                    day_outside: 'text-muted-foreground opacity-50',
+                }}
+                components={{
+                    DayContent: (props) => <DayContent {...props} events={events} />
+                }}
+            />
+        )}
+        {viewMode === 'week' && <WeekView date={date} events={events} />}
+        {viewMode === 'day' && <DayView date={date} events={events} />}
        </div>
     </div>
   );
 }
+
