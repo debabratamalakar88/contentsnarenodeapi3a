@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface CalendarEvent {
   id: string;
-  type: 'request-due' | 'request-scheduled' | 'reminder';
+  type: 'request-published' | 'request-due' | 'request-scheduled' | 'reminder';
   date: Date;
   title: string;
   clientName: string;
@@ -29,6 +29,8 @@ interface CalendarEvent {
 
 const getEventStyles = (type: CalendarEvent['type']): string => {
     switch (type) {
+        case 'request-published':
+            return 'bg-purple-100 text-purple-800';
         case 'request-due':
             return 'bg-red-100 text-red-800';
         case 'request-scheduled':
@@ -42,6 +44,8 @@ const getEventStyles = (type: CalendarEvent['type']): string => {
 
 const getEventLabel = (type: CalendarEvent['type']): string => {
     switch (type) {
+        case 'request-published':
+            return 'Published';
         case 'request-due':
             return 'Due Date';
         case 'request-scheduled':
@@ -211,6 +215,18 @@ export default function CalendarView() {
 
           clientIds.forEach(clientId => {
             const clientName = clientMap.get(clientId) || 'Unknown Client';
+            if (req.status === 'published') {
+                fetchedEvents.push({
+                  id: `req-pub-${req.id}-${clientId}`,
+                  type: 'request-published',
+                  date: parseISO(req.updated_at),
+                  title: req.title,
+                  clientName,
+                  clientId,
+                  ownerId,
+                  data: req,
+                });
+            }
             if (req.status === 'published' && req.due_date) {
                 fetchedEvents.push({
                   id: `req-due-${req.id}-${clientId}`,
@@ -319,7 +335,7 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
        <header className="flex items-center justify-between p-4 border-b">
          <div className="flex items-center gap-2">
             <DropdownMenu>
