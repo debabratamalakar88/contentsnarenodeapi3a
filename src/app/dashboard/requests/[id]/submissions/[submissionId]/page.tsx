@@ -273,35 +273,12 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-        const contentClone = contentToPrint.cloneNode(true) as HTMLElement;
-        document.body.appendChild(contentClone);
-
-        const images = Array.from(contentClone.getElementsByTagName('img'));
-        const imagePromises = images.map(async (img) => {
-          if (!img.src || img.src.startsWith('data:')) return;
-          try {
-            const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(img.src)}`);
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(`Failed to proxy image: ${errorData.message}`);
-            }
-            const { dataUri } = await response.json();
-            img.src = dataUri;
-          } catch(e) {
-            console.error("Could not load image for PDF via proxy:", img.src, e);
-          }
-        });
-
-        await Promise.all(imagePromises);
-        
-        const canvas = await html2canvas(contentClone, {
+        const canvas = await html2canvas(contentToPrint, {
             scale: 2,
-            useCORS: true,
+            useCORS: true, 
             allowTaint: true,
             logging: true,
         });
-
-        document.body.removeChild(contentClone);
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
@@ -471,3 +448,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
