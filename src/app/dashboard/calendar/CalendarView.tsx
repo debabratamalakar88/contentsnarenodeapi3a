@@ -38,8 +38,14 @@ const getEventStyles = (type: CalendarEvent['type']) => {
     }
 };
 
-const DayContent = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
+const DayContent = ({ date, events, setDate, setViewMode }: { date: Date, events: CalendarEvent[], setDate: (date: Date) => void, setViewMode: (view: 'month' | 'week' | 'day') => void }) => {
     const dayEvents = events.filter(event => isSameDay(event.date, date));
+    
+    const handleMoreClick = () => {
+        setDate(date);
+        setViewMode('day');
+    };
+
     return (
       <div className="relative w-full h-full p-1 flex flex-col gap-1 overflow-hidden">
         <p className="absolute top-1 right-2 text-xs">{getDate(date)}</p>
@@ -51,7 +57,9 @@ const DayContent = ({ date, events }: { date: Date, events: CalendarEvent[] }) =
               </div>
           ))}
           {dayEvents.length > 2 && (
-              <div className="text-xs text-muted-foreground font-semibold mt-1">+ {dayEvents.length - 2} more</div>
+              <button onClick={handleMoreClick} className="text-xs text-primary hover:underline font-semibold mt-1 text-left">
+                + {dayEvents.length - 2} more
+              </button>
           )}
         </div>
       </div>
@@ -340,7 +348,7 @@ export default function CalendarView() {
                     day_outside: 'text-muted-foreground opacity-50',
                 }}
                 components={{
-                    DayContent: (props) => <DayContent {...props} events={filteredEvents} />
+                    DayContent: (props) => <DayContent {...props} events={filteredEvents} setDate={setDate} setViewMode={setViewMode} />
                 }}
             />
         )}
