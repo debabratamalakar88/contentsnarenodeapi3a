@@ -27,7 +27,7 @@ interface CalendarEvent {
   data: Request | Reminder;
 }
 
-const getEventStyles = (type: CalendarEvent['type']) => {
+const getEventStyles = (type: CalendarEvent['type']): string => {
     switch (type) {
         case 'request-due':
             return 'bg-red-100 text-red-800';
@@ -39,6 +39,19 @@ const getEventStyles = (type: CalendarEvent['type']) => {
             return 'bg-primary/10 text-primary-foreground';
     }
 };
+
+const getEventLabel = (type: CalendarEvent['type']): string => {
+    switch (type) {
+        case 'request-due':
+            return 'Due Date';
+        case 'request-scheduled':
+            return 'Scheduled';
+        case 'reminder':
+            return 'Reminder';
+        default:
+            return 'Event';
+    }
+}
 
 const DayContent = ({ date, events, setDate, setViewMode }: { date: Date, events: CalendarEvent[], setDate: (date: Date) => void, setViewMode: (view: 'month' | 'week' | 'day') => void }) => {
     const dayEvents = events.filter(event => isSameDay(event.date, date));
@@ -57,8 +70,7 @@ const DayContent = ({ date, events, setDate, setViewMode }: { date: Date, events
               <Tooltip>
                 <TooltipTrigger asChild>
                     <div className={cn("text-xs p-1 rounded-sm flex items-center gap-1.5 truncate", getEventStyles(event.type))}>
-                      {event.type === 'reminder' ? <Mail className="h-3 w-3 flex-shrink-0" /> : <FileText className="h-3 w-3 flex-shrink-0" />}
-                      <span className="truncate">{event.title} - {event.clientName}</span>
+                      <span className="font-semibold truncate">{getEventLabel(event.type)}: {event.title}</span>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -103,12 +115,9 @@ const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => 
                                 <TooltipProvider key={event.id}>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className={cn("text-xs p-2 rounded-md flex items-center gap-2", getEventStyles(event.type))}>
-                                            {event.type === 'reminder' ? <Mail className="h-4 w-4 flex-shrink-0" /> : <FileText className="h-4 w-4 flex-shrink-0" />}
-                                            <div>
-                                                <p className="font-semibold">{event.title}</p>
-                                                <p>{event.clientName}</p>
-                                            </div>
+                                        <div className={cn("text-xs p-2 rounded-md", getEventStyles(event.type))}>
+                                            <p className="font-semibold">{getEventLabel(event.type)}: {event.title}</p>
+                                            <p>{event.clientName}</p>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -138,14 +147,21 @@ const DayView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
             <CardContent>
                 <div className="space-y-4">
                     {dayEvents.length > 0 ? dayEvents.map(event => (
-                        <div key={event.id} className={cn("p-4 rounded-lg flex items-center gap-4", getEventStyles(event.type))}>
-                            {event.type === 'reminder' ? <Mail className="h-5 w-5 flex-shrink-0" /> : <FileText className="h-5 w-5 flex-shrink-0" />}
-                            <div>
-                                <p className="font-bold">{event.title}</p>
-                                <p className="text-sm">{event.clientName}</p>
-                                <p className="text-xs mt-1">Time: {format(event.date, 'p')}</p>
-                            </div>
-                        </div>
+                         <TooltipProvider key={event.id}>
+                           <Tooltip>
+                             <TooltipTrigger asChild>
+                                <div className={cn("p-4 rounded-lg", getEventStyles(event.type))}>
+                                    <p className="font-bold">{getEventLabel(event.type)}: {event.title}</p>
+                                    <p className="text-sm">{event.clientName}</p>
+                                </div>
+                             </TooltipTrigger>
+                             <TooltipContent>
+                               <p className="font-bold">{event.title}</p>
+                               <p>Client: {event.clientName}</p>
+                               <p>Time: {format(event.date, 'p')}</p>
+                             </TooltipContent>
+                           </Tooltip>
+                         </TooltipProvider>
                     )) : <p className="text-muted-foreground text-center py-10">No events scheduled for this day.</p>}
                 </div>
             </CardContent>
@@ -228,7 +244,7 @@ export default function CalendarView() {
               id: `rem-${rem.id}`,
               type: 'reminder',
               date: parseISO(rem.reminder_date),
-              title: `Reminder: ${rem.request.title}`,
+              title: `${rem.request.title}`,
               clientName: rem.client.full_name,
               clientId: rem.client.id,
               ownerId: rem.request.created_by,
@@ -368,7 +384,7 @@ export default function CalendarView() {
                     table: 'w-full border-collapse',
                     head_row: 'grid grid-cols-7',
                     head_cell: 'text-muted-foreground font-normal text-xs uppercase pt-2 pb-2 text-center',
-                    row: 'grid grid-cols-7 w-full flex-1',
+                    row: 'grid grid-cols-1 sm:grid-cols-7 w-full flex-1',
                     cell: 'text-sm text-left p-0 relative focus-within:relative focus-within:z-20 border',
                     day: 'h-full w-full p-0 text-left align-top font-medium aria-selected:opacity-100',
                     day_selected: 'bg-transparent text-primary border-2 border-primary rounded-none',
