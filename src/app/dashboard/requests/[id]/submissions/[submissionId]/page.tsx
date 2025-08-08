@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -93,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} />
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -273,33 +272,24 @@ export default function SubmissionDetailPage() {
     if (!contentToPrint) return;
     setIsExporting(true);
     
-    // Create a clone of the node to modify image sources
     const clone = contentToPrint.cloneNode(true) as HTMLElement;
     
     try {
         const imageElements = Array.from(clone.querySelectorAll('img'));
         
         const imagePromises = imageElements.map(async (img) => {
-            const originalSrc = img.src;
-            // Prevent browser from trying to fetch from cache with a different origin policy
-            if (originalSrc.startsWith('http')) { 
+            const originalSrc = img.dataset.src || img.src;
+            if (originalSrc.startsWith('http')) {
                 try {
                     const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(originalSrc)}`);
                     if (!response.ok) {
-                        throw new Error(`Failed to proxy image: ${response.statusText}`);
+                        const errorData = await response.json();
+                        throw new Error(`Failed to proxy image: ${errorData.error}`);
                     }
-                    const blob = await response.blob();
-                    const dataUri = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result as string);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(blob);
-                    });
+                    const dataUri = await response.text();
                     img.src = dataUri;
                 } catch(e) {
                     console.error("Could not load image for PDF via proxy:", originalSrc, e);
-                    // Optionally, replace with a placeholder if it fails
-                    // img.src = "path/to/placeholder.png"; 
                 }
             }
         });
@@ -470,4 +460,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
