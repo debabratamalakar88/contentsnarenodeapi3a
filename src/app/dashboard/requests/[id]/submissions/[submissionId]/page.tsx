@@ -32,7 +32,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost';
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
 
     switch (question.type) {
         case 'date':
@@ -88,7 +88,7 @@ const renderAnswer = (question: Question, answer: any) => {
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {files.map((file, index) => {
-                         const fileUrl = file.url && API_ASSETS_BASE_URL ? `${API_ASSETS_BASE_URL}${file.url}` : '#';
+                         const fileUrl = file.url && API_ASSETS_BASE_URL ? `${API_ASSETS_BASE_URL}${file.url.startsWith('/') ? '' : '/'}${file.url}` : '#';
                          if (question.type === 'image-upload' && isImageFile(file.filename)) {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
@@ -276,8 +276,6 @@ export default function SubmissionDetailPage() {
     try {
       const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
       
-      // We need to append the clone to the body to ensure styles are applied
-      // but we can make it invisible
       clonedContent.style.position = 'absolute';
       clonedContent.style.left = '-9999px';
       clonedContent.style.top = '-9999px';
@@ -286,7 +284,6 @@ export default function SubmissionDetailPage() {
       const canvas = await html2canvas(clonedContent, {
         scale: 2,
         useCORS: true,
-        allowTaint: true, // This is important for cross-origin images
       });
       
       document.body.removeChild(clonedContent);
