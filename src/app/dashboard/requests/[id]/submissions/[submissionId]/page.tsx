@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -31,7 +30,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = 'http://contentsnare.technovosac.com';
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || 'http://localhost/projects/laravel/laravel12/contentsnare_api/public';
 
     switch (question.type) {
         case 'date':
@@ -282,14 +281,13 @@ export default function SubmissionDetailPage() {
           try {
             const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(img.src)}`);
             if (!response.ok) {
-              throw new Error(`Failed to proxy image: ${response.statusText}`);
+              const errorData = await response.json();
+              throw new Error(`Failed to proxy image: ${errorData.message}`);
             }
             const { dataUri } = await response.json();
             img.src = dataUri;
           } catch(e) {
             console.error("Could not load image for PDF via proxy:", img.src, e);
-            // Optionally, replace with a placeholder if it fails
-            // img.src = "path/to/placeholder.png"; 
           }
         });
 
@@ -297,8 +295,8 @@ export default function SubmissionDetailPage() {
         
         const canvas = await html2canvas(contentClone, {
             scale: 2,
-            allowTaint: true,
             useCORS: true,
+            allowTaint: true,
             logging: true,
         });
 
@@ -468,4 +466,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
