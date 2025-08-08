@@ -282,8 +282,8 @@ export default function SubmissionDetailPage() {
                 reader.readAsDataURL(blob);
             });
         } catch (error) {
-            console.error(`Failed to fetch and convert image: ${url}`, error);
-            return null; // Return null if fetching fails
+            console.error(`Failed to fetch image: ${url}`, error);
+            return null;
         }
     };
 
@@ -292,6 +292,10 @@ export default function SubmissionDetailPage() {
         document.body.appendChild(clonedContent);
         
         clonedContent.style.width = `${contentToPrint.offsetWidth}px`;
+        clonedContent.style.display = 'block';
+        clonedContent.style.position = 'absolute';
+        clonedContent.style.left = '-9999px';
+
 
         const images = Array.from(clonedContent.getElementsByTagName('img'));
         const imagePromises = images.map(async (img) => {
@@ -307,7 +311,8 @@ export default function SubmissionDetailPage() {
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true, 
-            allowTaint: true
+            allowTaint: true,
+            logging: false,
         });
         
         document.body.removeChild(clonedContent);
@@ -476,5 +481,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
-    
