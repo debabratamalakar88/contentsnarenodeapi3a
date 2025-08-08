@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, CheckCircle, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO, isValid } from 'date-fns';
@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const isImageFile = (filename: string) => {
     if (!filename) return false;
@@ -144,6 +146,8 @@ export default function SubmissionDetailPage() {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [request, setRequest] = useState<RequestType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const submissionContentRef = useRef<HTMLDivElement>(null);
 
   const submissionId = Number(params.submissionId);
   const requestId = Number(params.id);
@@ -262,6 +266,64 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
+  const handleExportPdf = async () => {
+    if (!submissionContentRef.current) return;
+    setIsExporting(true);
+
+    try {
+        const canvas = await html2canvas(submissionContentRef.current, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: 'a4',
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgWidth / imgHeight;
+        
+        let finalImgWidth = pdfWidth;
+        let finalImgHeight = pdfWidth / ratio;
+        
+        if (finalImgHeight > pdfHeight) {
+            finalImgHeight = pdfHeight;
+            finalImgWidth = pdfHeight * ratio;
+        }
+
+        let heightLeft = imgHeight;
+        let position = 0;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        pdf.addImage(imgData, 'PNG', 0, position, finalImgWidth, finalImgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+        
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, finalImgWidth, finalImgHeight, undefined, 'FAST');
+            heightLeft -= pageHeight;
+        }
+        
+        pdf.save(`submission-${submission?.submission_code}.pdf`);
+        toast({ title: 'Success', description: 'PDF export has started.' });
+
+    } catch (error) {
+        console.error("PDF Export Error: ", error);
+        toast({ title: 'Error', description: 'Failed to export PDF.', variant: 'destructive' });
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -297,15 +359,21 @@ export default function SubmissionDetailPage() {
   return (
     <div className="bg-white min-h-full w-full">
       <div className="p-6">
-        <div className="flex items-center gap-4 mb-4">
-            <Button variant="outline" size="icon" asChild>
-                <Link href={`/dashboard/requests/${requestId}`}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Link>
+        <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" asChild>
+                    <Link href={`/dashboard/requests/${requestId}`}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Link>
+                </Button>
+                <h1 className="text-2xl font-bold">Submission Details</h1>
+            </div>
+            <Button onClick={handleExportPdf} disabled={isExporting}>
+                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                Export as PDF
             </Button>
-            <h1 className="text-2xl font-bold">Submission Details</h1>
         </div>
-        <Card className="bg-card shadow-sm w-full">
+        <Card className="bg-card shadow-sm w-full" ref={submissionContentRef}>
             <CardHeader>
                 <div className="flex justify-between items-start flex-wrap gap-4">
                     <div>
