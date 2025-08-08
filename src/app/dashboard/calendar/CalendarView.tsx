@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { getAllRequests, getReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
+import { getAllRequests, getCalendarReminders, type Request, type Reminder, type Client, getClients, getProfile, type User } from '@/lib/api';
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isWithinInterval, getDate, startOfWeek, endOfWeek, eachDayOfInterval as eachDayOfWeek, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -91,7 +91,7 @@ const WeekView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => 
 }
 
 const DayView = ({ date, events }: { date: Date, events: CalendarEvent[] }) => {
-    const dayEvents = events.filter(event => isSameDay(event.date, date));
+    const dayEvents = events.filter(event => isSameDay(event.date, day));
     return (
         <Card className="m-6">
             <CardHeader>
@@ -136,9 +136,9 @@ export default function CalendarView() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [requestsData, remindersResponse, clientsData, profileData] = await Promise.all([
+        const [requestsData, remindersData, clientsData, profileData] = await Promise.all([
           getAllRequests(token!),
-          getReminders(token!),
+          getCalendarReminders(token!),
           getClients(token!),
           getProfile(token!),
         ]);
@@ -149,7 +149,6 @@ export default function CalendarView() {
         }
 
         const clientMap = new Map(clientsData.map(c => [c.id, c.full_name]));
-        const remindersData = remindersResponse.data || [];
         const allEvents: CalendarEvent[] = [];
 
         requestsData.forEach((req) => {

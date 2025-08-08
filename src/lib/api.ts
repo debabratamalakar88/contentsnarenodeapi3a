@@ -965,6 +965,10 @@ export async function getReminders(token: string, page: number = 1): Promise<Pag
     return fetchWithToken(`${API_BASE_URL}/api/reminders?page=${page}`, token);
 }
 
+export async function getCalendarReminders(token: string): Promise<Reminder[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/reminders/calendar`, token);
+}
+
 export async function deleteReminder(token: string, id: number): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/reminders/${id}`, token, {
         method: 'DELETE',
