@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || 'http://localhost/projects/laravel/laravel12/contentsnare_api/public';
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost';
 
     switch (question.type) {
         case 'date':
@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200} crossOrigin="anonymous"/>
+                                     <Image src={fileUrl} alt={file.filename || 'Uploaded image'} data-src={fileUrl} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" width={200} height={200}/>
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted truncate" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -275,8 +275,8 @@ export default function SubmissionDetailPage() {
     try {
         const canvas = await html2canvas(contentToPrint, { 
             scale: 2,
-            useCORS: true, // Attempt to use CORS to load images
-            allowTaint: true // Allow tainting the canvas for cross-origin images
+            useCORS: true,
+            allowTaint: true
         });
         
         const imgData = canvas.toDataURL('image/png');

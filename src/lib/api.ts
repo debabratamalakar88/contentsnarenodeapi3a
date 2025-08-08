@@ -2,7 +2,7 @@
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
+const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export interface User {
   id: number;
@@ -269,7 +269,6 @@ export interface PaginatedTemplateCategories extends PaginatedResponse<TemplateC
 
 
 async function handleResponse(response: Response) {
-  // A 204 No Content response has no body, so we return an empty object.
   if (response.status === 204) {
     return {};
   }
@@ -283,15 +282,19 @@ async function handleResponse(response: Response) {
     } catch (e) {
       errorData = { message: responseText || `Request failed with status ${response.status}` };
     }
+    
+    // Ensure the thrown object has a message property
+    if (typeof errorData !== 'object' || errorData === null || !('message' in errorData)) {
+        throw { message: responseText || 'An unknown error occurred', status: response.status };
+    }
+
     throw errorData;
   }
 
-  // If the response text is empty, we can also return an empty object if the status is OK.
   if (!responseText) {
     if (response.ok) {
       return {};
     } else {
-      // If not ok and empty, throw a generic error.
       throw { message: `Request failed with status ${response.status}: ${response.statusText}`, status: response.status };
     }
   }
