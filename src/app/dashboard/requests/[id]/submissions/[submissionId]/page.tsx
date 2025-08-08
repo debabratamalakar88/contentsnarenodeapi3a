@@ -31,7 +31,7 @@ const renderAnswer = (question: Question, answer: any) => {
         return <p className="text-muted-foreground italic">No answer provided.</p>;
     }
     
-    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
+    const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
 
     switch (question.type) {
         case 'date':
@@ -87,7 +87,7 @@ const renderAnswer = (question: Question, answer: any) => {
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {files.map((file, index) => {
-                         const fileUrl = file.url ? `${API_ASSETS_BASE_URL}${file.url}` : '#';
+                         const fileUrl = file.url && API_ASSETS_BASE_URL ? `${API_ASSETS_BASE_URL}${file.url}` : '#';
                          if (question.type === 'image-upload' && isImageFile(file.filename)) {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
@@ -277,20 +277,20 @@ export default function SubmissionDetailPage() {
         document.body.appendChild(contentClone);
 
         const images = Array.from(contentClone.getElementsByTagName('img'));
-        const imagePromises = images.map(img => {
-            if (img.src.startsWith('data:')) return Promise.resolve();
-            return fetch(img.src)
-                .then(response => response.blob())
-                .then(blob => new Promise<void>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        img.src = reader.result as string;
-                        resolve();
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                }))
-                .catch(e => console.error("Could not load image for PDF:", img.src, e));
+        const imagePromises = images.map(async (img) => {
+          if (!img.src || img.src.startsWith('data:')) return;
+          try {
+            const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(img.src)}`);
+            if (!response.ok) {
+              throw new Error(`Failed to proxy image: ${response.statusText}`);
+            }
+            const { dataUri } = await response.json();
+            img.src = dataUri;
+          } catch(e) {
+            console.error("Could not load image for PDF via proxy:", img.src, e);
+            // Optionally, replace with a placeholder if it fails
+            // img.src = "path/to/placeholder.png"; 
+          }
         });
 
         await Promise.all(imagePromises);
@@ -298,8 +298,6 @@ export default function SubmissionDetailPage() {
         const canvas = await html2canvas(contentClone, {
             scale: 2,
             logging: true,
-            allowTaint: false,
-            useCORS: true,
         });
 
         document.body.removeChild(contentClone);
@@ -393,19 +391,21 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full">
            <div ref={submissionContentRef} className="p-8">
             <header className="mb-8 pb-4 border-b">
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
                         <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                        <div className="mt-4 flex flex-col gap-2 text-sm">
-                           <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground w-32">Submission Code:</span>
-                                <span className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground w-32">Submitted On:</span>
-                                <span className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</span>
-                            </div>
-                        </div>
+                        <table className="text-sm">
+                            <tbody>
+                                <tr>
+                                    <td className="font-semibold text-foreground pr-4 py-1">Submission Code:</td>
+                                    <td className="font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">{submission.submission_code}</td>
+                                </tr>
+                                <tr>
+                                    <td className="font-semibold text-foreground pr-4 py-1">Submitted On:</td>
+                                    <td className="text-muted-foreground">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                      <div className="flex justify-end items-start">
                          <Badge
