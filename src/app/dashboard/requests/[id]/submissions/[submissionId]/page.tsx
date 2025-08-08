@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -272,19 +273,10 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
 
     try {
-      const clonedContent = contentToPrint.cloneNode(true) as HTMLElement;
-      
-      clonedContent.style.position = 'absolute';
-      clonedContent.style.left = '-9999px';
-      clonedContent.style.top = '-9999px';
-      document.body.appendChild(clonedContent);
-      
-      const canvas = await html2canvas(clonedContent, {
+      const canvas = await html2canvas(contentToPrint, {
         scale: 2,
         useCORS: true,
       });
-      
-      document.body.removeChild(clonedContent);
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -294,23 +286,23 @@ export default function SubmissionDetailPage() {
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      const ratio = canvasHeight / canvasWidth;
-      const imgHeight = pdfWidth * ratio;
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      const ratio = canvasWidth / pdfWidth;
+      const imgHeight = canvasHeight / ratio;
       
       let heightLeft = imgHeight;
       let position = 0;
       
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pageHeight;
+      heightLeft -= pdfHeight;
 
       while (heightLeft > 0) {
-          position -= pageHeight;
+          position = position - pdfHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pageHeight;
+          heightLeft -= pdfHeight;
       }
 
       pdf.save(`submission-${submission?.submission_code}.pdf`);
@@ -453,3 +445,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
