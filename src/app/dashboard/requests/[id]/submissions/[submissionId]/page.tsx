@@ -348,18 +348,18 @@ export default function SubmissionDetailPage() {
         const scale = pdfWidth / contentRect.width;
 
         const addLinksToPage = (pageNumber: number) => {
-            const pageTopOffsetMm = (pageNumber - 1) * pdfHeight;
+            const contentTop = clonedContent.offsetTop;
+            const pageTopOffset = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
-                
-                const linkTopMm = (linkRect.top - contentRect.top) * scale;
+                const linkTopMm = (linkRect.top - contentTop) * scale;
 
-                if (linkTopMm >= pageTopOffsetMm && linkTopMm < pageTopOffsetMm + pdfHeight) {
-                    const linkLeftMm = (linkRect.left - contentRect.left) * scale;
+                if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
+                    const linkLeftMm = (linkRect.left - clonedContent.offsetLeft) * scale;
                     const linkWidthMm = linkRect.width * scale;
                     const linkHeightMm = linkRect.height * scale;
-                    const linkTopOnPageMm = linkTopMm - pageTopOffsetMm;
+                    const linkTopOnPageMm = linkTopMm - pageTopOffset;
                     pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
             });
@@ -369,11 +369,13 @@ export default function SubmissionDetailPage() {
         addLinksToPage(1);
         heightLeft -= pdfHeight;
 
+        let pageCount = 1;
         while (heightLeft > 0) {
             position -= pdfHeight;
+            pageCount++;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            addLinksToPage(pdf.internal.pages.length);
+            addLinksToPage(pageCount);
             heightLeft -= pdfHeight;
         }
         
