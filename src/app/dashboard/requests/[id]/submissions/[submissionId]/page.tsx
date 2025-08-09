@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -333,15 +332,13 @@ export default function SubmissionDetailPage() {
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
         const contentTop = clonedContent.getBoundingClientRect().top;
         const scale = pdfWidth / clonedContent.getBoundingClientRect().width;
-        const offsetPx = 0; // Removed custom offset
-        const yOffsetMm = offsetPx * 0.264583;
 
         const addLinksToPage = (pageNumber: number) => {
             const pageTopOffsetMm = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
-                const linkTopMm = ((linkRect.top - contentTop) * scale) + yOffsetMm;
+                const linkTopMm = (linkRect.top - contentTop) * scale;
                 
                 if (linkTopMm >= pageTopOffsetMm && linkTopMm < pageTopOffsetMm + pdfHeight) {
                     const linkLeftMm = linkRect.left * scale;
@@ -431,35 +428,41 @@ export default function SubmissionDetailPage() {
         <Card className="bg-card shadow-sm w-full" ref={submissionContentRef}>
            <div className="p-8">
                 <header className="mb-8 pb-4 border-b">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
-                            <table className="text-sm mt-4">
-                                <tbody>
-                                    <tr className="bg-transparent hover:bg-transparent">
-                                        <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submission Code:</td>
-                                        <td className="align-top">
-                                            <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</span>
-                                        </td>
-                                    </tr>
-                                    <tr className="bg-transparent hover:bg-transparent">
-                                        <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted On:</td>
-                                        <td className="text-gray-600 align-top">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                         <Badge
-                            variant={'outline'}
-                            className={cn(
-                                "capitalize text-base px-4 py-1 flex items-center justify-center",
-                                submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
-                            )}
-                        >
-                            {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                            <span className="relative">{submission.status}</span>
-                        </Badge>
-                    </div>
+                     <table className="w-full">
+                        <tbody>
+                            <tr>
+                                <td className="align-middle">
+                                    <h2 className="text-2xl font-bold">Submission for "{request.title}"</h2>
+                                    <table className="text-sm mt-4">
+                                        <tbody>
+                                            <tr className="bg-transparent hover:bg-transparent">
+                                                <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submission Code:</td>
+                                                <td className="align-top">
+                                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</span>
+                                                </td>
+                                            </tr>
+                                            <tr className="bg-transparent hover:bg-transparent">
+                                                <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted On:</td>
+                                                <td className="text-gray-600 align-top">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td className="w-px px-4 align-middle">
+                                    <Badge
+                                        variant={'outline'}
+                                        className={cn(
+                                            "capitalize text-base px-4 py-1 flex items-center justify-center",
+                                            submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
+                                        )}
+                                    >
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        {submission.status}
+                                    </Badge>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </header>
                 <div>
                     {processedData.length > 0 ? (
@@ -506,3 +509,5 @@ export default function SubmissionDetailPage() {
   );
 }
 
+
+    
