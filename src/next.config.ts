@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         hostname: 'localhost',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'narlaxsoftware.com',
+        pathname: '/**',
+      },
     ],
   },
 };
