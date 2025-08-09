@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -315,12 +314,12 @@ export default function SubmissionDetailPage() {
             const dataUri = await imageToDataUri(img.src);
             if (dataUri) {
                 return new Promise<void>((resolve) => {
-                img.onload = () => resolve();
-                img.onerror = () => {
-                    console.warn(`Failed to load image from data URI: ${img.src}`);
-                    resolve();
-                };
-                img.src = dataUri;
+                    img.onload = () => resolve();
+                    img.onerror = () => {
+                        console.warn(`Failed to load image from data URI: ${img.src}`);
+                        resolve();
+                    };
+                    img.src = dataUri;
                 });
             }
             }
@@ -345,34 +344,29 @@ export default function SubmissionDetailPage() {
         let heightLeft = imgHeight;
         let position = 0;
         
-        const contentTop = clonedContent.offsetTop;
-        const contentLeft = clonedContent.offsetLeft;
-        const scale = pdfWidth / canvas.width;
-        
+        const contentRect = clonedContent.getBoundingClientRect();
+        const scale = pdfWidth / contentRect.width;
+
         const addLinksToPage = (pageNumber: number) => {
-            const pageTopOffset = (pageNumber - 1) * pdfHeight;
+            const pageTopOffsetMm = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
-                const rect = link.getBoundingClientRect();
-                const linkTop = rect.top - contentTop;
-                const linkLeft = rect.left - contentLeft;
+                const linkRect = link.getBoundingClientRect();
+                
+                const linkTopMm = (linkRect.top - contentRect.top) * scale;
 
-                const linkTopMm = linkTop * scale;
-                const linkLeftMm = linkLeft * scale;
-                const linkWidthMm = rect.width * scale;
-                const linkHeightMm = rect.height * scale;
-
-                const linkTopOnPage = linkTopMm - pageTopOffset;
-
-                if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
-                    pdf.link(linkLeftMm, linkTopOnPage, linkWidthMm, linkHeightMm, { url: link.href });
+                if (linkTopMm >= pageTopOffsetMm && linkTopMm < pageTopOffsetMm + pdfHeight) {
+                    const linkLeftMm = (linkRect.left - contentRect.left) * scale;
+                    const linkWidthMm = linkRect.width * scale;
+                    const linkHeightMm = linkRect.height * scale;
+                    const linkTopOnPageMm = linkTopMm - pageTopOffsetMm;
+                    pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
             });
         };
-
+        
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         addLinksToPage(1);
-
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
@@ -520,4 +514,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
