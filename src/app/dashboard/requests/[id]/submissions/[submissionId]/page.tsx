@@ -93,17 +93,17 @@ const renderAnswer = (question: Question, answer: any) => {
                                    <div className="relative aspect-square bg-muted">
                                      <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
-                                    <div className="text-xs text-center p-2 bg-muted break-words flex items-center justify-center" title={file.filename}>
-                                        {file.filename || 'View Image'}
+                                    <div className="text-xs p-2 bg-muted break-words flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                        <span className="truncate">{file.filename || 'View Image'}</span>
                                     </div>
                                 </a>
                             );
                          }
                          return (
-                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted">
-                                <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center" title={file.filename}>
-                                    {file.filename || 'Download File'}
+                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
+                                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
+                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                    <span className="truncate">{file.filename || 'Download File'}</span>
                                 </span>
                             </a>
                          );
@@ -313,11 +313,15 @@ export default function SubmissionDetailPage() {
         }));
 
         await new Promise((r) => setTimeout(r, 500));
+        
+        const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        const contentTop = clonedContent.getBoundingClientRect().top;
+        const scale = 210 / clonedContent.getBoundingClientRect().width; // A4 width is 210mm
 
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
-            logging: false,
+            logging: true,
         });
         
         const imgData = canvas.toDataURL('image/png');
@@ -329,10 +333,6 @@ export default function SubmissionDetailPage() {
         let heightLeft = imgHeight;
         let position = 0;
         
-        const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-        const contentTop = clonedContent.getBoundingClientRect().top;
-        const scale = pdfWidth / clonedContent.getBoundingClientRect().width;
-
         const addLinksToPage = (pageNumber: number) => {
             const pageTopOffsetMm = (pageNumber - 1) * pdfHeight;
 
@@ -508,6 +508,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
-
-    
