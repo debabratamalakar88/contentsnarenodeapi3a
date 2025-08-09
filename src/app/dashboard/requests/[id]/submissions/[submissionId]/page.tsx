@@ -282,8 +282,6 @@ export default function SubmissionDetailPage() {
     clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
 
     try {
-        const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-        
         const imageToDataUri = async (url: string) => {
             try {
                 const response = await fetch(`/api/cors-proxy?url=${encodeURIComponent(url)}`);
@@ -332,13 +330,12 @@ export default function SubmissionDetailPage() {
         let heightLeft = imgHeight;
         let position = 0;
         
-        const contentRect = clonedContent.getBoundingClientRect();
-        const contentTop = contentRect.top;
-        const scale = pdfWidth / contentRect.width;
+        const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        const contentTop = clonedContent.getBoundingClientRect().top;
+        const scale = pdfWidth / clonedContent.getBoundingClientRect().width;
 
         const addLinksToPage = (pageNumber: number) => {
-            const yOffsetPx = 36;
-            const yOffsetMm = yOffsetPx * scale;
+            const yOffsetMm = 0; 
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
@@ -346,12 +343,12 @@ export default function SubmissionDetailPage() {
                 const linkTopMm = (linkRect.top - contentTop) * scale;
                 
                 if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
-                    const linkLeftMm = linkRect.left - contentRect.left;
-                    const linkWidthMm = linkRect.width;
-                    const linkHeightMm = linkRect.height;
+                    const linkLeftMm = (linkRect.left - clonedContent.getBoundingClientRect().left) * scale;
+                    const linkWidthMm = linkRect.width * scale;
+                    const linkHeightMm = linkRect.height * scale;
                     const linkTopOnPageMm = linkTopMm - pageTopOffset + yOffsetMm; 
                     
-                    pdf.link(linkLeftMm * scale, linkTopOnPageMm, linkWidthMm * scale, linkHeightMm * scale, { url: link.href });
+                    pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
             });
         };
@@ -454,7 +451,7 @@ export default function SubmissionDetailPage() {
                          <Badge
                             variant={'outline'}
                             className={cn(
-                                "capitalize h-fit text-base px-4 py-1 flex items-center justify-center relative bottom-[6px]",
+                                "capitalize text-base px-4 py-1 flex items-center justify-center",
                                 submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
                             )}
                         >
@@ -507,6 +504,7 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
 
 
 
