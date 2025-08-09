@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -81,7 +82,7 @@ const renderAnswer = (question: Question, answer: any) => {
 
         case 'file':
         case 'image-upload':
-             const files = Array.isArray(answer) ? answer : [];
+            const files = Array.isArray(answer) ? answer : [];
             if (files.length === 0) return <p className="text-muted-foreground italic">No files uploaded.</p>;
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -345,13 +346,13 @@ export default function SubmissionDetailPage() {
         let position = 0;
         
         const contentRect = clonedContent.getBoundingClientRect();
+        const contentTop = contentRect.top;
         const scale = pdfWidth / contentRect.width;
 
         const addLinksToPage = (pageNumber: number) => {
-            const contentTop = clonedContent.getBoundingClientRect().top;
-            const pageTopOffset = (pageNumber - 1) * pdfHeight;
-            const yOffsetPx = 36; 
+            const yOffsetPx = 36;
             const yOffsetMm = yOffsetPx * scale;
+            const pageTopOffset = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
@@ -465,7 +466,7 @@ export default function SubmissionDetailPage() {
                          <Badge
                             variant={'outline'}
                             className={cn(
-                                "capitalize h-fit text-base px-4 py-1",
+                                "capitalize h-fit text-base px-4 py-1 flex items-center justify-center",
                                 submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
                             )}
                         >
@@ -518,4 +519,5 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
 
