@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { countries } from '@/lib/countries';
 import { iconList } from '@/components/ui/icon-selector';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const isImageFile = (filename: string) => {
     if (!filename) return false;
@@ -264,47 +266,103 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
- const handleExportPdf = async () => {
-    setIsExporting(true);
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        toast({ title: 'Authentication Error', variant: 'destructive' });
-        setIsExporting(false);
-        return;
+  const imageToDataUri = async (url: string) => {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.warn(`Failed to fetch image: ${url}, status: ${response.status}`);
+            return null;
+        }
+        const blob = await response.blob();
+        return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => {
+              console.warn(`Failed to read blob for image: ${url}`);
+              resolve('');
+            };
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error(`Error converting image to data URI: ${url}`, error);
+        return null;
     }
+  };
+
+
+ const handleExportPdf = async () => {
+    if (!submissionContentRef.current) return;
+    setIsExporting(true);
+
+    const originalContent = submissionContentRef.current;
+    const clonedContent = originalContent.cloneNode(true) as HTMLDivElement;
+    document.body.appendChild(clonedContent);
+    
+    // Make sure all accordions are open in the clone
+    clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => {
+        const trigger = el.querySelector('[aria-expanded="false"]');
+        if (trigger) (trigger as HTMLElement).click();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Allow time for accordions to open
+
+    const images = Array.from(clonedContent.querySelectorAll('img'));
+    const imagePromises = images.map(async (img) => {
+        if (img.src && !img.src.startsWith('data:')) {
+            const dataUri = await imageToDataUri(img.src);
+            if (dataUri) {
+                return new Promise<void>((resolve) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // Resolve even on error to not block PDF generation
+                    img.src = dataUri;
+                });
+            }
+        }
+    });
+
+    await Promise.all(imagePromises);
+    await new Promise((r) => setTimeout(r, 300)); // Short delay for DOM to catch up
 
     try {
-        const exportUrl = `${window.location.href}?pdf=true`;
-        
-        const response = await fetch('/api/export-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: exportUrl, token }),
+        const canvas = await html2canvas(clonedContent, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.details || 'PDF generation failed on the server.');
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / pdfWidth;
+        const imgHeight = canvasHeight / ratio;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
         }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `submission-${submission?.submission_code}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
+        
+        pdf.save(`submission-${submission?.submission_code}.pdf`);
         toast({ title: 'PDF Exported Successfully' });
-    } catch (error: any) {
+    } catch (error) {
         console.error("PDF Export Error: ", error);
-        toast({ title: 'Error', description: `Failed to export PDF: ${error.message}`, variant: 'destructive' });
+        toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
     } finally {
+        document.body.removeChild(clonedContent);
         setIsExporting(false);
     }
   };
+
 
   if (isLoading) {
     return (
