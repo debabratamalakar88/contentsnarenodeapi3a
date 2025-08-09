@@ -104,7 +104,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                                      <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                                    </div>
                                                     <div className="text-xs p-2 bg-muted break-words flex items-center justify-center min-h-[40px]" title={file.filename}>
-                                                        <span className="truncate">{file.filename || 'View Image'}</span>
+                                                        <span className="break-words">{file.filename || 'View Image'}</span>
                                                     </div>
                                                 </a>
                                             </td>
@@ -115,7 +115,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
                                                 <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
                                                 <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
-                                                    <span className="truncate">{file.filename || 'Download File'}</span>
+                                                    <span className="break-words">{file.filename || 'Download File'}</span>
                                                 </span>
                                             </a>
                                         </td>
@@ -333,8 +333,7 @@ export default function SubmissionDetailPage() {
         
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
         const contentTop = clonedContent.getBoundingClientRect().top;
-        const scale = 210 / clonedContent.getBoundingClientRect().width;
-
+        
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
@@ -351,19 +350,21 @@ export default function SubmissionDetailPage() {
         let position = 0;
         
         const addLinksToPage = (pageNumber: number) => {
-            const pageTopOffsetMm = (pageNumber - 1) * pdfHeight;
-
+            const pageTopOffset = (pageNumber - 1) * pdfHeight;
+            const scaleFactor = pdfWidth / canvas.width * 2; // Adjust for html2canvas scale
+             const linkVerticalOffset = 6;
+            
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
-                const linkTopMm = (linkRect.top - contentTop) * scale;
-                
-                if (linkTopMm >= pageTopOffsetMm && linkTopMm < pageTopOffsetMm + pdfHeight) {
-                    const linkLeftMm = linkRect.left * scale;
-                    const linkWidthMm = linkRect.width * scale;
-                    const linkHeightMm = linkRect.height * scale;
-                    const linkTopOnPageMm = (linkTopMm - pageTopOffsetMm) + (6 * scale); // 6px offset
+                const linkTop = (linkRect.top - contentTop) * scaleFactor;
+
+                if(linkTop >= pageTopOffset && linkTop < pageTopOffset + pdfHeight) {
+                    const linkLeftOnPage = linkRect.left * scaleFactor;
+                    const linkTopOnPage = (linkTop - pageTopOffset) + linkVerticalOffset;
+                    const linkWidth = linkRect.width * scaleFactor;
+                    const linkHeight = linkRect.height * scaleFactor;
                     
-                    pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
+                    pdf.link(linkLeftOnPage, linkTopOnPage, linkWidth, linkHeight, { url: link.href });
                 }
             });
         };
