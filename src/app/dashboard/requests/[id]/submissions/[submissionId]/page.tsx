@@ -98,7 +98,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                         {file.filename || 'View Image'}
                                     </div>
                                 </a>
-                            )
+                            );
                          }
                          return (
                             <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted">
@@ -107,10 +107,10 @@ const renderAnswer = (question: Question, answer: any) => {
                                     {file.filename || 'Download File'}
                                 </span>
                             </a>
-                         )
+                         );
                     })}
                 </div>
-            )
+            );
         case 'url':
             if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
                 return <a href={answer} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{answer}</a>
@@ -270,21 +270,19 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
- const handleExportPdf = async () => {
+  const handleExportPdf = async () => {
     if (!submissionContentRef.current) return;
     setIsExporting(true);
     toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
 
-    const originalContent = submissionContentRef.current;
-    
     try {
-        const canvas = await html2canvas(originalContent, {
+        const canvas = await html2canvas(submissionContentRef.current, {
             scale: 2,
-            useCORS: true, 
-            proxy: '/api/cors-proxy', // Use the new proxy
+            useCORS: true,
+            proxy: '/api/cors-proxy',
             logging: process.env.NODE_ENV === 'development',
         });
-
+        
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();

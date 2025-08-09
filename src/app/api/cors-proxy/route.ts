@@ -29,12 +29,13 @@ export async function GET(req: NextRequest) {
         const imageBuffer = await response.arrayBuffer();
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
         
+        const headers = new Headers();
+        headers.set('Content-Type', contentType);
+        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+
         return new NextResponse(imageBuffer, {
             status: 200,
-            headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'public, max-age=31536000, immutable',
-            },
+            headers: headers,
         });
 
     } catch (error) {
@@ -45,4 +46,3 @@ export async function GET(req: NextRequest) {
         });
     }
 }
-
