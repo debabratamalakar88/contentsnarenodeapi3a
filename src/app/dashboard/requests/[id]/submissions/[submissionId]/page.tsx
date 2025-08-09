@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -92,7 +92,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted break-words" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -272,7 +272,6 @@ export default function SubmissionDetailPage() {
 
   const imageToDataUri = async (url: string) => {
     try {
-      // Use our own CORS proxy route to fetch the image
       const response = await fetch(`/api/cors-proxy?url=${encodeURIComponent(url)}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch image through proxy. Status: ${response.status}`);
@@ -291,7 +290,7 @@ export default function SubmissionDetailPage() {
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Failed to convert image to Data URI:', error);
+      console.error(`Failed to convert image to Data URI: ${url}`, error);
       return null;
     }
   };
@@ -308,25 +307,35 @@ export default function SubmissionDetailPage() {
       clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
   
       try {
-          const images = Array.from(clonedContent.getElementsByTagName('img'));
+          const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+          const linkData: { url: string; rect: DOMRect }[] = [];
           
+          links.forEach(link => {
+              linkData.push({
+                  url: link.href,
+                  rect: link.getBoundingClientRect(),
+              });
+          });
+
+          const images = Array.from(clonedContent.getElementsByTagName('img'));
           const imagePromises = images.map(async (img) => {
-              if (img.src && !img.src.startsWith('data:')) {
-                  const dataUri = await imageToDataUri(img.src);
-                  if (dataUri) {
-                      return new Promise<void>((resolve) => {
-                          img.onload = () => resolve();
-                          img.onerror = () => resolve(); // Resolve even if one image fails to load
-                          img.src = dataUri;
-                      });
-                  }
+            if (img.src && !img.src.startsWith('data:')) {
+              const dataUri = await imageToDataUri(img.src);
+              if (dataUri) {
+                return new Promise<void>((resolve) => {
+                  img.onload = () => resolve();
+                  img.onerror = () => {
+                    console.warn(`Failed to load image from data URI: ${img.src}`);
+                    resolve();
+                  };
+                  img.src = dataUri;
+                });
               }
-              return Promise.resolve();
+            }
+            return Promise.resolve();
           });
   
           await Promise.all(imagePromises);
-  
-          // Add a small delay for the browser to finish rendering the images
           await new Promise((r) => setTimeout(r, 500));
   
           const canvas = await html2canvas(clonedContent, {
@@ -338,19 +347,45 @@ export default function SubmissionDetailPage() {
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
           const imgHeight = (canvas.height * pdfWidth) / canvas.width;
           
           let heightLeft = imgHeight;
           let position = 0;
+          const contentTop = clonedContent.getBoundingClientRect().top;
           
           pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdf.internal.pageSize.getHeight();
-  
+          heightLeft -= pdfHeight;
+          
+          const addLinksToPage = (pageNumber: number) => {
+            const pageTop = (pageNumber - 1) * pdfHeight;
+            const pageBottom = pageNumber * pdfHeight;
+
+            linkData.forEach(link => {
+                const linkRect = link.rect;
+                // Calculate link position relative to the canvas
+                const linkTopMm = ((linkRect.top - contentTop) * pdfWidth) / canvas.width;
+                const linkLeftMm = (linkRect.left * pdfWidth) / canvas.width;
+                const linkWidthMm = (linkRect.width * pdfWidth) / canvas.width;
+                const linkHeightMm = (linkRect.height * pdfWidth) / canvas.width;
+
+                // Adjust for current PDF page
+                const linkTopOnPage = linkTopMm - pageTop;
+                
+                if (linkTopMm >= pageTop && linkTopMm < pageBottom) {
+                    pdf.link(linkLeftMm, linkTopOnPage, linkWidthMm, linkHeightMm, { url: link.url });
+                }
+            });
+          };
+
+          addLinksToPage(1);
+
           while (heightLeft > 0) {
+              position -= pdfHeight;
               pdf.addPage();
-              position -= pdf.internal.pageSize.getHeight();
               pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-              heightLeft -= pdf.internal.pageSize.getHeight();
+              addLinksToPage(pdf.internal.pages.length);
+              heightLeft -= pdfHeight;
           }
           
           pdf.save(`submission-${submission?.submission_code}.pdf`);
