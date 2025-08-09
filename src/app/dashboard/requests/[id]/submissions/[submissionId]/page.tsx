@@ -270,57 +270,98 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
-  const handleExportPdf = async () => {
-    if (!submissionContentRef.current) return;
-    setIsExporting(true);
-    toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
-
-    const clonedContent = submissionContentRef.current.cloneNode(true) as HTMLElement;
-    document.body.appendChild(clonedContent);
-    clonedContent.style.position = 'absolute';
-    clonedContent.style.left = '-9999px';
-    clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
-
+  const imageToDataUri = async (url: string) => {
     try {
-        const canvas = await html2canvas(clonedContent, {
-            scale: 2,
-            useCORS: true,
-            proxy: '/api/cors-proxy',
-            logging: true,
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / pdfWidth;
-        const imgHeight = canvasHeight / ratio;
-        
-        let heightLeft = imgHeight;
-        let position = 0;
-        
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-            position -= pdfHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
-        }
-        
-        pdf.save(`submission-${submission?.submission_code}.pdf`);
-        toast({ title: 'PDF Exported Successfully' });
+      // Use our own CORS proxy route to fetch the image
+      const response = await fetch(`/api/cors-proxy?url=${encodeURIComponent(url)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image through proxy. Status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject('Failed to convert blob to Data URI');
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     } catch (error) {
-        console.error("PDF Export Error: ", error);
-        toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
-    } finally {
-        document.body.removeChild(clonedContent);
-        setIsExporting(false);
+      console.error('Failed to convert image to Data URI:', error);
+      return null;
     }
+  };
+  
+  const handleExportPdf = async () => {
+      if (!submissionContentRef.current) return;
+      setIsExporting(true);
+      toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
+  
+      const clonedContent = submissionContentRef.current.cloneNode(true) as HTMLElement;
+      document.body.appendChild(clonedContent);
+      clonedContent.style.position = 'absolute';
+      clonedContent.style.left = '-9999px';
+      clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
+  
+      try {
+          const images = Array.from(clonedContent.getElementsByTagName('img'));
+          
+          const imagePromises = images.map(async (img) => {
+              if (img.src && !img.src.startsWith('data:')) {
+                  const dataUri = await imageToDataUri(img.src);
+                  if (dataUri) {
+                      return new Promise<void>((resolve) => {
+                          img.onload = () => resolve();
+                          img.onerror = () => resolve(); // Resolve even if one image fails to load
+                          img.src = dataUri;
+                      });
+                  }
+              }
+              return Promise.resolve();
+          });
+  
+          await Promise.all(imagePromises);
+  
+          // Add a small delay for the browser to finish rendering the images
+          await new Promise((r) => setTimeout(r, 500));
+  
+          const canvas = await html2canvas(clonedContent, {
+              scale: 2,
+              useCORS: true,
+              logging: true,
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+          
+          let heightLeft = imgHeight;
+          let position = 0;
+          
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pdf.internal.pageSize.getHeight();
+  
+          while (heightLeft > 0) {
+              pdf.addPage();
+              position -= pdf.internal.pageSize.getHeight();
+              pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+              heightLeft -= pdf.internal.pageSize.getHeight();
+          }
+          
+          pdf.save(`submission-${submission?.submission_code}.pdf`);
+          toast({ title: 'PDF Exported Successfully' });
+      } catch (error) {
+          console.error("PDF Export Error: ", error);
+          toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
+      } finally {
+          document.body.removeChild(clonedContent);
+          setIsExporting(false);
+      }
   };
 
 
