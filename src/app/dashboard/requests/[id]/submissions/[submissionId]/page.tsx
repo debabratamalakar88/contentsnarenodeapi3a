@@ -296,108 +296,103 @@ export default function SubmissionDetailPage() {
   };
   
   const handleExportPdf = async () => {
-      if (!submissionContentRef.current) return;
-      setIsExporting(true);
-      toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
-  
-      const clonedContent = submissionContentRef.current.cloneNode(true) as HTMLElement;
-      document.body.appendChild(clonedContent);
-      clonedContent.style.position = 'absolute';
-      clonedContent.style.left = '-9999px';
-      clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
-  
-      try {
-          const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-          const linkData: { url: string; rect: DOMRect }[] = [];
-          
-          links.forEach(link => {
-              linkData.push({
-                  url: link.href,
-                  rect: link.getBoundingClientRect(),
-              });
-          });
+    if (!submissionContentRef.current) return;
+    setIsExporting(true);
+    toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
 
-          const images = Array.from(clonedContent.getElementsByTagName('img'));
-          const imagePromises = images.map(async (img) => {
+    const clonedContent = submissionContentRef.current.cloneNode(true) as HTMLElement;
+    document.body.appendChild(clonedContent);
+    clonedContent.style.position = 'absolute';
+    clonedContent.style.left = '-9999px';
+    clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
+
+    try {
+        const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        
+        const images = Array.from(clonedContent.getElementsByTagName('img'));
+        const imagePromises = images.map(async (img) => {
             if (img.src && !img.src.startsWith('data:')) {
-              const dataUri = await imageToDataUri(img.src);
-              if (dataUri) {
+            const dataUri = await imageToDataUri(img.src);
+            if (dataUri) {
                 return new Promise<void>((resolve) => {
-                  img.onload = () => resolve();
-                  img.onerror = () => {
+                img.onload = () => resolve();
+                img.onerror = () => {
                     console.warn(`Failed to load image from data URI: ${img.src}`);
                     resolve();
-                  };
-                  img.src = dataUri;
+                };
+                img.src = dataUri;
                 });
-              }
+            }
             }
             return Promise.resolve();
-          });
-  
-          await Promise.all(imagePromises);
-          await new Promise((r) => setTimeout(r, 500));
-  
-          const canvas = await html2canvas(clonedContent, {
-              scale: 2,
-              useCORS: true,
-              logging: true,
-          });
-          
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-          
-          let heightLeft = imgHeight;
-          let position = 0;
-          const contentTop = clonedContent.getBoundingClientRect().top;
-          
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfHeight;
-          
-          const addLinksToPage = (pageNumber: number) => {
-            const pageTop = (pageNumber - 1) * pdfHeight;
-            const pageBottom = pageNumber * pdfHeight;
+        });
 
-            linkData.forEach(link => {
-                const linkRect = link.rect;
-                // Calculate link position relative to the canvas
-                const linkTopMm = ((linkRect.top - contentTop) * pdfWidth) / canvas.width;
-                const linkLeftMm = (linkRect.left * pdfWidth) / canvas.width;
-                const linkWidthMm = (linkRect.width * pdfWidth) / canvas.width;
-                const linkHeightMm = (linkRect.height * pdfWidth) / canvas.width;
+        await Promise.all(imagePromises);
+        await new Promise((r) => setTimeout(r, 500));
 
-                // Adjust for current PDF page
-                const linkTopOnPage = linkTopMm - pageTop;
-                
-                if (linkTopMm >= pageTop && linkTopMm < pageBottom) {
-                    pdf.link(linkLeftMm, linkTopOnPage, linkWidthMm, linkHeightMm, { url: link.url });
+        const canvas = await html2canvas(clonedContent, {
+            scale: 2,
+            useCORS: true,
+            logging: true,
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        const contentTop = clonedContent.offsetTop;
+        const contentLeft = clonedContent.offsetLeft;
+        const scale = pdfWidth / canvas.width;
+        
+        const addLinksToPage = (pageNumber: number) => {
+            const pageTopOffset = (pageNumber - 1) * pdfHeight;
+
+            links.forEach(link => {
+                const rect = link.getBoundingClientRect();
+                const linkTop = rect.top - contentTop;
+                const linkLeft = rect.left - contentLeft;
+
+                const linkTopMm = linkTop * scale;
+                const linkLeftMm = linkLeft * scale;
+                const linkWidthMm = rect.width * scale;
+                const linkHeightMm = rect.height * scale;
+
+                const linkTopOnPage = linkTopMm - pageTopOffset;
+
+                if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
+                    pdf.link(linkLeftMm, linkTopOnPage, linkWidthMm, linkHeightMm, { url: link.href });
                 }
             });
-          };
+        };
 
-          addLinksToPage(1);
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        addLinksToPage(1);
 
-          while (heightLeft > 0) {
-              position -= pdfHeight;
-              pdf.addPage();
-              pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-              addLinksToPage(pdf.internal.pages.length);
-              heightLeft -= pdfHeight;
-          }
-          
-          pdf.save(`submission-${submission?.submission_code}.pdf`);
-          toast({ title: 'PDF Exported Successfully' });
-      } catch (error) {
-          console.error("PDF Export Error: ", error);
-          toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
-      } finally {
-          document.body.removeChild(clonedContent);
-          setIsExporting(false);
-      }
-  };
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position -= pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            addLinksToPage(pdf.internal.pages.length);
+            heightLeft -= pdfHeight;
+        }
+        
+        pdf.save(`submission-${submission?.submission_code}.pdf`);
+        toast({ title: 'PDF Exported Successfully' });
+    } catch (error) {
+        console.error("PDF Export Error: ", error);
+        toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
+    } finally {
+        document.body.removeChild(clonedContent);
+        setIsExporting(false);
+    }
+};
 
 
   if (isLoading) {
@@ -525,3 +520,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
