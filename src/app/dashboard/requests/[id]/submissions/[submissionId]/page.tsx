@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -298,12 +299,11 @@ export default function SubmissionDetailPage() {
     const clonedContent = originalContent.cloneNode(true) as HTMLDivElement;
     document.body.appendChild(clonedContent);
     
-    // Make sure all accordions are open in the clone
     clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => {
         const trigger = el.querySelector('[aria-expanded="false"]');
         if (trigger) (trigger as HTMLElement).click();
     });
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Allow time for accordions to open
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const images = Array.from(clonedContent.querySelectorAll('img'));
     const imagePromises = images.map(async (img) => {
@@ -312,7 +312,10 @@ export default function SubmissionDetailPage() {
             if (dataUri) {
                 return new Promise<void>((resolve) => {
                     img.onload = () => resolve();
-                    img.onerror = () => resolve(); // Resolve even on error to not block PDF generation
+                    img.onerror = () => {
+                      console.warn(`Failed to load image for PDF export: ${img.src}`);
+                      resolve();
+                    };
                     img.src = dataUri;
                 });
             }
@@ -320,7 +323,7 @@ export default function SubmissionDetailPage() {
     });
 
     await Promise.all(imagePromises);
-    await new Promise((r) => setTimeout(r, 300)); // Short delay for DOM to catch up
+    await new Promise((r) => setTimeout(r, 300)); 
 
     try {
         const canvas = await html2canvas(clonedContent, {
@@ -332,13 +335,12 @@ export default function SubmissionDetailPage() {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / pdfWidth;
         const imgHeight = canvasHeight / ratio;
-
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
         let heightLeft = imgHeight;
         let position = 0;
         
@@ -346,7 +348,7 @@ export default function SubmissionDetailPage() {
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
+            position -= pdfHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
             heightLeft -= pdfHeight;
@@ -489,3 +491,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
