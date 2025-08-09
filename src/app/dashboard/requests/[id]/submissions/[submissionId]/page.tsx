@@ -82,7 +82,7 @@ const renderAnswer = (question: Question, answer: any) => {
 
         case 'file':
         case 'image-upload':
-            const files = Array.isArray(answer) ? answer : [];
+             const files = Array.isArray(answer) ? answer : [];
             if (files.length === 0) return <p className="text-muted-foreground italic">No files uploaded.</p>;
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -275,25 +275,32 @@ export default function SubmissionDetailPage() {
     setIsExporting(true);
     toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
 
+    const clonedContent = submissionContentRef.current.cloneNode(true) as HTMLElement;
+    document.body.appendChild(clonedContent);
+    clonedContent.style.position = 'absolute';
+    clonedContent.style.left = '-9999px';
+    clonedContent.style.width = submissionContentRef.current.offsetWidth + 'px';
+
     try {
-        const canvas = await html2canvas(submissionContentRef.current, {
+        const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
             proxy: '/api/cors-proxy',
-            logging: process.env.NODE_ENV === 'development',
+            logging: true,
         });
         
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / pdfWidth;
         const imgHeight = canvasHeight / ratio;
-        const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        let position = 0;
         let heightLeft = imgHeight;
+        let position = 0;
         
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
@@ -311,6 +318,7 @@ export default function SubmissionDetailPage() {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
     } finally {
+        document.body.removeChild(clonedContent);
         setIsExporting(false);
     }
   };
@@ -441,4 +449,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
