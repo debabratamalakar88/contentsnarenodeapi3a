@@ -350,7 +350,7 @@ export default function SubmissionDetailPage() {
         const addLinksToPage = (pageNumber: number) => {
             const contentTop = clonedContent.getBoundingClientRect().top;
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
-            const yOffsetPx = 30; 
+            const yOffsetPx = 36; 
             const yOffsetMm = yOffsetPx * scale;
 
             links.forEach(link => {
@@ -518,3 +518,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
