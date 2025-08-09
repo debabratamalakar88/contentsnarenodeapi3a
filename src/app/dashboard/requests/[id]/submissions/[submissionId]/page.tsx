@@ -83,32 +83,49 @@ const renderAnswer = (question: Question, answer: any) => {
         case 'image-upload':
             const files = Array.isArray(answer) ? answer : [];
             if (files.length === 0) return <p className="text-muted-foreground italic">No files uploaded.</p>;
+            
+            const rows: any[][] = [];
+            for (let i = 0; i < files.length; i += 3) {
+                rows.push(files.slice(i, i + 3));
+            }
+
             return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {files.map((file, index) => {
-                         const fileUrl = file.url && API_ASSETS_BASE_URL ? `${API_ASSETS_BASE_URL}${file.url.startsWith('/') ? '' : '/'}${file.url}` : '#';
-                         if (question.type === 'image-upload' && isImageFile(file.filename)) {
-                            return (
-                                <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
-                                   <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
-                                   </div>
-                                    <div className="text-xs p-2 bg-muted break-words flex items-center justify-center min-h-[40px]" title={file.filename}>
-                                        <span className="truncate">{file.filename || 'View Image'}</span>
-                                    </div>
-                                </a>
-                            );
-                         }
-                         return (
-                            <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
-                                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
-                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
-                                    <span className="truncate">{file.filename || 'Download File'}</span>
-                                </span>
-                            </a>
-                         );
-                    })}
-                </div>
+                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '1rem' }}>
+                    <tbody>
+                        {rows.map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                                {row.map((file, fileIndex) => {
+                                    const fileUrl = file.url && API_ASSETS_BASE_URL ? `${API_ASSETS_BASE_URL}${file.url.startsWith('/') ? '' : '/'}${file.url}` : '#';
+                                    if (question.type === 'image-upload' && isImageFile(file.filename)) {
+                                        return (
+                                            <td key={fileIndex} style={{ width: '33.33%', verticalAlign: 'top' }}>
+                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
+                                                   <div className="relative aspect-square bg-muted">
+                                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
+                                                   </div>
+                                                    <div className="text-xs p-2 bg-muted break-words flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                        <span className="truncate">{file.filename || 'View Image'}</span>
+                                                    </div>
+                                                </a>
+                                            </td>
+                                        );
+                                     }
+                                     return (
+                                        <td key={fileIndex} style={{ width: '33.33%', verticalAlign: 'top' }}>
+                                            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
+                                                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
+                                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                    <span className="truncate">{file.filename || 'Download File'}</span>
+                                                </span>
+                                            </a>
+                                        </td>
+                                     );
+                                })}
+                                {Array(3 - row.length).fill(0).map((_, i) => <td key={`empty-${i}`} />)}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             );
         case 'url':
             if (typeof answer === 'string' && (answer.startsWith('http') || answer.startsWith('/'))) {
@@ -316,7 +333,7 @@ export default function SubmissionDetailPage() {
         
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
         const contentTop = clonedContent.getBoundingClientRect().top;
-        const scale = 210 / clonedContent.getBoundingClientRect().width; // A4 width is 210mm
+        const scale = 210 / clonedContent.getBoundingClientRect().width;
 
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
@@ -344,7 +361,7 @@ export default function SubmissionDetailPage() {
                     const linkLeftMm = linkRect.left * scale;
                     const linkWidthMm = linkRect.width * scale;
                     const linkHeightMm = linkRect.height * scale;
-                    const linkTopOnPageMm = linkTopMm - pageTopOffsetMm; 
+                    const linkTopOnPageMm = (linkTopMm - pageTopOffsetMm) + (6 * scale); // 6px offset
                     
                     pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
@@ -448,7 +465,7 @@ export default function SubmissionDetailPage() {
                                         </tbody>
                                     </table>
                                 </td>
-                                <td className="w-px px-4 align-middle">
+                                <td className="w-px px-4 align-middle" style={{verticalAlign: 'middle'}}>
                                     <Badge
                                         variant={'outline'}
                                         className={cn(
@@ -457,7 +474,7 @@ export default function SubmissionDetailPage() {
                                         )}
                                     >
                                         <CheckCircle className="mr-2 h-4 w-4" />
-                                        {submission.status}
+                                        Completed
                                     </Badge>
                                 </td>
                             </tr>
