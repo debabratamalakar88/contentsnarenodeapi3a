@@ -91,7 +91,7 @@ const renderAnswer = (question: Question, answer: any) => {
                             return (
                                 <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="block border rounded-lg overflow-hidden group">
                                    <div className="relative aspect-square bg-muted">
-                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" crossOrigin="anonymous"/>
+                                     <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
                                     <div className="text-xs text-center p-2 bg-muted break-words" title={file.filename}>
                                         {file.filename || 'View Image'}
@@ -332,7 +332,7 @@ export default function SubmissionDetailPage() {
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
-            logging: true,
+            logging: false,
         });
         
         const imgData = canvas.toDataURL('image/png');
@@ -348,8 +348,10 @@ export default function SubmissionDetailPage() {
         const scale = pdfWidth / contentRect.width;
 
         const addLinksToPage = (pageNumber: number) => {
-            const contentTop = clonedContent.offsetTop;
+            const contentTop = clonedContent.getBoundingClientRect().top;
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
+            const yOffsetPx = 30; 
+            const yOffsetMm = yOffsetPx * scale;
 
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
@@ -359,7 +361,7 @@ export default function SubmissionDetailPage() {
                     const linkLeftMm = (linkRect.left - clonedContent.offsetLeft) * scale;
                     const linkWidthMm = linkRect.width * scale;
                     const linkHeightMm = linkRect.height * scale;
-                    const linkTopOnPageMm = linkTopMm - pageTopOffset;
+                    const linkTopOnPageMm = linkTopMm - pageTopOffset + yOffsetMm; 
                     pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
             });
