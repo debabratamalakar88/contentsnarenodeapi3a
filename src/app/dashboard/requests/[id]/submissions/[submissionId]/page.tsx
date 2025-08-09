@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -93,7 +94,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                    <div className="relative aspect-square bg-muted">
                                      <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                    </div>
-                                    <div className="text-xs text-center p-2 bg-muted break-words" title={file.filename}>
+                                    <div className="text-xs text-center p-2 bg-muted break-words flex items-center justify-center" title={file.filename}>
                                         {file.filename || 'View Image'}
                                     </div>
                                 </a>
@@ -102,7 +103,7 @@ const renderAnswer = (question: Question, answer: any) => {
                          return (
                             <a key={index} href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted">
                                 <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                <span className="text-primary hover:underline break-words block text-sm" title={file.filename}>
+                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center" title={file.filename}>
                                     {file.filename || 'Download File'}
                                 </span>
                             </a>
@@ -317,7 +318,7 @@ export default function SubmissionDetailPage() {
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
-            logging: true,
+            logging: false,
         });
         
         const imgData = canvas.toDataURL('image/png');
@@ -332,7 +333,7 @@ export default function SubmissionDetailPage() {
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
         const contentTop = clonedContent.getBoundingClientRect().top;
         const scale = pdfWidth / clonedContent.getBoundingClientRect().width;
-        const offsetPx = 36;
+        const offsetPx = 0; // Removed custom offset
         const yOffsetMm = offsetPx * 0.264583;
 
         const addLinksToPage = (pageNumber: number) => {
@@ -437,13 +438,13 @@ export default function SubmissionDetailPage() {
                                 <tbody>
                                     <tr className="bg-transparent hover:bg-transparent">
                                         <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submission Code:</td>
-                                        <td>
+                                        <td className="align-top">
                                             <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</span>
                                         </td>
                                     </tr>
                                     <tr className="bg-transparent hover:bg-transparent">
                                         <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted On:</td>
-                                        <td className="text-gray-600">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
+                                        <td className="text-gray-600 align-top">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -504,3 +505,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
