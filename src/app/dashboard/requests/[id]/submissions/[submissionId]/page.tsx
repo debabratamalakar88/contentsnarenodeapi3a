@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -331,22 +330,22 @@ export default function SubmissionDetailPage() {
         let position = 0;
         
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-        const contentTop = clonedContent.getBoundingClientRect().top;
+        const contentTop = clonedContent.offsetTop;
         const scale = pdfWidth / clonedContent.getBoundingClientRect().width;
+        const offsetPx = 36; // 30px + 6px
+        const yOffsetMm = offsetPx * 0.264583;
 
         const addLinksToPage = (pageNumber: number) => {
-            const yOffsetMm = 0; 
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
 
             links.forEach(link => {
-                const linkRect = link.getBoundingClientRect();
-                const linkTopMm = (linkRect.top - contentTop) * scale;
+                const linkTopMm = ((link.offsetTop - contentTop) * scale) + yOffsetMm;
                 
                 if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
-                    const linkLeftMm = (linkRect.left - clonedContent.getBoundingClientRect().left) * scale;
-                    const linkWidthMm = linkRect.width * scale;
-                    const linkHeightMm = linkRect.height * scale;
-                    const linkTopOnPageMm = linkTopMm - pageTopOffset + yOffsetMm; 
+                    const linkLeftMm = link.offsetLeft * scale;
+                    const linkWidthMm = link.offsetWidth * scale;
+                    const linkHeightMm = link.offsetHeight * scale;
+                    const linkTopOnPageMm = linkTopMm - pageTopOffset; 
                     
                     pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
                 }
@@ -456,7 +455,7 @@ export default function SubmissionDetailPage() {
                             )}
                         >
                             {submission.status === 'completed' && <CheckCircle className="mr-2 h-4 w-4" />}
-                            {submission.status}
+                            <span className="relative bottom-[-6px]">{submission.status}</span>
                         </Badge>
                     </div>
                 </header>
@@ -504,7 +503,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
-
-
-
