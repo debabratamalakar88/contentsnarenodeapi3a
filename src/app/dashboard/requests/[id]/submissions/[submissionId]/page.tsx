@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -213,27 +214,30 @@ export default function SubmissionDetailPage() {
         if (!pageDef) return;
 
         const stepData = submissionData[stepKey];
-        const isNestedStructure = stepData[stepKey] && stepData[stepKey].page_title;
+        const isNestedStructure = stepData && typeof stepData === 'object' && !Array.isArray(stepData) && Object.values(stepData).some((val: any) => val && typeof val === 'object' && val.page_title);
+        
+        if (isNestedStructure) { 
+             Object.values(stepData).forEach((pageData: any) => {
+                if (pageData && pageData.sections) {
+                     pageData.sections.forEach((submittedSection: any) => {
+                        const originalSectionDef = pageDef.sections.find(s => s.title === submittedSection.section_title);
+                        if (!originalSectionDef) return;
 
-        if (isNestedStructure) { // Structure without files
-            const pageData = stepData[stepKey];
-            pageData.sections.forEach((submittedSection: any) => {
-                const originalSectionDef = pageDef.sections.find(s => s.title === submittedSection.section_title);
-                if (!originalSectionDef) return;
-
-                if (!answersByPageAndSection[pageDef.id]) answersByPageAndSection[pageDef.id] = {};
-                if (!answersByPageAndSection[pageDef.id][originalSectionDef.id]) answersByPageAndSection[pageDef.id][originalSectionDef.id] = [];
-                
-                if (submittedSection.questions) {
-                    Object.entries(submittedSection.questions).forEach(([apiId, answer]) => {
-                        const question = questionMap.get(apiId);
-                        if (question) {
-                            answersByPageAndSection[pageDef.id][originalSectionDef.id].push({ question, answer });
+                        if (!answersByPageAndSection[pageDef.id]) answersByPageAndSection[pageDef.id] = {};
+                        if (!answersByPageAndSection[pageDef.id][originalSectionDef.id]) answersByPageAndSection[pageDef.id][originalSectionDef.id] = [];
+                        
+                        if (submittedSection.questions) {
+                            Object.entries(submittedSection.questions).forEach(([apiId, answer]) => {
+                                const question = questionMap.get(apiId);
+                                if (question) {
+                                    answersByPageAndSection[pageDef.id][originalSectionDef.id].push({ question, answer });
+                                }
+                            });
                         }
                     });
                 }
-            });
-        } else { // Flat structure with files
+             });
+        } else {
             Object.entries(stepData).forEach(([key, answer]) => {
                 let question: Question | undefined;
                 if (key === 'images') {
@@ -269,14 +273,15 @@ export default function SubmissionDetailPage() {
  const handleExportPdf = async () => {
     if (!submissionContentRef.current) return;
     setIsExporting(true);
+    toast({ title: "Generating PDF...", description: "Please wait, this may take a moment." });
 
     const originalContent = submissionContentRef.current;
     
     try {
         const canvas = await html2canvas(originalContent, {
             scale: 2,
-            useCORS: true,
-            proxy: '/api/cors-proxy', // Use a proxy for images
+            useCORS: true, 
+            proxy: '/api/cors-proxy', // Use the new proxy
             logging: process.env.NODE_ENV === 'development',
         });
 
@@ -289,8 +294,8 @@ export default function SubmissionDetailPage() {
         const imgHeight = canvasHeight / ratio;
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        let heightLeft = imgHeight;
         let position = 0;
+        let heightLeft = imgHeight;
         
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
@@ -438,3 +443,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
