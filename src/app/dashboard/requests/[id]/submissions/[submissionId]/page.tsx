@@ -270,31 +270,6 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
-  const imageToDataUri = async (url: string) => {
-    try {
-      const response = await fetch(`/api/cors-proxy?url=${encodeURIComponent(url)}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image through proxy. Status: ${response.status}`);
-      }
-      const blob = await response.blob();
-      return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            resolve(reader.result);
-          } else {
-            reject('Failed to convert blob to Data URI');
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error(`Failed to convert image to Data URI: ${url}`, error);
-      return null;
-    }
-  };
-  
   const handleExportPdf = async () => {
     if (!submissionContentRef.current) return;
     setIsExporting(true);
@@ -309,31 +284,43 @@ export default function SubmissionDetailPage() {
     try {
         const links = Array.from(clonedContent.querySelectorAll('a[href]')) as HTMLAnchorElement[];
         
-        const images = Array.from(clonedContent.getElementsByTagName('img'));
-        const imagePromises = images.map(async (img) => {
-            if (img.src && !img.src.startsWith('data:')) {
-            const dataUri = await imageToDataUri(img.src);
-            if (dataUri) {
-                return new Promise<void>((resolve) => {
-                    img.onload = () => resolve();
-                    img.onerror = () => {
-                        console.warn(`Failed to load image from data URI: ${img.src}`);
-                        resolve();
-                    };
-                    img.src = dataUri;
+        const imageToDataUri = async (url: string) => {
+            try {
+                const response = await fetch(`/api/cors-proxy?url=${encodeURIComponent(url)}`);
+                if (!response.ok) throw new Error(`Proxy fetch failed with status ${response.status}`);
+                const blob = await response.blob();
+                return new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => typeof reader.result === 'string' ? resolve(reader.result) : reject('Failed to convert blob to Data URI');
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
                 });
+            } catch (error) {
+                console.error(`Failed to convert image to Data URI: ${url}`, error);
+                return null;
             }
-            }
-            return Promise.resolve();
-        });
+        };
 
-        await Promise.all(imagePromises);
+        const images = Array.from(clonedContent.getElementsByTagName('img'));
+        await Promise.all(images.map(async (img) => {
+            if (img.src && !img.src.startsWith('data:')) {
+                const dataUri = await imageToDataUri(img.src);
+                if (dataUri) {
+                    return new Promise<void>((resolve) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => { console.warn(`Failed to load image from data URI: ${img.src}`); resolve(); };
+                        img.src = dataUri;
+                    });
+                }
+            }
+        }));
+
         await new Promise((r) => setTimeout(r, 500));
 
         const canvas = await html2canvas(clonedContent, {
             scale: 2,
             useCORS: true,
-            logging: false,
+            logging: true,
         });
         
         const imgData = canvas.toDataURL('image/png');
@@ -357,13 +344,14 @@ export default function SubmissionDetailPage() {
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
                 const linkTopMm = (linkRect.top - contentTop) * scale;
-
+                
                 if (linkTopMm >= pageTopOffset && linkTopMm < pageTopOffset + pdfHeight) {
-                    const linkLeftMm = (linkRect.left - clonedContent.offsetLeft) * scale;
-                    const linkWidthMm = linkRect.width * scale;
-                    const linkHeightMm = linkRect.height * scale;
+                    const linkLeftMm = linkRect.left - contentRect.left;
+                    const linkWidthMm = linkRect.width;
+                    const linkHeightMm = linkRect.height;
                     const linkTopOnPageMm = linkTopMm - pageTopOffset + yOffsetMm; 
-                    pdf.link(linkLeftMm, linkTopOnPageMm, linkWidthMm, linkHeightMm, { url: link.href });
+                    
+                    pdf.link(linkLeftMm * scale, linkTopOnPageMm, linkWidthMm * scale, linkHeightMm * scale, { url: link.href });
                 }
             });
         };
@@ -466,7 +454,7 @@ export default function SubmissionDetailPage() {
                          <Badge
                             variant={'outline'}
                             className={cn(
-                                "capitalize h-fit text-base px-4 py-1 flex items-center justify-center",
+                                "capitalize h-fit text-base px-4 py-1 flex items-center justify-center relative bottom-[6px]",
                                 submission.status === 'completed' && "border-green-300 bg-green-100 text-green-800"
                             )}
                         >
@@ -519,5 +507,6 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
 
 
