@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -267,69 +266,18 @@ export default function SubmissionDetailPage() {
 
 }, [submission, request]);
 
-  const imageToDataUri = async (url: string) => {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.warn(`Failed to fetch image: ${url}, status: ${response.status}`);
-            return null;
-        }
-        const blob = await response.blob();
-        return new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => {
-              console.warn(`Failed to read blob for image: ${url}`);
-              resolve('');
-            };
-            reader.readAsDataURL(blob);
-        });
-    } catch (error) {
-        console.error(`Error converting image to data URI: ${url}`, error);
-        return null;
-    }
-  };
-
-
  const handleExportPdf = async () => {
     if (!submissionContentRef.current) return;
     setIsExporting(true);
 
     const originalContent = submissionContentRef.current;
-    const clonedContent = originalContent.cloneNode(true) as HTMLDivElement;
-    document.body.appendChild(clonedContent);
     
-    clonedContent.querySelectorAll('[data-state="closed"]').forEach(el => {
-        const trigger = el.querySelector('[aria-expanded="false"]');
-        if (trigger) (trigger as HTMLElement).click();
-    });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const images = Array.from(clonedContent.querySelectorAll('img'));
-    const imagePromises = images.map(async (img) => {
-        if (img.src && !img.src.startsWith('data:')) {
-            const dataUri = await imageToDataUri(img.src);
-            if (dataUri) {
-                return new Promise<void>((resolve) => {
-                    img.onload = () => resolve();
-                    img.onerror = () => {
-                      console.warn(`Failed to load image for PDF export: ${img.src}`);
-                      resolve();
-                    };
-                    img.src = dataUri;
-                });
-            }
-        }
-    });
-
-    await Promise.all(imagePromises);
-    await new Promise((r) => setTimeout(r, 300)); 
-
     try {
-        const canvas = await html2canvas(clonedContent, {
+        const canvas = await html2canvas(originalContent, {
             scale: 2,
             useCORS: true,
-            logging: false,
+            proxy: '/api/cors-proxy', // Use a proxy for images
+            logging: process.env.NODE_ENV === 'development',
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -360,7 +308,6 @@ export default function SubmissionDetailPage() {
         console.error("PDF Export Error: ", error);
         toast({ title: 'Error', description: `Failed to export PDF.`, variant: 'destructive' });
     } finally {
-        document.body.removeChild(clonedContent);
         setIsExporting(false);
     }
   };
@@ -491,4 +438,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
