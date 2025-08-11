@@ -226,9 +226,13 @@ export default function SharedRequestPage() {
                             }
     
                             const flattenedData = Object.values(parsedData).reduce((acc: any, pageData: any) => {
-                                pageData.sections.forEach((section: any) => {
-                                    Object.assign(acc, section.questions);
-                                });
+                                if (pageData && Array.isArray(pageData.sections)) {
+                                    pageData.sections.forEach((section: any) => {
+                                        if (section && typeof section.questions === 'object') {
+                                            Object.assign(acc, section.questions);
+                                        }
+                                    });
+                                }
                                 return acc;
                             }, {});
                             setAllAnswers(flattenedData || {});
