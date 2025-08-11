@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, type Request, type Question, type Page } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -173,6 +173,7 @@ const PublicRequestSidebar = ({ request, pages, activePageIndex, setActivePageIn
 export default function SharedRequestPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     
     const requestCode = params.request_code as string;
@@ -186,8 +187,16 @@ export default function SharedRequestPage() {
     const [allAnswers, setAllAnswers] = useState<any>({});
     const [isComplete, setIsComplete] = useState(false);
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
-    
+    const [clientId, setClientId] = useState<string | null>(null);
+
     const formRef = React.useRef<HTMLFormElement>(null);
+
+    useEffect(() => {
+      const id = searchParams.get('client_id');
+      if (id) {
+        setClientId(id);
+      }
+    }, [searchParams]);
     
     useEffect(() => {
         if (!requestCode) return;
@@ -246,7 +255,7 @@ export default function SharedRequestPage() {
         }
     
         fetchInitialData();
-    }, [requestCode, toast]);
+    }, [requestCode, toast, submissionCode]);
     
     const handleAnswerChange = (fieldName: string, value: any) => {
         setAllAnswers((prev: any) => ({
@@ -442,6 +451,7 @@ export default function SharedRequestPage() {
                 <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
                 <main className="flex-1 overflow-y-auto">
                     <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
+                         {clientId && <input type="hidden" name="client_id" value={clientId} />}
                         <div className="max-w-3xl mx-auto p-6">
                             {currentPage ? (
                                 <Card>
