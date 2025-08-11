@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -458,7 +457,7 @@ export default function SubmissionDetailPage() {
                                             <tr className="bg-transparent hover:bg-transparent">
                                                 <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submission Code:</td>
                                                 <td className="align-top">
-                                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600 mt-5 inline-block">{submission.submission_code}</span>
+                                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600 inline-block">{submission.submission_code}</span>
                                                 </td>
                                             </tr>
                                             <tr className="bg-transparent hover:bg-transparent">
@@ -528,4 +527,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-
