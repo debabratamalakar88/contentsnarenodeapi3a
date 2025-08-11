@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question } from '@/lib/api';
+import { getSingleSubmissionForRequest, getRequest, type Submission, type Request as RequestType, type Question, getClients, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -103,7 +103,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                                    <div className="relative aspect-square bg-muted">
                                                      <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                                    </div>
-                                                    <div className="text-xs p-2 bg-muted flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                    <div className="text-xs p-2 bg-muted flex items-center justify-center min-h-[40px]">
                                                         <span className="break-words">{file.filename || 'View Image'}</span>
                                                     </div>
                                                 </a>
@@ -114,7 +114,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                         <td key={fileIndex} style={{ width: '33.33%', verticalAlign: 'top' }}>
                                             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
                                                 <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
-                                                <span className="text-primary hover:underline block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                <span className="text-primary hover:underline block text-sm flex items-center justify-center min-h-[40px]">
                                                     <span className="break-words">{file.filename || 'Download File'}</span>
                                                 </span>
                                             </a>
@@ -162,6 +162,7 @@ export default function SubmissionDetailPage() {
 
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [request, setRequest] = useState<RequestType | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const submissionContentRef = useRef<HTMLDivElement>(null);
@@ -178,12 +179,14 @@ export default function SubmissionDetailPage() {
 
     async function fetchSubmissionData() {
       try {
-        const [submissionData, requestData] = await Promise.all([
+        const [submissionData, requestData, clientsData] = await Promise.all([
           getSingleSubmissionForRequest(token, requestId, submissionId),
           getRequest(token, requestId),
+          getClients(token),
         ]);
         setSubmission(submissionData);
         setRequest(requestData);
+        setClients(clientsData);
       } catch (error: any) {
         toast({
           title: 'Error fetching data',
@@ -197,6 +200,11 @@ export default function SubmissionDetailPage() {
 
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
+
+  const submittingClient = useMemo(() => {
+    if (!submission || !clients || !submission.client_id) return null;
+    return clients.find(c => c.id === submission.client_id) || null;
+  }, [submission, clients]);
   
  const processedData = useMemo(() => {
     if (!submission || !request || !request.form_data) return [];
@@ -460,6 +468,12 @@ export default function SubmissionDetailPage() {
                                                     <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600 inline-block">{submission.submission_code}</span>
                                                 </td>
                                             </tr>
+                                            {submittingClient && (
+                                                <tr className="bg-transparent hover:bg-transparent">
+                                                    <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted by:</td>
+                                                    <td className="text-gray-600 align-top">{submittingClient.full_name} ({submittingClient.email})</td>
+                                                </tr>
+                                            )}
                                             <tr className="bg-transparent hover:bg-transparent">
                                                 <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted On:</td>
                                                 <td className="text-gray-600 align-top">{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</td>
@@ -476,7 +490,7 @@ export default function SubmissionDetailPage() {
                                         )}
                                     >
                                         <CheckCircle className="mr-2 h-4 w-4" />
-                                        <span className="">Completed</span>
+                                        <span>Completed</span>
                                     </Badge>
                                 </td>
                             </tr>
