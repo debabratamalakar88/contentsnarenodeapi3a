@@ -103,7 +103,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                                    <div className="relative aspect-square bg-muted">
                                                      <img src={fileUrl} alt={file.filename || 'Uploaded image'} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                                                    </div>
-                                                    <div className="text-xs p-2 bg-muted break-words flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                    <div className="text-xs p-2 bg-muted flex items-center justify-center min-h-[40px]" title={file.filename}>
                                                         <span className="break-words">{file.filename || 'View Image'}</span>
                                                     </div>
                                                 </a>
@@ -351,12 +351,13 @@ export default function SubmissionDetailPage() {
         
         const addLinksToPage = (pageNumber: number) => {
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
-            const scaleFactor = pdfWidth / canvas.width * 2; // Adjust for html2canvas scale
-             const linkVerticalOffset = 6;
+            const scaleFactor = pdfWidth / canvas.width * 2; 
+            const linkVerticalOffset = 6;
             
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
-                const linkTop = (linkRect.top - contentTop) * scaleFactor;
+                const linkTopRelativeToContainer = linkRect.top - contentTop;
+                const linkTop = linkTopRelativeToContainer * scaleFactor;
 
                 if(linkTop >= pageTopOffset && linkTop < pageTopOffset + pdfHeight) {
                     const linkLeftOnPage = linkRect.left * scaleFactor;
@@ -492,7 +493,7 @@ export default function SubmissionDetailPage() {
                                     <div className="space-y-6">
                                         {page.sections.map((section, sectionIndex) => (
                                             <div key={sectionIndex}>
-                                                <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2">{section.title}</h4>
+                                                <h4 className="font-semibold text-lg text-foreground mb-4 border-b pb-2 py-2">{section.title}</h4>
                                                 <div className="space-y-6">
                                                     {section.answers.map((item, itemIndex) => (
                                                         <table key={itemIndex} className="w-full">
