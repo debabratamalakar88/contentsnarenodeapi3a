@@ -178,7 +178,9 @@ export interface Request {
 export interface Submission {
   id: number;
   request_id: number;
-  client_id: number;
+  client_id: number | null;
+  client_name?: string;
+  client_email?: string;
   submission_code: string;
   status: 'in_progress' | 'completed';
   form_data: any;

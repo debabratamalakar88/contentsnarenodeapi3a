@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -162,7 +163,6 @@ export default function SubmissionDetailPage() {
 
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [request, setRequest] = useState<RequestType | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const submissionContentRef = useRef<HTMLDivElement>(null);
@@ -179,14 +179,12 @@ export default function SubmissionDetailPage() {
 
     async function fetchSubmissionData() {
       try {
-        const [submissionData, requestData, clientsData] = await Promise.all([
+        const [submissionData, requestData] = await Promise.all([
           getSingleSubmissionForRequest(token, requestId, submissionId),
           getRequest(token, requestId),
-          getClients(token),
         ]);
         setSubmission(submissionData);
         setRequest(requestData);
-        setClients(clientsData);
       } catch (error: any) {
         toast({
           title: 'Error fetching data',
@@ -200,11 +198,6 @@ export default function SubmissionDetailPage() {
 
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
-
-  const submittingClient = useMemo(() => {
-    if (!submission || !clients || !submission.client_id) return null;
-    return clients.find(c => c.id === submission.client_id) || null;
-  }, [submission, clients]);
   
  const processedData = useMemo(() => {
     if (!submission || !request || !request.form_data) return [];
@@ -468,10 +461,10 @@ export default function SubmissionDetailPage() {
                                                     <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600 inline-block">{submission.submission_code}</span>
                                                 </td>
                                             </tr>
-                                            {submittingClient && (
+                                            {submission.client_name && submission.client_email && (
                                                 <tr className="bg-transparent hover:bg-transparent">
                                                     <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submitted by:</td>
-                                                    <td className="text-gray-600 align-top">{submittingClient.full_name} ({submittingClient.email})</td>
+                                                    <td className="text-gray-600 align-top">{submission.client_name} ({submission.client_email})</td>
                                                 </tr>
                                             )}
                                             <tr className="bg-transparent hover:bg-transparent">
