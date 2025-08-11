@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -114,7 +115,7 @@ const renderAnswer = (question: Question, answer: any) => {
                                         <td key={fileIndex} style={{ width: '33.33%', verticalAlign: 'top' }}>
                                             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-2 p-3 border rounded-lg hover:bg-muted text-center">
                                                 <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
-                                                <span className="text-primary hover:underline break-words block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
+                                                <span className="text-primary hover:underline block text-sm flex items-center justify-center min-h-[40px]" title={file.filename}>
                                                     <span className="break-words">{file.filename || 'Download File'}</span>
                                                 </span>
                                             </a>
@@ -352,7 +353,7 @@ export default function SubmissionDetailPage() {
         const addLinksToPage = (pageNumber: number) => {
             const pageTopOffset = (pageNumber - 1) * pdfHeight;
             const scaleFactor = pdfWidth / canvas.width * 2; 
-            const linkVerticalOffset = 6;
+            const linkVerticalOffset = 36 / (96 / 25.4);
             
             links.forEach(link => {
                 const linkRect = link.getBoundingClientRect();
@@ -457,7 +458,7 @@ export default function SubmissionDetailPage() {
                                             <tr className="bg-transparent hover:bg-transparent">
                                                 <td className="font-semibold text-gray-700 pr-4 py-1 align-top">Submission Code:</td>
                                                 <td className="align-top">
-                                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600">{submission.submission_code}</span>
+                                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-600 mt-5 inline-block">{submission.submission_code}</span>
                                                 </td>
                                             </tr>
                                             <tr className="bg-transparent hover:bg-transparent">
@@ -476,7 +477,7 @@ export default function SubmissionDetailPage() {
                                         )}
                                     >
                                         <CheckCircle className="mr-2 h-4 w-4" />
-                                        Completed
+                                        <span className="">Completed</span>
                                     </Badge>
                                 </td>
                             </tr>
@@ -527,3 +528,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
