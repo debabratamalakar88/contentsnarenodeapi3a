@@ -26,11 +26,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const roleVariantMap: Record<TeamMember['role'], 'default' | 'destructive' | 'secondary' | 'outline'> = {
-  Administrator: "destructive",
-  Editor: "default",
-  Reviewer: "secondary",
-  Viewer: "outline",
+const roleStyles: Record<TeamMember['role'], string> = {
+  Administrator: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20",
+  Editor: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  Reviewer: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
+  Viewer: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200",
 };
 
 const getInitials = (name: string): string => {
@@ -388,10 +388,9 @@ function UsersGrid({ members, isArchived, onEdit, onArchive, onRestore, onForceD
                   <p className="text-sm text-muted-foreground pt-1">{member.email}</p>
                 </div>
 
-                <Badge variant={roleVariantMap[member.role]} className={cn(
-                    "text-base mt-2 py-1 px-3",
-                    member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200'
-                )}>{member.role}</Badge>
+                <Badge variant="outline" className={cn("text-base mt-2 py-1 px-3", roleStyles[member.role])}>
+                  {member.role}
+                </Badge>
            </CardContent>
         </Card>
       ))}
@@ -435,7 +434,7 @@ function UsersTable({ members, isArchived, onEdit, onArchive, onRestore, onForce
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={roleVariantMap[member.role]} className={cn(member.role === 'Administrator' && 'text-pink-600 bg-pink-100 border-pink-200 hover:bg-pink-100')}>
+                <Badge variant="outline" className={cn(roleStyles[member.role])}>
                     {member.role}
                 </Badge>
               </TableCell>
