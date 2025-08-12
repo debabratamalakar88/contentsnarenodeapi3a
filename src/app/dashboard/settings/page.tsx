@@ -52,9 +52,9 @@ const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
   new_password: z.string().min(8, "New password must be at least 8 characters."),
   new_password_confirmation: z.string(),
-}).refine(data => data.new_password === data.new_password_confirmation, {
+}).refine(data => data.new_password === data.password_confirmation, {
   message: "New passwords do not match.",
-  path: ["password_confirmation"],
+  path: ["new_password_confirmation"],
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
@@ -386,29 +386,6 @@ export default function SettingsPage() {
             </Card>
         </form>
     </Form>
-
-       <Card>
-        <CardHeader>
-          <CardTitle>Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Add an additional layer of security to your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="2fa" />
-            <label
-              htmlFor="2fa"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Enable Two-Factor Authentication
-            </label>
-          </div>
-        </CardContent>
-        <CardFooter className="border-t px-6 py-4">
-            <Button>Save</Button>
-        </CardFooter>
-      </Card>
     </div>
   )
 }
