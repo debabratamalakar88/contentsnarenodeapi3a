@@ -173,6 +173,7 @@ export interface Request {
   updated_by?: number | null;
   created_at: string;
   updated_at: string;
+  submissions_count?: number;
 }
 
 export interface Submission {

@@ -88,8 +88,8 @@ export default function Dashboard() {
     });
   }, [requests]);
 
-  const completedRequestsCount = useMemo(() => {
-    return requests.filter(r => r.status === 'completed').length;
+  const totalCompletedSubmissions = useMemo(() => {
+    return requests.reduce((acc, request) => acc + (request.submissions_count || 0), 0);
   }, [requests]);
 
   if (isLoading) {
@@ -210,9 +210,9 @@ export default function Dashboard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedRequestsCount}</div>
+            <div className="text-2xl font-bold">{totalCompletedSubmissions}</div>
             <p className="text-xs text-muted-foreground">
-              Total completed requests
+              Total completed submissions
             </p>
           </CardContent>
         </Card>
