@@ -142,7 +142,7 @@ export default function UserViewPage() {
                                         <Briefcase className="h-5 w-5 text-muted-foreground mt-1" />
                                         <div>
                                             <p className="font-semibold">{company.company_name}</p>
-                                            <Badge variant="secondary">{company.role}</Badge>
+                                            <Badge variant="secondary">{company.pivot?.role || 'N/A'}</Badge>
                                         </div>
                                     </div>
                                 ))}

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -21,7 +20,9 @@ export interface User {
   companies?: {
     id: number;
     company_name: string;
-    role: string;
+    pivot?: {
+        role: string;
+    };
   }[];
 }
 
@@ -84,6 +85,9 @@ export interface Company {
     company_logo: string | null;
     created_by: number;
     updated_by: number;
+    pivot?: {
+        role?: string;
+    };
 }
 
 export interface Client {
