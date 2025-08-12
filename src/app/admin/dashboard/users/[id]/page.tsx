@@ -13,6 +13,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon, ShieldCheck, ShieldX, Briefcase } from "lucide-react";
 import { format, parseISO } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+const roleStyles: { [key: string]: string } = {
+  Administrator: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20",
+  Editor: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  Reviewer: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
+  Viewer: "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200",
+  'N/A': 'bg-gray-100 text-gray-800'
+};
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -142,7 +151,9 @@ export default function UserViewPage() {
                                         <Briefcase className="h-5 w-5 text-muted-foreground mt-1" />
                                         <div>
                                             <p className="font-semibold">{company.company_name}</p>
-                                            <Badge variant="secondary">{company.pivot?.role || 'N/A'}</Badge>
+                                            <Badge variant="outline" className={cn("mt-1", roleStyles[company.pivot?.role || 'N/A'])}>
+                                                {company.pivot?.role || 'N/A'}
+                                            </Badge>
                                         </div>
                                     </div>
                                 ))}
