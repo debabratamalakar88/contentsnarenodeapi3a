@@ -102,12 +102,6 @@ export default function AdminDashboardLayout({
         </nav>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
           <div className="ml-auto flex-1 sm:flex-initial" />
-          <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-white/10">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-white/10">
-            <HelpCircle className="h-4 w-4" />
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
