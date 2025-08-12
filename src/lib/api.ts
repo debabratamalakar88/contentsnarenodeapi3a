@@ -18,6 +18,11 @@ export interface User {
   deleted_at?: string | null;
   company?: string | null;
   selected_company_id?: number | null;
+  companies?: {
+    id: number;
+    company_name: string;
+    role: string;
+  }[];
 }
 
 export interface Profile extends User {

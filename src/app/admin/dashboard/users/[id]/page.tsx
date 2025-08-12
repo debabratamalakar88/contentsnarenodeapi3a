@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useEffect, useState } from "react";
@@ -7,11 +8,12 @@ import Link from "next/link";
 import { getAdminUser, type User } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon, ShieldCheck, ShieldX } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, Building, CheckCircle, XCircle, Calendar as CalendarIcon, ShieldCheck, ShieldX, Briefcase } from "lucide-react";
 import { format, parseISO } from 'date-fns';
+import { Badge } from "@/components/ui/badge";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -68,6 +70,7 @@ export default function UserViewPage() {
                     <div className="max-w-4xl mx-auto space-y-8">
                         <div className="flex items-center gap-6"><Skeleton className="h-24 w-24 rounded-full" /><div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-5 w-48" /></div></div>
                         <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>
                         <Card><CardHeader><Skeleton className="h-7 w-48" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>
                     </div>
                 </main>
@@ -127,6 +130,26 @@ export default function UserViewPage() {
                             <div className="flex items-center gap-3">{isArchived ? (<ShieldX className="h-5 w-5 text-red-500" />) : (<ShieldCheck className="h-5 w-5 text-green-500" />)}<div><p className="text-sm font-medium">Account Status</p><p className="text-sm text-muted-foreground">{isArchived ? 'Archived' : 'Active'}</p></div></div>
                         </CardContent>
                     </Card>
+
+                    {user.companies && user.companies.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Company Associations</CardTitle>
+                                <CardDescription>This user is a member of the following companies.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {user.companies.map(company => (
+                                    <div key={company.id} className="flex items-start gap-4 p-3 rounded-lg border bg-muted/50">
+                                        <Briefcase className="h-5 w-5 text-muted-foreground mt-1" />
+                                        <div>
+                                            <p className="font-semibold">{company.company_name}</p>
+                                            <Badge variant="secondary">{company.role}</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardHeader><CardTitle>Bio</CardTitle></CardHeader>
