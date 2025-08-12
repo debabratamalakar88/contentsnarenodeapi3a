@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -9,6 +10,7 @@ import {
     FileText,
     PlusCircle,
     User,
+    CheckCircle,
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
@@ -84,6 +86,10 @@ export default function Dashboard() {
         if (!a.created_at || !b.created_at) return 0;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+  }, [requests]);
+
+  const completedRequestsCount = useMemo(() => {
+    return requests.filter(r => r.status === 'completed').length;
   }, [requests]);
 
   if (isLoading) {
@@ -200,13 +206,13 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Submissions</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{completedRequestsCount}</div>
             <p className="text-xs text-muted-foreground">
-              New submissions today
+              Total completed requests
             </p>
           </CardContent>
         </Card>
