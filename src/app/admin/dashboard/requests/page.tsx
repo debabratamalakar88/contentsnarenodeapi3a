@@ -1,4 +1,3 @@
-
 'use client'
 
 import { 
@@ -19,7 +18,9 @@ import {
     PenSquare,
     FileText,
     CheckCircle,
-    Building
+    Building,
+    CalendarClock,
+    Send
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
@@ -84,6 +85,33 @@ const getInitials = (name: string): string => {
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
+
+const statusStyles = {
+  draft: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
+  published: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
+  scheduled: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+  archived: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
+  completed: "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-100",
+};
+
+const statusIcons = {
+  draft: PenSquare,
+  published: Send,
+  scheduled: CalendarClock,
+  archived: ArchiveIcon,
+  completed: CheckCircle,
+};
+
+const StatusBadge = ({ status }: { status: Request['status'] | 'archived' }) => {
+    const Icon = statusIcons[status] || FileText;
+    return (
+        <Badge variant="outline" className={cn("capitalize font-semibold", statusStyles[status])}>
+            <Icon className="mr-1 h-3 w-3" />
+            {status}
+        </Badge>
+    );
+};
+
 
 interface RequestCardProps {
     request: Request;
@@ -164,7 +192,7 @@ const RequestCard = ({ request, clientMap, userMap, onDuplicate, onArchive, onRe
             <CardFooter className="p-4 border-t flex flex-col items-start gap-3">
                 <div className="flex justify-between w-full text-xs text-muted-foreground">
                     <span>Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</span>
-                    <Badge variant="outline" className="capitalize">{request.status}</Badge>
+                    <StatusBadge status={isArchived ? 'archived' : request.status} />
                 </div>
                 <div className="flex justify-between w-full">
                     <div className="flex items-center gap-2 text-sm">
@@ -217,7 +245,7 @@ const RequestRow = ({ request, clientMap, userMap, onDuplicate, onArchive, onRes
             {clientName}
             {additionalClientsCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientsCount}</span>}
         </TableCell>
-        <TableCell><Badge variant="outline" className="capitalize">{request.status}</Badge></TableCell>
+        <TableCell><StatusBadge status={isArchived ? 'archived' : request.status} /></TableCell>
         <TableCell>{request.submissions_count || 0}</TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
@@ -386,10 +414,19 @@ const RequestTable = ({ requests, userMap, clientMap }: { requests: Request[]; u
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {firstClientName}
-                                    {additionalClientCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientCount}</span>}
+                                    {firstClientName === '(No Client)' ? (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Users className="h-4 w-4" />
+                                            <span>(No Client)</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {firstClientName}
+                                            {additionalClientCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientCount}</span>}
+                                        </>
+                                    )}
                                 </TableCell>
-                                <TableCell><Badge variant="outline" className="capitalize">{request.status}</Badge></TableCell>
+                                <TableCell><StatusBadge status={request.status} /></TableCell>
                                 <TableCell>{request.submissions_count || 0}</TableCell>
                                 <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
                                 <TableCell>
