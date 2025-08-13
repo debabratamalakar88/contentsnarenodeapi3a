@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Eye, CalendarDays, User, Check, Sparkles, Bold, Italic, Underline, List as ListIcon, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Clipboard, CheckCircle, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, CalendarDays, User, Check, Sparkles, Bold, Italic, Underline, List as ListIcon, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Clipboard, CheckCircle, FileText, Building } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
@@ -132,16 +132,24 @@ const ViewSidebar = ({ request, ownerName, assignedClients, pages, activePageInd
                 <div className="p-4 border-b">
                     <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
                     <p className="text-sm text-muted-foreground mt-1">{request.description}</p>
-                    <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>Created by {ownerName}</span>
-                    </div>
-                    {request.due_date && (
-                        <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
-                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-                            Due: {format(parseISO(request.due_date), 'PPP')}
+                    <div className="text-sm text-muted-foreground mt-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span>Created by {ownerName}</span>
                         </div>
-                    )}
+                        {request.company && (
+                            <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4" />
+                                <span>Company: {request.company.company_name}</span>
+                            </div>
+                        )}
+                        {request.due_date && (
+                            <div className="text-xs font-medium flex items-center">
+                                <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                                Due: {format(parseISO(request.due_date), 'PPP')}
+                            </div>
+                        )}
+                    </div>
                      {request.status === 'published' && request.request_code && publicUrl && (
                         <div className="mt-4">
                             <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
