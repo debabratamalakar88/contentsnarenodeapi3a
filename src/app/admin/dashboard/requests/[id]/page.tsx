@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getAdminRequest, getAdminUsers, getAdminClients, type Request, type Client, type User as UserType, Page, Question } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Eye, CalendarDays, User, Check, Sparkles, Bold, Italic, Underline, List as ListIcon, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -275,3 +275,5 @@ export default function AdminViewRequestPage() {
         </div>
     );
 }
+
+    
