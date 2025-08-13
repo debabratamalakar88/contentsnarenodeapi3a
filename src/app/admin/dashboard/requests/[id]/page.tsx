@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAdminRequest, type Request, type Client as ClientType, type User as UserType } from '@/lib/api';
+import { getAdminRequest, getAdminUsers, getAdminClients, type Request, type Client, type User as UserType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,8 @@ export default function AdminViewRequestPage() {
     const id = Number(params.id);
 
     const [request, setRequest] = useState<Request | null>(null);
+    const [allUsers, setAllUsers] = useState<UserType[]>([]);
+    const [allClients, setAllClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -40,8 +42,14 @@ export default function AdminViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const requestData = await getAdminRequest(token!, id);
+                const [requestData, usersData, clientsData] = await Promise.all([
+                    getAdminRequest(token!, id),
+                    getAdminUsers(token!),
+                    getAdminClients(token!)
+                ]);
                 setRequest(requestData);
+                setAllUsers(usersData);
+                setAllClients(clientsData);
             } catch (err: any) {
                 toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to load request data.' });
             } finally {
@@ -51,8 +59,16 @@ export default function AdminViewRequestPage() {
         fetchRequestData();
     }, [id, router, toast]);
 
-    const assignedClients = useMemo(() => request?.clients || [], [request]);
-    const owner = useMemo(() => request?.user || null, [request]);
+    const owner = useMemo(() => {
+        if (!request || !allUsers) return null;
+        return allUsers.find(u => u.id === request.user_id);
+    }, [request, allUsers]);
+
+    const assignedClients = useMemo(() => {
+        if (!request?.client_id || !allClients) return [];
+        const clientIds = Array.isArray(request.client_id) ? request.client_id : [request.client_id];
+        return allClients.filter(c => clientIds.includes(c.id));
+    }, [request, allClients]);
 
     if (isLoading) {
         return (
@@ -84,7 +100,7 @@ export default function AdminViewRequestPage() {
                         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                              <div>
                                 <h3 className="text-sm font-medium text-muted-foreground">Owner</h3>
-                                <p className="font-semibold">{owner?.name || 'N/A'}</p>
+                                <p className="font-semibold">{owner?.name || `User #${request.user_id}`}</p>
                             </div>
                             <div>
                                 <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
