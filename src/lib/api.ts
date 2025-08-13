@@ -651,6 +651,10 @@ export async function getAdminArchivedRequests(token: string): Promise<Paginated
     return fetchWithToken(`${API_BASE_URL}/api/admin/requests/archived`, token);
 }
 
+export async function getAdminRequest(token: string, id: number): Promise<Request> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token);
+}
+
 // --- Admin Template Category Management ---
 export async function getAdminTemplateCategories(token: string, search: string = ''): Promise<PaginatedTemplateCategories> {
     const url = new URL(`${API_BASE_URL}/api/admin/template-categories`);

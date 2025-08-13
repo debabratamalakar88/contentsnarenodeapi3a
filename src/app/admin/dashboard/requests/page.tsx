@@ -186,7 +186,7 @@ const RequestCard = ({ request, clientMap, userMap }: { request: Request; client
                         <span className="font-medium">{request.submissions_count || 0} Submissions</span>
                     </div>
                     <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
+                        <Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
                     </Button>
                 </div>
             </CardFooter>
@@ -220,7 +220,7 @@ const RequestTable = ({ requests, clientMap, userMap }: { requests: Request[], c
                                 <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
                                 <TableCell>
                                     <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`/dashboard/requests/${request.id}`}>View Details</Link>
+                                        <Link href={`/admin/dashboard/requests/${request.id}`}>View Details</Link>
                                     </Button>
                                 </TableCell>
                             </TableRow>
