@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, List, ChevronDown, User, Eye, FileText, CheckCircle } from "lucide-react";
-import { getAdminAllRequests, getAdminArchivedRequests, getClients, type Request, type Client, type User as UserType, getAdminUsers } from "@/lib/api";
+import { Search, LayoutGrid, List, ChevronDown, User, Eye, FileText, CheckCircle, Building } from "lucide-react";
+import { getAdminAllRequests, getAdminArchivedRequests, type Request } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
@@ -35,8 +35,6 @@ const getInitials = (name: string): string => {
 export default function AdminRequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [requests, setRequests] = useState<Request[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [users, setUsers] = useState<UserType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
@@ -46,7 +44,6 @@ export default function AdminRequestsPage() {
     const [searchQuery, setSearchQuery] = useState("");
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
-    const refetchData = () => setDataVersion(v => v + 1);
 
     useEffect(() => {
         if (!token) {
@@ -58,14 +55,8 @@ export default function AdminRequestsPage() {
             setIsLoading(true);
             try {
                 const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
-                const [requestsData, clientsData, usersData] = await Promise.all([
-                    fetchFn(token!),
-                    getClients(token!), // Assuming a generic getClients is fine, or create getAdminAllClients
-                    getAdminUsers(token!),
-                ]);
+                const requestsData = await fetchFn(token!);
                 setRequests(requestsData.data || []);
-                setClients(clientsData || []);
-                setUsers(usersData || []);
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
             } finally {
@@ -74,20 +65,18 @@ export default function AdminRequestsPage() {
         }
         loadData();
     }, [router, toast, currentTab, dataVersion, token]);
-
-    const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
-    const userMap = useMemo(() => new Map(users.map(u => [u.id, u.name])), [users]);
+    
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
     const filteredRequests = useMemo(() => requests.filter(request => {
         const searchLower = searchQuery.toLowerCase();
-        const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
-        const userName = userMap.get(request.user_id)?.toLowerCase() || '';
+        const userName = request.user?.name.toLowerCase() || '';
+        const companyName = request.company?.company_name.toLowerCase() || '';
 
         return request.title.toLowerCase().includes(searchLower) ||
-               clientNames.includes(searchLower) ||
-               userName.includes(searchLower);
-    }), [requests, searchQuery, clientMap, userMap]);
+               userName.includes(searchLower) ||
+               companyName.includes(searchLower);
+    }), [requests, searchQuery]);
 
     const renderContent = (reqs: Request[]) => {
         if (isLoading) {
@@ -111,11 +100,11 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {reqs.map(req => <RequestCard key={req.id} request={req} clientMap={clientMap} userMap={userMap} />)}
+                    {reqs.map(req => <RequestCard key={req.id} request={req} />)}
                 </div>
             )
         }
-        return <RequestTable requests={reqs} clientMap={clientMap} userMap={userMap} />;
+        return <RequestTable requests={reqs} />;
     }
 
     return (
@@ -153,10 +142,9 @@ export default function AdminRequestsPage() {
     );
 }
 
-const RequestCard = ({ request, clientMap, userMap }: { request: Request; clientMap: Map<number, string>, userMap: Map<number, string> }) => {
-    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) : "No Client";
-    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
-    const userName = userMap.get(request.user_id) || 'Unknown User';
+const RequestCard = ({ request }: { request: Request }) => {
+    const userName = request.user?.name || 'Unknown User';
+    const companyName = request.company?.company_name || 'No Company';
 
     return (
         <Card className="flex flex-col">
@@ -167,7 +155,7 @@ const RequestCard = ({ request, clientMap, userMap }: { request: Request; client
                     </Avatar>
                     <div>
                         <p className="font-semibold">{userName}</p>
-                        <p className="text-xs text-muted-foreground">Request Owner</p>
+                        <p className="text-xs text-muted-foreground">{companyName}</p>
                     </div>
                 </div>
             </CardHeader>
@@ -194,7 +182,7 @@ const RequestCard = ({ request, clientMap, userMap }: { request: Request; client
     );
 };
 
-const RequestTable = ({ requests, clientMap, userMap }: { requests: Request[], clientMap: Map<number, string>, userMap: Map<number, string> }) => {
+const RequestTable = ({ requests }: { requests: Request[] }) => {
     return (
         <Card>
             <Table>
@@ -202,6 +190,7 @@ const RequestTable = ({ requests, clientMap, userMap }: { requests: Request[], c
                     <TableRow>
                         <TableHead>Request Title</TableHead>
                         <TableHead>Owner</TableHead>
+                        <TableHead>Company</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Submissions</TableHead>
                         <TableHead>Due Date</TableHead>
@@ -210,11 +199,18 @@ const RequestTable = ({ requests, clientMap, userMap }: { requests: Request[], c
                 </TableHeader>
                 <TableBody>
                     {requests.map(request => {
-                        const userName = userMap.get(request.user_id) || 'Unknown User';
+                        const userName = request.user?.name || 'Unknown User';
+                        const companyName = request.company?.company_name || 'N/A';
                         return (
                             <TableRow key={request.id}>
                                 <TableCell className="font-medium">{request.title}</TableCell>
                                 <TableCell>{userName}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <Building className="h-4 w-4 text-muted-foreground" />
+                                        {companyName}
+                                    </div>
+                                </TableCell>
                                 <TableCell><Badge variant="outline" className="capitalize">{request.status}</Badge></TableCell>
                                 <TableCell>{request.submissions_count || 0}</TableCell>
                                 <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>

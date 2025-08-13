@@ -181,6 +181,8 @@ export interface Request {
   due_date: string | null;
   user_id: number;
   user?: User; 
+  company_id?: number;
+  company?: Company;
   created_by: number;
   updated_by?: number | null;
   created_at: string;
