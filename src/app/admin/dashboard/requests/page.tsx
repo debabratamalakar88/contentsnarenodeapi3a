@@ -21,7 +21,9 @@ import {
     CheckCircle,
     Building,
     CalendarClock,
-    Send
+    Send,
+    Briefcase,
+    Filter,
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
@@ -42,6 +44,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import {
   Table,
@@ -90,7 +94,7 @@ const getInitials = (name: string): string => {
 const statusStyles = {
   draft: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
   published: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
-  scheduled: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100",
+  scheduled: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
   archived: "bg-red-100 text-red-800 border-red-200 hover:bg-red-100",
   completed: "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-100",
 };
@@ -325,6 +329,10 @@ export default function AdminRequestsPage() {
     const [currentTab, setCurrentTab] = useState('active');
     const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedOwnerId, setSelectedOwnerId] = useState('all');
+    const [selectedCompanyId, setSelectedCompanyId] = useState('all');
+    const [selectedClientId, setSelectedClientId] = useState('all');
+    const [selectedStatus, setSelectedStatus] = useState('all');
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
 
@@ -358,6 +366,16 @@ export default function AdminRequestsPage() {
     
     const userMap = useMemo(() => new Map(allUsers.map(u => [u.id, u.name])), [allUsers]);
     const clientMap = useMemo(() => new Map(allClients.map(c => [c.id, c.full_name])), [allClients]);
+    
+    const uniqueCompanies = useMemo(() => {
+        const companies = new Map<number, { id: number, name: string }>();
+        requests.forEach(req => {
+            if (req.company && !companies.has(req.company.id)) {
+                companies.set(req.company.id, { id: req.company.id, name: req.company.company_name });
+            }
+        });
+        return Array.from(companies.values());
+    }, [requests]);
 
     const filteredRequests = useMemo(() => requests.filter(request => {
         const searchLower = searchQuery.toLowerCase();
@@ -365,11 +383,24 @@ export default function AdminRequestsPage() {
         const companyName = request.company?.company_name.toLowerCase() || '';
         const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
 
-        return request.title.toLowerCase().includes(searchLower) ||
+        const matchesSearch = request.title.toLowerCase().includes(searchLower) ||
                userName.includes(searchLower) ||
                companyName.includes(searchLower) ||
                clientNames.includes(searchLower);
-    }), [requests, searchQuery, userMap, clientMap]);
+
+        const matchesOwner = selectedOwnerId === 'all' || request.user_id === Number(selectedOwnerId);
+        const matchesCompany = selectedCompanyId === 'all' || request.company_id === Number(selectedCompanyId);
+        const matchesClient = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
+        const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
+
+        return matchesSearch && matchesOwner && matchesCompany && matchesClient && matchesStatus;
+    }), [requests, searchQuery, userMap, clientMap, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+
+    const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
+    const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
+    const selectedClientName = allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients';
+    const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus;
+    const requestStatuses = ['draft', 'published', 'completed', 'scheduled'];
 
     const renderContent = (reqs: Request[], isArchivedTab: boolean) => {
         if (isLoading) {
@@ -385,7 +416,7 @@ export default function AdminRequestsPage() {
                     <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">No Requests Found</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        There are no {currentTab} requests to display.
+                        There are no {currentTab} requests that match your filters.
                     </p>
                 </div>
             )
@@ -411,23 +442,31 @@ export default function AdminRequestsPage() {
                 </Tabs>
                 <div className="flex items-center gap-2 ml-auto">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex items-center gap-2 font-semibold h-9">
-                                <ViewIcon className="h-4 w-4" />
-                                {viewMode === 'grid' ? 'Grid' : 'List'}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                        </DropdownMenuContent>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="flex items-center gap-2 font-semibold h-9"><ViewIcon className="h-4 w-4" />{viewMode === 'grid' ? 'Grid' : 'List'}</Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem><DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem></DropdownMenuContent>
                     </DropdownMenu>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search requests..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    </div>
+                    <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search requests..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                 </div>
             </header>
+            <div className="flex items-center gap-2 px-6 py-3 border-b bg-background flex-wrap">
+                <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{allUsers.map(user => <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Briefcase className="mr-2 h-4 w-4"/>{selectedCompanyName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedCompanyId} onValueChange={setSelectedCompanyId}><DropdownMenuRadioItem value="all">All Companies</DropdownMenuRadioItem><DropdownMenuSeparator/>{uniqueCompanies.map(company => <DropdownMenuRadioItem key={company.id} value={String(company.id)}>{company.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}><DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem><DropdownMenuSeparator/>{requestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                </DropdownMenu>
+            </div>
             <main className="flex-1 p-6 overflow-y-auto">
                 {renderContent(filteredRequests, currentTab === 'archived')}
             </main>
