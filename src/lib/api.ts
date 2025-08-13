@@ -178,6 +178,7 @@ export interface Request {
   started_from_scratch: boolean;
   due_date: string | null;
   user_id: number;
+  user?: User; // Add user for admin view
   created_by: number;
   updated_by?: number | null;
   created_at: string;
@@ -640,6 +641,14 @@ export async function restoreAdminClient(token: string, id: number) {
 
 export async function forceDeleteAdminClient(token: string, id: number) {
   return fetchWithToken(`${API_BASE_URL}/api/admin/clients/${id}/force`, token, { method: 'DELETE' });
+}
+
+// --- Admin Request Management ---
+export async function getAdminAllRequests(token: string): Promise<PaginatedRequests> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/requests`, token);
+}
+export async function getAdminArchivedRequests(token: string): Promise<PaginatedRequests> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/requests/archived`, token);
 }
 
 // --- Admin Template Category Management ---
