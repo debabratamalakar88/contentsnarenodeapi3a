@@ -131,6 +131,7 @@ const ViewSidebar = ({ request, ownerName, assignedClients, pages, activePageInd
             <div className="flex-shrink-0">
                 <div className="p-4 border-b">
                     <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{request.description}</p>
                     <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>Created by {ownerName}</span>
