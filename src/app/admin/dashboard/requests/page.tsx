@@ -1,29 +1,81 @@
 
-
 'use client'
 
-import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, List, ChevronDown, User as UserIcon, Eye, FileText, CheckCircle, Building } from "lucide-react";
-import { getAdminAllRequests, getAdminArchivedRequests, getAdminUsers, getAdminClients, type Request, type User as UserType, type Client } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { 
+    Users, 
+    MoreHorizontal, 
+    ChevronDown, 
+    LayoutGrid, 
+    Search,
+    Layers,
+    List,
+    User,
+    PlusCircle,
+    Copy,
+    Archive as ArchiveIcon,
+    ArchiveRestore,
+    Trash2,
+    Eye,
+    PenSquare,
+    FileText,
+    CheckCircle,
+    Building
+} from "lucide-react"
+import { useState, useEffect, useMemo } from "react";
+import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { format, parseISO } from 'date-fns';
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  getAdminAllRequests, 
+  getAdminArchivedRequests,
+  getAdminUsers,
+  getAdminClients,
+  type Request, 
+  type Client,
+  type User as UserType
+} from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -31,6 +83,150 @@ const getInitials = (name: string): string => {
     if (words.length === 0) return '';
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
+interface RequestCardProps {
+    request: Request;
+    clientMap: Map<number, string>;
+    userMap: Map<number, string>;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
+    isArchived: boolean;
+    canManage: boolean;
+    currentUser: UserType | null;
+    userRole: string | null;
+}
+
+const RequestCard = ({ request, clientMap, userMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestCardProps) => {
+    const ownerName = userMap.get(request.user_id) || 'Unknown User';
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const clientInitial = getInitials(clientName);
+    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
+    
+    const showActions = canManage || !isArchived;
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
+
+    return (
+        <Card className="flex flex-col">
+            <CardHeader className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        {clientName === "(No Client)" ? (
+                            <Avatar className="h-10 w-10 border bg-muted">
+                                <AvatarFallback className="bg-transparent">
+                                    <Users className="h-5 w-5 text-muted-foreground" />
+                                </AvatarFallback>
+                            </Avatar>
+                        ) : (
+                            <Avatar className="h-10 w-10 border"><AvatarFallback>{clientInitial}</AvatarFallback></Avatar>
+                        )}
+                        <div>
+                            <p className="font-semibold">{clientName}{additionalClientsCount > 0 && <span className="text-muted-foreground"> +{additionalClientsCount}</span>}</p>
+                            <p className="text-xs text-muted-foreground">Client</p>
+                        </div>
+                    </div>
+                     {showActions && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                                {isArchived ? (
+                                    <>
+                                        <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                        {canDeletePermanently && (
+                                            <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                            </DropdownMenuItem>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 flex-grow">
+                <h3 className="font-bold text-lg">{request.title}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{request.description}</p>
+                 <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                    <p>Owner: {ownerName}</p>
+                    <p>Company: {request.company?.company_name || 'N/A'}</p>
+                </div>
+            </CardContent>
+            <CardFooter className="p-4 border-t flex flex-col items-start gap-3">
+                <div className="flex justify-between w-full text-xs text-muted-foreground">
+                    <span>Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</span>
+                    <Badge variant="outline" className="capitalize">{request.status}</Badge>
+                </div>
+                <div className="flex justify-between w-full">
+                    <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="font-medium">{request.submissions_count || 0} Submissions</span>
+                    </div>
+                     <Button size="sm" variant="ghost" asChild>
+                        <Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
+                    </Button>
+                </div>
+            </CardFooter>
+        </Card>
+    );
+};
+
+interface RequestRowProps {
+    request: Request;
+    clientMap: Map<number, string>;
+    userMap: Map<number, string>;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
+    isArchived: boolean;
+    canManage: boolean;
+    currentUser: UserType | null;
+    userRole: string | null;
+}
+
+const RequestRow = ({ request, clientMap, userMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestRowProps) => {
+    const ownerName = userMap.get(request.user_id) || 'Unknown User';
+    const companyName = request.company?.company_name || 'N/A';
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
+    
+    const showActions = canManage || !isArchived;
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
+    
+    return (
+     <TableRow>
+        <TableCell className="font-medium">{request.title}</TableCell>
+        <TableCell>{ownerName}</TableCell>
+        <TableCell>
+            <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-muted-foreground" />
+                {companyName}
+            </div>
+        </TableCell>
+        <TableCell>
+            {clientName}
+            {additionalClientsCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientsCount}</span>}
+        </TableCell>
+        <TableCell><Badge variant="outline" className="capitalize">{request.status}</Badge></TableCell>
+        <TableCell>{request.submissions_count || 0}</TableCell>
+        <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
+        <TableCell>
+            <Button variant="ghost" size="sm" asChild>
+                <Link href={`/admin/dashboard/requests/${request.id}`}>View Details</Link>
+            </Button>
+        </TableCell>
+    </TableRow>
+    );
 };
 
 export default function AdminRequestsPage() {
@@ -113,7 +309,7 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} />)}
+                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} onDuplicate={()=>{}} onArchive={()=>{}} onRestore={()=>{}} onForceDelete={()=>{}} isArchived={currentTab==='archived'} canManage={true} currentUser={null} userRole={null} />)}
                 </div>
             )
         }
@@ -154,50 +350,6 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
-
-const RequestCard = ({ request, userMap, clientMap }: { request: Request; userMap: Map<number, string>; clientMap: Map<number, string> }) => {
-    const ownerName = userMap.get(request.user_id) || 'Unknown User';
-    const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
-    const firstClientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) : '(No Client)';
-    const additionalClientCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
-    
-    return (
-        <Card className="flex flex-col">
-            <CardHeader className="p-4 border-b">
-                <div className="flex items-center gap-3">
-                     <Avatar className="h-10 w-10 border"><AvatarFallback>{getInitials(firstClientName || '?')}</AvatarFallback></Avatar>
-                    <div>
-                        <p className="font-semibold">{firstClientName}{additionalClientCount > 0 && <span className="text-muted-foreground"> +{additionalClientCount}</span>}</p>
-                        <p className="text-xs text-muted-foreground">Client</p>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                <h3 className="font-bold text-lg">{request.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{request.description}</p>
-                <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                    <p>Owner: {ownerName}</p>
-                    <p>Company: {request.company?.company_name || 'N/A'}</p>
-                </div>
-            </CardContent>
-            <CardFooter className="p-4 border-t flex flex-col items-start gap-3">
-                <div className="flex justify-between w-full text-xs text-muted-foreground">
-                    <span>Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</span>
-                    <Badge variant="outline" className="capitalize">{request.status}</Badge>
-                </div>
-                <div className="flex justify-between w-full">
-                    <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="font-medium">{request.submissions_count || 0} Submissions</span>
-                    </div>
-                    <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
-                    </Button>
-                </div>
-            </CardFooter>
-        </Card>
-    );
-};
 
 const RequestTable = ({ requests, userMap, clientMap }: { requests: Request[]; userMap: Map<number, string>; clientMap: Map<number, string> }) => {
     return (
