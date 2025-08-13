@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useEffect, useState, useMemo } from "react";
@@ -10,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, LayoutGrid, List, ChevronDown, User as UserIcon, Eye, FileText, CheckCircle, Building } from "lucide-react";
-import { getAdminAllRequests, getAdminArchivedRequests, getAdminUsers, type Request, type User as UserType } from "@/lib/api";
+import { getAdminAllRequests, getAdminArchivedRequests, getAdminUsers, getAdminClients, type Request, type User as UserType, type Client } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ export default function AdminRequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [requests, setRequests] = useState<Request[]>([]);
     const [allUsers, setAllUsers] = useState<UserType[]>([]);
+    const [allClients, setAllClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
@@ -55,13 +57,14 @@ export default function AdminRequestsPage() {
         async function loadData() {
             setIsLoading(true);
             try {
-                const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
-                const [requestsData, usersData] = await Promise.all([
-                    fetchFn(token!),
-                    getAdminUsers(token!)
+                const [requestsData, usersData, clientsData] = await Promise.all([
+                    currentTab === 'active' ? getAdminAllRequests(token!) : getAdminArchivedRequests(token!),
+                    getAdminUsers(token!),
+                    getAdminClients(token!)
                 ]);
                 setRequests(requestsData.data || []);
                 setAllUsers(usersData || []);
+                setAllClients(clientsData || []);
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
             } finally {
@@ -74,16 +77,19 @@ export default function AdminRequestsPage() {
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
     const userMap = useMemo(() => new Map(allUsers.map(u => [u.id, u.name])), [allUsers]);
+    const clientMap = useMemo(() => new Map(allClients.map(c => [c.id, c.full_name])), [allClients]);
 
     const filteredRequests = useMemo(() => requests.filter(request => {
         const searchLower = searchQuery.toLowerCase();
         const userName = userMap.get(request.user_id)?.toLowerCase() || '';
         const companyName = request.company?.company_name.toLowerCase() || '';
+        const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
 
         return request.title.toLowerCase().includes(searchLower) ||
                userName.includes(searchLower) ||
-               companyName.includes(searchLower);
-    }), [requests, searchQuery, userMap]);
+               companyName.includes(searchLower) ||
+               clientNames.includes(searchLower);
+    }), [requests, searchQuery, userMap, clientMap]);
 
     const renderContent = (reqs: Request[]) => {
         if (isLoading) {
@@ -107,11 +113,11 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} />)}
+                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} />)}
                 </div>
             )
         }
-        return <RequestTable requests={reqs} userMap={userMap} />;
+        return <RequestTable requests={reqs} userMap={userMap} clientMap={clientMap} />;
     }
 
     return (
@@ -149,26 +155,30 @@ export default function AdminRequestsPage() {
     );
 }
 
-const RequestCard = ({ request, userMap }: { request: Request; userMap: Map<number, string> }) => {
-    const userName = userMap.get(request.user_id) || 'Unknown User';
-    const companyName = request.company?.company_name || 'No Company';
-
+const RequestCard = ({ request, userMap, clientMap }: { request: Request; userMap: Map<number, string>; clientMap: Map<number, string> }) => {
+    const ownerName = userMap.get(request.user_id) || 'Unknown User';
+    const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
+    const firstClientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) : '(No Client)';
+    const additionalClientCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
+    
     return (
         <Card className="flex flex-col">
             <CardHeader className="p-4 border-b">
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border">
-                        <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-                    </Avatar>
+                     <Avatar className="h-10 w-10 border"><AvatarFallback>{getInitials(firstClientName || '?')}</AvatarFallback></Avatar>
                     <div>
-                        <p className="font-semibold">{userName}</p>
-                        <p className="text-xs text-muted-foreground">{companyName}</p>
+                        <p className="font-semibold">{firstClientName}{additionalClientCount > 0 && <span className="text-muted-foreground"> +{additionalClientCount}</span>}</p>
+                        <p className="text-xs text-muted-foreground">Client</p>
                     </div>
                 </div>
             </CardHeader>
             <CardContent className="p-4 flex-grow">
                 <h3 className="font-bold text-lg">{request.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{request.description}</p>
+                <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                    <p>Owner: {ownerName}</p>
+                    <p>Company: {request.company?.company_name || 'N/A'}</p>
+                </div>
             </CardContent>
             <CardFooter className="p-4 border-t flex flex-col items-start gap-3">
                 <div className="flex justify-between w-full text-xs text-muted-foreground">
@@ -189,7 +199,7 @@ const RequestCard = ({ request, userMap }: { request: Request; userMap: Map<numb
     );
 };
 
-const RequestTable = ({ requests, userMap }: { requests: Request[]; userMap: Map<number, string> }) => {
+const RequestTable = ({ requests, userMap, clientMap }: { requests: Request[]; userMap: Map<number, string>; clientMap: Map<number, string> }) => {
     return (
         <Card>
             <Table>
@@ -198,6 +208,7 @@ const RequestTable = ({ requests, userMap }: { requests: Request[]; userMap: Map
                         <TableHead>Request Title</TableHead>
                         <TableHead>Owner</TableHead>
                         <TableHead>Company</TableHead>
+                        <TableHead>Client(s)</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Submissions</TableHead>
                         <TableHead>Due Date</TableHead>
@@ -206,17 +217,25 @@ const RequestTable = ({ requests, userMap }: { requests: Request[]; userMap: Map
                 </TableHeader>
                 <TableBody>
                     {requests.map(request => {
-                        const userName = userMap.get(request.user_id) || 'Unknown User';
+                        const ownerName = userMap.get(request.user_id) || 'Unknown User';
                         const companyName = request.company?.company_name || 'N/A';
+                        const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
+                        const firstClientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) : '(No Client)';
+                        const additionalClientCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
+                        
                         return (
                             <TableRow key={request.id}>
                                 <TableCell className="font-medium">{request.title}</TableCell>
-                                <TableCell>{userName}</TableCell>
+                                <TableCell>{ownerName}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Building className="h-4 w-4 text-muted-foreground" />
                                         {companyName}
                                     </div>
+                                </TableCell>
+                                <TableCell>
+                                    {firstClientName}
+                                    {additionalClientCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientCount}</span>}
                                 </TableCell>
                                 <TableCell><Badge variant="outline" className="capitalize">{request.status}</Badge></TableCell>
                                 <TableCell>{request.submissions_count || 0}</TableCell>
