@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -391,10 +392,10 @@ export default function AdminRequestsPage() {
         const matchesOwner = selectedOwnerId === 'all' || request.user_id === Number(selectedOwnerId);
         const matchesCompany = selectedCompanyId === 'all' || request.company_id === Number(selectedCompanyId);
         const matchesClient = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
-        const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
+        const matchesStatus = currentTab !== 'active' || selectedStatus === 'all' || request.status === selectedStatus;
 
         return matchesSearch && matchesOwner && matchesCompany && matchesClient && matchesStatus;
-    }), [requests, searchQuery, userMap, clientMap, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+    }), [requests, searchQuery, userMap, clientMap, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab]);
 
     const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
@@ -465,7 +466,13 @@ export default function AdminRequestsPage() {
                 {currentTab === 'active' && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}><DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem><DropdownMenuSeparator/>{activeRequestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                        <DropdownMenuContent>
+                            <DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}>
+                                <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
+                                <DropdownMenuSeparator/>
+                                {activeRequestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
                     </DropdownMenu>
                 )}
             </div>
@@ -475,3 +482,4 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
