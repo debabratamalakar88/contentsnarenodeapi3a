@@ -170,6 +170,7 @@ export interface Request {
   form_code: string;
   form_data: Page[];
   client_id: number[] | number | null;
+  clients?: Client[];
   status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   allow_comments: boolean;
   send_option: 'immediately' | 'scheduled';
@@ -178,7 +179,7 @@ export interface Request {
   started_from_scratch: boolean;
   due_date: string | null;
   user_id: number;
-  user?: User; // Add user for admin view
+  user?: User; 
   created_by: number;
   updated_by?: number | null;
   created_at: string;

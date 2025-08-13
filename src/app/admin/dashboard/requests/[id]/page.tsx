@@ -3,16 +3,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAdminRequest, getAdminClient, getAdminUsers, type Request, type Client, type User, type Submission } from '@/lib/api';
+import { getAdminRequest, type Request, type Client as ClientType, type User as UserType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Eye, CalendarDays, Check, Clipboard } from 'lucide-react';
+import { ArrowLeft, Eye, CalendarDays, User, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -33,10 +31,7 @@ export default function AdminViewRequestPage() {
     const id = Number(params.id);
 
     const [request, setRequest] = useState<Request | null>(null);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentTab, setCurrentTab] = useState("details");
 
     useEffect(() => {
         if (!id) { router.push('/admin/dashboard/requests'); return; }
@@ -45,16 +40,8 @@ export default function AdminViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, clientsData, usersData] = await Promise.all([
-                    getAdminRequest(token!, id),
-                    // Assuming you have an admin function to get all clients, else it needs to be created
-                    // For now, let's assume getClients can work with an admin token if permissions allow
-                    getAdminClients(token!), 
-                    getAdminUsers(token!),
-                ]);
+                const requestData = await getAdminRequest(token!, id);
                 setRequest(requestData);
-                setClients(clientsData || []);
-                setUsers(usersData || []);
             } catch (err: any) {
                 toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to load request data.' });
             } finally {
@@ -64,15 +51,8 @@ export default function AdminViewRequestPage() {
         fetchRequestData();
     }, [id, router, toast]);
 
-    const assignedClients = useMemo(() => {
-        if (!request?.client_id || !clients) return [];
-        return clients.filter(c => request.client_id!.includes(c.id));
-    }, [request, clients]);
-    
-    const owner = useMemo(() => {
-        if (!request?.user_id || !users) return null;
-        return users.find(u => u.id === request.user_id);
-    }, [request, users]);
+    const assignedClients = useMemo(() => request?.clients || [], [request]);
+    const owner = useMemo(() => request?.user || null, [request]);
 
     if (isLoading) {
         return (
@@ -80,7 +60,7 @@ export default function AdminViewRequestPage() {
                 <header className="flex items-center justify-between mb-6 pb-4 border-b">
                     <div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-8 w-48" /></div>
                 </header>
-                <div className="flex flex-1"><Skeleton className="w-64" /><div className="flex-1 p-6"><Skeleton className="h-full w-full" /></div></div>
+                <div className="flex-1 p-6"><Skeleton className="h-full w-full" /></div>
             </div>
         );
     }
@@ -148,4 +128,3 @@ export default function AdminViewRequestPage() {
         </div>
     );
 }
-
