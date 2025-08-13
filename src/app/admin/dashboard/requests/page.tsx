@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, List, ChevronDown, User, Eye, FileText, CheckCircle, Building } from "lucide-react";
-import { getAdminAllRequests, getAdminArchivedRequests, type Request } from "@/lib/api";
+import { Search, LayoutGrid, List, ChevronDown, User as UserIcon, Eye, FileText, CheckCircle, Building } from "lucide-react";
+import { getAdminAllRequests, getAdminArchivedRequests, getAdminUsers, type Request, type User as UserType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
@@ -35,6 +35,7 @@ const getInitials = (name: string): string => {
 export default function AdminRequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [requests, setRequests] = useState<Request[]>([]);
+    const [allUsers, setAllUsers] = useState<UserType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
@@ -55,8 +56,12 @@ export default function AdminRequestsPage() {
             setIsLoading(true);
             try {
                 const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
-                const requestsData = await fetchFn(token!);
+                const [requestsData, usersData] = await Promise.all([
+                    fetchFn(token!),
+                    getAdminUsers(token!)
+                ]);
                 setRequests(requestsData.data || []);
+                setAllUsers(usersData || []);
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
             } finally {
@@ -68,15 +73,17 @@ export default function AdminRequestsPage() {
     
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
+    const userMap = useMemo(() => new Map(allUsers.map(u => [u.id, u.name])), [allUsers]);
+
     const filteredRequests = useMemo(() => requests.filter(request => {
         const searchLower = searchQuery.toLowerCase();
-        const userName = request.user?.name.toLowerCase() || '';
+        const userName = userMap.get(request.user_id)?.toLowerCase() || '';
         const companyName = request.company?.company_name.toLowerCase() || '';
 
         return request.title.toLowerCase().includes(searchLower) ||
                userName.includes(searchLower) ||
                companyName.includes(searchLower);
-    }), [requests, searchQuery]);
+    }), [requests, searchQuery, userMap]);
 
     const renderContent = (reqs: Request[]) => {
         if (isLoading) {
@@ -100,11 +107,11 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {reqs.map(req => <RequestCard key={req.id} request={req} />)}
+                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} />)}
                 </div>
             )
         }
-        return <RequestTable requests={reqs} />;
+        return <RequestTable requests={reqs} userMap={userMap} />;
     }
 
     return (
@@ -142,8 +149,8 @@ export default function AdminRequestsPage() {
     );
 }
 
-const RequestCard = ({ request }: { request: Request }) => {
-    const userName = request.user?.name || 'Unknown User';
+const RequestCard = ({ request, userMap }: { request: Request; userMap: Map<number, string> }) => {
+    const userName = userMap.get(request.user_id) || 'Unknown User';
     const companyName = request.company?.company_name || 'No Company';
 
     return (
@@ -182,7 +189,7 @@ const RequestCard = ({ request }: { request: Request }) => {
     );
 };
 
-const RequestTable = ({ requests }: { requests: Request[] }) => {
+const RequestTable = ({ requests, userMap }: { requests: Request[]; userMap: Map<number, string> }) => {
     return (
         <Card>
             <Table>
@@ -199,7 +206,7 @@ const RequestTable = ({ requests }: { requests: Request[] }) => {
                 </TableHeader>
                 <TableBody>
                     {requests.map(request => {
-                        const userName = request.user?.name || 'Unknown User';
+                        const userName = userMap.get(request.user_id) || 'Unknown User';
                         const companyName = request.company?.company_name || 'N/A';
                         return (
                             <TableRow key={request.id}>
