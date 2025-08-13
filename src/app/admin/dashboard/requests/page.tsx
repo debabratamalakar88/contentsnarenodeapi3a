@@ -1,3 +1,4 @@
+
 'use client'
 
 import { 
@@ -242,8 +243,17 @@ const RequestRow = ({ request, clientMap, userMap, onDuplicate, onArchive, onRes
             </div>
         </TableCell>
         <TableCell>
-            {clientName}
-            {additionalClientsCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientsCount}</span>}
+            {clientName === "(No Client)" ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>(No Client)</span>
+                </div>
+            ) : (
+                <>
+                    {clientName}
+                    {additionalClientsCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientsCount}</span>}
+                </>
+            )}
         </TableCell>
         <TableCell><StatusBadge status={isArchived ? 'archived' : request.status} /></TableCell>
         <TableCell>{request.submissions_count || 0}</TableCell>
@@ -256,6 +266,52 @@ const RequestRow = ({ request, clientMap, userMap, onDuplicate, onArchive, onRes
     </TableRow>
     );
 };
+
+interface RequestTableProps {
+    requests: Request[];
+    userMap: Map<number, string>;
+    clientMap: Map<number, string>;
+    isArchived: boolean;
+}
+
+const RequestTable = ({ requests, userMap, clientMap, isArchived }: RequestTableProps) => {
+    return (
+        <Card>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Request Title</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Client(s)</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Submissions</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {requests.map(request => (
+                        <RequestRow
+                          key={request.id}
+                          request={request}
+                          userMap={userMap}
+                          clientMap={clientMap}
+                          isArchived={isArchived}
+                          onDuplicate={() => {}}
+                          onArchive={() => {}}
+                          onRestore={() => {}}
+                          onForceDelete={() => {}}
+                          canManage={true}
+                          currentUser={null}
+                          userRole={null}
+                        />
+                    ))}
+                </TableBody>
+            </Table>
+        </Card>
+    );
+}
 
 export default function AdminRequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -315,7 +371,7 @@ export default function AdminRequestsPage() {
                clientNames.includes(searchLower);
     }), [requests, searchQuery, userMap, clientMap]);
 
-    const renderContent = (reqs: Request[]) => {
+    const renderContent = (reqs: Request[], isArchivedTab: boolean) => {
         if (isLoading) {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -341,7 +397,7 @@ export default function AdminRequestsPage() {
                 </div>
             )
         }
-        return <RequestTable requests={reqs} userMap={userMap} clientMap={clientMap} />;
+        return <RequestTable requests={reqs} userMap={userMap} clientMap={clientMap} isArchived={isArchivedTab} />;
     }
 
     return (
@@ -373,72 +429,8 @@ export default function AdminRequestsPage() {
                 </div>
             </header>
             <main className="flex-1 p-6 overflow-y-auto">
-                {renderContent(filteredRequests)}
+                {renderContent(filteredRequests, currentTab === 'archived')}
             </main>
         </div>
-    );
-}
-
-const RequestTable = ({ requests, userMap, clientMap }: { requests: Request[]; userMap: Map<number, string>; clientMap: Map<number, string> }) => {
-    return (
-        <Card>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Request Title</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Client(s)</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Submissions</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {requests.map(request => {
-                        const ownerName = userMap.get(request.user_id) || 'Unknown User';
-                        const companyName = request.company?.company_name || 'N/A';
-                        const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
-                        const firstClientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) : '(No Client)';
-                        const additionalClientCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
-                        
-                        return (
-                            <TableRow key={request.id}>
-                                <TableCell className="font-medium">{request.title}</TableCell>
-                                <TableCell>{ownerName}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Building className="h-4 w-4 text-muted-foreground" />
-                                        {companyName}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    {firstClientName === '(No Client)' ? (
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Users className="h-4 w-4" />
-                                            <span>(No Client)</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {firstClientName}
-                                            {additionalClientCount > 0 && <span className="text-muted-foreground ml-1">+{additionalClientCount}</span>}
-                                        </>
-                                    )}
-                                </TableCell>
-                                <TableCell><StatusBadge status={request.status} /></TableCell>
-                                <TableCell>{request.submissions_count || 0}</TableCell>
-                                <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`/admin/dashboard/requests/${request.id}`}>View Details</Link>
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </Table>
-        </Card>
     );
 }
