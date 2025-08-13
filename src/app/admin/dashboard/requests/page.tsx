@@ -17,6 +17,12 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -225,4 +231,3 @@ const RequestTable = ({ requests, clientMap, userMap }: { requests: Request[], c
         </Card>
     );
 }
-
