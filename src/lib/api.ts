@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -654,6 +655,14 @@ export async function getAdminArchivedRequests(token: string): Promise<Paginated
 
 export async function getAdminRequest(token: string, id: number): Promise<Request> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token);
+}
+
+export async function getAdminRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions`, token);
+}
+
+export async function getAdminSingleSubmissionForRequest(token: string, requestId: number, submissionId: number): Promise<Submission> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
 // --- Admin Template Category Management ---
