@@ -123,24 +123,14 @@ interface RequestCardProps {
     request: Request;
     clientMap: Map<number, string>;
     userMap: Map<number, string>;
-    onDuplicate: (id: number) => void;
-    onArchive: (request: Request) => void;
-    onRestore: (request: Request) => void;
-    onForceDelete: (request: Request) => void;
-    isArchived: boolean;
-    canManage: boolean;
-    currentUser: UserType | null;
-    userRole: string | null;
 }
 
-const RequestCard = ({ request, clientMap, userMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, userMap }: RequestCardProps) => {
     const ownerName = userMap.get(request.user_id) || 'Unknown User';
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
-    
-    const showActions = canManage || !isArchived;
-    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
+    const isArchived = request.status === 'archived';
 
     return (
         <Card className="flex flex-col">
@@ -194,24 +184,14 @@ interface RequestRowProps {
     request: Request;
     clientMap: Map<number, string>;
     userMap: Map<number, string>;
-    onDuplicate: (id: number) => void;
-    onArchive: (request: Request) => void;
-    onRestore: (request: Request) => void;
-    onForceDelete: (request: Request) => void;
     isArchived: boolean;
-    canManage: boolean;
-    currentUser: UserType | null;
-    userRole: string | null;
 }
 
-const RequestRow = ({ request, clientMap, userMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestRowProps) => {
+const RequestRow = ({ request, clientMap, userMap, isArchived }: RequestRowProps) => {
     const ownerName = userMap.get(request.user_id) || 'Unknown User';
     const companyName = request.company?.company_name || 'N/A';
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
-    
-    const showActions = canManage || !isArchived;
-    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
     
     return (
      <TableRow>
@@ -279,13 +259,6 @@ const RequestTable = ({ requests, userMap, clientMap, isArchived }: RequestTable
                           userMap={userMap}
                           clientMap={clientMap}
                           isArchived={isArchived}
-                          onDuplicate={() => {}}
-                          onArchive={() => {}}
-                          onRestore={() => {}}
-                          onForceDelete={() => {}}
-                          canManage={true}
-                          currentUser={null}
-                          userRole={null}
                         />
                     ))}
                 </TableBody>
@@ -310,6 +283,8 @@ export default function AdminRequestsPage() {
     const [selectedCompanyId, setSelectedCompanyId] = useState('all');
     const [selectedClientId, setSelectedClientId] = useState('all');
     const [selectedStatus, setSelectedStatus] = useState('all');
+    
+    const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
 
@@ -322,22 +297,44 @@ export default function AdminRequestsPage() {
         async function loadData() {
             setIsLoading(true);
             try {
-                const [requestsData, usersData, clientsData] = await Promise.all([
-                    currentTab === 'active' ? getAdminAllRequests(token!) : getAdminArchivedRequests(token!),
+                const [usersData, clientsData] = await Promise.all([
                     getAdminUsers(token!, 1, '', true),
-                    getAdminClients(token!)
+                    getAdminClients(token!, 1, '', true)
                 ]);
-                setRequests(requestsData.data || []);
+
                 setAllUsers(usersData.data || []);
                 setAllClients(Array.isArray(clientsData.data) ? clientsData.data : []);
+
+                const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
+                const filters = {
+                    search: searchQuery,
+                    owner: selectedOwnerId,
+                    company: selectedCompanyId,
+                    client: selectedClientId,
+                    status: currentTab === 'active' ? selectedStatus : 'all'
+                };
+                
+                const requestsData = await fetchFn(token!, pagination.current_page, filters);
+                setRequests(requestsData.data || []);
+                setPagination({
+                    current_page: requestsData.current_page,
+                    last_page: requestsData.last_page,
+                    total: requestsData.total,
+                });
+
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
             } finally {
                 setIsLoading(false);
             }
         }
-        loadData();
-    }, [router, toast, currentTab, dataVersion, token]);
+        
+        const timer = setTimeout(() => {
+            loadData();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [router, toast, currentTab, dataVersion, token, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
     
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
@@ -354,29 +351,11 @@ export default function AdminRequestsPage() {
         return Array.from(companies.values());
     }, [requests]);
 
-    const filteredRequests = useMemo(() => requests.filter(request => {
-        const searchLower = searchQuery.toLowerCase();
-        const userName = userMap.get(request.user_id)?.toLowerCase() || '';
-        const companyName = request.company?.company_name.toLowerCase() || '';
-        const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
-
-        const matchesSearch = request.title.toLowerCase().includes(searchLower) ||
-               userName.includes(searchLower) ||
-               companyName.includes(searchLower) ||
-               clientNames.includes(searchLower);
-
-        const matchesOwner = selectedOwnerId === 'all' || request.user_id === Number(selectedOwnerId);
-        const matchesCompany = selectedCompanyId === 'all' || request.company_id === Number(selectedCompanyId);
-        const matchesClient = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
-        
-        if (currentTab === 'archived') {
-            return matchesSearch && matchesOwner && matchesCompany && matchesClient;
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= pagination.last_page) {
+            setPagination(prev => ({ ...prev, current_page: newPage }));
         }
-
-        const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
-
-        return matchesSearch && matchesOwner && matchesCompany && matchesClient && matchesStatus;
-    }), [requests, searchQuery, userMap, clientMap, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab]);
+    };
 
     const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
@@ -384,7 +363,7 @@ export default function AdminRequestsPage() {
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
     const activeRequestStatuses = ['draft', 'published', 'scheduled'];
 
-    const renderContent = (reqs: Request[], isArchivedTab: boolean) => {
+    const renderContent = () => {
         if (isLoading) {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -392,7 +371,7 @@ export default function AdminRequestsPage() {
                 </div>
             );
         }
-        if (reqs.length === 0) {
+        if (requests.length === 0) {
             return (
                 <div className="text-center py-20">
                     <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -406,15 +385,15 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {reqs.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} onDuplicate={()=>{}} onArchive={()=>{}} onRestore={()=>{}} onForceDelete={()=>{}} isArchived={currentTab==='archived'} canManage={true} currentUser={null} userRole={null} />)}
+                    {requests.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} />)}
                 </div>
             )
         }
-        return <RequestTable requests={reqs} userMap={userMap} clientMap={clientMap} isArchived={isArchivedTab} />;
+        return <RequestTable requests={requests} userMap={userMap} clientMap={clientMap} isArchived={currentTab === 'archived'} />;
     }
 
     return (
-        <div className="flex flex-col h-full bg-muted/40">
+        <div className="flex flex-col h-[calc(100vh-4rem)]">
             <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
                 <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
                     <TabsList>
@@ -458,8 +437,19 @@ export default function AdminRequestsPage() {
                 )}
             </div>
             <main className="flex-1 p-6 overflow-y-auto">
-                {renderContent(filteredRequests, currentTab === 'archived')}
+                {renderContent()}
             </main>
+            {pagination.last_page > 1 && (
+                <div className="flex items-center justify-between p-4 border-t bg-card">
+                    <div className="text-sm text-muted-foreground">
+                        Page {pagination.current_page} of {pagination.last_page} ({pagination.total} requests)
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1}>Previous</Button>
+                        <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page}>Next</Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
