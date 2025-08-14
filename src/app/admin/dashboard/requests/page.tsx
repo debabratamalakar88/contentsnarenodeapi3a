@@ -305,7 +305,23 @@ export default function AdminRequestsPage() {
                 setAllUsers(usersData.data || []);
                 setAllClients(Array.isArray(clientsData.data) ? clientsData.data : []);
 
-                const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
+            } catch (err: any) {
+                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        
+        loadData();
+    }, [router, toast, token]);
+
+    useEffect(() => {
+        if (!token) return;
+
+        async function loadRequests() {
+            setIsLoading(true);
+            try {
+                 const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
                 const filters = {
                     search: searchQuery,
                     owner: selectedOwnerId,
@@ -322,19 +338,19 @@ export default function AdminRequestsPage() {
                     total: requestsData.total,
                 });
 
-            } catch (err: any) {
-                toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
+            } catch(err: any) {
+                toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
             } finally {
                 setIsLoading(false);
             }
         }
-        
+
         const timer = setTimeout(() => {
-            loadData();
+            loadRequests();
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [router, toast, currentTab, dataVersion, token, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+    }, [token, currentTab, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
     
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
