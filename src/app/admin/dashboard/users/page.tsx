@@ -98,7 +98,7 @@ export default function ManageUsersPage() {
       setIsLoading(true);
       try {
         const fetchFunction = currentTab === 'active' ? getAdminUsers : getAdminArchivedUsers;
-        const response = await fetchFunction(token, pagination.current_page);
+        const response = await fetchFunction(token, pagination.current_page, searchQuery);
         
         setUsers(response.data || []);
         setPagination(prev => ({
@@ -124,13 +124,8 @@ export default function ManageUsersPage() {
     }, 300); // Debounce search calls
 
     return () => clearTimeout(timer);
-  }, [toast, currentTab, dataVersion, token, router, pagination.current_page]);
+  }, [toast, currentTab, dataVersion, token, router, pagination.current_page, searchQuery]);
   
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleArchive = async () => {
     if (!token || !userToArchive) return;
     try {
@@ -182,7 +177,7 @@ export default function ManageUsersPage() {
     if (isLoading) {
       return <LoadingSkeleton view={viewMode} />;
     }
-    if (filteredUsers.length === 0) {
+    if (users.length === 0) {
       const message = isArchived ? "No archived users found." : "No active users found.";
       const action = !isArchived ? <Button asChild className="mt-4"><Link href="/admin/dashboard/users/new">Create a User</Link></Button> : null;
       return (
@@ -193,49 +188,14 @@ export default function ManageUsersPage() {
       );
     }
     const viewProps = {
-      users: filteredUsers,
+      users: users,
       isArchived,
       onArchive: setUserToArchive,
       onRestore: setUserToRestore,
       onForceDelete: setUserToForceDelete,
     };
     
-    if (viewMode === 'grid') {
-      return <UsersGrid {...viewProps} />;
-    }
-
-    return (
-        <Card>
-            <CardContent className="p-0">
-                 <UsersTable {...viewProps} />
-            </CardContent>
-             {pagination.last_page > 1 && (
-                <CardFooter className="py-4">
-                    <div className="text-xs text-muted-foreground">
-                        Page {pagination.current_page} of {pagination.last_page}
-                    </div>
-                    <div className="ml-auto flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(pagination.current_page - 1)}
-                            disabled={pagination.current_page === 1}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(pagination.current_page + 1)}
-                            disabled={pagination.current_page === pagination.last_page}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </CardFooter>
-            )}
-        </Card>
-    );
+    return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
   }
 
   return (
@@ -243,11 +203,13 @@ export default function ManageUsersPage() {
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col h-full">
             <div className="flex items-center p-6 pb-0 border-b bg-card">
-              <TabsList className="bg-transparent p-0">
-                  <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE</TabsTrigger>
-                  <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED</TabsTrigger>
-              </TabsList>
-              <div className="ml-auto flex items-center gap-2 mb-2">
+              <div className="flex-1">
+                <TabsList className="bg-transparent p-0">
+                    <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE ({currentTab === 'active' ? pagination.total : '...'})</TabsTrigger>
+                    <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED ({currentTab === 'archived' ? pagination.total : '...'})</TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
                   <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -285,6 +247,31 @@ export default function ManageUsersPage() {
                   {renderContent(true)}
                 </TabsContent>
             </div>
+             {pagination.last_page > 1 && (
+                <div className="flex items-center justify-between p-4 border-t bg-card">
+                    <div className="text-sm text-muted-foreground">
+                        Page {pagination.current_page} of {pagination.last_page} ({pagination.total} users)
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </Tabs>
       </div>
 
@@ -350,7 +337,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {users.map(user => (
-        <Card key={user.id} className="relative">
+        <Card key={user.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
           <CardHeader className="flex flex-col items-center text-center p-6">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -376,7 +363,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
                     <DropdownMenuItem asChild>
                         <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => onArchive(user)}>
+                    <DropdownMenuItem onSelect={() => onArchive(user)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                       <Archive className="mr-2 h-4 w-4"/>Archive User
                     </DropdownMenuItem>
                   </>
@@ -416,7 +403,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
         </Card>
       ))}
       {!isArchived && (
-          <Card className="flex flex-col items-center justify-center bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[260px] h-full">
+          <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[260px] h-full">
             <Link href="/admin/dashboard/users/new" className="flex flex-col items-center justify-center h-full w-full">
                 <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
                 <UserPlus className="h-8 w-8 text-slate-400" />
@@ -433,103 +420,105 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
 
 function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Verified</TableHead>
-          <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
-          <TableHead>
-            <span className="sr-only">Actions</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>
-              {isArchived ? (
-                  <Badge variant="destructive">
-                      <ShieldAlert className="h-3 w-3 mr-1" />
-                      Archived
-                  </Badge>
-              ) : (
-                  <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                      <ShieldCheck className="h-3 w-3 mr-1" />
-                      Active
-                  </Badge>
-              )}
-            </TableCell>
-            <TableCell>
-              {user.email_verified_at ? (
-                <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Verified
-                </Badge>
-              ) : (
-                <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Not Verified
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell>
-              {isArchived 
-                ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
-                : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
-              }
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button aria-haspopup="true" size="icon" variant="ghost">
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {isArchived ? (
-                    <>
-                      <DropdownMenuItem onSelect={() => onRestore(user)}><ArchiveRestore className="mr-2 h-4 w-4"/>Restore User</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
-                        <Trash2 className="mr-2 h-4 w-4"/>Delete Permanently
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem asChild>
-                          <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                          <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => onArchive(user)}>
-                        <Archive className="mr-2 h-4 w-4"/>Archive User
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-        {!isArchived && (
+    <Card>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={6} className="py-4">
-              <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
-                Add new user...
-              </Link>
-            </TableCell>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Verified</TableHead>
+            <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
+            <TableHead>
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                {isArchived ? (
+                    <Badge variant="destructive">
+                        <ShieldAlert className="h-3 w-3 mr-1" />
+                        Archived
+                    </Badge>
+                ) : (
+                    <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                        Active
+                    </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {user.email_verified_at ? (
+                  <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Not Verified
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {isArchived 
+                  ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
+                  : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
+                }
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Toggle menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isArchived ? (
+                      <>
+                        <DropdownMenuItem onSelect={() => onRestore(user)}><ArchiveRestore className="mr-2 h-4 w-4"/>Restore User</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
+                          <Trash2 className="mr-2 h-4 w-4"/>Delete Permanently
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onArchive(user)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                          <Archive className="mr-2 h-4 w-4"/>Archive User
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+          {!isArchived && (
+            <TableRow>
+              <TableCell colSpan={6} className="py-4">
+                <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
+                  Add new user...
+                </Link>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
   )
 }
 
@@ -552,3 +541,4 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+

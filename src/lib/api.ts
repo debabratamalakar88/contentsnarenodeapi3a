@@ -568,12 +568,22 @@ export async function changeAdminPassword(token: string, passwordData: any) {
 }
 
 // --- Admin User Management ---
-export async function getAdminUsers(token: string, page: number = 1): Promise<PaginatedUsers> {
-  return fetchWithToken(`${API_BASE_URL}/api/admin/users?page=${page}`, token);
+export async function getAdminUsers(token: string, page: number = 1, search: string = ''): Promise<PaginatedUsers> {
+  const url = new URL(`${API_BASE_URL}/api/admin/users`);
+  url.searchParams.append('page', String(page));
+  if (search) {
+      url.searchParams.append('search', search);
+  }
+  return fetchWithToken(url.toString(), token);
 }
 
-export async function getAdminArchivedUsers(token: string, page: number = 1): Promise<PaginatedUsers> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/users/archived?page=${page}`, token);
+export async function getAdminArchivedUsers(token: string, page: number = 1, search: string = ''): Promise<PaginatedUsers> {
+    const url = new URL(`${API_BASE_URL}/api/admin/users/archived`);
+    url.searchParams.append('page', String(page));
+    if (search) {
+      url.searchParams.append('search', search);
+    }
+    return fetchWithToken(url.toString(), token);
 }
 
 export async function getAdminUser(token: string, id: number): Promise<User> {
