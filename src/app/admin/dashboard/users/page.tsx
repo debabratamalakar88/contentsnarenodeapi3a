@@ -40,7 +40,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive, Eye, PenSquare, ArchiveRestore, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminUsers, 
@@ -360,21 +360,21 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
                 <DropdownMenuSeparator />
                 {isArchived ? (
                   <>
-                    <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onRestore(user)}><ArchiveRestore className="mr-2 h-4 w-4"/>Restore User</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
-                      Delete Permanently
+                      <Trash2 className="mr-2 h-4 w-4"/>Delete Permanently
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
                     <DropdownMenuItem asChild>
-                        <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                        <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
+                        <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => onArchive(user)}>
-                      Archive User
+                      <Archive className="mr-2 h-4 w-4"/>Archive User
                     </DropdownMenuItem>
                   </>
                 )}
@@ -493,21 +493,21 @@ function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: 
                   <DropdownMenuSeparator />
                   {isArchived ? (
                     <>
-                      <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => onRestore(user)}><ArchiveRestore className="mr-2 h-4 w-4"/>Restore User</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
-                        Delete Permanently
+                        <Trash2 className="mr-2 h-4 w-4"/>Delete Permanently
                       </DropdownMenuItem>
                     </>
                   ) : (
                     <>
                       <DropdownMenuItem asChild>
-                          <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                          <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                          <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
+                          <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => onArchive(user)}>
-                        Archive User
+                        <Archive className="mr-2 h-4 w-4"/>Archive User
                       </DropdownMenuItem>
                     </>
                   )}
