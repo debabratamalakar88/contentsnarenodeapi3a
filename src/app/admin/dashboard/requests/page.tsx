@@ -161,30 +161,6 @@ const RequestCard = ({ request, clientMap, userMap, onDuplicate, onArchive, onRe
                             <p className="text-xs text-muted-foreground">Client</p>
                         </div>
                     </div>
-                     {showActions && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
-                                {isArchived ? (
-                                    <>
-                                        <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                        {canDeletePermanently && (
-                                            <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
-                                            </DropdownMenuItem>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
-                                    </>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
                 </div>
             </CardHeader>
             <CardContent className="p-4 flex-grow">
@@ -393,7 +369,7 @@ export default function AdminRequestsPage() {
         const matchesCompany = selectedCompanyId === 'all' || request.company_id === Number(selectedCompanyId);
         const matchesClient = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
         
-        if(currentTab === 'archived') {
+        if (currentTab === 'archived') {
             return matchesSearch && matchesOwner && matchesCompany && matchesClient;
         }
 
