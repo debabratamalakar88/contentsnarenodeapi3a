@@ -199,14 +199,17 @@ export default function ManageUsersPage() {
       onRestore: setUserToRestore,
       onForceDelete: setUserToForceDelete,
     };
-    const content = viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
+    
+    if (viewMode === 'grid') {
+      return <UsersGrid {...viewProps} />;
+    }
 
     return (
         <Card>
             <CardContent className="p-0">
-                 {content}
+                 <UsersTable {...viewProps} />
             </CardContent>
-            {pagination.last_page > 1 && (
+             {pagination.last_page > 1 && (
                 <CardFooter className="py-4">
                     <div className="text-xs text-muted-foreground">
                         Page {pagination.current_page} of {pagination.last_page}
@@ -232,7 +235,7 @@ export default function ManageUsersPage() {
                 </CardFooter>
             )}
         </Card>
-    )
+    );
   }
 
   return (
@@ -549,4 +552,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-
