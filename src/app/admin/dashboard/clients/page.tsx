@@ -97,12 +97,12 @@ export default function ManageClientsPage() {
       setIsLoading(true);
       try {
         const fetchClientsFn = currentTab === 'active' ? getAdminClients : getAdminArchivedClients;
-        const [fetchedClients, fetchedUsers] = await Promise.all([
+        const [fetchedClients, fetchedUsersResponse] = await Promise.all([
           fetchClientsFn(token),
-          getAdminUsers(token)
+          getAdminUsers(token, 1, '', true) // Fetch all users
         ]);
         setClients(fetchedClients);
-        setAllUsers(fetchedUsers);
+        setAllUsers(fetchedUsersResponse.data || []);
       } catch (error: any) {
         toast({
           title: `Failed to fetch data`,
@@ -242,7 +242,7 @@ export default function ManageClientsPage() {
                         <DropdownMenuRadioItem value="all">All Users</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
                         <DropdownMenuSeparator />
-                        {allUsers.map((user) => (
+                        {Array.isArray(allUsers) && allUsers.map((user) => (
                           <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>
                         ))}
                     </DropdownMenuRadioGroup>
@@ -409,4 +409,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-

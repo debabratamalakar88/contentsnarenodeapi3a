@@ -568,9 +568,13 @@ export async function changeAdminPassword(token: string, passwordData: any) {
 }
 
 // --- Admin User Management ---
-export async function getAdminUsers(token: string, page: number = 1, search: string = ''): Promise<PaginatedUsers> {
+export async function getAdminUsers(token: string, page: number = 1, search: string = '', all: boolean = false): Promise<PaginatedUsers> {
   const url = new URL(`${API_BASE_URL}/api/admin/users`);
-  url.searchParams.append('page', String(page));
+  if (!all) {
+    url.searchParams.append('page', String(page));
+  } else {
+    url.searchParams.append('all', 'true');
+  }
   if (search) {
       url.searchParams.append('search', search);
   }
@@ -1027,4 +1031,3 @@ export async function deleteReminder(token: string, id: number): Promise<{ messa
         method: 'DELETE',
     });
 }
-
