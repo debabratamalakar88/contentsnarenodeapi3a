@@ -277,7 +277,6 @@ export default function AdminRequestsPage() {
     const router = useRouter();
 
     const [currentTab, setCurrentTab] = useState('active');
-    const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedOwnerId, setSelectedOwnerId] = useState('all');
     const [selectedCompanyId, setSelectedCompanyId] = useState('all');
@@ -297,13 +296,13 @@ export default function AdminRequestsPage() {
         async function loadData() {
             setIsLoading(true);
             try {
-                const [usersData, clientsData] = await Promise.all([
+                const [usersResponse, clientsResponse] = await Promise.all([
                     getAdminUsers(token!, 1, '', true),
                     getAdminClients(token!, 1, true)
                 ]);
 
-                setAllUsers(usersData.data || []);
-                setAllClients(Array.isArray(clientsData.data) ? clientsData.data : []);
+                setAllUsers(usersResponse.data || []);
+                setAllClients(Array.isArray(clientsResponse.data) ? clientsResponse.data : []);
 
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
@@ -352,6 +351,12 @@ export default function AdminRequestsPage() {
         return () => clearTimeout(timer);
     }, [token, currentTab, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
     
+    // Effect to reset pagination when filters change
+    useEffect(() => {
+        setPagination(prev => ({...prev, current_page: 1}));
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab]);
+
+
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
     const userMap = useMemo(() => new Map(allUsers.map(u => [u.id, u.name])), [allUsers]);
@@ -469,3 +474,4 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
