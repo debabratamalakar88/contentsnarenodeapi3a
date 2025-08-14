@@ -205,8 +205,8 @@ export default function ManageUsersPage() {
             <div className="flex items-center p-6 pb-0 border-b bg-card">
               <div className="flex-1">
                 <TabsList className="bg-transparent p-0">
-                    <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE ({currentTab === 'active' ? pagination.total : '...'})</TabsTrigger>
-                    <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED ({currentTab === 'archived' ? pagination.total : '...'})</TabsTrigger>
+                    <TabsTrigger value="active" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ACTIVE</TabsTrigger>
+                    <TabsTrigger value="archived" className="bg-transparent pb-3 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary">ARCHIVED</TabsTrigger>
                 </TabsList>
               </div>
               <div className="flex items-center gap-2 mb-2">
