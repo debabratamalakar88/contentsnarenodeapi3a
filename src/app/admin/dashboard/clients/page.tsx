@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive, Eye, PenSquare, ArchiveRestore, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -325,9 +325,20 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
                 {isArchived ? (
-                  <><DropdownMenuItem onSelect={() => onRestore(client)}>Restore</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}>Delete Permanently</DropdownMenuItem></>
+                  <>
+                    <DropdownMenuItem onSelect={() => onRestore(client)}>
+                      <ArchiveRestore className="mr-2 h-4 w-4" /> Restore
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                    </DropdownMenuItem>
+                  </>
                 ) : (
-                  <><DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}>View Client</Link></DropdownMenuItem><DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}>Edit</Link></DropdownMenuItem><DropdownMenuItem onSelect={() => onArchive(client)}>Archive</DropdownMenuItem></>
+                  <>
+                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" />View Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -374,9 +385,16 @@ function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
                     {isArchived ? (
-                      <><DropdownMenuItem onSelect={() => onRestore(client)}>Restore Client</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}>Delete Permanently</DropdownMenuItem></>
+                      <>
+                        <DropdownMenuItem onSelect={() => onRestore(client)}><ArchiveRestore className="mr-2 h-4 w-4"/>Restore Client</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}><Trash2 className="mr-2 h-4 w-4"/>Delete Permanently</DropdownMenuItem>
+                      </>
                     ) : (
-                      <><DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}>View Details</Link></DropdownMenuItem><DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}>Edit Client</Link></DropdownMenuItem><DropdownMenuItem onSelect={() => onArchive(client)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Archive Client</DropdownMenuItem></>
+                      <>
+                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4"/>View Details</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit Client</Link></DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onArchive(client)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4"/>Archive Client</DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
