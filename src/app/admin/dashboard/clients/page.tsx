@@ -70,6 +70,7 @@ export default function ManageClientsPage() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState("active");
   const [dataVersion, setDataVersion] = useState(0);
+  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 15 });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,12 +98,25 @@ export default function ManageClientsPage() {
       setIsLoading(true);
       try {
         const fetchClientsFn = currentTab === 'active' ? getAdminClients : getAdminArchivedClients;
-        const [fetchedClients, fetchedUsersResponse] = await Promise.all([
-          fetchClientsFn(token),
-          getAdminUsers(token, 1, '', true) // Fetch all users
+        const [clientsResponse, usersResponse] = await Promise.all([
+          fetchClientsFn(token, pagination.current_page, searchQuery),
+          getAdminUsers(token, 1, '', true) // Fetch all users for filter dropdown
         ]);
-        setClients(fetchedClients);
-        setAllUsers(fetchedUsersResponse.data || []);
+        
+        setClients(clientsResponse.data || []);
+        setPagination({
+            current_page: clientsResponse.current_page,
+            last_page: clientsResponse.last_page,
+            total: clientsResponse.total,
+            per_page: clientsResponse.per_page,
+        });
+
+        if (Array.isArray(usersResponse.data)) {
+          setAllUsers(usersResponse.data);
+        } else {
+          setAllUsers([]);
+        }
+
       } catch (error: any) {
         toast({
           title: `Failed to fetch data`,
@@ -114,13 +128,16 @@ export default function ManageClientsPage() {
       }
     }
 
-    fetchData();
-  }, [toast, currentTab, dataVersion, token, router]);
+    const timer = setTimeout(() => {
+        fetchData();
+    }, 300); // Debounce search calls
+    
+    return () => clearTimeout(timer);
+
+  }, [toast, currentTab, dataVersion, token, router, pagination.current_page, searchQuery]);
   
   const filteredClients = clients.filter(client => {
     const createdBy = client.created_by;
-    const matchesSearch = client.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           client.email.toLowerCase().includes(searchQuery.toLowerCase());
     
     let matchesUser = false;
     if (selectedUserId === 'all') {
@@ -131,7 +148,7 @@ export default function ManageClientsPage() {
       matchesUser = createdBy !== null && createdBy === Number(selectedUserId);
     }
 
-    return matchesSearch && matchesUser;
+    return matchesUser;
   });
 
   const selectedUserName = selectedUserId === 'all'
@@ -179,6 +196,13 @@ export default function ManageClientsPage() {
       setClientToForceDelete(null);
     }
   };
+  
+   const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.last_page) {
+      setPagination(prev => ({ ...prev, current_page: newPage }));
+    }
+  };
+
 
   const viewProps = {
     clients: filteredClients,
@@ -273,6 +297,17 @@ export default function ManageClientsPage() {
                 {renderContent(true)}
             </TabsContent>
           </div>
+          {pagination.last_page > 1 && (
+            <div className="flex items-center justify-between p-4 border-t bg-card">
+              <div className="text-sm text-muted-foreground">
+                Page {pagination.current_page} of {pagination.last_page} ({pagination.total} clients)
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page}>Next</Button>
+              </div>
+            </div>
+          )}
         </Tabs>
       </div>
 
@@ -326,12 +361,8 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
                 <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
                 {isArchived ? (
                   <>
-                    <DropdownMenuItem onSelect={() => onRestore(client)}>
-                      <ArchiveRestore className="mr-2 h-4 w-4" /> Restore
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onRestore(client)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(client)}><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
                   </>
                 ) : (
                   <>
@@ -427,3 +458,4 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+

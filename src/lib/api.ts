@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -239,6 +238,7 @@ export interface PaginatedResponse<T> {
 
 export interface PaginatedRequests extends PaginatedResponse<Request> {}
 export interface PaginatedUsers extends PaginatedResponse<User> {}
+export interface PaginatedClients extends PaginatedResponse<Client> {}
 export interface PaginatedReminders extends PaginatedResponse<Reminder> {}
 
 
@@ -622,12 +622,22 @@ export async function forceDeleteAdminUser(token: string, id: number) {
 
 
 // --- Admin Client Management ---
-export async function getAdminClients(token:string): Promise<Client[]> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/clients`, token);
+export async function getAdminClients(token: string, page: number = 1, search: string = ''): Promise<PaginatedClients> {
+    const url = new URL(`${API_BASE_URL}/api/admin/clients`);
+    url.searchParams.append('page', String(page));
+    if (search) {
+        url.searchParams.append('search', search);
+    }
+    return fetchWithToken(url.toString(), token);
 }
 
-export async function getAdminArchivedClients(token:string): Promise<Client[]> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/clients/archived`, token);
+export async function getAdminArchivedClients(token: string, page: number = 1, search: string = ''): Promise<PaginatedClients> {
+    const url = new URL(`${API_BASE_URL}/api/admin/clients/archived`);
+    url.searchParams.append('page', String(page));
+    if (search) {
+        url.searchParams.append('search', search);
+    }
+    return fetchWithToken(url.toString(), token);
 }
 
 export async function getAdminClient(token: string, id: number): Promise<Client> {
