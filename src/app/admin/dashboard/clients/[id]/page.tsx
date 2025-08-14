@@ -47,12 +47,12 @@ export default function ClientViewPage() {
             }
 
             try {
-                const [fetchedClient, fetchedUsers] = await Promise.all([
+                const [fetchedClient, fetchedUsersResponse] = await Promise.all([
                     getAdminClient(token, id),
-                    getAdminUsers(token)
+                    getAdminUsers(token, 1, '', true)
                 ]);
                 setClient(fetchedClient);
-                setAllUsers(fetchedUsers);
+                setAllUsers(fetchedUsersResponse.data || []);
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
