@@ -92,7 +92,7 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-const statusStyles = {
+const statusStyles: { [key: string]: string } = {
   draft: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
   published: "bg-green-100 text-green-800 border-green-200 hover:bg-green-100",
   scheduled: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
@@ -123,15 +123,15 @@ interface RequestCardProps {
     request: Request;
     clientMap: Map<number, string>;
     userMap: Map<number, string>;
+    isArchived: boolean;
 }
 
-const RequestCard = ({ request, clientMap, userMap }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, userMap, isArchived }: RequestCardProps) => {
     const ownerName = userMap.get(request.user_id) || 'Unknown User';
     const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
-    const isArchived = request.status === 'archived';
-
+    
     return (
         <Card className="flex flex-col">
             <CardHeader className="p-4 border-b">
@@ -299,7 +299,7 @@ export default function AdminRequestsPage() {
             try {
                 const [usersData, clientsData] = await Promise.all([
                     getAdminUsers(token!, 1, '', true),
-                    getAdminClients(token!, 1, '', true)
+                    getAdminClients(token!, 1, true)
                 ]);
 
                 setAllUsers(usersData.data || []);
@@ -311,7 +311,7 @@ export default function AdminRequestsPage() {
                     owner: selectedOwnerId,
                     company: selectedCompanyId,
                     client: selectedClientId,
-                    status: currentTab === 'active' ? selectedStatus : 'all'
+                    status: currentTab === 'active' ? selectedStatus : undefined
                 };
                 
                 const requestsData = await fetchFn(token!, pagination.current_page, filters);
@@ -385,7 +385,7 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {requests.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} />)}
+                    {requests.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} isArchived={currentTab === 'archived'}/>)}
                 </div>
             )
         }
@@ -453,4 +453,3 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
-
