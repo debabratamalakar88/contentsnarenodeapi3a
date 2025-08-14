@@ -348,12 +348,12 @@ export default function AdminRequestsPage() {
             try {
                 const [requestsData, usersData, clientsData] = await Promise.all([
                     currentTab === 'active' ? getAdminAllRequests(token!) : getAdminArchivedRequests(token!),
-                    getAdminUsers(token!),
+                    getAdminUsers(token!, 1, '', true),
                     getAdminClients(token!)
                 ]);
                 setRequests(requestsData.data || []);
-                setAllUsers(usersData || []);
-                setAllClients(clientsData || []);
+                setAllUsers(usersData.data || []);
+                setAllClients(Array.isArray(clientsData.data) ? clientsData.data : []);
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch data.", variant: "destructive" });
             } finally {
@@ -392,7 +392,12 @@ export default function AdminRequestsPage() {
         const matchesOwner = selectedOwnerId === 'all' || request.user_id === Number(selectedOwnerId);
         const matchesCompany = selectedCompanyId === 'all' || request.company_id === Number(selectedCompanyId);
         const matchesClient = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
-        const matchesStatus = currentTab !== 'active' || selectedStatus === 'all' || request.status === selectedStatus;
+        
+        if(currentTab === 'archived') {
+            return matchesSearch && matchesOwner && matchesCompany && matchesClient;
+        }
+
+        const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
 
         return matchesSearch && matchesOwner && matchesCompany && matchesClient && matchesStatus;
     }), [requests, searchQuery, userMap, clientMap, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab]);
@@ -400,7 +405,7 @@ export default function AdminRequestsPage() {
     const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
     const selectedClientName = allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients';
-    const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus;
+    const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
     const activeRequestStatuses = ['draft', 'published', 'scheduled'];
 
     const renderContent = (reqs: Request[], isArchivedTab: boolean) => {
