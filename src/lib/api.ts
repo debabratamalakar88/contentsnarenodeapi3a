@@ -238,6 +238,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface PaginatedRequests extends PaginatedResponse<Request> {}
+export interface PaginatedUsers extends PaginatedResponse<User> {}
 export interface PaginatedReminders extends PaginatedResponse<Reminder> {}
 
 
@@ -567,14 +568,12 @@ export async function changeAdminPassword(token: string, passwordData: any) {
 }
 
 // --- Admin User Management ---
-export async function getAdminUsers(token: string): Promise<User[]> {
-  const users = await fetchWithToken(`${API_BASE_URL}/api/admin/users`, token);
-  return Array.isArray(users) ? users : [];
+export async function getAdminUsers(token: string, page: number = 1): Promise<PaginatedUsers> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/users?page=${page}`, token);
 }
 
-export async function getAdminArchivedUsers(token: string): Promise<User[]> {
-  const users = await fetchWithToken(`${API_BASE_URL}/api/admin/users/archived`, token);
-  return Array.isArray(users) ? users : [];
+export async function getAdminArchivedUsers(token: string, page: number = 1): Promise<PaginatedUsers> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/users/archived?page=${page}`, token);
 }
 
 export async function getAdminUser(token: string, id: number): Promise<User> {
@@ -1018,3 +1017,4 @@ export async function deleteReminder(token: string, id: number): Promise<{ messa
         method: 'DELETE',
     });
 }
+

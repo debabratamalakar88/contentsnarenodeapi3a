@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -47,7 +48,8 @@ import {
   softDeleteAdminUser,
   restoreAdminUser,
   forceDeleteAdminUser,
-  type User as UserType 
+  type User as UserType,
+  type PaginatedResponse
 } from "@/lib/api";
 import { format, parseISO } from 'date-fns';
 import { useRouter } from "next/navigation";
@@ -70,6 +72,7 @@ export default function ManageUsersPage() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState("active");
   const [dataVersion, setDataVersion] = useState(0);
+  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 15 });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,8 +98,16 @@ export default function ManageUsersPage() {
       setIsLoading(true);
       try {
         const fetchFunction = currentTab === 'active' ? getAdminUsers : getAdminArchivedUsers;
-        const fetchedUsers = await fetchFunction(token);
-        setUsers(fetchedUsers);
+        const response = await fetchFunction(token, pagination.current_page);
+        
+        setUsers(response.data || []);
+        setPagination(prev => ({
+            ...prev,
+            last_page: response.last_page || 1,
+            total: response.total || 0,
+            per_page: response.per_page || 15
+        }));
+
       } catch (error: any) {
         toast({
           title: `Failed to fetch ${currentTab === 'active' ? 'active' : 'archived'} users`,
@@ -108,8 +119,12 @@ export default function ManageUsersPage() {
       }
     }
 
-    fetchUsers();
-  }, [toast, currentTab, dataVersion, token, router]);
+    const timer = setTimeout(() => {
+        fetchUsers();
+    }, 300); // Debounce search calls
+
+    return () => clearTimeout(timer);
+  }, [toast, currentTab, dataVersion, token, router, pagination.current_page]);
   
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,6 +169,12 @@ export default function ManageUsersPage() {
       setUserToForceDelete(null);
     }
   };
+  
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.last_page) {
+      setPagination(prev => ({ ...prev, current_page: newPage }));
+    }
+  };
 
   const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
   
@@ -178,7 +199,40 @@ export default function ManageUsersPage() {
       onRestore: setUserToRestore,
       onForceDelete: setUserToForceDelete,
     };
-    return viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
+    const content = viewMode === 'grid' ? <UsersGrid {...viewProps} /> : <UsersTable {...viewProps} />;
+
+    return (
+        <Card>
+            <CardContent className="p-0">
+                 {content}
+            </CardContent>
+            {pagination.last_page > 1 && (
+                <CardFooter className="py-4">
+                    <div className="text-xs text-muted-foreground">
+                        Page {pagination.current_page} of {pagination.last_page}
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </CardFooter>
+            )}
+        </Card>
+    )
   }
 
   return (
@@ -376,105 +430,103 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
 
 function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Verified</TableHead>
-            <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
-            <TableHead>
-              <span className="sr-only">Actions</span>
-            </TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Verified</TableHead>
+          <TableHead>{isArchived ? "Date Archived" : "Date Registered"}</TableHead>
+          <TableHead>
+            <span className="sr-only">Actions</span>
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {users.map((user) => (
+          <TableRow key={user.id}>
+            <TableCell className="font-medium">{user.name}</TableCell>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              {isArchived ? (
+                  <Badge variant="destructive">
+                      <ShieldAlert className="h-3 w-3 mr-1" />
+                      Archived
+                  </Badge>
+              ) : (
+                  <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
+                      <ShieldCheck className="h-3 w-3 mr-1" />
+                      Active
+                  </Badge>
+              )}
+            </TableCell>
+            <TableCell>
+              {user.email_verified_at ? (
+                <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Verified
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Not Verified
+                </Badge>
+              )}
+            </TableCell>
+            <TableCell>
+              {isArchived 
+                ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
+                : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
+              }
+            </TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button aria-haspopup="true" size="icon" variant="ghost">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {isArchived ? (
+                    <>
+                      <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
+                        Delete Permanently
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                          <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                          <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => onArchive(user)}>
+                        Archive User
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                {isArchived ? (
-                    <Badge variant="destructive">
-                        <ShieldAlert className="h-3 w-3 mr-1" />
-                        Archived
-                    </Badge>
-                ) : (
-                    <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        Active
-                    </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                {user.email_verified_at ? (
-                  <Badge variant="secondary" className="text-blue-700 bg-blue-100 border-blue-200">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Not Verified
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                {isArchived 
-                  ? (user.deleted_at ? format(parseISO(user.deleted_at), 'PPP') : 'N/A')
-                  : (user.created_at ? format(parseISO(user.created_at), 'PPP') : 'N/A')
-                }
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Toggle menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {isArchived ? (
-                      <>
-                        <DropdownMenuItem onSelect={() => onRestore(user)}>Restore User</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onSelect={() => onForceDelete(user)}>
-                          Delete Permanently
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/admin/dashboard/users/${user.id}`}>View User</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/admin/dashboard/users/${user.id}/edit`}>Edit User</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onArchive(user)}>
-                          Archive User
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-          {!isArchived && (
-            <TableRow>
-              <TableCell colSpan={6} className="py-4">
-                <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
-                  Add new user...
-                </Link>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Card>
+        ))}
+        {!isArchived && (
+          <TableRow>
+            <TableCell colSpan={6} className="py-4">
+              <Link href="/admin/dashboard/users/new" className="text-primary hover:underline text-sm font-medium">
+                Add new user...
+              </Link>
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   )
 }
 
@@ -497,3 +549,4 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+
