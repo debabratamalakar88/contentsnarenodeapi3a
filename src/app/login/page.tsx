@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser, getCompany, forgotPassword } from "@/lib/api";
+import { loginUser, getCompany, forgotPassword, selectCompany } from "@/lib/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "../auth/AuthLayout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,9 +68,10 @@ export default function LoginPage() {
       const loginData = await loginUser(values);
       if (loginData.token && loginData.user) {
         
-        localStorage.setItem('authToken', loginData.token);
+        let initialToken = loginData.token;
         
         if (loginData.user.email_verified_at === null) {
+          localStorage.setItem('authToken', initialToken);
           toast({
             title: "Verification Required",
             description: "Please check your email to verify your account.",
@@ -83,12 +84,17 @@ export default function LoginPage() {
         const user = loginData.user;
 
         if (user.selected_company_id) {
-            const companyDetails = await getCompany(loginData.token, user.selected_company_id);
+            const selectResponse = await selectCompany(initialToken, user.selected_company_id);
+            const companyDetails = await getCompany(selectResponse.token, user.selected_company_id);
+            
+            localStorage.setItem('authToken', selectResponse.token);
             localStorage.setItem('selectedCompany', JSON.stringify(companyDetails));
             localStorage.setItem('userRole', companyDetails.pivot?.role || 'Viewer');
+            
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
         } else {
+            localStorage.setItem('authToken', initialToken);
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/companies');
         }
