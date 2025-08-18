@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/icons"
 import { NavLinks } from "./NavLinks"
-import { logoutUser, switchCompany, type Company } from '@/lib/api';
+import { logoutUser, switchCompany, getCompany, type Company } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
@@ -58,11 +58,28 @@ export default function DashboardLayout({
         return;
     }
     
-    if (companyData) {
-        setCompany(JSON.parse(companyData));
+    async function hydrateCompanyData() {
+        if (companyData) {
+            const parsedCompany = JSON.parse(companyData);
+            // If we only have a placeholder, fetch the full data
+            if (userToken && parsedCompany && !parsedCompany.company_name) {
+                try {
+                    const fullCompanyDetails = await getCompany(userToken, parsedCompany.id);
+                    localStorage.setItem('selectedCompany', JSON.stringify(fullCompanyDetails));
+                    setCompany(fullCompanyDetails);
+                } catch (error) {
+                    console.error("Failed to hydrate company data, redirecting.", error);
+                    localStorage.removeItem('selectedCompany');
+                    router.replace('/companies');
+                }
+            } else {
+                 setCompany(parsedCompany);
+            }
+        }
+        setIsChecking(false);
     }
     
-    setIsChecking(false);
+    hydrateCompanyData();
 
   }, [router, pathname]);
   

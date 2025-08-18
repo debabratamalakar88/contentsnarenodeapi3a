@@ -82,24 +82,19 @@ export default function LoginPage() {
           return;
         } 
         
+        localStorage.setItem('authToken', initialToken);
+        
         if (user.selected_company_id) {
-            // User has a default company, so we auto-select it.
-            const selectResponse = await selectCompany(initialToken, user.selected_company_id);
-            const companyScopedToken = selectResponse.token;
-            
-            const companyDetails = await getCompany(companyScopedToken, user.selected_company_id);
-            
-            localStorage.setItem('authToken', companyScopedToken);
-            localStorage.setItem('selectedCompany', JSON.stringify(companyDetails));
-            if (companyDetails.pivot?.role) {
-                 localStorage.setItem('userRole', companyDetails.pivot.role);
-            }
-            
+            // The user has a default company. The token is already scoped.
+            // We need to store a placeholder for `selectedCompany` to pass the layout check.
+            // The actual full company details can be fetched in the dashboard if needed.
+            const companyPlaceholder = { id: user.selected_company_id };
+            localStorage.setItem('selectedCompany', JSON.stringify(companyPlaceholder));
+
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
         } else {
             // User does not have a default company, redirect to selection page.
-            localStorage.setItem('authToken', initialToken);
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/companies');
         }
