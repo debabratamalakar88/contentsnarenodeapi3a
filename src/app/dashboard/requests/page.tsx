@@ -309,7 +309,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
 };
 
 export default function RequestsPage() {
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [activeRequests, setActiveRequests] = useState<Request[]>([]);
     const [archivedRequests, setArchivedRequests] = useState<Request[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
