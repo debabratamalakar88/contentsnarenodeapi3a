@@ -122,15 +122,15 @@ const StatusBadge = ({ status }: { status: Request['status'] | 'archived' }) => 
 interface RequestCardProps {
     request: Request;
     clientMap: Map<number, string>;
-    userMap: Map<number, string>;
     isArchived: boolean;
 }
 
-const RequestCard = ({ request, clientMap, userMap, isArchived }: RequestCardProps) => {
-    const ownerName = userMap.get(request.user_id) || 'Unknown User';
-    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+const RequestCard = ({ request, clientMap, isArchived }: RequestCardProps) => {
+    const ownerName = request.user?.name || 'Unknown User';
+    const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
+    const clientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
-    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
+    const additionalClientsCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
     
     return (
         <Card className="flex flex-col">
@@ -183,15 +183,15 @@ const RequestCard = ({ request, clientMap, userMap, isArchived }: RequestCardPro
 interface RequestRowProps {
     request: Request;
     clientMap: Map<number, string>;
-    userMap: Map<number, string>;
     isArchived: boolean;
 }
 
-const RequestRow = ({ request, clientMap, userMap, isArchived }: RequestRowProps) => {
-    const ownerName = userMap.get(request.user_id) || 'Unknown User';
+const RequestRow = ({ request, clientMap, isArchived }: RequestRowProps) => {
+    const ownerName = request.user?.name || 'Unknown User';
     const companyName = request.company?.company_name || 'N/A';
-    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
-    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
+    const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
+    const clientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) || "(No Client)" : "(No Client)";
+    const additionalClientsCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
     
     return (
      <TableRow>
@@ -230,12 +230,11 @@ const RequestRow = ({ request, clientMap, userMap, isArchived }: RequestRowProps
 
 interface RequestTableProps {
     requests: Request[];
-    userMap: Map<number, string>;
     clientMap: Map<number, string>;
     isArchived: boolean;
 }
 
-const RequestTable = ({ requests, userMap, clientMap, isArchived }: RequestTableProps) => {
+const RequestTable = ({ requests, clientMap, isArchived }: RequestTableProps) => {
     return (
         <Card>
             <Table>
@@ -256,7 +255,6 @@ const RequestTable = ({ requests, userMap, clientMap, isArchived }: RequestTable
                         <RequestRow
                           key={request.id}
                           request={request}
-                          userMap={userMap}
                           clientMap={clientMap}
                           isArchived={isArchived}
                         />
@@ -302,7 +300,7 @@ export default function AdminRequestsPage() {
                 ]);
 
                 setAllUsers(usersResponse.data || []);
-                setAllClients(Array.isArray(clientsResponse.data) ? clientsResponse.data : []);
+                setAllClients(clientsResponse.data || []);
 
             } catch (err: any) {
                 toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
@@ -359,7 +357,6 @@ export default function AdminRequestsPage() {
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
     
-    const userMap = useMemo(() => new Map(allUsers.map(u => [u.id, u.name])), [allUsers]);
     const clientMap = useMemo(() => new Map(allClients.map(c => [c.id, c.full_name])), [allClients]);
     
     const uniqueCompanies = useMemo(() => {
@@ -382,7 +379,7 @@ export default function AdminRequestsPage() {
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
     const selectedClientName = allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients';
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
-    const activeRequestStatuses = ['draft', 'published', 'scheduled'];
+    const activeRequestStatuses = ['draft', 'published', 'scheduled', 'completed'];
 
     const renderContent = () => {
         if (isLoading) {
@@ -406,11 +403,11 @@ export default function AdminRequestsPage() {
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {requests.map(req => <RequestCard key={req.id} request={req} userMap={userMap} clientMap={clientMap} isArchived={currentTab === 'archived'}/>)}
+                    {requests.map(req => <RequestCard key={req.id} request={req} clientMap={clientMap} isArchived={currentTab === 'archived'}/>)}
                 </div>
             )
         }
-        return <RequestTable requests={requests} userMap={userMap} clientMap={clientMap} isArchived={currentTab === 'archived'} />;
+        return <RequestTable requests={requests} clientMap={clientMap} isArchived={currentTab === 'archived'} />;
     }
 
     return (
