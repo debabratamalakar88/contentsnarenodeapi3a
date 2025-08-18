@@ -7,21 +7,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Facebook, Twitter, Chrome } from 'lucide-react';
 import Image from 'next/image';
+import { Logo } from '@/components/icons';
 
-const ContentSnareLogo = () => (
+const NarlaxLogo = () => (
     <div className="flex items-center gap-3">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#f43f5e" />
-                    <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-            </defs>
-            <path d="M10 13L6 9L10 5" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M14 5L18 9L14 13" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M8.5 19L15.5 19" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
-        </svg>
-        <span className="text-3xl font-bold text-white">Content Snare</span>
+        <Logo className="h-10 w-10 text-white" />
+        <span className="text-3xl font-bold text-white">Narlax</span>
     </div>
 );
 
@@ -46,7 +37,7 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
       <div className="relative z-20 w-full max-w-4xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
         {/* Left Panel */}
         <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#34495e] p-12 text-white text-center">
-            <ContentSnareLogo />
+            <NarlaxLogo />
             <p className="mt-4 text-slate-300">Login using social media to get quick access</p>
             <div className="mt-8 space-y-4 w-full max-w-xs">
                 <Button className="w-full bg-[#3b5998] hover:bg-[#3b5998]/90">
