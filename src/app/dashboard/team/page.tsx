@@ -63,7 +63,7 @@ export default function TeamPage() {
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
 
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [memberToArchive, setMemberToArchive] = useState<TeamMember | null>(null);
     const [memberToRestore, setMemberToRestore] = useState<TeamMember | null>(null);
     const [memberToForceDelete, setMemberToForceDelete] = useState<TeamMember | null>(null);

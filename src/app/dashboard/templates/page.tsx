@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -52,7 +53,7 @@ export default function TemplatesPage() {
     const [dataVersion, setDataVersion] = useState(0);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
 

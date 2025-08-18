@@ -49,7 +49,7 @@ const getInitials = (name: string): string => {
 }
 
 export default function ClientsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [activeClients, setActiveClients] = useState<Client[]>([]);
   const [archivedClients, setArchivedClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
