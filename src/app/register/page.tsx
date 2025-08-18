@@ -55,6 +55,15 @@ export default function RegisterPage() {
     },
   });
 
+  const companyNameValue = form.watch("company_name");
+
+  const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  useEffect(() => {
+      const slug = slugify(companyNameValue);
+      form.setValue('company_subdomain', slug);
+  }, [companyNameValue, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await registerUser(values);
@@ -117,8 +126,15 @@ export default function RegisterPage() {
             name="company_subdomain"
             render={({ field }) => (
               <FormItem>
-                <FormControl>
-                  <Input placeholder="Company Subdomain" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"/>
+                 <FormControl>
+                    <div className="flex items-center mt-1">
+                        <Input
+                            placeholder="subdomain"
+                            className="bg-gray-50 rounded-r-none border-0 border-b border-input focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none px-2"
+                            {...field}
+                        />
+                        <span className="px-3 h-10 flex items-center bg-gray-50 text-muted-foreground border-b border-input rounded-r-md text-sm">.contentsnare.com</span>
+                    </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
