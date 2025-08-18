@@ -18,6 +18,8 @@ import { AuthLayout } from "../auth/AuthLayout";
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
+  company_name: z.string().min(1, { message: "Company name is required." }),
+  company_subdomain: z.string().min(1, { message: "Company subdomain is required." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   password_confirmation: z.string()
 }).refine(data => data.password === data.password_confirmation, {
@@ -46,6 +48,8 @@ export default function RegisterPage() {
     defaultValues: {
       name: "",
       email: "",
+      company_name: "",
+      company_subdomain: "",
       password: "",
       password_confirmation: "",
     },
@@ -90,7 +94,31 @@ export default function RegisterPage() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Full Name" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"/>
+                  <Input placeholder="Full Name" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="company_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="Company Name" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="company_subdomain"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="Company Subdomain" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -102,7 +130,7 @@ export default function RegisterPage() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"/>
+                  <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,7 +143,7 @@ export default function RegisterPage() {
               <FormItem>
                 <div className="relative">
                   <FormControl>
-                    <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
+                    <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8 px-2"/>
                   </FormControl>
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
                     {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
@@ -132,7 +160,7 @@ export default function RegisterPage() {
               <FormItem>
                 <div className="relative">
                     <FormControl>
-                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
+                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8 px-2"/>
                     </FormControl>
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
                       {showConfirmPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
