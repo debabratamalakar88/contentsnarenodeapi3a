@@ -313,7 +313,7 @@ export default function AdminRequestsPage() {
             try {
                 const [usersResponse, clientsResponse] = await Promise.all([
                     getAdminUsers(token, 1, '', true),
-                    getAdminClients(token, 1, true)
+                    getAdminClients(token, 1, '', true)
                 ]);
                 setAllUsers(usersResponse.data || []);
                 setAllClients(clientsResponse.data || []);
@@ -337,16 +337,16 @@ export default function AdminRequestsPage() {
 
     useEffect(() => {
         const handler = setTimeout(() => {
+            const filters = {
+                search: searchQuery,
+                owner: selectedOwnerId,
+                company: selectedCompanyId,
+                client: selectedClientId,
+                status: currentTab === 'active' ? selectedStatus : undefined
+            };
             if (pagination.current_page !== 1) {
                 setPagination(p => ({ ...p, current_page: 1 }));
             } else {
-                 const filters = {
-                    search: searchQuery,
-                    owner: selectedOwnerId,
-                    company: selectedCompanyId,
-                    client: selectedClientId,
-                    status: currentTab === 'active' ? selectedStatus : undefined
-                };
                 fetchData(1, filters);
             }
         }, 300);
@@ -378,7 +378,7 @@ export default function AdminRequestsPage() {
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
     const selectedClientName = allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients';
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
-    const activeRequestStatuses = ['draft', 'published', 'scheduled', 'completed'];
+    const activeRequestStatuses = ['draft', 'published', 'scheduled'];
 
     const renderContent = () => {
         if (isLoading) {
@@ -470,3 +470,4 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
