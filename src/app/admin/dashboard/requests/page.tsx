@@ -26,7 +26,7 @@ import {
     Briefcase,
     Filter,
 } from "lucide-react"
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -285,74 +285,73 @@ export default function AdminRequestsPage() {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
 
-    useEffect(() => {
+    const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
             router.push('/admin/login');
             return;
         }
-
-        async function loadData() {
-            setIsLoading(true);
-            try {
-                const [usersResponse, clientsResponse] = await Promise.all([
-                    getAdminUsers(token!, 1, '', true),
-                    getAdminClients(token!, 1, true)
-                ]);
-
-                setAllUsers(usersResponse.data || []);
-                setAllClients(clientsResponse.data || []);
-
-            } catch (err: any) {
-                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
-            } finally {
-                setIsLoading(false);
-            }
+        setIsLoading(true);
+        try {
+            const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
+            const requestsData = await fetchFn(token, page, filters);
+            setRequests(requestsData.data || []);
+            setPagination({
+                current_page: requestsData.current_page,
+                last_page: requestsData.last_page,
+                total: requestsData.total,
+            });
+        } catch(err: any) {
+            toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
-        
-        loadData();
-    }, [router, toast, token]);
-
+    }, [token, router, toast, currentTab]);
+    
     useEffect(() => {
         if (!token) return;
-
-        async function loadRequests() {
-            setIsLoading(true);
+        async function loadSupportingData() {
             try {
-                 const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
-                const filters = {
+                const [usersResponse, clientsResponse] = await Promise.all([
+                    getAdminUsers(token, 1, '', true),
+                    getAdminClients(token, 1, true)
+                ]);
+                setAllUsers(usersResponse.data || []);
+                setAllClients(clientsResponse.data || []);
+            } catch (err: any) {
+                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+            }
+        }
+        loadSupportingData();
+    }, [token, toast]);
+    
+    useEffect(() => {
+        const filters = {
+            search: searchQuery,
+            owner: selectedOwnerId,
+            company: selectedCompanyId,
+            client: selectedClientId,
+            status: currentTab === 'active' ? selectedStatus : undefined
+        };
+        fetchData(pagination.current_page, filters);
+    }, [pagination.current_page, currentTab, fetchData]);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (pagination.current_page !== 1) {
+                setPagination(p => ({ ...p, current_page: 1 }));
+            } else {
+                 const filters = {
                     search: searchQuery,
                     owner: selectedOwnerId,
                     company: selectedCompanyId,
                     client: selectedClientId,
                     status: currentTab === 'active' ? selectedStatus : undefined
                 };
-                
-                const requestsData = await fetchFn(token!, pagination.current_page, filters);
-                setRequests(requestsData.data || []);
-                setPagination({
-                    current_page: requestsData.current_page,
-                    last_page: requestsData.last_page,
-                    total: requestsData.total,
-                });
-
-            } catch(err: any) {
-                toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
-            } finally {
-                setIsLoading(false);
+                fetchData(1, filters);
             }
-        }
-
-        const timer = setTimeout(() => {
-            loadRequests();
         }, 300);
-
-        return () => clearTimeout(timer);
-    }, [token, currentTab, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, toast]);
-    
-    // Effect to reset pagination when filters change
-    useEffect(() => {
-        setPagination(prev => ({...prev, current_page: 1}));
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab]);
+        return () => clearTimeout(handler);
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, fetchData]);
 
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
@@ -385,7 +384,7 @@ export default function AdminRequestsPage() {
         if (isLoading) {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                    {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-72 w-full" />)}
                 </div>
             );
         }
