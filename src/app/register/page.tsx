@@ -130,10 +130,10 @@ export default function RegisterPage() {
                     <div className="flex items-center mt-1">
                         <Input
                             placeholder="subdomain"
-                            className="bg-gray-50 rounded-r-none border-0 border-b border-input focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none px-2"
+                            className="rounded-r-none border-0 border-b border-input focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none px-2"
                             {...field}
                         />
-                        <span className="px-3 h-10 flex items-center bg-gray-50 text-muted-foreground border-b border-input rounded-r-md text-sm">.contentsnare.com</span>
+                        <span className="px-3 h-10 flex items-center text-muted-foreground border-b border-input rounded-r-md text-sm">.contentsnare.com</span>
                     </div>
                 </FormControl>
                 <FormMessage />
