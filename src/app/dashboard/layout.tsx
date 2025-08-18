@@ -109,6 +109,7 @@ export default function DashboardLayout({
     } finally {
         localStorage.removeItem('authToken');
         localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('userRole');
         router.push('/login');
     }
   };

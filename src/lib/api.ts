@@ -446,7 +446,7 @@ export async function getCompany(token: string, id: number): Promise<Company> {
     return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token);
 }
 
-export async function selectCompany(token: string, company_id: number): Promise<{ message: string; token: string }> {
+export async function selectCompany(token: string, company_id: number): Promise<{ message: string; role: string; token: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/selectCompany`, token, {
       method: 'POST',
       body: JSON.stringify({ company_id }),
