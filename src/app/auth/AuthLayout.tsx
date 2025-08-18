@@ -5,7 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Facebook, Twitter, Chrome } from 'lucide-react';
+import { Chrome } from 'lucide-react';
 import Image from 'next/image';
 import { Logo } from '@/components/icons';
 
@@ -40,12 +40,6 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
             <NarlaxLogo />
             <p className="mt-4 text-slate-300">Login using social media to get quick access</p>
             <div className="mt-8 space-y-4 w-full max-w-xs">
-                <Button className="w-full bg-[#3b5998] hover:bg-[#3b5998]/90">
-                    <Facebook className="mr-2 h-4 w-4"/> Sign in with Facebook
-                </Button>
-                <Button className="w-full bg-[#00aced] hover:bg-[#00aced]/90">
-                    <Twitter className="mr-2 h-4 w-4"/> Sign in with Twitter
-                </Button>
                 <Button className="w-full bg-[#dd4b39] hover:bg-[#dd4b39]/90">
                     <Chrome className="mr-2 h-4 w-4"/> Sign in with Google
                 </Button>
