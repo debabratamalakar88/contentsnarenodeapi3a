@@ -44,8 +44,7 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4">
        <Image 
-        src="https://placehold.co/1920x1080.png" 
-        data-ai-hint="working laptop"
+        src="https://themeknit.com/demo/html/authfy/demo/images/computer-1867758_1920-min.jpg"
         alt="Background" 
         layout="fill" 
         objectFit="cover" 

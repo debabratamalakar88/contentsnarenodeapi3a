@@ -18,7 +18,16 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        pathname: '**',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'narlaxsoftware.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'themeknit.com',
       },
     ],
   },
