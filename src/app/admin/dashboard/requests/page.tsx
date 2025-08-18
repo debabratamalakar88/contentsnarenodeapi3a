@@ -327,23 +327,27 @@ export default function AdminRequestsPage() {
     useEffect(() => {
         const filters = {
             search: searchQuery,
-            owner: selectedOwnerId,
-            company: selectedCompanyId,
-            client: selectedClientId,
+            created_by: selectedOwnerId,
+            company_id: selectedCompanyId,
+            client_id: selectedClientId,
             status: currentTab === 'active' ? selectedStatus : undefined
         };
         fetchData(pagination.current_page, filters);
-    }, [pagination.current_page, currentTab, fetchData]);
+    // We only want to refetch when page or tab changes, not on every filter change here.
+    // The filter-specific useEffect will handle filter changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pagination.current_page, currentTab]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            const filters = {
+             const filters = {
                 search: searchQuery,
-                owner: selectedOwnerId,
-                company: selectedCompanyId,
-                client: selectedClientId,
+                created_by: selectedOwnerId,
+                company_id: selectedCompanyId,
+                client_id: selectedClientId,
                 status: currentTab === 'active' ? selectedStatus : undefined
             };
+            // If filters change, we should go back to page 1
             if (pagination.current_page !== 1) {
                 setPagination(p => ({ ...p, current_page: 1 }));
             } else {
@@ -351,7 +355,9 @@ export default function AdminRequestsPage() {
             }
         }, 300);
         return () => clearTimeout(handler);
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, fetchData]);
+    // We want this to run on any filter change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
 
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
@@ -470,4 +476,5 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
 
