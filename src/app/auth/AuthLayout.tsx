@@ -30,13 +30,16 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
         alt="Background" 
         layout="fill" 
         objectFit="cover" 
-        className="absolute inset-0 z-0 opacity-80" 
+        className="absolute inset-0 z-0" 
       />
-       <div className="absolute inset-0 bg-slate-800/50 z-10" />
+       <div className="absolute inset-0 bg-slate-900/60 z-10" />
 
       <div className="relative z-20 w-full max-w-5xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
         {/* Left Panel */}
-        <div className="hidden md:flex flex-col items-center justify-center w-2/5 bg-[#34495e] p-12 text-white text-center">
+        <div 
+          className="hidden md:flex flex-col items-center justify-center w-2/5 p-12 text-white text-center"
+          style={{ backgroundColor: 'rgba(38, 43, 72, 0.92)' }}
+        >
             <NarlaxLogo />
             <p className="mt-4 text-slate-300">Login using social media to get quick access</p>
             <div className="mt-8 space-y-4 w-full max-w-xs">
