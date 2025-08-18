@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser, getProfile, getCompany, forgotPassword } from "@/lib/api";
+import { loginUser, getCompany, forgotPassword } from "@/lib/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "../auth/AuthLayout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -80,12 +80,12 @@ export default function LoginPage() {
           return;
         } 
         
-        const profileResponse = await getProfile(loginData.token);
-        const profile = profileResponse.user || profileResponse.data || profileResponse;
+        const user = loginData.user;
 
-        if (profile.selected_company_id) {
-            const companyDetails = await getCompany(loginData.token, profile.selected_company_id);
+        if (user.selected_company_id) {
+            const companyDetails = await getCompany(loginData.token, user.selected_company_id);
             localStorage.setItem('selectedCompany', JSON.stringify(companyDetails));
+            localStorage.setItem('userRole', companyDetails.pivot?.role || 'Viewer');
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
         } else {
