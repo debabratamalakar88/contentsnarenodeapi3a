@@ -691,7 +691,7 @@ export async function getAdminAllRequests(token: string, page: number = 1, filte
     if (filters.owner && filters.owner !== 'all') url.searchParams.append('created_by', filters.owner);
     if (filters.company && filters.company !== 'all') url.searchParams.append('company_id', filters.company);
     if (filters.client && filters.client !== 'all') {
-        url.searchParams.append('client_id[]', filters.client);
+        url.searchParams.append('client_id', filters.client);
     }
     if (filters.status && filters.status !== 'all') url.searchParams.append('status', filters.status);
     return fetchWithToken(url.toString(), token);
@@ -703,7 +703,7 @@ export async function getAdminArchivedRequests(token: string, page: number = 1, 
     if (filters.owner && filters.owner !== 'all') url.searchParams.append('created_by', filters.owner);
     if (filters.company && filters.company !== 'all') url.searchParams.append('company_id', filters.company);
     if (filters.client && filters.client !== 'all') {
-       url.searchParams.append('client_id[]', filters.client);
+       url.searchParams.append('client_id', filters.client);
     }
     return fetchWithToken(url.toString(), token);
 }
