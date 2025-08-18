@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser, getCompany, forgotPassword, selectCompany } from "@/lib/api";
+import { loginUser, forgotPassword } from "@/lib/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "../auth/AuthLayout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,14 +65,13 @@ export default function LoginPage() {
   
   async function onLoginSubmit(values: z.infer<typeof loginFormSchema>) {
     try {
-      const loginData = await loginUser(values);
+      const loginData = await loginUser(values); 
       if (loginData.token && loginData.user) {
         
-        const initialToken = loginData.token;
-        const user = loginData.user;
+        const { token, user, role, selected_company_id } = loginData;
         
         if (user.email_verified_at === null) {
-          localStorage.setItem('authToken', initialToken);
+          localStorage.setItem('authToken', token);
           toast({
             title: "Verification Required",
             description: "Please check your email to verify your account.",
@@ -82,21 +81,20 @@ export default function LoginPage() {
           return;
         } 
         
-        localStorage.setItem('authToken', initialToken);
-        
-        if (user.selected_company_id) {
-            // The user has a default company. The token is already scoped.
-            // We need to store a placeholder for `selectedCompany` to pass the layout check.
-            // The actual full company details can be fetched in the dashboard if needed.
-            const companyPlaceholder = { id: user.selected_company_id };
-            localStorage.setItem('selectedCompany', JSON.stringify(companyPlaceholder));
+        localStorage.setItem('authToken', token);
 
+        if (selected_company_id === null && role === null) {
+            router.push('/companies');
+        } else {
+            if (role) {
+                localStorage.setItem('userRole', role);
+            }
+            if (selected_company_id) {
+                const companyPlaceholder = { id: selected_company_id };
+                localStorage.setItem('selectedCompany', JSON.stringify(companyPlaceholder));
+            }
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
-        } else {
-            // User does not have a default company, redirect to selection page.
-            toast({ title: "Success", description: "Logged in successfully." });
-            router.push('/companies');
         }
 
       } else {

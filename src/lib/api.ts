@@ -72,6 +72,8 @@ export interface AdminProfile {
 interface UserAuthResponse {
   user: User;
   token: string;
+  role: string | null;
+  selected_company_id: number | null;
 }
 
 interface AdminAuthResponse {
