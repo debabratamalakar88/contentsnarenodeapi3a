@@ -34,9 +34,9 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
       />
        <div className="absolute inset-0 bg-slate-800/50 z-10" />
 
-      <div className="relative z-20 w-full max-w-4xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
+      <div className="relative z-20 w-full max-w-5xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
         {/* Left Panel */}
-        <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#34495e] p-12 text-white text-center">
+        <div className="hidden md:flex flex-col items-center justify-center w-2/5 bg-[#34495e] p-12 text-white text-center">
             <NarlaxLogo />
             <p className="mt-4 text-slate-300">Login using social media to get quick access</p>
             <div className="mt-8 space-y-4 w-full max-w-xs">
@@ -47,7 +47,7 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
         </div>
 
         {/* Right Panel */}
-        <div className="w-full md:w-1/2 p-8 sm:p-12">
+        <div className="w-full md:w-3/5 p-8 sm:p-12">
             <div className="flex border-b mb-8">
                  <Link href="/login" className={cn("py-2 px-4 font-semibold text-sm", activeTab === 'login' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500')}>
                     ALREADY A MEMBER
