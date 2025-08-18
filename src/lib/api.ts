@@ -678,9 +678,9 @@ export async function forceDeleteAdminClient(token: string, id: number) {
 // --- Admin Request Management ---
 interface RequestFilters {
     search?: string;
-    owner?: string;
-    company?: string;
-    client?: string;
+    created_by?: string;
+    company_id?: string;
+    client_id?: string;
     status?: string;
 }
 
@@ -688,10 +688,10 @@ export async function getAdminAllRequests(token: string, page: number = 1, filte
     const url = new URL(`${API_BASE_URL}/api/admin/requests`);
     url.searchParams.append('page', String(page));
     if (filters.search) url.searchParams.append('search', filters.search);
-    if (filters.owner && filters.owner !== 'all') url.searchParams.append('created_by', filters.owner);
-    if (filters.company && filters.company !== 'all') url.searchParams.append('company_id', filters.company);
-    if (filters.client && filters.client !== 'all') {
-        url.searchParams.append('client_id', filters.client);
+    if (filters.created_by && filters.created_by !== 'all') url.searchParams.append('created_by', filters.created_by);
+    if (filters.company_id && filters.company_id !== 'all') url.searchParams.append('company_id', filters.company_id);
+    if (filters.client_id && filters.client_id !== 'all') {
+        url.searchParams.append('client_id', String(parseInt(filters.client_id, 10)));
     }
     if (filters.status && filters.status !== 'all') url.searchParams.append('status', filters.status);
     return fetchWithToken(url.toString(), token);
@@ -700,10 +700,10 @@ export async function getAdminArchivedRequests(token: string, page: number = 1, 
     const url = new URL(`${API_BASE_URL}/api/admin/requests/archived`);
     url.searchParams.append('page', String(page));
     if (filters.search) url.searchParams.append('search', filters.search);
-    if (filters.owner && filters.owner !== 'all') url.searchParams.append('created_by', filters.owner);
-    if (filters.company && filters.company !== 'all') url.searchParams.append('company_id', filters.company);
-    if (filters.client && filters.client !== 'all') {
-       url.searchParams.append('client_id', filters.client);
+    if (filters.created_by && filters.created_by !== 'all') url.searchParams.append('created_by', filters.created_by);
+    if (filters.company_id && filters.company_id !== 'all') url.searchParams.append('company_id', filters.company_id);
+    if (filters.client_id && filters.client_id !== 'all') {
+       url.searchParams.append('client_id', String(parseInt(filters.client_id, 10)));
     }
     return fetchWithToken(url.toString(), token);
 }
