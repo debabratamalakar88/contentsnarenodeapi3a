@@ -192,9 +192,9 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem className="flex items-center gap-2 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox id="remember-me" checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <label htmlFor="remember-me" className="text-gray-600 cursor-pointer">Remember me</label>
+                      <label htmlFor="remember-me" className="text-gray-600 cursor-pointer">Remember me for the next 7 days</label>
                     </FormItem>
                   )}
                 />
