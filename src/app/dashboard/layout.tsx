@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -58,28 +59,10 @@ export default function DashboardLayout({
         return;
     }
     
-    async function hydrateCompanyData() {
+    function hydrateCompanyData() {
         if (companyData) {
             const parsedCompany = JSON.parse(companyData);
-            
-            // If we only have a placeholder (id only), fetch the full data
-            if (userToken && parsedCompany && !parsedCompany.company_name) {
-                try {
-                    const fullCompanyDetails = await getCompany(userToken, parsedCompany.id);
-                    localStorage.setItem('selectedCompany', JSON.stringify(fullCompanyDetails));
-                    setCompany(fullCompanyDetails);
-                } catch (error: any) {
-                     toast({
-                        title: "Session Error",
-                        description: "Could not load company data. Please select your company again.",
-                        variant: "destructive"
-                    });
-                    localStorage.removeItem('selectedCompany');
-                    router.replace('/companies');
-                }
-            } else {
-                 setCompany(parsedCompany);
-            }
+            setCompany(parsedCompany);
         }
         setIsChecking(false);
     }

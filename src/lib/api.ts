@@ -74,6 +74,7 @@ interface UserAuthResponse {
   token: string;
   role: string | null;
   selected_company_id: number | null;
+  selected_company: Company | null;
 }
 
 interface AdminAuthResponse {

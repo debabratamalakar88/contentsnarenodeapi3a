@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm } from "react-hook-form";
@@ -68,7 +69,7 @@ export default function LoginPage() {
       const loginData = await loginUser(values); 
       if (loginData.token && loginData.user) {
         
-        const { token, user, role, selected_company_id } = loginData;
+        const { token, user, role, selected_company } = loginData;
         
         if (user.email_verified_at === null) {
           localStorage.setItem('authToken', token);
@@ -83,18 +84,13 @@ export default function LoginPage() {
         
         localStorage.setItem('authToken', token);
 
-        if (selected_company_id === null && role === null) {
-            router.push('/companies');
-        } else {
-            if (role) {
-                localStorage.setItem('userRole', role);
-            }
-            if (selected_company_id) {
-                const companyPlaceholder = { id: selected_company_id };
-                localStorage.setItem('selectedCompany', JSON.stringify(companyPlaceholder));
-            }
+        if (selected_company && role) {
+            localStorage.setItem('userRole', role);
+            localStorage.setItem('selectedCompany', JSON.stringify(selected_company));
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
+        } else {
+            router.push('/companies');
         }
 
       } else {
