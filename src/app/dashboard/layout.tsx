@@ -67,10 +67,15 @@ export default function DashboardLayout({
                     const fullCompanyDetails = await getCompany(userToken, parsedCompany.id);
                     localStorage.setItem('selectedCompany', JSON.stringify(fullCompanyDetails));
                     setCompany(fullCompanyDetails);
-                } catch (error) {
-                    console.error("Failed to hydrate company data, redirecting.", error);
+                } catch (error: any) {
+                    toast({
+                        title: "Session Error",
+                        description: "Could not load company data. Please select your company again.",
+                        variant: "destructive"
+                    });
                     localStorage.removeItem('selectedCompany');
                     router.replace('/companies');
+                    return; // Stop further execution in this effect
                 }
             } else {
                  setCompany(parsedCompany);
@@ -81,7 +86,7 @@ export default function DashboardLayout({
     
     hydrateCompanyData();
 
-  }, [router, pathname]);
+  }, [router, pathname, toast]);
   
 
   const handleLogout = async () => {
