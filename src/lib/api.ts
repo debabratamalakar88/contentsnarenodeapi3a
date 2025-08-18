@@ -690,8 +690,10 @@ export async function getAdminAllRequests(token: string, page: number = 1, filte
     if (filters.search) url.searchParams.append('search', filters.search);
     if (filters.created_by && filters.created_by !== 'all') url.searchParams.append('created_by', filters.created_by);
     if (filters.company_id && filters.company_id !== 'all') url.searchParams.append('company_id', filters.company_id);
-    if (filters.client_id && filters.client_id !== 'all') {
+    if (filters.client_id && filters.client_id !== 'all' && filters.client_id !== 'no-client') {
         url.searchParams.append('client_id', String(parseInt(filters.client_id, 10)));
+    } else if (filters.client_id === 'no-client') {
+        url.searchParams.append('client_id', 'null');
     }
     if (filters.status && filters.status !== 'all') url.searchParams.append('status', filters.status);
     return fetchWithToken(url.toString(), token);
@@ -702,8 +704,10 @@ export async function getAdminArchivedRequests(token: string, page: number = 1, 
     if (filters.search) url.searchParams.append('search', filters.search);
     if (filters.created_by && filters.created_by !== 'all') url.searchParams.append('created_by', filters.created_by);
     if (filters.company_id && filters.company_id !== 'all') url.searchParams.append('company_id', filters.company_id);
-    if (filters.client_id && filters.client_id !== 'all') {
+    if (filters.client_id && filters.client_id !== 'all' && filters.client_id !== 'no-client') {
        url.searchParams.append('client_id', String(parseInt(filters.client_id, 10)));
+    } else if (filters.client_id === 'no-client') {
+        url.searchParams.append('client_id', 'null');
     }
     return fetchWithToken(url.toString(), token);
 }

@@ -347,15 +347,13 @@ export default function AdminRequestsPage() {
                 client_id: selectedClientId,
                 status: currentTab === 'active' ? selectedStatus : undefined
             };
-            // If filters change, we should go back to page 1
             if (pagination.current_page !== 1) {
-                setPagination(p => ({ ...p, current_page: 1 }));
+                 setPagination(p => ({ ...p, current_page: 1 }));
             } else {
                 fetchData(1, filters);
             }
-        }, 300);
+        }, 500); // Debounce search/filter calls
         return () => clearTimeout(handler);
-    // We want this to run on any filter change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
 
@@ -382,7 +380,7 @@ export default function AdminRequestsPage() {
 
     const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
-    const selectedClientName = allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients';
+    const selectedClientName = selectedClientId === 'no-client' ? 'No Client' : (allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients');
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
     const activeRequestStatuses = ['draft', 'published', 'scheduled'];
 
@@ -444,7 +442,7 @@ export default function AdminRequestsPage() {
                 </DropdownMenu>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuRadioItem value="no-client">No Client</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
                 </DropdownMenu>
                 {currentTab === 'active' && (
                     <DropdownMenu>
@@ -476,5 +474,6 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
 
 
