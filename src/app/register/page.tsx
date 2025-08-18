@@ -90,7 +90,7 @@ export default function RegisterPage() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Full Name" {...field} className="border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0"/>
+                  <Input placeholder="Full Name" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0"/>
+                  <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,7 +115,7 @@ export default function RegisterPage() {
               <FormItem>
                 <div className="relative">
                   <FormControl>
-                    <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
+                    <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
                   </FormControl>
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
                     {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
@@ -132,7 +132,7 @@ export default function RegisterPage() {
               <FormItem>
                 <div className="relative">
                     <FormControl>
-                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" {...field} className="border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
+                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8"/>
                     </FormControl>
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
                       {showConfirmPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
