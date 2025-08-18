@@ -68,9 +68,10 @@ export default function LoginPage() {
       const loginData = await loginUser(values);
       if (loginData.token && loginData.user) {
         
-        let initialToken = loginData.token;
+        const initialToken = loginData.token;
+        const user = loginData.user;
         
-        if (loginData.user.email_verified_at === null) {
+        if (user.email_verified_at === null) {
           localStorage.setItem('authToken', initialToken);
           toast({
             title: "Verification Required",
@@ -81,19 +82,23 @@ export default function LoginPage() {
           return;
         } 
         
-        const user = loginData.user;
-
         if (user.selected_company_id) {
+            // User has a default company, so we auto-select it.
             const selectResponse = await selectCompany(initialToken, user.selected_company_id);
-            const companyDetails = await getCompany(selectResponse.token, user.selected_company_id);
+            const companyScopedToken = selectResponse.token;
             
-            localStorage.setItem('authToken', selectResponse.token);
+            const companyDetails = await getCompany(companyScopedToken, user.selected_company_id);
+            
+            localStorage.setItem('authToken', companyScopedToken);
             localStorage.setItem('selectedCompany', JSON.stringify(companyDetails));
-            localStorage.setItem('userRole', companyDetails.pivot?.role || 'Viewer');
+            if (companyDetails.pivot?.role) {
+                 localStorage.setItem('userRole', companyDetails.pivot.role);
+            }
             
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/dashboard');
         } else {
+            // User does not have a default company, redirect to selection page.
             localStorage.setItem('authToken', initialToken);
             toast({ title: "Success", description: "Logged in successfully." });
             router.push('/companies');
