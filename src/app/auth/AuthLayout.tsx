@@ -8,29 +8,20 @@ import { cn } from '@/lib/utils';
 import { Facebook, Twitter, Chrome } from 'lucide-react';
 import Image from 'next/image';
 
-const AuthfyLogo = () => (
-    <div className="flex items-center gap-2">
-        <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+const ContentSnareLogo = () => (
+    <div className="flex items-center gap-3">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{ stopColor: '#FFD54F', stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: '#FF8A65', stopOpacity: 1 }} />
-                </linearGradient>
-                <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" style={{ stopColor: '#4FC3F7', stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: '#29B6F6', stopOpacity: 1 }} />
-                </linearGradient>
-                 <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style={{ stopColor: '#4DB6AC', stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: '#81C784', stopOpacity: 1 }} />
+                <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#ec4899" />
                 </linearGradient>
             </defs>
-            <path d="M50 0 A50 50 0 0 1 93.3 25 L50 50 Z" fill="url(#grad1)" />
-            <path d="M93.3 25 A50 50 0 0 1 50 100 L50 50 Z" fill="url(#grad2)" />
-            <path d="M50 100 A50 50 0 0 1 6.7 25 L50 50 Z" fill="url(#grad3)" />
-            <path d="M6.7 25 A50 50 0 0 1 50 0 L50 50 Z" fill="#E57373" />
+            <path d="M10 13L6 9L10 5" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 5L18 9L14 13" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M8.5 19L15.5 19" stroke="url(#logoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
         </svg>
-        <span className="text-3xl font-bold text-white">Authfy</span>
+        <span className="text-3xl font-bold text-white">Content Snare</span>
     </div>
 );
 
@@ -55,7 +46,7 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
       <div className="relative z-20 w-full max-w-4xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
         {/* Left Panel */}
         <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#34495e] p-12 text-white text-center">
-            <AuthfyLogo />
+            <ContentSnareLogo />
             <p className="mt-4 text-slate-300">Login using social media to get quick access</p>
             <div className="mt-8 space-y-4 w-full max-w-xs">
                 <Button className="w-full bg-[#3b5998] hover:bg-[#3b5998]/90">
