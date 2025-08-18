@@ -34,7 +34,7 @@ export function AuthLayout({ children, activeTab }: AuthLayoutProps) {
       />
        <div className="absolute inset-0 bg-slate-900/60 z-10" />
 
-      <div className="relative z-20 w-full max-w-[700px] flex bg-white rounded-lg shadow-2xl overflow-hidden">
+      <div className="relative z-20 w-full max-w-3xl flex bg-white rounded-lg shadow-2xl overflow-hidden">
         {/* Left Panel */}
         <div 
           className="hidden md:flex flex-col items-center justify-center p-12 text-white text-center"
