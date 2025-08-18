@@ -347,7 +347,7 @@ export default function AdminRequestsPage() {
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [token, currentTab, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+    }, [token, currentTab, pagination.current_page, searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, toast]);
     
     // Effect to reset pagination when filters change
     useEffect(() => {
@@ -471,4 +471,3 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
-
