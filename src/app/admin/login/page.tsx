@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
                       <div className="flex items-center">
                         <FormLabel>Password</FormLabel>
                         <Link
-                          href="/admin/forgot-password"
+                          href="/login"
                           className="ml-auto inline-block text-sm underline"
                         >
                           Forgot your password?

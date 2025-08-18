@@ -12,15 +12,19 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser, getProfile, getCompany } from "@/lib/api";
+import { loginUser, getProfile, getCompany, forgotPassword } from "@/lib/api";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "../auth/AuthLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const formSchema = z.object({
+const loginFormSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
   remember: z.boolean().optional(),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Invalid email address." }),
 });
 
 
@@ -29,6 +33,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [view, setView] = useState<'login' | 'forgot-password'>('login');
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -42,16 +47,23 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const loginForm = useForm<z.infer<typeof loginFormSchema>>({
+    resolver: zodResolver(loginFormSchema),
     defaultValues: {
       email: "",
       password: "",
       remember: false,
     },
   });
+
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
   
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onLoginSubmit(values: z.infer<typeof loginFormSchema>) {
     try {
       const loginData = await loginUser(values);
       if (loginData.token && loginData.user) {
@@ -108,6 +120,28 @@ export default function LoginPage() {
       });
     }
   }
+
+  async function onForgotPasswordSubmit(values: z.infer<typeof forgotPasswordSchema>) {
+     try {
+      const data = await forgotPassword(values);
+      toast({
+        title: "Success",
+        description: data.message || "Password reset link sent. Please check your email.",
+      });
+      forgotPasswordForm.reset();
+      setView('login');
+    } catch (error: any) {
+      const description = error.errors
+        ? Object.values(error.errors).flat().join("\n")
+        : error.message || "Could not send password reset link. Please try again.";
+      
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: description,
+      });
+    }
+  }
   
   if (isChecking) {
     return (
@@ -119,61 +153,93 @@ export default function LoginPage() {
 
   return (
     <AuthLayout activeTab="login">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="relative">
+      {view === 'login' ? (
+        <Form {...loginForm}>
+          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
+            <FormField
+              control={loginForm.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
                   <FormControl>
-                    <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8" />
+                    <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0" />
                   </FormControl>
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
-                    {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
-                  </button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="flex items-center justify-between text-sm">
-             <FormField
-                control={form.control}
-                name="remember"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={loginForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="relative">
                     <FormControl>
-                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 pr-8" />
                     </FormControl>
-                    <label htmlFor="remember-me" className="text-gray-600 cursor-pointer">Remember me</label>
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
+                      {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                    </button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex items-center justify-between text-sm">
+              <FormField
+                  control={loginForm.control}
+                  name="remember"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <label htmlFor="remember-me" className="text-gray-600 cursor-pointer">Remember me</label>
+                    </FormItem>
+                  )}
+                />
+                <button type="button" onClick={() => setView('forgot-password')} className="font-semibold text-blue-600 hover:underline">
+                    Forgot password?
+                </button>
+            </div>
+
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 font-bold" disabled={loginForm.formState.isSubmitting}>
+              {loginForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Login with email
+            </Button>
+          </form>
+        </Form>
+      ) : (
+        <Form {...forgotPasswordForm}>
+           <div className="text-center mb-6">
+              <h3 className="text-xl font-bold">Forgot Password</h3>
+              <p className="text-sm text-muted-foreground">Enter your email and we'll send you a reset link.</p>
+           </div>
+           <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-6">
+              <FormField
+                control={forgotPasswordForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Email address" {...field} className="border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0" />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <Link href="/forgot-password" className="font-semibold text-blue-600 hover:underline">
-                  Forgot password?
-              </Link>
-          </div>
-
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 font-bold" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Login with email
-          </Button>
-        </form>
-      </Form>
+               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 font-bold" disabled={forgotPasswordForm.formState.isSubmitting}>
+                {forgotPasswordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Reset Link
+              </Button>
+               <div className="text-center">
+                 <button type="button" onClick={() => setView('login')} className="text-sm font-semibold text-blue-600 hover:underline">
+                    Back to Login
+                </button>
+               </div>
+           </form>
+        </Form>
+      )}
     </AuthLayout>
   )
 }
