@@ -74,7 +74,7 @@ export default function ManageTemplateCategoriesPage() {
   const [dataVersion, setDataVersion] = useState(0)
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const [categoryToArchive, setCategoryToArchive] = useState<TemplateCategory | null>(null)
   const [categoryToRestore, setCategoryToRestore] = useState<TemplateCategory | null>(null)
