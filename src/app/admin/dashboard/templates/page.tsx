@@ -75,7 +75,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { iconList } from "@/components/ui/icon-selector";
+import { iconList } from '@/components/ui/icon-selector';
 
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
@@ -93,7 +93,7 @@ const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | 
 
 
 export default function ManageTemplatesPage() {
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [activeTemplates, setActiveTemplates] = useState<Template[]>([]);
     const [archivedTemplates, setArchivedTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
