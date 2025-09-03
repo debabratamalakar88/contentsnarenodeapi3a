@@ -83,22 +83,6 @@ export default function AdminDashboardPage() {
             </Card>
         ))}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>System Logs</CardTitle>
-          <CardDescription>
-            View system-wide logs and audit trails. This is a placeholder.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="h-64 bg-muted/50 rounded-lg p-4 font-mono text-sm overflow-auto">
-          <p>[2024-07-31 10:00:00] INFO: User 'admin@example.com' logged in.</p>
-          <p>[2024-07-31 10:01:15] INFO: Team 'Global Marketing' created by 'admin@example.com'.</p>
-          <p>[2024-07-31 10:02:30] WARN: SMTP connection failed. Retrying...</p>
-          <p>[2024-07-31 10:02:35] INFO: SMTP connection successful.</p>
-          <p>[2024-07-31 10:05:00] INFO: New user 'newuser@example.com' registered.</p>
-        </CardContent>
-      </Card>
     </div>
   )
 }
