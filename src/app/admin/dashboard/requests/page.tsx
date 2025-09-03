@@ -220,7 +220,7 @@ const RequestRow = ({ request, clientMap, isArchived }: RequestRowProps) => {
         <TableCell>{request.submissions_count || 0}</TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
         <TableCell>
-            <Button variant="ghost" size="sm" asChild>
+            <Button size="sm" asChild>
                 <Link href={`/admin/dashboard/requests/${request.id}`}>View Details</Link>
             </Button>
         </TableCell>
