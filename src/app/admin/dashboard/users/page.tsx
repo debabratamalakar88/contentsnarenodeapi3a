@@ -74,7 +74,7 @@ export default function ManageUsersPage() {
   const [dataVersion, setDataVersion] = useState(0);
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 15 });
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState("");
 
   const [userToArchive, setUserToArchive] = useState<UserType | null>(null);
