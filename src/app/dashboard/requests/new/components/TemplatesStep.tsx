@@ -75,7 +75,7 @@ const renderQuestionPreview = (question: Question) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -419,11 +419,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
-                        <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
-                        <DialogClose asChild>
-                            <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
-                        </DialogClose>
+                    <DialogHeader className="p-4 border-b flex-row items-center">
+                        <DialogTitle className="text-base flex-1">Template: {previewTemplate?.title}</DialogTitle>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.title ? (
                          <div className="flex items-center justify-center h-full">
