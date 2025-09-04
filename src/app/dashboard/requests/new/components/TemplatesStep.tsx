@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Loader2
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Loader2, ArrowLeft
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -454,6 +454,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center">
                         <DialogTitle className="text-base flex-1 truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
+                        <DialogClose asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
