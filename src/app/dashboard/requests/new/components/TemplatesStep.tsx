@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Loader2, ArrowLeft
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Edit, Copy, Trash2, Rocket as RocketIcon, PlusCircle, Loader2, ArrowLeft
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -56,12 +55,12 @@ const renderQuestionPreview = (question: Question) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue}>
+                <RadioGroup defaultValue={question.defaultValue} disabled>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -75,7 +74,7 @@ const renderQuestionPreview = (question: Question) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} />
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} disabled />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -83,7 +82,7 @@ const renderQuestionPreview = (question: Question) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue}>
+                <Select defaultValue={question.defaultValue} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -91,7 +90,7 @@ const renderQuestionPreview = (question: Question) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} />;
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
     }
 }
 
@@ -151,8 +150,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [previewTemplate, setPreviewTemplate] = useState<Template | MyTemplate | null>(null);
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
     
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string[]>([]);
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined);
     const [activeScrollId, setActiveScrollId] = useState<string | null>(null);
+    const [activePageIndex, setActivePageIndex] = useState(0);
+
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -196,14 +197,15 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         if (!token) return;
         setIsPreviewLoading(true);
         setPreviewTemplate(template);
-        setActiveScrollId(`page-${template.form_data?.[0]?.id}`);
     
         try {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
             const fullTemplate = await fetchFunction(token, template.id);
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data?.length) {
-                setActiveAccordionItem([`page-${fullTemplate.form_data[0].id}`]);
+                setActivePageIndex(0);
+                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
+                setActiveScrollId(`page-${fullTemplate.form_data[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -220,11 +222,18 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         const containerTop = container.getBoundingClientRect().top;
         let currentActiveId: string | null = null;
         let smallestDistance = Infinity;
+        
+        const activePageContent = container.querySelector(`[data-page-id="${previewTemplate?.form_data?.[activePageIndex]?.id}"]`);
+        if (!activePageContent) return;
+        
+        const pageItemRefs = Array.from(activePageContent.querySelectorAll('[data-scroll-id]'));
 
-        Object.entries(itemRefs.current).forEach(([id, element]) => {
-            if (element) {
+        pageItemRefs.forEach((element) => {
+            const id = element.getAttribute('data-scroll-id');
+            if (id) {
                 const rect = element.getBoundingClientRect();
                 const distance = Math.abs(rect.top - containerTop);
+
                 if (rect.top <= containerTop + 200 && distance < smallestDistance) {
                     smallestDistance = distance;
                     currentActiveId = id;
@@ -232,16 +241,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             }
         });
         
-        if (currentActiveId) {
-             const [type, id] = currentActiveId.split('-');
-             const pageId = (type === 'page') ? id : itemRefs.current[currentActiveId]?.dataset.pageId;
-             if (pageId && !activeAccordionItem.includes(`page-${pageId}`)) {
-                setActiveAccordionItem([`page-${pageId}`]);
-             }
+        if (currentActiveId && currentActiveId !== activeScrollId) {
              setActiveScrollId(currentActiveId);
         }
 
-    }, [activeAccordionItem]);
+    }, [activeScrollId, activePageIndex, previewTemplate]);
 
     useEffect(() => {
         const container = scrollContainerRef.current;
@@ -387,7 +391,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                             <Button onClick={() => onProceed(true)}>
                                 <Plus className="mr-2 h-4 w-4" /> Start From Scratch
                             </Button>
-                            <div className="relative flex-1">
+                            <div className="relative flex-1 max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
@@ -457,13 +461,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
             <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center">
-                        <DialogTitle className="text-base flex-1 truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
+                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
+                        <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
-                        <div className="flex flex-1 overflow-hidden bg-muted/40">
+                        <div className="flex flex-1 overflow-hidden">
                              <aside className="w-64 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-4">
                                 <TemplateIconDisplay 
                                     iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
@@ -475,7 +479,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <h3 className="font-bold">{previewTemplate.title}</h3>
                                     <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 text-center">
+                                <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t">
                                     <div>
                                         <p className="text-2xl font-bold">{totalPages}</p>
                                         <p className="text-xs text-muted-foreground">Pages</p>
@@ -491,19 +495,23 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                </Button>
                                <ScrollArea className="flex-1 -mx-6">
-                                    <Accordion type="multiple" className="w-full px-6" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                                    <Accordion type="single" value={activeAccordionItem} onValueChange={(value) => {
+                                        setActiveAccordionItem(value);
+                                        const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === value);
+                                        if (newIndex !== -1) setActivePageIndex(newIndex);
+                                    }} className="w-full px-6">
                                         {previewTemplate.form_data?.map(page => (
-                                            <AccordionItem value={`page-${page.id}`} key={page.id} ref={el => itemRefs.current[`page-${page.id}`] = el}>
+                                            <AccordionItem value={`page-${page.id}`} key={page.id} data-scroll-id={`page-${page.id}`} ref={el => itemRefs.current[`page-${page.id}`] = el}>
                                                 <AccordionTrigger className={cn("font-semibold hover:no-underline", activeScrollId === `page-${page.id}` && "text-primary")}>
                                                     <span className="truncate">{page.title}</span>
                                                 </AccordionTrigger>
                                                 <AccordionContent className="pl-4 border-l">
                                                     {page.sections.map(section => (
                                                         <div key={section.id} className="mt-2">
-                                                            <a href={`#section-${section.id}`} ref={el => itemRefs.current[`section-${section.id}`] = el} data-page-id={page.id} className={cn("font-medium text-sm block py-1 truncate", activeScrollId === `section-${section.id}` && "text-primary")}>{section.title}</a>
+                                                            <a href={`#section-${section.id}`} data-scroll-id={`section-${section.id}`} ref={el => itemRefs.current[`section-${section.id}`] = el} data-page-id={page.id} className={cn("font-medium text-sm block py-1 truncate", activeScrollId === `section-${section.id}` && "text-primary")}>{section.title}</a>
                                                             <div className="pl-4 border-l mt-1 space-y-1">
                                                                 {section.questions.map(question => (
-                                                                     <a href={`#question-${question.id}`} ref={el => itemRefs.current[`question-${question.id}`] = el} data-page-id={page.id} key={question.id} className={cn("text-xs text-muted-foreground hover:text-foreground block py-0.5 truncate", activeScrollId === `question-${question.id}` && "text-primary font-medium")}>
+                                                                     <a href={`#question-${question.id}`} data-scroll-id={`question-${question.id}`} ref={el => itemRefs.current[`question-${question.id}`] = el} data-page-id={page.id} key={question.id} className={cn("text-xs text-muted-foreground hover:text-foreground block py-0.5 truncate", activeScrollId === `question-${question.id}` && "text-primary font-medium")}>
                                                                         {question.label}
                                                                      </a>
                                                                 ))}
@@ -516,31 +524,33 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </Accordion>
                                 </ScrollArea>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden">
+                            <main className="flex-1 flex overflow-hidden bg-muted/40">
                                 <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                     <div className="p-8">
                                         <div className="bg-white p-8 rounded-lg shadow-sm">
-                                            {previewTemplate.form_data?.map((page) => (
-                                                <div key={page.id} id={`page-${page.id}`} className="mb-12">
-                                                    <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
-                                                    {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
-                                                    {page.sections.map(section => (
-                                                        <div key={section.id} id={`section-${section.id}`} className="mb-8">
-                                                            <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
-                                                            <div className="space-y-6">
-                                                                {section.questions.map(q => (
-                                                                    <div key={q.id} id={`question-${q.id}`} className="grid gap-2">
-                                                                        <Label htmlFor={`preview-${q.id}`}>
-                                                                            {q.label}
-                                                                            {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                        </Label>
-                                                                        {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
-                                                                        {renderQuestionPreview(q)}
-                                                                    </div>
-                                                                ))}
+                                            {previewTemplate.form_data?.map((page, index) => (
+                                                <div key={page.id} data-page-id={page.id} className={cn(index === activePageIndex ? "block" : "hidden")}>
+                                                    <div id={`page-${page.id}`} className="mb-12">
+                                                        <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
+                                                        {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
+                                                        {page.sections.map(section => (
+                                                            <div key={section.id} id={`section-${section.id}`} className="mb-8">
+                                                                <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
+                                                                <div className="space-y-6">
+                                                                    {section.questions.map(q => (
+                                                                        <div key={q.id} id={`question-${q.id}`} className="grid gap-2">
+                                                                            <Label htmlFor={`preview-${q.id}`}>
+                                                                                {q.label}
+                                                                                {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                            </Label>
+                                                                            {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
+                                                                            {renderQuestionPreview(q)}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -558,4 +568,3 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </>
     );
 }
-
