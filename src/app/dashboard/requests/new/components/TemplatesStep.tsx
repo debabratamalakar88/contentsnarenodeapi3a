@@ -150,12 +150,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [previewTemplate, setPreviewTemplate] = useState<Template | MyTemplate | null>(null);
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
     
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined);
-    const [activeScrollId, setActiveScrollId] = useState<string | null>(null);
     const [activePageIndex, setActivePageIndex] = useState(0);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const itemRefs = useRef<Record<string, HTMLElement | null>>({});
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -204,8 +201,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data?.length) {
                 setActivePageIndex(0);
-                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
-                setActiveScrollId(`page-${fullTemplate.form_data[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -214,46 +209,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setIsPreviewLoading(false);
         }
     }, [token, toast]);
-
-    const handleScroll = useCallback(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
-        const containerTop = container.getBoundingClientRect().top;
-        let currentActiveId: string | null = null;
-        let smallestDistance = Infinity;
-        
-        const activePageContent = container.querySelector(`[data-page-id="${previewTemplate?.form_data?.[activePageIndex]?.id}"]`);
-        if (!activePageContent) return;
-        
-        const pageItemRefs = Array.from(activePageContent.querySelectorAll('[data-scroll-id]'));
-
-        pageItemRefs.forEach((element) => {
-            const id = element.getAttribute('data-scroll-id');
-            if (id) {
-                const rect = element.getBoundingClientRect();
-                const distance = Math.abs(rect.top - containerTop);
-
-                if (rect.top <= containerTop + 200 && distance < smallestDistance) {
-                    smallestDistance = distance;
-                    currentActiveId = id;
-                }
-            }
-        });
-        
-        if (currentActiveId && currentActiveId !== activeScrollId) {
-             setActiveScrollId(currentActiveId);
-        }
-
-    }, [activeScrollId, activePageIndex, previewTemplate]);
-
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll, { passive: true });
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, [handleScroll]);
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
@@ -463,6 +418,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
+                        <DialogClose />
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -490,73 +446,74 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </div>
                                 </div>
                              </aside>
-                             <aside className="w-72 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-6">
-                               <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
-                                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
-                               </Button>
-                               <ScrollArea className="flex-1 -mx-6">
-                                    <Accordion type="single" value={activeAccordionItem} onValueChange={(value) => {
-                                        setActiveAccordionItem(value);
-                                        const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === value);
-                                        if (newIndex !== -1) setActivePageIndex(newIndex);
-                                    }} className="w-full px-6">
-                                        {previewTemplate.form_data?.map(page => (
-                                            <AccordionItem value={`page-${page.id}`} key={page.id} data-scroll-id={`page-${page.id}`} ref={el => itemRefs.current[`page-${page.id}`] = el}>
-                                                <AccordionTrigger className={cn("font-semibold hover:no-underline", activeScrollId === `page-${page.id}` && "text-primary")}>
-                                                    <span className="truncate">{page.title}</span>
-                                                </AccordionTrigger>
-                                                <AccordionContent className="pl-4 border-l">
-                                                    {page.sections.map(section => (
-                                                        <div key={section.id} className="mt-2">
-                                                            <a href={`#section-${section.id}`} data-scroll-id={`section-${section.id}`} ref={el => itemRefs.current[`section-${section.id}`] = el} data-page-id={page.id} className={cn("font-medium text-sm block py-1 truncate", activeScrollId === `section-${section.id}` && "text-primary")}>{section.title}</a>
-                                                            <div className="pl-4 border-l mt-1 space-y-1">
-                                                                {section.questions.map(question => (
-                                                                     <a href={`#question-${question.id}`} data-scroll-id={`question-${question.id}`} ref={el => itemRefs.current[`question-${question.id}`] = el} data-page-id={page.id} key={question.id} className={cn("text-xs text-muted-foreground hover:text-foreground block py-0.5 truncate", activeScrollId === `question-${question.id}` && "text-primary font-medium")}>
-                                                                        {question.label}
-                                                                     </a>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
-                                    </Accordion>
-                                </ScrollArea>
-                            </aside>
-                            <main className="flex-1 flex overflow-hidden bg-muted/40">
-                                <ScrollArea className="flex-1" ref={scrollContainerRef}>
-                                    <div className="p-8">
-                                        <div className="bg-white p-8 rounded-lg shadow-sm">
-                                            {previewTemplate.form_data?.map((page, index) => (
-                                                <div key={page.id} data-page-id={page.id} className={cn(index === activePageIndex ? "block" : "hidden")}>
-                                                    <div id={`page-${page.id}`} className="mb-12">
-                                                        <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
-                                                        {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
+                             
+                             <div className="flex flex-1 overflow-hidden gap-6 p-6 bg-muted/40">
+                                <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
+                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
+                                </Button>
+                                <ScrollArea className="flex-1 -mx-6">
+                                        <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(value) => {
+                                            const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === value);
+                                            if (newIndex !== -1) setActivePageIndex(newIndex);
+                                        }}>
+                                            {previewTemplate.form_data.map(page => (
+                                                <AccordionItem value={`page-${page.id}`} key={page.id}>
+                                                    <AccordionTrigger className="font-semibold hover:no-underline">
+                                                        <span className="truncate">{page.title}</span>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="pl-4 border-l">
                                                         {page.sections.map(section => (
-                                                            <div key={section.id} id={`section-${section.id}`} className="mb-8">
-                                                                <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
-                                                                <div className="space-y-6">
-                                                                    {section.questions.map(q => (
-                                                                        <div key={q.id} id={`question-${q.id}`} className="grid gap-2">
-                                                                            <Label htmlFor={`preview-${q.id}`}>
-                                                                                {q.label}
-                                                                                {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                            </Label>
-                                                                            {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
-                                                                            {renderQuestionPreview(q)}
-                                                                        </div>
+                                                            <div key={section.id} className="mt-2">
+                                                                <p className="font-medium text-sm block py-1 truncate">{section.title}</p>
+                                                                <div className="pl-4 border-l mt-1 space-y-1">
+                                                                    {section.questions.map(question => (
+                                                                        <p key={question.id} className="text-xs text-muted-foreground block py-0.5 truncate" title={question.label}>
+                                                                            {question.label}
+                                                                        </p>
                                                                     ))}
                                                                 </div>
                                                             </div>
                                                         ))}
-                                                    </div>
-                                                </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
                                             ))}
-                                        </div>
-                                    </div>
+                                        </Accordion>
                                 </ScrollArea>
-                            </main>
+                                </aside>
+                                <main className="flex-1 flex overflow-hidden">
+                                    <ScrollArea className="flex-1" ref={scrollContainerRef}>
+                                        <div className="p-8">
+                                            <div className="bg-white p-8 rounded-lg shadow-sm">
+                                                {previewTemplate.form_data.map((page, index) => (
+                                                    <div key={page.id} className={cn(index === activePageIndex ? "block" : "hidden")}>
+                                                        <div className="mb-12">
+                                                            <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
+                                                            {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
+                                                            {page.sections.map(section => (
+                                                                <div key={section.id} className="mb-8">
+                                                                    <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
+                                                                    <div className="space-y-6">
+                                                                        {section.questions.map(q => (
+                                                                            <div key={q.id} className="grid gap-2">
+                                                                                <Label htmlFor={`preview-${q.id}`}>
+                                                                                    {q.label}
+                                                                                    {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                                </Label>
+                                                                                {renderQuestionPreview(q)}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </ScrollArea>
+                                </main>
+                            </div>
                         </div>
                     )}
                     <DialogFooter className="p-4 border-t bg-background">
