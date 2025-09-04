@@ -493,9 +493,21 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                                     <div className="space-y-4">
                                                         {activePreviewPage.sections.map(section => (
                                                             <div key={section.id}>
-                                                                <div className="prose prose-sm max-w-none">
+                                                                <div className="prose prose-sm max-w-none mb-4">
                                                                     <h3 className="text-lg font-bold">{section.title}</h3>
                                                                     {section.instructions && <p className="text-muted-foreground">{section.instructions}</p>}
+                                                                </div>
+                                                                 <div className="space-y-6">
+                                                                    {section.questions.map(q => (
+                                                                        <div key={q.id} className="grid gap-2">
+                                                                            <Label htmlFor={`preview-${q.id}`}>
+                                                                                {q.label}
+                                                                                {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                            </Label>
+                                                                            {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
+                                                                            {renderQuestionPreview(q)}
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             </div>
                                                         ))}
