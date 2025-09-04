@@ -464,7 +464,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden bg-muted/40">
-                             <aside className="w-64 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-4">
+                             <aside className="w-64 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-4">
                                 <TemplateIconDisplay 
                                     iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
                                     categoryColor={templateCategory?.color}
@@ -486,7 +486,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </div>
                                 </div>
                              </aside>
-                             <aside className="w-72 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
+                             <aside className="w-72 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-6">
                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                </Button>
