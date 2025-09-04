@@ -153,10 +153,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [activePageIndex, setActivePageIndex] = useState(0);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const sectionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
-    const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
-
+    const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+    const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+    const observer = useRef<IntersectionObserver | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -193,13 +192,47 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         fetchData();
 
     }, [token, toast, router]);
+    
+    useEffect(() => {
+      const currentObserver = observer.current;
+      if (currentObserver) {
+          currentObserver.disconnect();
+      }
+
+      const options = {
+          root: scrollContainerRef.current,
+          rootMargin: '0px 0px -60% 0px',
+          threshold: 0,
+      };
+
+      observer.current = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                  const id = entry.target.id;
+                  if (id.startsWith('section-')) {
+                      setActiveSectionId(id);
+                  } else if (id.startsWith('question-')) {
+                      const sectionId = entry.target.closest('[id^="section-"]')?.id;
+                      if(sectionId) setActiveSectionId(sectionId);
+                      setActiveQuestionId(id);
+                  }
+              }
+          });
+      }, options);
+
+      const elements = scrollContainerRef.current?.querySelectorAll('[id^="section-"], [id^="question-"]');
+      elements?.forEach(el => observer.current!.observe(el));
+
+      return () => {
+          currentObserver?.disconnect();
+      };
+    }, [previewTemplate, activePageIndex]);
 
     const handlePreviewClick = useCallback(async (template: Template | MyTemplate) => {
         if (!token) return;
         setIsPreviewLoading(true);
         setPreviewTemplate(template);
         setActivePageIndex(0);
-        setActiveAccordionItem('');
     
         try {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
@@ -207,7 +240,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data?.length) {
                 setActivePageIndex(0);
-                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
+                setActiveSectionId(`section-${fullTemplate.form_data[0].sections[0].id}`);
+                setActiveQuestionId(`question-${fullTemplate.form_data[0].sections[0].questions[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -428,74 +462,84 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     </div>
                 </main>
             </div>
-            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
+            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => { if (!isOpen) setPreviewTemplate(null); }}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
+                         <DialogClose asChild><Button variant="ghost" size="icon" className="h-7 w-7"><X className="h-4 w-4" /></Button></DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden">
-                             <div className="flex flex-1 overflow-hidden gap-6 p-6 bg-muted/40">
-                                <aside className="w-64 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
-                                    <TemplateIconDisplay 
-                                        iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
-                                        categoryColor={templateCategory?.color}
-                                        isMyTemplate={isMyTemplate}
-                                        className="h-16 w-16 text-3xl"
-                                    />
-                                    <div className="space-y-1">
-                                        <h3 className="font-bold">{previewTemplate.title}</h3>
-                                        <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
+                             <aside className="w-64 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-4">
+                                <TemplateIconDisplay 
+                                    iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
+                                    categoryColor={templateCategory?.color}
+                                    isMyTemplate={isMyTemplate}
+                                    className="h-16 w-16 text-3xl"
+                                />
+                                <div className="space-y-1">
+                                    <h3 className="font-bold">{previewTemplate.title}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t">
+                                    <div>
+                                        <p className="text-2xl font-bold">{totalPages}</p>
+                                        <p className="text-xs text-muted-foreground">Pages</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t">
-                                        <div>
-                                            <p className="text-2xl font-bold">{totalPages}</p>
-                                            <p className="text-xs text-muted-foreground">Pages</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-2xl font-bold">{totalQuestions}</p>
-                                            <p className="text-xs text-muted-foreground">Questions</p>
-                                        </div>
+                                    <div>
+                                        <p className="text-2xl font-bold">{totalQuestions}</p>
+                                        <p className="text-xs text-muted-foreground">Questions</p>
                                     </div>
-                                </aside>
-                                
-                                <div className="flex-1 grid grid-cols-12 gap-2 overflow-hidden">
-                                <aside className="col-span-4 bg-white border rounded-lg p-6 flex flex-col">
-                                    <Button variant="link" className="text-primary p-0 h-auto justify-start mb-4" onClick={() => setPreviewTemplate(null)}>
-                                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
-                                    </Button>
-                                    <ScrollArea className="flex-1 -mx-6">
-                                        <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
-                                            {previewTemplate.form_data.map((page, index) => (
-                                                <AccordionItem value={`page-${page.id}`} key={page.id}>
-                                                    <AccordionTrigger className="font-semibold hover:no-underline" onClick={() => setActivePageIndex(index)}>
-                                                        <span className="truncate">{page.title}</span>
-                                                    </AccordionTrigger>
-                                                    <AccordionContent className="pl-4 border-l">
-                                                        {page.sections.map(section => (
-                                                            <div key={section.id} className="mt-2">
-                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className="font-medium text-sm block py-1 truncate text-left hover:text-primary w-full">
-                                                                    {section.title}
-                                                                </button>
-                                                                <div className="pl-4 border-l mt-1 space-y-1">
-                                                                    {section.questions.map(question => (
-                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className="text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full" title={question.label}>
-                                                                            {question.label}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
+                                </div>
+                             </aside>
+                             
+                             <div className="flex flex-1 overflow-hidden gap-2 p-6 bg-muted/40">
+                                <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col">
+                                <Button variant="link" className="text-primary p-0 h-auto justify-start mb-4" onClick={() => setPreviewTemplate(null)}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
+                                </Button>
+                                 <ScrollArea className="flex-1 -mx-6">
+                                    <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(value) => {
+                                        const pageIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === value);
+                                        if (pageIndex !== -1) setActivePageIndex(pageIndex);
+                                    }}>
+                                        {previewTemplate.form_data.map((page) => (
+                                            <AccordionItem value={`page-${page.id}`} key={page.id}>
+                                                <AccordionTrigger className={cn("font-semibold hover:no-underline", activePageIndex === previewTemplate.form_data.indexOf(page) && 'text-blue-600')}>
+                                                    <span className="truncate">{page.title}</span>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="pl-4 border-l">
+                                                    {page.sections.map(section => (
+                                                        <div key={section.id} className="mt-2">
+                                                            <button 
+                                                                onClick={() => handleScrollToElement(`section-${section.id}`)} 
+                                                                className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", `section-${section.id}` === activeSectionId && "text-blue-600")}
+                                                            >
+                                                                {section.title}
+                                                            </button>
+                                                            <div className="pl-4 border-l mt-1 space-y-1">
+                                                                {section.questions.map(question => (
+                                                                    <button 
+                                                                        onClick={() => handleScrollToElement(`question-${question.id}`)} 
+                                                                        key={question.id} 
+                                                                        className={cn("text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full", `question-${question.id}` === activeQuestionId && "text-blue-600")}
+                                                                        title={question.label}
+                                                                    >
+                                                                        {question.label}
+                                                                    </button>
+                                                                ))}
                                                             </div>
-                                                        ))}
-                                                    </AccordionContent>
-                                                </AccordionItem>
-                                            ))}
-                                        </Accordion>
-                                    </ScrollArea>
+                                                        </div>
+                                                    ))}
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                </ScrollArea>
                                 </aside>
-                                
-                                <main className="col-span-8 flex overflow-hidden">
+                                <main className="flex-1 flex overflow-hidden">
                                     <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                         <div className="p-8">
                                             <div className="bg-white p-8 rounded-lg shadow-sm">
@@ -530,7 +574,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         </div>
                                     </ScrollArea>
                                 </main>
-                                </div>
                             </div>
                         </div>
                     )}
