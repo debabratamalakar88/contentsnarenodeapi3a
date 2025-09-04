@@ -26,6 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const initialPagesData: Page[] = [
@@ -330,11 +332,7 @@ export default function NewRequestWizardPage() {
     const deletePage = (pageId: number) => {
         setPages(prevPages => {
             if (prevPages.length <= 1) {
-                toast({
-                    title: "Action Forbidden",
-                    description: "You cannot delete the only page in a request.",
-                    variant: "destructive"
-                });
+                toast({ title: "Action Forbidden", description: "You cannot delete the only page in a request.", variant: "destructive" });
                 return prevPages;
             }
             
@@ -449,12 +447,7 @@ export default function NewRequestWizardPage() {
     };
 
     const updatePageTitle = (pageId: number, newTitle: string) => {
-        setPages(prevPages => prevPages.map(page => {
-            if (page.id === pageId) {
-                return { ...page, title: newTitle };
-            }
-            return page;
-        }));
+        setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, title: newTitle } : page));
     };
 
     const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => {
@@ -676,7 +669,7 @@ export default function NewRequestWizardPage() {
                                         reorderQuestions={reorderQuestions}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
-            case "Finalize": return <FinalizeStep />;
+            case "Finalize": return <FinalizeStep initialData={null} onPublish={() => {}} onSaveDraft={() => {}} isSubmitting={false} />;
             default: return <div>Not Found</div>;
         }
     };
@@ -894,4 +887,3 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
-

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, Eye, Loader2, User
+    Search, Plus, FolderOpen, Eye, Loader2, User, ChevronDown, CheckCircle
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -15,13 +15,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
     const IconComponent = useMemo(() => {
@@ -48,12 +49,12 @@ const renderQuestionPreview = (question: Question) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled/>;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue}>
+                <RadioGroup defaultValue={question.defaultValue} disabled>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -67,7 +68,7 @@ const renderQuestionPreview = (question: Question) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
+                            <Checkbox id={`${questionId}-${i}`} value={opt.value} disabled />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -75,13 +76,15 @@ const renderQuestionPreview = (question: Question) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue}>
+                <Select defaultValue={question.defaultValue} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
             )
+        case 'formatted-text':
+            return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} />;
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
     }
 }
 
@@ -266,6 +269,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     }, [filteredTemplatesBySearch, activeCategorySlug]);
 
     const activePreviewPage = (previewTemplate && 'form_data' in previewTemplate) ? previewTemplate.form_data?.[activePreviewPageIndex] : undefined;
+    const templateIcon = previewTemplate ? ('icon' in previewTemplate ? previewTemplate.icon : undefined) : undefined;
+    const templateCategory = previewTemplate && 'category' in previewTemplate ? previewTemplate.category : undefined;
     
     return (
         <>
@@ -401,68 +406,103 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 </main>
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
-                <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b">
-                        <DialogTitle>Template Preview</DialogTitle>
-                        {previewTemplate && <DialogDescription>{previewTemplate.title}</DialogDescription>}
+                <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
+                        <div className="flex flex-col gap-1">
+                            <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
+                        </div>
+                        <DialogClose asChild>
+                            <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
+                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.title ? (
                          <div className="flex items-center justify-center h-full">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>
                     ) : (
-                        <div className="flex flex-1 overflow-hidden">
-                            <aside className="w-60 flex-shrink-0 bg-background border-r p-4">
-                                <h3 className="text-xs font-semibold text-muted-foreground mb-4 px-2 tracking-widest">PAGES</h3>
-                                <ul className="space-y-1">
-                                    {'form_data' in previewTemplate && previewTemplate.form_data && previewTemplate.form_data.map((page, index) => (
-                                        <li key={page.id}>
-                                            <button
-                                                onClick={() => setActivePreviewPageIndex(index)}
-                                                className={cn(
-                                                    "w-full text-left p-2 rounded-md font-semibold text-sm transition-colors text-foreground",
-                                                    activePreviewPageIndex === index ? 'bg-pink-100 text-pink-700' : 'hover:bg-muted'
-                                                )}
-                                            >
-                                                {page.title}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
+                        <div className="flex flex-1 overflow-hidden bg-muted/40">
+                            <aside className="w-80 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
+                               <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
+                                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
+                               </Button>
+                               <Card>
+                                  <CardContent className="pt-6 flex flex-col items-center text-center gap-4">
+                                      <TemplateIconDisplay iconName={templateIcon} categoryColor={templateCategory?.color} />
+                                      <div>
+                                          <h3 className="font-semibold">{previewTemplate.title}</h3>
+                                          <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{previewTemplate.description}</p>
+                                      </div>
+                                      <div className="flex gap-8 text-center">
+                                          <div>
+                                              <p className="text-2xl font-bold">{previewTemplate.form_data?.length || 0}</p>
+                                              <p className="text-xs text-muted-foreground uppercase">Pages</p>
+                                          </div>
+                                           <div>
+                                              <p className="text-2xl font-bold">{previewTemplate.form_data?.reduce((acc, page) => acc + page.sections.reduce((sAcc, sec) => sAcc + sec.questions.length, 0), 0) || 0}</p>
+                                              <p className="text-xs text-muted-foreground uppercase">Questions</p>
+                                          </div>
+                                      </div>
+                                  </CardContent>
+                               </Card>
                             </aside>
-                            <main className="flex-1 overflow-y-auto p-8">
-                                <div className="max-w-3xl mx-auto">
-                                    <h2 className="text-2xl font-bold">{previewTemplate.title}</h2>
-                                    <p className="text-muted-foreground mb-8">{previewTemplate.description}</p>
-                                    
-                                    {activePreviewPage && (
-                                        <div className="space-y-8">
-                                            <h3 className="text-xl font-bold border-b pb-2 mb-4">{activePreviewPage.title}</h3>
-                                            {activePreviewPage.sections.map(section => (
-                                                <div key={section.id}>
-                                                    <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                                    <div className="space-y-6">
-                                                        {section.questions.map(q => (
-                                                            <div key={q.id} className="grid gap-2">
-                                                                <Label htmlFor={`preview-${q.id}`}>
-                                                                    {q.label}
-                                                                    {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                </Label>
-                                                                {renderQuestionPreview(q)}
-                                                            </div>
-                                                        ))}
+                            <main className="flex-1 flex overflow-hidden">
+                                <nav className="w-80 flex-shrink-0 bg-background border-r p-6 overflow-y-auto">
+                                    <Accordion type="multiple" defaultValue={previewTemplate.form_data?.map(p => p.title)} className="w-full">
+                                    {previewTemplate.form_data?.map((page, pIndex) => (
+                                        <AccordionItem key={page.id} value={page.title}>
+                                            <AccordionTrigger className="text-base font-semibold hover:no-underline [&[data-state=open]>svg]:text-primary [&>svg]:h-5 [&>svg]:w-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold", activePreviewPageIndex === pIndex ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                                                        {pIndex + 1}
                                                     </div>
+                                                    <span>{page.title}</span>
                                                 </div>
-                                            ))}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pt-2 pl-5">
+                                               <ul className="space-y-1 border-l-2">
+                                                   {page.sections.map(section => (
+                                                        <li key={section.id} className="pl-4 py-1 text-muted-foreground">{section.title}</li>
+                                                   ))}
+                                               </ul>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                    </Accordion>
+                                </nav>
+                                <ScrollArea className="flex-1">
+                                    <div className="p-8">
+                                    {activePreviewPage && (
+                                        <div className="bg-background p-8 rounded-lg shadow-sm">
+                                            <h2 className="text-xl font-bold mb-6">{activePreviewPage.title}</h2>
+                                            <div className="space-y-8">
+                                                {activePreviewPage.sections.map(section => (
+                                                    <div key={section.id}>
+                                                        <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
+                                                        <div className="space-y-6">
+                                                            {section.questions.map(q => (
+                                                                <div key={q.id} className="grid gap-2">
+                                                                    <Label htmlFor={`preview-${q.id}`}>
+                                                                        {q.label}
+                                                                        {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                    </Label>
+                                                                    {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
+                                                                    {renderQuestionPreview(q)}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
-                                </div>
+                                    </div>
+                                </ScrollArea>
                             </main>
                         </div>
                     )}
                     <DialogFooter className="p-4 border-t bg-background">
-                        <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
-                        <Button onClick={() => previewTemplate && onProceed(false, previewTemplate)}>Use Template</Button>
+                        <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Cancel</Button>
+                        <Button onClick={() => previewTemplate && onProceed(false, previewTemplate)}>Use This Template</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
