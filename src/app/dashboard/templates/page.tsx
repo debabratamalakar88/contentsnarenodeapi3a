@@ -53,12 +53,12 @@ const renderQuestionPreview = (question: any) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue}>
+                <RadioGroup defaultValue={question.defaultValue} disabled>
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -72,7 +72,7 @@ const renderQuestionPreview = (question: any) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
+                            <Checkbox id={`${questionId}-${i}`} value={opt.value} disabled />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -80,7 +80,7 @@ const renderQuestionPreview = (question: any) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue}>
+                <Select defaultValue={question.defaultValue} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt: any, i: number) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -88,7 +88,7 @@ const renderQuestionPreview = (question: any) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} />;
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
     }
 }
 
@@ -271,9 +271,11 @@ export default function TemplatesPage() {
     const activePreviewPage = (previewTemplate && 'form_data' in previewTemplate) ? previewTemplate.form_data?.[activePreviewPageIndex] : undefined;
     const templateIcon = previewTemplate ? ('icon' in previewTemplate ? previewTemplate.icon : undefined) : undefined;
     const templateCategory = previewTemplate && 'category' in previewTemplate ? previewTemplate.category : undefined;
+    
     const isMyTemplate = previewTemplate && 'created_by' in previewTemplate;
     const totalPages = previewTemplate?.form_data?.length || 0;
     const totalQuestions = previewTemplate?.form_data?.reduce((acc: number, page: any) => acc + page.sections.reduce((sAcc: number, sec: any) => sAcc + sec.questions.length, 0), 0) || 0;
+
 
     return (
         <>
@@ -473,10 +475,10 @@ export default function TemplatesPage() {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
-                        <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
+                    <DialogHeader className="p-4 border-b flex-row items-center">
+                        <DialogTitle className="text-base flex-1">Template: {previewTemplate?.title}</DialogTitle>
                     </DialogHeader>
-                    {isPreviewLoading || !previewTemplate?.title ? (
+                    {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>
@@ -510,8 +512,8 @@ export default function TemplatesPage() {
                                   </CardContent>
                                </Card>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden bg-white">
-                                <ScrollArea className="flex-1">
+                            <main className="flex-1 flex overflow-hidden">
+                                <ScrollArea className="flex-1 bg-white">
                                     <div className="p-8">
                                     <div className="bg-white p-8 rounded-lg shadow-sm border">
                                       <div className="flex items-center gap-2 mb-6">
@@ -544,22 +546,26 @@ export default function TemplatesPage() {
                                                     <div className="space-y-4">
                                                         {activePreviewPage.sections.map((section: any) => (
                                                             <div key={section.id}>
-                                                                <div className="prose prose-sm max-w-none mb-4">
-                                                                    <h3 className="text-lg font-bold">{section.title}</h3>
-                                                                    {section.instructions && <p className="text-muted-foreground">{section.instructions}</p>}
-                                                                </div>
-                                                                 <div className="space-y-6">
-                                                                    {section.questions.map((q: any) => (
-                                                                        <div key={q.id} className="grid gap-2">
-                                                                            <Label htmlFor={`preview-${q.id}`}>
-                                                                                {q.label}
-                                                                                {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                            </Label>
-                                                                            {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
-                                                                            {renderQuestionPreview(q)}
+                                                                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                                                                  <AccordionItem value="item-1" className="border-none">
+                                                                    <AccordionTrigger className="text-lg font-bold hover:no-underline">{section.title}</AccordionTrigger>
+                                                                    <AccordionContent>
+                                                                        {section.instructions && <p className="text-muted-foreground mb-4">{section.instructions}</p>}
+                                                                        <div className="space-y-6">
+                                                                            {section.questions.map((q: any) => (
+                                                                                <div key={q.id} className="grid gap-2">
+                                                                                    <Label htmlFor={`preview-${q.id}`}>
+                                                                                        {q.label}
+                                                                                        {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                                    </Label>
+                                                                                    {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
+                                                                                    {renderQuestionPreview(q)}
+                                                                                </div>
+                                                                            ))}
                                                                         </div>
-                                                                    ))}
-                                                                </div>
+                                                                    </AccordionContent>
+                                                                  </AccordionItem>
+                                                                </Accordion>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -581,6 +587,19 @@ export default function TemplatesPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={!!templateToDelete} onOpenChange={setTemplateToDelete}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>This will permanently delete the template "{templateToDelete?.title}". This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className={cn(buttonVariants({ variant: "destructive" }))}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
-}
+
+    
