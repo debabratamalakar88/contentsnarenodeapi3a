@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Edit, Copy, Trash2, Rocket as RocketIcon, PlusCircle, Loader2, ArrowLeft
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, getTemplate, getMyTemplate, deleteMyTemplate, duplicateMyTemplate, getProfile, type User as UserType, type Template, type TemplateCategory, type MyTemplate, type Question, type Page } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -156,9 +155,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
     const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
-    const [activeSectionId, setActiveSectionId] = useState<string>('');
-    const [activeQuestionId, setActiveQuestionId] = useState<string>('');
     const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
+
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -195,55 +193,21 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         fetchData();
 
     }, [token, toast, router]);
-    
-     useEffect(() => {
-        if (!previewTemplate || !scrollContainerRef.current) return;
-
-        const observer = new IntersectionObserver((entries) => {
-            const intersectingEntry = entries.find(entry => entry.isIntersecting);
-            if (intersectingEntry) {
-                const id = intersectingEntry.target.id;
-                if (id.startsWith('section-')) {
-                    setActiveSectionId(id);
-                } else if (id.startsWith('question-')) {
-                    setActiveQuestionId(id);
-                    const parentSection = (intersectingEntry.target as HTMLElement).closest('[id^="section-"]');
-                    if(parentSection) setActiveSectionId(parentSection.id);
-                }
-            }
-        }, {
-            root: scrollContainerRef.current,
-            rootMargin: '-50% 0px -50% 0px',
-            threshold: 0
-        });
-
-        const currentSectionRefs = sectionRefs.current;
-        const currentQuestionRefs = questionRefs.current;
-
-        Object.values(currentSectionRefs).forEach(el => el && observer.observe(el));
-        Object.values(currentQuestionRefs).forEach(el => el && observer.observe(el));
-
-        return () => {
-            Object.values(currentSectionRefs).forEach(el => el && observer.unobserve(el));
-            Object.values(currentQuestionRefs).forEach(el => el && observer.unobserve(el));
-        };
-    }, [previewTemplate, activePageIndex]);
-
 
     const handlePreviewClick = useCallback(async (template: Template | MyTemplate) => {
         if (!token) return;
         setIsPreviewLoading(true);
         setPreviewTemplate(template);
         setActivePageIndex(0);
-        setActiveSectionId('');
-        setActiveQuestionId('');
+        setActiveAccordionItem('');
     
         try {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
             const fullTemplate = await fetchFunction(token, template.id);
             setPreviewTemplate(fullTemplate);
-            if (fullTemplate.form_data && fullTemplate.form_data.length > 0) {
-              setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
+            if (fullTemplate.form_data?.length) {
+                setActivePageIndex(0);
+                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -256,7 +220,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handleScrollToElement = (elementId: string) => {
       const element = document.getElementById(elementId);
       if (element && scrollContainerRef.current) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     };
 
@@ -464,7 +428,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     </div>
                 </main>
             </div>
-             <Dialog open={!!previewTemplate} onOpenChange={setPreviewTemplate}>
+            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
@@ -473,11 +437,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden">
-                             <div className="flex-1 grid grid-cols-12 gap-2 overflow-hidden bg-muted/40 p-6">
-                                <aside className="col-span-3 bg-white border rounded-lg p-6 flex flex-col gap-6">
-                                    <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
-                                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
-                                    </Button>
+                             <div className="flex flex-1 overflow-hidden gap-6 p-6 bg-muted/40">
+                                <aside className="w-64 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
                                     <TemplateIconDisplay 
                                         iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
                                         categoryColor={templateCategory?.color}
@@ -499,30 +460,28 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         </div>
                                     </div>
                                 </aside>
-
-                                <aside className="col-span-3 bg-white border rounded-lg p-6 flex flex-col">
+                                
+                                <div className="flex-1 grid grid-cols-12 gap-2 overflow-hidden">
+                                <aside className="col-span-4 bg-white border rounded-lg p-6 flex flex-col">
+                                    <Button variant="link" className="text-primary p-0 h-auto justify-start mb-4" onClick={() => setPreviewTemplate(null)}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
+                                    </Button>
                                     <ScrollArea className="flex-1 -mx-6">
-                                        <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={(val) => {
-                                            if (val) {
-                                                const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
-                                                if (newIndex !== -1) setActivePageIndex(newIndex);
-                                                setActiveAccordionItem(val);
-                                            }
-                                        }}>
-                                            {previewTemplate.form_data.map((page) => (
+                                        <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                                            {previewTemplate.form_data.map((page, index) => (
                                                 <AccordionItem value={`page-${page.id}`} key={page.id}>
-                                                    <AccordionTrigger className="font-semibold hover:no-underline text-left">
+                                                    <AccordionTrigger className="font-semibold hover:no-underline" onClick={() => setActivePageIndex(index)}>
                                                         <span className="truncate">{page.title}</span>
                                                     </AccordionTrigger>
                                                     <AccordionContent className="pl-4 border-l">
                                                         {page.sections.map(section => (
                                                             <div key={section.id} className="mt-2">
-                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` ? 'text-blue-600' : 'text-foreground')}>
+                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className="font-medium text-sm block py-1 truncate text-left hover:text-primary w-full">
                                                                     {section.title}
                                                                 </button>
                                                                 <div className="pl-4 border-l mt-1 space-y-1">
                                                                     {section.questions.map(question => (
-                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` ? 'text-blue-600 font-medium' : 'text-muted-foreground')} title={question.label}>
+                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className="text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full" title={question.label}>
                                                                             {question.label}
                                                                         </button>
                                                                     ))}
@@ -536,7 +495,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </ScrollArea>
                                 </aside>
                                 
-                                <main className="col-span-6 flex overflow-hidden">
+                                <main className="col-span-8 flex overflow-hidden">
                                     <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                         <div className="p-8">
                                             <div className="bg-white p-8 rounded-lg shadow-sm">
@@ -548,11 +507,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                                                 <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
                                                                 {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
                                                                 {page.sections.map(section => (
-                                                                    <div key={section.id} id={`section-${section.id}`} ref={el => sectionRefs.current[`section-${section.id}`] = el} className="mb-8">
+                                                                    <div key={section.id} id={`section-${section.id}`} className="mb-8">
                                                                         <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
                                                                         <div className="space-y-6">
                                                                             {section.questions.map(q => (
-                                                                                <div key={q.id} id={`question-${q.id}`} ref={el => questionRefs.current[`question-${q.id}`] = el} className="grid gap-2">
+                                                                                <div key={q.id} id={`question-${q.id}`} className="grid gap-2">
                                                                                     <Label htmlFor={`preview-${q.id}`}>
                                                                                         {q.label}
                                                                                         {q.required && <span className="text-destructive ml-1">*</span>}
@@ -571,6 +530,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                         </div>
                                     </ScrollArea>
                                 </main>
+                                </div>
                             </div>
                         </div>
                     )}
