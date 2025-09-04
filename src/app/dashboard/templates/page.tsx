@@ -1,20 +1,13 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
 } from "lucide-react";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,7 +106,7 @@ export default function TemplatesPage() {
     const [dataVersion, setDataVersion] = useState(0);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     
@@ -352,8 +345,10 @@ export default function TemplatesPage() {
                     </ul>
                      {canManageTemplates && (
                          <div className="mt-4">
-                            <Button onClick={() => router.push('/dashboard/requests/new/essentials')} className="w-full">
-                                <Plus className="mr-2 h-4 w-4" /> Start From Scratch
+                            <Button asChild className="w-full">
+                                <Link href="/dashboard/templates/new">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Start From Scratch
+                                </Link>
                             </Button>
                         </div>
                      )}
@@ -361,15 +356,26 @@ export default function TemplatesPage() {
                 
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                     <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
-                        <div className="flex items-center gap-4">
-                            <Button onClick={() => onProceed(true)}>
-                                <Plus className="mr-2 h-4 w-4" /> Start From Scratch
-                            </Button>
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
+                         <div className="flex items-center gap-4">
+                             <h1 className="text-xl font-bold">Template Gallery</h1>
+                             <div className="ml-auto relative flex-1 max-w-sm">
+                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                 <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                             </div>
+                             <DropdownMenu>
+                                 <DropdownMenuTrigger asChild>
+                                     <Button variant="outline" className="flex items-center gap-2 font-semibold h-10 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary">
+                                         <ViewIcon className="h-4 w-4" />
+                                         <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
+                                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                     </Button>
+                                 </DropdownMenuTrigger>
+                                 <DropdownMenuContent align="end">
+                                     <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                     <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                                 </DropdownMenuContent>
+                            </DropdownMenu>
+                         </div>
                     </header>
 
                     <div className="p-6 space-y-8">
@@ -389,20 +395,32 @@ export default function TemplatesPage() {
                         {(activeCategorySlug === 'my-templates' || activeCategorySlug === null) && (
                             <section id="category-my-templates">
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                    {filteredMyTemplatesBySearch.map((template) => (
-                                        <MyTemplateCard 
-                                            key={template.id} 
-                                            template={template} 
-                                            currentUser={currentUser}
-                                            onDuplicate={() => handleDuplicateTemplate(template.id)}
-                                            onDelete={() => setTemplateToDelete(template)}
-                                            onPreview={() => handlePreviewClick(template)}
-                                            onSelect={() => handleUseMyTemplate(template.id)}
-                                            canManage={canManageTemplates}
-                                        />
-                                    ))}
-                                </div>
+                                {viewMode === 'grid' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                        {filteredMyTemplatesBySearch.map((template) => (
+                                            <MyTemplateCard 
+                                                key={template.id} 
+                                                template={template} 
+                                                currentUser={currentUser}
+                                                onDuplicate={() => handleDuplicateTemplate(template.id)}
+                                                onDelete={() => setTemplateToDelete(template)}
+                                                onPreview={() => handlePreviewClick(template)}
+                                                onSelect={() => handleUseMyTemplate(template.id)}
+                                                canManage={canManageTemplates}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <MyTemplatesTable 
+                                        templates={filteredMyTemplatesBySearch}
+                                        currentUser={currentUser}
+                                        onDuplicate={handleDuplicateTemplate}
+                                        onDelete={setTemplateToDelete}
+                                        onPreview={handlePreviewClick}
+                                        onSelect={handleUseMyTemplate}
+                                        canManage={canManageTemplates}
+                                    />
+                                )}
                             </section>
                         )}
 
@@ -414,11 +432,21 @@ export default function TemplatesPage() {
                                             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                                 {data.title}
                                             </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                                {data.items.map((template) => (
-                                                    <TemplateCard key={template.id} template={template} onSelect={() => handleUsePublicTemplate(template)} onPreview={() => handlePreviewClick(template)} onDuplicate={() => handleDuplicateTemplate(template.id)} canManage={canManageTemplates} />
-                                                ))}
-                                            </div>
+                                             {viewMode === 'grid' ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                                    {data.items.map((template) => (
+                                                        <TemplateCard key={template.id} template={template} onSelect={() => handleUsePublicTemplate(template)} onPreview={() => handlePreviewClick(template)} onDuplicate={() => handleDuplicateTemplate(template.id)} canManage={canManageTemplates} />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <TemplatesTable 
+                                                    templates={data.items}
+                                                    onSelect={handleUsePublicTemplate}
+                                                    onPreview={handlePreviewClick}
+                                                    onDuplicate={handleDuplicateTemplate}
+                                                    canManage={canManageTemplates}
+                                                />
+                                            )}
                                         </section>
                                     )
                                 })
@@ -441,7 +469,7 @@ export default function TemplatesPage() {
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
-                        <DialogClose asChild>
+                         <DialogClose asChild>
                            <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
                         </DialogClose>
                     </DialogHeader>
@@ -570,5 +598,6 @@ export default function TemplatesPage() {
     );
 
     
+
 
 
