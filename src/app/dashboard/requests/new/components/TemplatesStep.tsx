@@ -459,10 +459,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                   </CardContent>
                                </Card>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden">
+                            <main className="flex-1 flex overflow-hidden bg-white">
                                 <ScrollArea className="flex-1">
                                     <div className="p-8">
-                                    <div className="bg-background p-8 rounded-lg shadow-sm border">
+                                    <div className="bg-white p-8 rounded-lg shadow-sm border">
                                       <div className="flex items-center gap-2 mb-6">
                                           <span className="h-3 w-3 rounded-full bg-red-400"></span>
                                           <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
