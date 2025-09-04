@@ -158,7 +158,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
     const [activeSectionId, setActiveSectionId] = useState<string>('');
     const [activeQuestionId, setActiveQuestionId] = useState<string>('');
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string[]>([]);
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -197,22 +197,25 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     }, [token, toast, router]);
     
     useEffect(() => {
+        if (!scrollContainerRef.current) return;
+
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+            for (const entry of entries) {
                 if (entry.isIntersecting) {
                     const id = entry.target.id;
-                    if (id.startsWith('section-')) {
+                     if (id.startsWith('section-')) {
                         setActiveSectionId(id);
                     } else if (id.startsWith('question-')) {
                         setActiveQuestionId(id);
                         const parentSection = (entry.target as HTMLElement).closest('[id^="section-"]');
                         if(parentSection) setActiveSectionId(parentSection.id);
                     }
+                    return; // Only process the first intersecting element for performance
                 }
-            });
+            }
         }, {
             root: scrollContainerRef.current,
-            rootMargin: '-50% 0px -50% 0px',
+            rootMargin: '-50% 0px -50% 0px', // Trigger when element is at the vertical center
             threshold: 0
         });
 
@@ -220,7 +223,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         const currentQuestionRefs = questionRefs.current;
 
         Object.values(currentSectionRefs).forEach(el => el && observer.observe(el));
-        Object.values(currentQuestionRefs).forEach(el => el && observer.unobserve(el));
+        Object.values(currentQuestionRefs).forEach(el => el && observer.observe(el));
 
         return () => {
             Object.values(currentSectionRefs).forEach(el => el && observer.unobserve(el));
@@ -242,7 +245,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             const fullTemplate = await fetchFunction(token, template.id);
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data && fullTemplate.form_data.length > 0) {
-              setActiveAccordionItem([`page-${fullTemplate.form_data[0].id}`]);
+              setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -501,9 +504,12 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                 </Button>
                                 <ScrollArea className="flex-1 -mx-6">
-                                    <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(val) => {
-                                        const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
-                                        if (newIndex !== -1) setActivePageIndex(newIndex);
+                                    <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={(val) => {
+                                        if (val) {
+                                            const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
+                                            if (newIndex !== -1) setActivePageIndex(newIndex);
+                                            setActiveAccordionItem(val);
+                                        }
                                     }}>
                                         {previewTemplate.form_data.map((page) => (
                                             <AccordionItem value={`page-${page.id}`} key={page.id}>
@@ -513,12 +519,12 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                                 <AccordionContent className="pl-4 border-l">
                                                     {page.sections.map(section => (
                                                         <div key={section.id} className="mt-2">
-                                                            <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` && 'text-primary')}>
+                                                            <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` ? 'text-blue-600' : 'text-foreground')}>
                                                                 {section.title}
                                                             </button>
                                                             <div className="pl-4 border-l mt-1 space-y-1">
                                                                 {section.questions.map(question => (
-                                                                    <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` && 'text-primary font-medium')} title={question.label}>
+                                                                    <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` ? 'text-blue-600 font-medium' : 'text-muted-foreground')} title={question.label}>
                                                                         {question.label}
                                                                     </button>
                                                                 ))}
