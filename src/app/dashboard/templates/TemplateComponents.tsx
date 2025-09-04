@@ -24,7 +24,6 @@ interface MyTemplateCardProps {
   currentUser: UserType | null;
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
-  onPreview: () => void;
   onSelect: () => void;
   canManage: boolean;
 }
@@ -32,7 +31,6 @@ interface MyTemplateCardProps {
 interface TemplateCardProps {
   template: Template;
   onSelect: () => void;
-  onPreview: () => void;
   onDuplicate: (id: number) => void;
   canManage: boolean;
 }
@@ -43,7 +41,6 @@ interface MyTemplatesTableProps {
   currentUser: UserType | null;
   onDuplicate: (id: number) => void;
   onDelete: (template: MyTemplate) => void;
-  onPreview: (template: MyTemplate) => void;
   onSelect: (id: number) => void;
   canManage: boolean;
 }
@@ -51,7 +48,6 @@ interface MyTemplatesTableProps {
 interface TemplatesTableProps {
   templates: Template[];
   onSelect: (template: Template) => void;
-  onPreview: (template: Template) => void;
   onDuplicate: (id: number) => void;
   canManage: boolean;
 }
@@ -76,7 +72,7 @@ const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconNa
 };
 
 // MyTemplateCard Component
-export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplateCardProps) {
+export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, onSelect, canManage }: MyTemplateCardProps) {
     const userRole = localStorage.getItem('userRole');
     const canDelete = userRole === 'Administrator' || (userRole === 'Editor' && currentUser?.id === template.created_by);
 
@@ -118,7 +114,7 @@ export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, o
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description || "No description provided."}</p>
       </CardContent>
       <CardFooter className="p-4 border-t flex justify-between">
-         <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4"/>Preview</Button>
+         <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4"/>Preview</Link></Button>
          {canManage && (
             <Button size="sm" onClick={onSelect}>
                 <Rocket className="mr-2 h-4 w-4" /> Use Template
@@ -130,7 +126,7 @@ export function MyTemplateCard({ template, currentUser, onDuplicate, onDelete, o
 }
 
 // TemplateCard Component (Public Templates)
-export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canManage }: TemplateCardProps) {
+export function TemplateCard({ template, onSelect, onDuplicate, canManage }: TemplateCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
        <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -159,7 +155,7 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canMa
         <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
       </CardContent>
       <CardFooter className="p-4 border-t flex justify-between">
-        <Button variant="ghost" size="sm" onClick={onPreview}><Eye className="mr-2 h-4 w-4" /> Preview</Button>
+        <Button variant="ghost" size="sm" asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" /> Preview</Link></Button>
         {canManage && (
             <Button size="sm" onClick={onSelect}>
                 <Rocket className="mr-2 h-4 w-4" /> Use Template
@@ -171,7 +167,7 @@ export function TemplateCard({ template, onSelect, onPreview, onDuplicate, canMa
 }
 
 // MyTemplatesTable Component
-export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete, onPreview, onSelect, canManage }: MyTemplatesTableProps) {
+export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete, onSelect, canManage }: MyTemplatesTableProps) {
   const userRole = localStorage.getItem('userRole');
 
   return (
@@ -199,7 +195,7 @@ export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {canManage && <DropdownMenuItem onClick={() => onSelect(template.id)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
                         {canManage && (
                             <>
                                 <DropdownMenuItem asChild><Link href={`/dashboard/templates/edit/${template.id}`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
@@ -237,7 +233,7 @@ export function MyTemplatesTable({ templates, currentUser, onDuplicate, onDelete
 }
 
 // TemplatesTable Component (Public)
-export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate, canManage }: TemplatesTableProps) {
+export function TemplatesTable({ templates, onSelect, onDuplicate, canManage }: TemplatesTableProps) {
   return (
     <Card>
       <Table>
@@ -261,7 +257,7 @@ export function TemplatesTable({ templates, onSelect, onPreview, onDuplicate, ca
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {canManage && <DropdownMenuItem onClick={() => onSelect(template)}><Rocket className="mr-2 h-4 w-4" />Use Template</DropdownMenuItem>}
-                    <DropdownMenuItem onClick={() => onPreview(template)}><Eye className="mr-2 h-4 w-4" />Preview</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/templates/preview/${template.id}`}><Eye className="mr-2 h-4 w-4" />Preview</Link></DropdownMenuItem>
                     {canManage && <DropdownMenuItem onClick={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>}
                   </DropdownMenuContent>
                 </DropdownMenu>
