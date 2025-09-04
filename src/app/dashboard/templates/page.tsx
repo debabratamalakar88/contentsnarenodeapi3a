@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Loader2, Eye } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -53,12 +53,12 @@ const renderQuestionPreview = (question: any) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue} disabled>
+                <RadioGroup defaultValue={question.defaultValue}>
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -72,7 +72,7 @@ const renderQuestionPreview = (question: any) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} value={opt.value} disabled />
+                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -80,7 +80,7 @@ const renderQuestionPreview = (question: any) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue} disabled>
+                <Select defaultValue={question.defaultValue}>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt: any, i: number) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -88,7 +88,7 @@ const renderQuestionPreview = (question: any) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
+            return <Input id={questionId} type="text" placeholder={question.label} />;
     }
 }
 
@@ -173,8 +173,23 @@ export default function TemplatesPage() {
         setIsPreviewLoading(true);
         setActivePreviewPageIndex(0);
         setPreviewTemplate(template);
+        try {
+            if ('created_by' in template) { 
+                 const fullTemplate = await getMyTemplate(token, template.id);
+                 setPreviewTemplate(fullTemplate);
+            } else {
+                 const fullTemplate = await getTemplate(token, template.id);
+                 setPreviewTemplate(fullTemplate);
+            }
+        } catch (error: any) {
+            toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
+            setPreviewTemplate(null);
+        } finally {
+            setIsPreviewLoading(false);
+        }
     }
-    
+
+
     const handleDuplicateTemplate = async (templateId: number) => {
         if (!token) return;
         toast({ title: 'Duplicating template...', description: 'Please wait.' });
@@ -512,8 +527,8 @@ export default function TemplatesPage() {
                                   </CardContent>
                                </Card>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden">
-                                <ScrollArea className="flex-1 bg-white">
+                            <main className="flex-1 flex overflow-hidden bg-white">
+                                <ScrollArea className="flex-1">
                                     <div className="p-8">
                                     <div className="bg-white p-8 rounded-lg shadow-sm border">
                                       <div className="flex items-center gap-2 mb-6">
