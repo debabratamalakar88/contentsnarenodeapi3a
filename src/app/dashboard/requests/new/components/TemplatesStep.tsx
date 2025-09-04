@@ -419,7 +419,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center">
+                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base flex-1">Template: {previewTemplate?.title}</DialogTitle>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.title ? (
@@ -522,7 +522,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                         </div>
                     )}
                     <DialogFooter className="p-4 border-t bg-background">
-                        <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Cancel</Button>
+                        <Button variant="secondary" onClick={() => setPreviewTemplate(null)}>Cancel</Button>
                         <Button onClick={() => previewTemplate && onProceed(false, previewTemplate)}>Use This Template</Button>
                     </DialogFooter>
                 </DialogContent>
