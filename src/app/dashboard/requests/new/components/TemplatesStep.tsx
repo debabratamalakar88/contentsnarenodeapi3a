@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Loader2
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -452,16 +452,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
             <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
+                    <DialogHeader className="p-4 border-b flex-row items-center">
                         <DialogTitle className="text-base flex-1 truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
-                        <DialogClose asChild>
-                            <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
-                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
-                        <div className="flex flex-1 overflow-hidden bg-muted/40">
+                        <div className="flex flex-1 overflow-hidden bg-white">
                              <aside className="w-80 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
@@ -492,7 +489,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </Accordion>
                                 </ScrollArea>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden bg-white">
+                            <main className="flex-1 flex overflow-hidden bg-muted/40">
                                 <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                     <div className="p-8">
                                         <div className="bg-white p-8 rounded-lg">
