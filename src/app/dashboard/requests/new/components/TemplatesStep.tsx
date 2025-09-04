@@ -153,6 +153,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [activePageIndex, setActivePageIndex] = useState(0);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const sectionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+    const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string[]>([]);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -194,6 +197,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         if (!token) return;
         setIsPreviewLoading(true);
         setPreviewTemplate(template);
+        setActivePageIndex(0);
+        setActiveAccordionItem([]);
     
         try {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
@@ -201,6 +206,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data?.length) {
                 setActivePageIndex(0);
+                setActiveAccordionItem([`page-${fullTemplate.form_data[0].id}`]);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -447,7 +453,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 </div>
                              </aside>
                              
-                             <div className="flex flex-1 overflow-hidden gap-6 p-6 bg-muted/40">
+                             <div className="flex flex-1 overflow-hidden gap-4 p-6 bg-muted/40">
                                 <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
                                 <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
@@ -485,30 +491,33 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                         <div className="p-8">
                                             <div className="bg-white p-8 rounded-lg shadow-sm">
-                                                {previewTemplate.form_data.map((page, index) => (
-                                                    <div key={page.id} className={cn(index === activePageIndex ? "block" : "hidden")}>
-                                                        <div className="mb-12">
-                                                            <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
-                                                            {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
-                                                            {page.sections.map(section => (
-                                                                <div key={section.id} className="mb-8">
-                                                                    <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
-                                                                    <div className="space-y-6">
-                                                                        {section.questions.map(q => (
-                                                                            <div key={q.id} className="grid gap-2">
-                                                                                <Label htmlFor={`preview-${q.id}`}>
-                                                                                    {q.label}
-                                                                                    {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                                </Label>
-                                                                                {renderQuestionPreview(q)}
-                                                                            </div>
-                                                                        ))}
+                                                {previewTemplate.form_data && previewTemplate.form_data[activePageIndex] ? (() => {
+                                                    const page = previewTemplate.form_data[activePageIndex];
+                                                    return (
+                                                        <div key={page.id}>
+                                                            <div className="mb-12">
+                                                                <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
+                                                                {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
+                                                                {page.sections.map(section => (
+                                                                    <div key={section.id} className="mb-8">
+                                                                        <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
+                                                                        <div className="space-y-6">
+                                                                            {section.questions.map(q => (
+                                                                                <div key={q.id} className="grid gap-2">
+                                                                                    <Label htmlFor={`preview-${q.id}`}>
+                                                                                        {q.label}
+                                                                                        {q.required && <span className="text-destructive ml-1">*</span>}
+                                                                                    </Label>
+                                                                                    {renderQuestionPreview(q)}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    )
+                                                })() : null}
                                             </div>
                                         </div>
                                     </ScrollArea>
