@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -374,7 +374,7 @@ export default function TemplatesPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                         {[...Array(4)].map((_, j) => (
                                             <Card key={j}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
-                                    ))}
+                                        ))}
                                     </div>
                                 </section>
                             ))
