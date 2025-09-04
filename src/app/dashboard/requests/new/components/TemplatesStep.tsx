@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Edit, Copy, Trash2, Rocket as RocketIcon, PlusCircle, Loader2, ArrowLeft
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User as UserType, type Template, type TemplateCategory, type MyTemplate, type Question, type Page } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, getTemplate, getMyTemplate, deleteMyTemplate, duplicateMyTemplate, getProfile, type User as UserType, type Template, type TemplateCategory, type MyTemplate, type Question, type Page } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
@@ -196,26 +196,24 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     }, [token, toast, router]);
     
-    useEffect(() => {
-        if (!scrollContainerRef.current) return;
+     useEffect(() => {
+        if (!previewTemplate || !scrollContainerRef.current) return;
 
         const observer = new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-                if (entry.isIntersecting) {
-                    const id = entry.target.id;
-                     if (id.startsWith('section-')) {
-                        setActiveSectionId(id);
-                    } else if (id.startsWith('question-')) {
-                        setActiveQuestionId(id);
-                        const parentSection = (entry.target as HTMLElement).closest('[id^="section-"]');
-                        if(parentSection) setActiveSectionId(parentSection.id);
-                    }
-                    return; // Only process the first intersecting element for performance
+            const intersectingEntry = entries.find(entry => entry.isIntersecting);
+            if (intersectingEntry) {
+                const id = intersectingEntry.target.id;
+                if (id.startsWith('section-')) {
+                    setActiveSectionId(id);
+                } else if (id.startsWith('question-')) {
+                    setActiveQuestionId(id);
+                    const parentSection = (intersectingEntry.target as HTMLElement).closest('[id^="section-"]');
+                    if(parentSection) setActiveSectionId(parentSection.id);
                 }
             }
         }, {
             root: scrollContainerRef.current,
-            rootMargin: '-50% 0px -50% 0px', // Trigger when element is at the vertical center
+            rootMargin: '-50% 0px -50% 0px',
             threshold: 0
         });
 
@@ -466,7 +464,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     </div>
                 </main>
             </div>
-            <Dialog open={!!previewTemplate} onOpenChange={setPreviewTemplate}>
+             <Dialog open={!!previewTemplate} onOpenChange={setPreviewTemplate}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
@@ -475,69 +473,70 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden">
-                             <aside className="w-64 flex-shrink-0 bg-white border-r p-6 flex flex-col gap-4">
-                                <TemplateIconDisplay 
-                                    iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
-                                    categoryColor={templateCategory?.color}
-                                    isMyTemplate={isMyTemplate}
-                                    className="h-16 w-16 text-3xl"
-                                />
-                                <div className="space-y-1">
-                                    <h3 className="font-bold">{previewTemplate.title}</h3>
-                                    <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t">
-                                    <div>
-                                        <p className="text-2xl font-bold">{totalPages}</p>
-                                        <p className="text-xs text-muted-foreground">Pages</p>
+                             <div className="flex-1 grid grid-cols-12 gap-2 overflow-hidden bg-muted/40 p-6">
+                                <aside className="col-span-3 bg-white border rounded-lg p-6 flex flex-col gap-6">
+                                    <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
+                                    </Button>
+                                    <TemplateIconDisplay 
+                                        iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
+                                        categoryColor={templateCategory?.color}
+                                        isMyTemplate={isMyTemplate}
+                                        className="h-16 w-16 text-3xl"
+                                    />
+                                    <div className="space-y-1">
+                                        <h3 className="font-bold">{previewTemplate.title}</h3>
+                                        <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">{totalQuestions}</p>
-                                        <p className="text-xs text-muted-foreground">Questions</p>
+                                    <div className="grid grid-cols-2 gap-4 text-center pt-4 border-t">
+                                        <div>
+                                            <p className="text-2xl font-bold">{totalPages}</p>
+                                            <p className="text-xs text-muted-foreground">Pages</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold">{totalQuestions}</p>
+                                            <p className="text-xs text-muted-foreground">Questions</p>
+                                        </div>
                                     </div>
-                                </div>
-                             </aside>
-                             
-                             <div className="flex flex-1 overflow-hidden gap-2 p-6 bg-muted/40">
-                                <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
-                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
-                                </Button>
-                                <ScrollArea className="flex-1 -mx-6">
-                                    <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={(val) => {
-                                        if (val) {
-                                            const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
-                                            if (newIndex !== -1) setActivePageIndex(newIndex);
-                                            setActiveAccordionItem(val);
-                                        }
-                                    }}>
-                                        {previewTemplate.form_data.map((page) => (
-                                            <AccordionItem value={`page-${page.id}`} key={page.id}>
-                                                <AccordionTrigger className="font-semibold hover:no-underline text-left">
-                                                    <span className="truncate">{page.title}</span>
-                                                </AccordionTrigger>
-                                                <AccordionContent className="pl-4 border-l">
-                                                    {page.sections.map(section => (
-                                                        <div key={section.id} className="mt-2">
-                                                            <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` ? 'text-blue-600' : 'text-foreground')}>
-                                                                {section.title}
-                                                            </button>
-                                                            <div className="pl-4 border-l mt-1 space-y-1">
-                                                                {section.questions.map(question => (
-                                                                    <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` ? 'text-blue-600 font-medium' : 'text-muted-foreground')} title={question.label}>
-                                                                        {question.label}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
-                                    </Accordion>
-                                </ScrollArea>
                                 </aside>
-                                <main className="flex-1 flex overflow-hidden">
+
+                                <aside className="col-span-3 bg-white border rounded-lg p-6 flex flex-col">
+                                    <ScrollArea className="flex-1 -mx-6">
+                                        <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={(val) => {
+                                            if (val) {
+                                                const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
+                                                if (newIndex !== -1) setActivePageIndex(newIndex);
+                                                setActiveAccordionItem(val);
+                                            }
+                                        }}>
+                                            {previewTemplate.form_data.map((page) => (
+                                                <AccordionItem value={`page-${page.id}`} key={page.id}>
+                                                    <AccordionTrigger className="font-semibold hover:no-underline text-left">
+                                                        <span className="truncate">{page.title}</span>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="pl-4 border-l">
+                                                        {page.sections.map(section => (
+                                                            <div key={section.id} className="mt-2">
+                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` ? 'text-blue-600' : 'text-foreground')}>
+                                                                    {section.title}
+                                                                </button>
+                                                                <div className="pl-4 border-l mt-1 space-y-1">
+                                                                    {section.questions.map(question => (
+                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` ? 'text-blue-600 font-medium' : 'text-muted-foreground')} title={question.label}>
+                                                                            {question.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            ))}
+                                        </Accordion>
+                                    </ScrollArea>
+                                </aside>
+                                
+                                <main className="col-span-6 flex overflow-hidden">
                                     <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                         <div className="p-8">
                                             <div className="bg-white p-8 rounded-lg shadow-sm">
