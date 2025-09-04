@@ -9,6 +9,12 @@ import { Input } from "@/components/ui/input";
 import { 
     Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight
 } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,12 +59,12 @@ const renderQuestionPreview = (question: any) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue}>
+                <RadioGroup defaultValue={question.defaultValue} disabled>
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -72,7 +78,7 @@ const renderQuestionPreview = (question: any) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt: any, i: number) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} value={opt.value} />
+                            <Checkbox id={`${questionId}-${i}`} value={opt.value} disabled />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -80,7 +86,7 @@ const renderQuestionPreview = (question: any) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue}>
+                <Select defaultValue={question.defaultValue} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt: any, i: number) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -88,7 +94,7 @@ const renderQuestionPreview = (question: any) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} />;
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
     }
 }
 
@@ -356,30 +362,13 @@ export default function TemplatesPage() {
                 <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
                     <header className="sticky top-0 bg-background/95 backdrop-blur z-10 p-4 border-b">
                         <div className="flex items-center gap-4">
+                            <Button onClick={() => onProceed(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> Start From Scratch
+                            </Button>
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Search for a template..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                             </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="flex items-center gap-2 font-semibold h-10 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary">
-                                        <ViewIcon className="h-4 w-4" />
-                                        <span>View: {viewMode === 'grid' ? 'Grid' : 'List'}</span>
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {canManageTemplates && (
-                                <Button asChild>
-                                    <Link href="/dashboard/templates/new">
-                                        <Plus className="mr-2 h-4 w-4" /> Create New
-                                    </Link>
-                                </Button>
-                            )}
                         </div>
                     </header>
 
@@ -400,45 +389,22 @@ export default function TemplatesPage() {
                         {(activeCategorySlug === 'my-templates' || activeCategorySlug === null) && (
                             <section id="category-my-templates">
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">My Templates</h2>
-                                {viewMode === 'grid' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                        {filteredMyTemplatesBySearch.map((template) => (
-                                            <MyTemplateCard 
-                                                key={template.id} 
-                                                template={template} 
-                                                currentUser={currentUser}
-                                                onDuplicate={() => handleDuplicateTemplate(template.id)}
-                                                onDelete={() => setTemplateToDelete(template)}
-                                                onPreview={() => handlePreviewClick(template)}
-                                                onSelect={() => handleUseMyTemplate(template.id)}
-                                                canManage={canManageTemplates}
-                                            />
-                                        ))}
-                                        {canManageTemplates && (
-                                            <Link href="/dashboard/templates/new">
-                                                <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[178px] h-full">
-                                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mb-4">
-                                                        <Plus className="h-8 w-8 text-slate-400" />
-                                                    </div>
-                                                    <span className="font-semibold text-primary">Create New Template</span>
-                                                </Card>
-                                            </Link>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <MyTemplatesTable 
-                                        templates={filteredMyTemplatesBySearch} 
-                                        currentUser={currentUser}
-                                        onDuplicate={handleDuplicateTemplate} 
-                                        onDelete={setTemplateToDelete}
-                                        onPreview={(template) => handlePreviewClick(template)}
-                                        onSelect={handleUseMyTemplate}
-                                        canManage={canManageTemplates}
-                                    />
-                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                    {filteredMyTemplatesBySearch.map((template) => (
+                                        <MyTemplateCard 
+                                            key={template.id} 
+                                            template={template} 
+                                            currentUser={currentUser}
+                                            onDuplicate={() => handleDuplicateTemplate(template.id)}
+                                            onDelete={() => setTemplateToDelete(template)}
+                                            onPreview={() => handlePreviewClick(template)}
+                                            onSelect={() => handleUseMyTemplate(template.id)}
+                                            canManage={canManageTemplates}
+                                        />
+                                    ))}
+                                </div>
                             </section>
                         )}
-
 
                         {Object.keys(groupedAndFilteredTemplates).length > 0 ? (
                                 Object.entries(groupedAndFilteredTemplates).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, data]) => {
@@ -448,28 +414,11 @@ export default function TemplatesPage() {
                                             <h2 className={`text-xl font-bold mb-4 flex items-center gap-2`}>
                                                 {data.title}
                                             </h2>
-                                            {viewMode === 'grid' ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                                    {data.items.map((template) => (
-                                                        <TemplateCard 
-                                                          key={template.id} 
-                                                          template={template} 
-                                                          onSelect={() => handleUsePublicTemplate(template)}
-                                                          onPreview={() => handlePreviewClick(template)}
-                                                          onDuplicate={() => handleDuplicateTemplate(template.id)}
-                                                          canManage={canManageTemplates}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <TemplatesTable 
-                                                  templates={data.items} 
-                                                  onSelect={(template) => handleUsePublicTemplate(template)}
-                                                  onPreview={(template) => handlePreviewPublicTemplate(template)}
-                                                  onDuplicate={handleDuplicateTemplate}
-                                                  canManage={canManageTemplates}
-                                                />
-                                            )}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                                {data.items.map((template) => (
+                                                    <TemplateCard key={template.id} template={template} onSelect={() => handleUsePublicTemplate(template)} onPreview={() => handlePreviewClick(template)} onDuplicate={() => handleDuplicateTemplate(template.id)} canManage={canManageTemplates} />
+                                                ))}
+                                            </div>
                                         </section>
                                     )
                                 })
@@ -490,8 +439,11 @@ export default function TemplatesPage() {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center">
-                        <DialogTitle className="text-base flex-1">Template: {previewTemplate?.title}</DialogTitle>
+                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
+                        <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
+                        <DialogClose asChild>
+                           <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
+                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full">
@@ -618,4 +570,5 @@ export default function TemplatesPage() {
     );
 
     
+
 
