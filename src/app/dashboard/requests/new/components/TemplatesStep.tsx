@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, Eye, Loader2, User, ChevronDown, CheckCircle, ArrowLeft, X
+    Search, Plus, FolderOpen, Eye, Loader2, User, ChevronDown, CheckCircle, ArrowLeft, X, FileQuestion, ChevronRight
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -279,6 +279,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const templateIcon = previewTemplate ? ('icon' in previewTemplate ? previewTemplate.icon : undefined) : undefined;
     const templateCategory = previewTemplate && 'category' in previewTemplate ? previewTemplate.category : undefined;
     
+    const isMyTemplate = previewTemplate && 'created_by' in previewTemplate;
+    const totalPages = previewTemplate?.form_data?.length || 0;
+    const totalQuestions = previewTemplate?.form_data?.reduce((acc, page) => acc + page.sections.reduce((sAcc, sec) => sAcc + sec.questions.length, 0), 0) || 0;
+
+
     return (
         <>
             <div className="flex flex-1 overflow-hidden h-full bg-muted/40">
@@ -415,9 +420,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                            <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
-                        </div>
+                        <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
                         <DialogClose asChild>
                             <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
                         </DialogClose>
@@ -428,24 +431,28 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                          </div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden bg-muted/40">
-                            <aside className="w-80 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
+                             <aside className="w-80 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                </Button>
                                <Card>
                                   <CardContent className="pt-6 flex flex-col items-center text-center gap-4">
-                                      <TemplateIconDisplay iconName={templateIcon} categoryColor={templateCategory?.color} />
+                                      <TemplateIconDisplay 
+                                        iconName={templateIcon} 
+                                        categoryColor={isMyTemplate ? '#3b82f6' : templateCategory?.color}
+                                        isMyTemplate={isMyTemplate}
+                                      />
                                       <div>
-                                          <h3 className="font-semibold">{previewTemplate.title}</h3>
+                                          <h3 className="font-semibold text-lg">{previewTemplate.title}</h3>
                                           <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{previewTemplate.description}</p>
                                       </div>
-                                      <div className="flex gap-8 text-center">
+                                      <div className="flex gap-8 text-center pt-2">
                                           <div>
-                                              <p className="text-2xl font-bold">{previewTemplate.form_data?.length || 0}</p>
+                                              <p className="text-2xl font-bold">{totalPages}</p>
                                               <p className="text-xs text-muted-foreground uppercase">Pages</p>
                                           </div>
                                            <div>
-                                              <p className="text-2xl font-bold">{previewTemplate.form_data?.reduce((acc, page) => acc + page.sections.reduce((sAcc, sec) => sAcc + sec.questions.length, 0), 0) || 0}</p>
+                                              <p className="text-2xl font-bold">{totalQuestions}</p>
                                               <p className="text-xs text-muted-foreground uppercase">Questions</p>
                                           </div>
                                       </div>
@@ -453,55 +460,53 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                </Card>
                             </aside>
                             <main className="flex-1 flex overflow-hidden">
-                                <nav className="w-80 flex-shrink-0 bg-background border-r p-6 overflow-y-auto">
-                                    <Accordion type="multiple" defaultValue={previewTemplate.form_data?.map(p => p.title)} className="w-full">
-                                    {previewTemplate.form_data?.map((page, pIndex) => (
-                                        <AccordionItem key={page.id} value={page.title}>
-                                            <AccordionTrigger className="text-base font-semibold hover:no-underline [&[data-state=open]>svg]:text-primary [&>svg]:h-5 [&>svg]:w-5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold", activePreviewPageIndex === pIndex ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                                                        {pIndex + 1}
-                                                    </div>
-                                                    <span>{page.title}</span>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="pt-2 pl-5">
-                                               <ul className="space-y-1 border-l-2">
-                                                   {page.sections.map(section => (
-                                                        <li key={section.id} className="pl-4 py-1 text-muted-foreground">{section.title}</li>
-                                                   ))}
-                                               </ul>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                    </Accordion>
-                                </nav>
                                 <ScrollArea className="flex-1">
                                     <div className="p-8">
-                                    {activePreviewPage && (
-                                        <div className="bg-background p-8 rounded-lg shadow-sm">
-                                            <h2 className="text-xl font-bold mb-6">{activePreviewPage.title}</h2>
-                                            <div className="space-y-8">
-                                                {activePreviewPage.sections.map(section => (
-                                                    <div key={section.id}>
-                                                        <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
-                                                        <div className="space-y-6">
-                                                            {section.questions.map(q => (
-                                                                <div key={q.id} className="grid gap-2">
-                                                                    <Label htmlFor={`preview-${q.id}`}>
-                                                                        {q.label}
-                                                                        {q.required && <span className="text-destructive ml-1">*</span>}
-                                                                    </Label>
-                                                                    {q.instructions && <p className="text-sm text-muted-foreground">{q.instructions}</p>}
-                                                                    {renderQuestionPreview(q)}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                    <div className="bg-background p-8 rounded-lg shadow-sm border">
+                                      <div className="flex items-center gap-2 mb-6">
+                                          <span className="h-3 w-3 rounded-full bg-red-400"></span>
+                                          <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
+                                          <span className="h-3 w-3 rounded-full bg-green-400"></span>
+                                      </div>
+                                      <div className="flex gap-6">
+                                          <div className="w-1/3 border-r pr-6">
+                                            <h2 className="text-xl font-bold mb-4">{previewTemplate.title}</h2>
+                                             <nav className="space-y-1">
+                                                {previewTemplate.form_data?.map((page, pIndex) => (
+                                                   <button
+                                                        key={page.id}
+                                                        onClick={() => setActivePreviewPageIndex(pIndex)}
+                                                        className={cn(
+                                                            "w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-medium",
+                                                            activePreviewPageIndex === pIndex ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                                                        )}
+                                                   >
+                                                      <span className="truncate">{page.title}</span>
+                                                      <ChevronRight className="h-4 w-4 shrink-0" />
+                                                  </button>
                                                 ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                             </nav>
+                                          </div>
+                                          <div className="w-2/3">
+                                            {activePreviewPage ? (
+                                                <div key={activePreviewPage.id}>
+                                                    <div className="space-y-4">
+                                                        {activePreviewPage.sections.map(section => (
+                                                            <div key={section.id}>
+                                                                <div className="prose prose-sm max-w-none">
+                                                                    <h3 className="text-lg font-bold">{section.title}</h3>
+                                                                    {section.instructions && <p className="text-muted-foreground">{section.instructions}</p>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-muted-foreground text-center py-10">Select a page to preview.</p>
+                                            )}
+                                          </div>
+                                      </div>
+                                    </div>
                                     </div>
                                 </ScrollArea>
                             </main>
