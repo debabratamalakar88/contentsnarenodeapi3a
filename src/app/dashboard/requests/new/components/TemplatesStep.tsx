@@ -158,6 +158,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
     const [activeSectionId, setActiveSectionId] = useState<string>('');
     const [activeQuestionId, setActiveQuestionId] = useState<string>('');
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string[]>([]);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -219,7 +220,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         const currentQuestionRefs = questionRefs.current;
 
         Object.values(currentSectionRefs).forEach(el => el && observer.observe(el));
-        Object.values(currentQuestionRefs).forEach(el => el && observer.observe(el));
+        Object.values(currentQuestionRefs).forEach(el => el && observer.unobserve(el));
 
         return () => {
             Object.values(currentSectionRefs).forEach(el => el && observer.unobserve(el));
@@ -240,6 +241,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
             const fullTemplate = await fetchFunction(token, template.id);
             setPreviewTemplate(fullTemplate);
+            if (fullTemplate.form_data && fullTemplate.form_data.length > 0) {
+              setActiveAccordionItem([`page-${fullTemplate.form_data[0].id}`]);
+            }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
             setPreviewTemplate(null);
@@ -459,7 +463,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     </div>
                 </main>
             </div>
-            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
+            <Dialog open={!!previewTemplate} onOpenChange={setPreviewTemplate}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
@@ -497,34 +501,34 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                 </Button>
                                 <ScrollArea className="flex-1 -mx-6">
-                                        <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(val) => {
-                                            const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
-                                            if (newIndex !== -1) setActivePageIndex(newIndex);
-                                        }}>
-                                            {previewTemplate.form_data.map((page) => (
-                                                <AccordionItem value={`page-${page.id}`} key={page.id}>
-                                                    <AccordionTrigger className="font-semibold hover:no-underline text-left">
-                                                        <span className="truncate">{page.title}</span>
-                                                    </AccordionTrigger>
-                                                    <AccordionContent className="pl-4 border-l">
-                                                        {page.sections.map(section => (
-                                                            <div key={section.id} className="mt-2">
-                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` && 'text-primary')}>
-                                                                    {section.title}
-                                                                </button>
-                                                                <div className="pl-4 border-l mt-1 space-y-1">
-                                                                    {section.questions.map(question => (
-                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` && 'text-primary font-medium')} title={question.label}>
-                                                                            {question.label}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
+                                    <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(val) => {
+                                        const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === val);
+                                        if (newIndex !== -1) setActivePageIndex(newIndex);
+                                    }}>
+                                        {previewTemplate.form_data.map((page) => (
+                                            <AccordionItem value={`page-${page.id}`} key={page.id}>
+                                                <AccordionTrigger className="font-semibold hover:no-underline text-left">
+                                                    <span className="truncate">{page.title}</span>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="pl-4 border-l">
+                                                    {page.sections.map(section => (
+                                                        <div key={section.id} className="mt-2">
+                                                            <button onClick={() => handleScrollToElement(`section-${section.id}`)} className={cn("font-medium text-sm block py-1 truncate text-left hover:text-primary w-full", activeSectionId === `section-${section.id}` && 'text-primary')}>
+                                                                {section.title}
+                                                            </button>
+                                                            <div className="pl-4 border-l mt-1 space-y-1">
+                                                                {section.questions.map(question => (
+                                                                    <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className={cn("text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full", activeQuestionId === `question-${question.id}` && 'text-primary font-medium')} title={question.label}>
+                                                                        {question.label}
+                                                                    </button>
+                                                                ))}
                                                             </div>
-                                                        ))}
-                                                    </AccordionContent>
-                                                </AccordionItem>
-                                            ))}
-                                        </Accordion>
+                                                        </div>
+                                                    ))}
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
                                 </ScrollArea>
                                 </aside>
                                 <main className="flex-1 flex overflow-hidden">
