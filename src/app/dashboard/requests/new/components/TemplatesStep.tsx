@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -15,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -419,7 +417,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             </div>
              <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-4 border-b flex-row items-center justify-between">
+                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base flex-1">Template: {previewTemplate?.title}</DialogTitle>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.title ? (
@@ -522,7 +520,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                         </div>
                     )}
                     <DialogFooter className="p-4 border-t bg-background">
-                        <Button variant="secondary" onClick={() => setPreviewTemplate(null)}>Cancel</Button>
+                        <Button variant="outline" className="border-indigo-600 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700" onClick={() => setPreviewTemplate(null)}>Cancel</Button>
                         <Button onClick={() => previewTemplate && onProceed(false, previewTemplate)}>Use This Template</Button>
                     </DialogFooter>
                 </DialogContent>
