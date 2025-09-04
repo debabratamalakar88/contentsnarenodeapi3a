@@ -6,9 +6,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
+    Search, Plus, FolderOpen, LayoutGrid, List, ChevronDown, Rocket, X, FileQuestion, ChevronRight, Eye, MoreHorizontal, User, Edit, Copy, Trash2, Rocket as RocketIcon, PlusCircle, Loader2
 } from "lucide-react";
-import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
+import { getTemplates, getTemplateCategories, getMyTemplates, deleteMyTemplate, duplicateMyTemplate, getProfile, type User as UserType, type Template, type TemplateCategory, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -31,7 +31,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, Eye } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,6 +38,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 const renderQuestionPreview = (question: any) => {
@@ -104,7 +111,7 @@ export default function TemplatesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const mainRef = useRef<HTMLDivElement>(null);
     const [dataVersion, setDataVersion] = useState(0);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<UserType | null>(null);
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [templateToDelete, setTemplateToDelete] = useState<MyTemplate | null>(null);
@@ -469,9 +476,6 @@ export default function TemplatesPage() {
                 <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base">Template: {previewTemplate?.title}</DialogTitle>
-                         <DialogClose asChild>
-                           <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
-                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full">
@@ -566,7 +570,7 @@ export default function TemplatesPage() {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-muted-foreground text-center py-10">Select a page to preview.</p>
+                                                <p className="text-muted-foreground text-center py-10">Select a page to preview its content.</p>
                                             )}
                                           </div>
                                       </div>
@@ -596,8 +600,4 @@ export default function TemplatesPage() {
             </AlertDialog>
         </>
     );
-
-    
-
-
-
+}
