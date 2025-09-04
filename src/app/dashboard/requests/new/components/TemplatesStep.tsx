@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-    Search, Plus, FolderOpen, Eye, Loader2, User, ChevronDown, CheckCircle
+    Search, Plus, FolderOpen, Eye, Loader2, User, ChevronDown, CheckCircle, ArrowLeft, X
 } from "lucide-react";
 import { getTemplates, getTemplateCategories, getTemplate, getMyTemplates, getMyTemplate, type Template, type TemplateCategory, type Question, type Page, type MyTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -23,17 +23,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const TemplateIconDisplay = ({ iconName, categoryColor }: { iconName?: string | null, categoryColor?: string | null }) => {
+
+const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
     const IconComponent = useMemo(() => {
+        if (isMyTemplate) return User;
         if (!iconName) return FolderOpen;
         const foundIcon = iconList.find(i => i.name.toLowerCase() === iconName.toLowerCase());
         return foundIcon ? foundIcon.icon : FolderOpen;
-    }, [iconName]);
+    }, [iconName, isMyTemplate]);
+
+    const bgColor = isMyTemplate ? '#e0f2fe' : (categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))');
+    const iconColor = isMyTemplate ? '#0284c7' : (categoryColor || 'hsl(var(--muted-foreground))');
+
 
     return (
-        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: categoryColor ? `${categoryColor}20` : 'hsl(var(--muted))' }}>
-            <IconComponent className="h-6 w-6" style={{ color: categoryColor || 'hsl(var(--muted-foreground))' }} />
+        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: bgColor }}>
+            <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
 };
