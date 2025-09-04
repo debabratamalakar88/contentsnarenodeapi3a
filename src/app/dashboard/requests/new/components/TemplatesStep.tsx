@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -25,7 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
-const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean }) => {
+const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate, className }: { iconName?: string | null, categoryColor?: string | null, isMyTemplate?: boolean, className?: string }) => {
     const IconComponent = useMemo(() => {
         if (isMyTemplate) return User;
         if (!iconName) return FolderOpen;
@@ -38,7 +39,7 @@ const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate }: { iconNa
 
 
     return (
-        <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: bgColor }}>
+        <div className={cn("p-3 rounded-lg flex-shrink-0", className)} style={{ backgroundColor: bgColor }}>
             <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
@@ -99,9 +100,7 @@ const MyTemplateCard = ({ template, onSelect, onPreview }: { template: MyTemplat
     <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
       <div className="flex flex-col flex-grow cursor-pointer" onClick={onSelect}>
         <CardContent className="p-4 flex gap-4 items-start flex-grow">
-           <div className="p-3 rounded-lg flex-shrink-0 bg-blue-100">
-                <User className="h-6 w-6 text-blue-600" />
-            </div>
+           <TemplateIconDisplay isMyTemplate={true} />
           <div className="flex-grow">
             <h3 className="font-semibold">{template.title}</h3>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description || "No description."}</p>
@@ -196,7 +195,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handlePreviewClick = useCallback(async (template: Template | MyTemplate) => {
         if (!token) return;
         setIsPreviewLoading(true);
-        setPreviewTemplate(template); // Show shell immediately
+        setPreviewTemplate(template);
         setActiveScrollId(`page-${template.form_data?.[0]?.id}`);
     
         try {
@@ -316,6 +315,12 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     }, [filteredTemplatesBySearch, activeCategorySlug]);
 
     const isMyTemplate = previewTemplate && 'created_by' in previewTemplate;
+    const templateCategory = previewTemplate && 'category' in previewTemplate ? previewTemplate.category : undefined;
+    const totalPages = previewTemplate?.form_data?.length || 0;
+    const totalQuestions = useMemo(() => {
+        return previewTemplate?.form_data?.reduce((acc, page) => 
+            acc + page.sections.reduce((sAcc, section) => sAcc + section.questions.length, 0), 0) || 0;
+    }, [previewTemplate]);
     
     return (
         <>
@@ -451,20 +456,37 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 </main>
             </div>
             <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
-                <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
+                <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center">
                         <DialogTitle className="text-base flex-1 truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
-                        <DialogClose asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </DialogClose>
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
-                        <div className="flex flex-1 overflow-hidden bg-white">
-                             <aside className="w-80 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
+                        <div className="flex flex-1 overflow-hidden bg-muted/40">
+                             <aside className="w-64 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-4">
+                                <TemplateIconDisplay 
+                                    iconName={'icon' in previewTemplate ? previewTemplate.icon : undefined} 
+                                    categoryColor={templateCategory?.color}
+                                    isMyTemplate={isMyTemplate}
+                                    className="h-16 w-16 text-3xl"
+                                />
+                                <div className="space-y-1">
+                                    <h3 className="font-bold">{previewTemplate.title}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-4">{previewTemplate.description}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                    <div>
+                                        <p className="text-2xl font-bold">{totalPages}</p>
+                                        <p className="text-xs text-muted-foreground">Pages</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-bold">{totalQuestions}</p>
+                                        <p className="text-xs text-muted-foreground">Questions</p>
+                                    </div>
+                                </div>
+                             </aside>
+                             <aside className="w-72 flex-shrink-0 bg-background border-r p-6 flex flex-col gap-6">
                                <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                </Button>
@@ -494,10 +516,10 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                     </Accordion>
                                 </ScrollArea>
                             </aside>
-                            <main className="flex-1 flex overflow-hidden bg-muted/40">
+                            <main className="flex-1 flex overflow-hidden">
                                 <ScrollArea className="flex-1" ref={scrollContainerRef}>
                                     <div className="p-8">
-                                        <div className="bg-white p-8 rounded-lg">
+                                        <div className="bg-white p-8 rounded-lg shadow-sm">
                                             {previewTemplate.form_data?.map((page) => (
                                                 <div key={page.id} id={`page-${page.id}`} className="mb-12">
                                                     <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
@@ -536,3 +558,4 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         </>
     );
 }
+
