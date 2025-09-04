@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
@@ -155,7 +156,8 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
     const questionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string[]>([]);
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
+
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -198,7 +200,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
         setIsPreviewLoading(true);
         setPreviewTemplate(template);
         setActivePageIndex(0);
-        setActiveAccordionItem([]);
+        setActiveAccordionItem('');
     
         try {
             const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
@@ -206,7 +208,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setPreviewTemplate(fullTemplate);
             if (fullTemplate.form_data?.length) {
                 setActivePageIndex(0);
-                setActiveAccordionItem([`page-${fullTemplate.form_data[0].id}`]);
+                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
             }
         } catch (error: any) {
             toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
@@ -215,6 +217,13 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
             setIsPreviewLoading(false);
         }
     }, [token, toast]);
+    
+    const handleScrollToElement = (elementId: string) => {
+      const element = document.getElementById(elementId);
+      if (element && scrollContainerRef.current) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
 
     const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string | null) => {
         e.preventDefault();
@@ -424,7 +433,6 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
-                        <DialogClose />
                     </DialogHeader>
                     {isPreviewLoading || !previewTemplate?.form_data ? (
                          <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -453,30 +461,29 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 </div>
                              </aside>
                              
-                             <div className="flex flex-1 overflow-hidden gap-4 p-6 bg-muted/40">
+                             <div className="flex flex-1 overflow-hidden gap-2 p-6 bg-muted/40">
                                 <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
                                 <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
                                 </Button>
                                 <ScrollArea className="flex-1 -mx-6">
-                                        <Accordion type="single" collapsible className="w-full px-6" value={`page-${previewTemplate.form_data[activePageIndex]?.id}`} onValueChange={(value) => {
-                                            const newIndex = previewTemplate.form_data.findIndex(p => `page-${p.id}` === value);
-                                            if (newIndex !== -1) setActivePageIndex(newIndex);
-                                        }}>
-                                            {previewTemplate.form_data.map(page => (
+                                        <Accordion type="single" collapsible className="w-full px-6" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                                            {previewTemplate.form_data.map((page, index) => (
                                                 <AccordionItem value={`page-${page.id}`} key={page.id}>
-                                                    <AccordionTrigger className="font-semibold hover:no-underline">
+                                                    <AccordionTrigger className="font-semibold hover:no-underline" onClick={() => setActivePageIndex(index)}>
                                                         <span className="truncate">{page.title}</span>
                                                     </AccordionTrigger>
                                                     <AccordionContent className="pl-4 border-l">
                                                         {page.sections.map(section => (
                                                             <div key={section.id} className="mt-2">
-                                                                <p className="font-medium text-sm block py-1 truncate">{section.title}</p>
+                                                                <button onClick={() => handleScrollToElement(`section-${section.id}`)} className="font-medium text-sm block py-1 truncate text-left hover:text-primary w-full">
+                                                                    {section.title}
+                                                                </button>
                                                                 <div className="pl-4 border-l mt-1 space-y-1">
                                                                     {section.questions.map(question => (
-                                                                        <p key={question.id} className="text-xs text-muted-foreground block py-0.5 truncate" title={question.label}>
+                                                                        <button onClick={() => handleScrollToElement(`question-${question.id}`)} key={question.id} className="text-xs text-muted-foreground block py-0.5 truncate text-left hover:text-primary w-full" title={question.label}>
                                                                             {question.label}
-                                                                        </p>
+                                                                        </button>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -499,11 +506,11 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                                                 <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
                                                                 {page.instructions && <p className="text-muted-foreground mb-6">{page.instructions}</p>}
                                                                 {page.sections.map(section => (
-                                                                    <div key={section.id} className="mb-8">
+                                                                    <div key={section.id} id={`section-${section.id}`} className="mb-8">
                                                                         <h3 className="text-lg font-semibold mb-4 border-b pb-2">{section.title}</h3>
                                                                         <div className="space-y-6">
                                                                             {section.questions.map(q => (
-                                                                                <div key={q.id} className="grid gap-2">
+                                                                                <div key={q.id} id={`question-${q.id}`} className="grid gap-2">
                                                                                     <Label htmlFor={`preview-${q.id}`}>
                                                                                         {q.label}
                                                                                         {q.required && <span className="text-destructive ml-1">*</span>}
