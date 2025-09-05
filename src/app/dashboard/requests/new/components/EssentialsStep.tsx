@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { IconSelector } from "@/components/ui/icon-selector"
 import type { TemplateCategory } from "@/lib/api"
-import { Bold, Italic, Underline, List as ListIcon, ListOrdered, Link as LinkIcon, Link2Off, Smile, Code, AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react"
+import { Bold, Italic, Underline, List as ListIcon, ListOrdered, Link as LinkIcon, Link2Off, Smile, Code, AlignLeft, AlignCenter, AlignRight, AlignJustify, Expand, Shrink } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -40,6 +40,10 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
 
     const [viewMode, setViewMode] = useState<'editor' | 'html'>('editor');
     const [htmlContent, setHtmlContent] = useState(value || '');
+    const [isFullScreen, setIsFullScreen] = React.useState(false);
+
+    const toggleFullScreen = () => setIsFullScreen(prev => !prev);
+
 
     useEffect(() => {
         setHtmlContent(value);
@@ -200,7 +204,10 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
     const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
 
     return (
-      <div className="rounded-md border border-input bg-background">
+      <div className={cn(
+          "rounded-md border border-input bg-background flex flex-col transition-all duration-300",
+          isFullScreen && "fixed inset-0 z-50 h-screen w-screen"
+        )}>
         <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
           <Select onValueChange={handleHeadingChange} defaultValue="p">
               <SelectTrigger className="w-[120px] h-8 text-sm focus:ring-0 focus:ring-offset-0 border-none shadow-none">
@@ -246,10 +253,16 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
           <Button variant={viewMode === 'html' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={toggleViewMode} title="Toggle HTML View">
               <Code className="h-4 w-4" />
           </Button>
+           <div className="ml-auto">
+             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullScreen} title="Toggle Fullscreen">
+                {isFullScreen ? <Shrink className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+             </Button>
+           </div>
         </div>
         
+        <div className={cn("flex-1 overflow-y-auto", isFullScreen && "h-[calc(100vh-80px)]")}>
         {viewMode === 'editor' ? (
-            <div className="relative">
+            <div className="relative h-full">
                  {isPlaceholderVisible && (
                      <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
                 )}
@@ -257,7 +270,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                   ref={editorRef}
                   contentEditable
                   suppressContentEditableWarning
-                  className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
+                  className={cn("prose-preview min-h-[200px] w-full resize-y p-3 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
                   onInput={handleInput}
                 />
             </div>
@@ -268,10 +281,11 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                     setHtmlContent(e.target.value);
                     onChange(e.target.value);
                 }}
-                className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
+                className={cn("prose-preview min-h-[200px] w-full resize-y p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
                 placeholder="Enter HTML here..."
             />
         )}
+        </div>
 
         <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
             <span>Words: {wordCount}</span>
