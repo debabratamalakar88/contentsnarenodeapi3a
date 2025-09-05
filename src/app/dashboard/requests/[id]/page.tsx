@@ -463,7 +463,6 @@ const ViewSidebar = ({ request, assignedClients, pages, activePageIndex, setActi
             <div className="flex-shrink-0">
                 <div className="p-4 border-b">
                     <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
                     {request.due_date && (
                         <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
                             <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
@@ -635,99 +634,106 @@ export default function ViewRequestPage() {
             <div className="flex flex-1 overflow-hidden">
                 <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl} />
                 <main className="flex-1 overflow-y-auto">
-                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="p-6">
-                        <TabsList>
-                            <TabsTrigger value="form">Form Preview</TabsTrigger>
-                            <TabsTrigger value="submissions">Submissions <Badge variant="secondary" className="ml-2">{submissions.length}</Badge></TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="form">
-                             <form className="max-w-3xl mx-auto pt-6" onSubmit={handleFormSubmit}>
-                                {activePage ? (
-                                    <Card>
-                                        <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
-                                        <CardContent className="space-y-8">
-                                            {activePage.sections.map(section => (
-                                                <div key={section.id}>
-                                                    <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                                    {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
-                                                    {section.questions.map(question => (
-                                                        <div key={question.id} className="grid gap-2 mb-4">
-                                                            {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
-                                                            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                            {renderQuestionInput(question)}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ))}
-                                        </CardContent>
-                                        <CardFooter className="flex justify-between border-t pt-6">
-                                            <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
-                                                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                                            </Button>
-                                            {!isLastPage && (
-                                                <Button type="button" onClick={handleNextPage}>
-                                                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                    <div className="p-6 space-y-6">
+                        {request.description && (
+                             <div className="p-6 border rounded-md h-[250px] overflow-y-auto bg-slate-50 shadow-sm">
+                                <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: request.description }} />
+                            </div>
+                        )}
+                        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+                            <TabsList>
+                                <TabsTrigger value="form">Form Preview</TabsTrigger>
+                                <TabsTrigger value="submissions">Submissions <Badge variant="secondary" className="ml-2">{submissions.length}</Badge></TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="form">
+                                <form className="max-w-3xl mx-auto pt-6" onSubmit={handleFormSubmit}>
+                                    {activePage ? (
+                                        <Card>
+                                            <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
+                                            <CardContent className="space-y-8">
+                                                {activePage.sections.map(section => (
+                                                    <div key={section.id}>
+                                                        <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
+                                                        {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
+                                                        {section.questions.map(question => (
+                                                            <div key={question.id} className="grid gap-2 mb-4">
+                                                                {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
+                                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
+                                                                {renderQuestionInput(question)}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                            <CardFooter className="flex justify-between border-t pt-6">
+                                                <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
+                                                    <ArrowLeft className="mr-2 h-4 w-4" /> Previous
                                                 </Button>
-                                            )}
-                                        </CardFooter>
-                                    </Card>
-                                ) : (
-                                     <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
-                                )}
-                            </form>
-                        </TabsContent>
-                        <TabsContent value="submissions">
-                           <Card className="mt-6">
-                                <CardHeader><CardTitle>Request Submissions</CardTitle><CardDescription>Here are all the submissions received for this request.</CardDescription></CardHeader>
-                                <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Submission Code</TableHead>
-                                                <TableHead>Submitted On</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead><span className="sr-only">Actions</span></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {submissions.length > 0 ? submissions.map(submission => {
-                                                return (
-                                                    <TableRow key={submission.id}>
-                                                        <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
-                                                        <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
-                                                        <TableCell>
-                                                          <Badge
-                                                              variant={'outline'}
-                                                              className={cn(
-                                                                  "capitalize",
-                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                                                              )}
-                                                          >
-                                                              {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
-                                                              {submission.status}
-                                                          </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
-                                                                <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
-                                                            </Button>
+                                                {!isLastPage && (
+                                                    <Button type="button" onClick={handleNextPage}>
+                                                        Next <ArrowRight className="ml-2 h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </CardFooter>
+                                        </Card>
+                                    ) : (
+                                        <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
+                                    )}
+                                </form>
+                            </TabsContent>
+                            <TabsContent value="submissions">
+                            <Card className="mt-6">
+                                    <CardHeader><CardTitle>Request Submissions</CardTitle><CardDescription>Here are all the submissions received for this request.</CardDescription></CardHeader>
+                                    <CardContent>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Submission Code</TableHead>
+                                                    <TableHead>Submitted On</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {submissions.length > 0 ? submissions.map(submission => {
+                                                    return (
+                                                        <TableRow key={submission.id}>
+                                                            <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
+                                                            <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
+                                                            <TableCell>
+                                                            <Badge
+                                                                variant={'outline'}
+                                                                className={cn(
+                                                                    "capitalize",
+                                                                    submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                                                                )}
+                                                            >
+                                                                {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                                                                {submission.status}
+                                                            </Badge>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
+                                                                    <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )
+                                                }) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="h-24 text-center">
+                                                            <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                                            No submissions received yet.
                                                         </TableCell>
                                                     </TableRow>
-                                                )
-                                            }) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="h-24 text-center">
-                                                        <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                                                        No submissions received yet.
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                           </Card>
-                        </TabsContent>
-                    </Tabs>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                            </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </main>
             </div>
         </div>
