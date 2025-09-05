@@ -136,9 +136,25 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         onChange(newContent);
     };
 
+    const handleHeadingChange = (value: string) => {
+        execCmd('formatBlock', value);
+    };
+
     return (
         <div className="rounded-md border border-input bg-background">
             <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
+                <Select onValueChange={handleHeadingChange} defaultValue="p">
+                    <SelectTrigger className="w-[120px] h-8 text-sm focus:ring-0 focus:ring-offset-0 border-none shadow-none">
+                        <SelectValue placeholder="Style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="p">Normal</SelectItem>
+                        <SelectItem value="h1">Heading 1</SelectItem>
+                        <SelectItem value="h2">Heading 2</SelectItem>
+                        <SelectItem value="h3">Heading 3</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Separator orientation="vertical" className="h-5 mx-1" />
                 <Button variant={isBold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
                 <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
                 <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
@@ -164,7 +180,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                 <textarea
                     value={htmlContent}
                     onChange={handleHtmlChange}
-                    className="prose-preview min-h-[200px] w-full p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
+                    className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
                     placeholder="Enter HTML here..."
                 />
             )}
