@@ -1,7 +1,7 @@
 
-
 'use client'
 
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import {
   Card,
   CardContent,
@@ -11,10 +11,131 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { IconSelector } from "@/components/ui/icon-selector"
 import type { TemplateCategory } from "@/lib/api"
+import { Bold, Italic, Underline, List as ListIcon, ListOrdered, Link as LinkIcon, Link2Off, Smile, Code, AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import EmojiPicker from "emoji-picker-react"
+import { cn } from "@/lib/utils"
+
+const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
+    const editorRef = useRef<HTMLDivElement>(null);
+    
+    const [isBold, setIsBold] = useState(false);
+    const [isItalic, setIsItalic] = useState(false);
+    const [isUnderline, setIsUnderline] = useState(false);
+    const [isUl, setIsUl] = useState(false);
+    const [isOl, setIsOl] = useState(false);
+    const [isLeftAligned, setIsLeftAligned] = useState(true);
+    const [isCenterAligned, setIsCenterAligned] = useState(false);
+    const [isRightAligned, setIsRightAligned] = useState(false);
+    const [isJustifyAligned, setIsJustifyAligned] = useState(false);
+    
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+    const [savedRange, setSavedRange] = useState<Range | null>(null);
+
+    const updateToolbarState = useCallback(() => {
+        if (editorRef.current) {
+            setIsBold(document.queryCommandState('bold'));
+            setIsItalic(document.queryCommandState('italic'));
+            setIsUnderline(document.queryCommandState('underline'));
+            setIsUl(document.queryCommandState('insertUnorderedList'));
+            setIsOl(document.queryCommandState('insertOrderedList'));
+            
+            const center = document.queryCommandState('justifyCenter');
+            const right = document.queryCommandState('justifyRight');
+            const justify = document.queryCommandState('justifyFull');
+            
+            setIsCenterAligned(center);
+            setIsRightAligned(right);
+            setIsJustifyAligned(justify);
+            setIsLeftAligned(!center && !right && !justify);
+        }
+    }, []);
+
+    const execCmd = (command: string, valueArg?: string) => {
+        if (editorRef.current) {
+            editorRef.current.focus();
+            document.execCommand(command, false, valueArg);
+            onChange(editorRef.current.innerHTML);
+            updateToolbarState();
+        }
+    };
+    
+    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
+        e.preventDefault();
+        execCmd(command);
+    };
+
+    const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        const url = window.prompt("Enter the URL:", "https://");
+        if (url) {
+            execCmd('createLink', url);
+        }
+    };
+
+     const handleInput = () => {
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+        }
+    };
+
+    useEffect(() => {
+      const editor = editorRef.current;
+      if (editor && editor.innerHTML !== value) {
+        editor.innerHTML = value;
+      }
+    }, [value]);
+    
+     useEffect(() => {
+        const editor = editorRef.current;
+        const handleSelectionChange = () => {
+            if (document.activeElement === editor) {
+                updateToolbarState();
+            }
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChange);
+        if (editor) {
+            editor.addEventListener('focus', updateToolbarState);
+            editor.addEventListener('input', updateToolbarState);
+        }
+
+        return () => {
+            document.removeEventListener('selectionchange', handleSelectionChange);
+             if (editor) {
+                editor.removeEventListener('focus', updateToolbarState);
+                editor.removeEventListener('input', updateToolbarState);
+            }
+        };
+    }, [updateToolbarState]);
+
+    return (
+        <div className="rounded-md border border-input bg-background">
+            <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
+                <Button variant={isBold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
+                <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
+                <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
+                <Separator orientation="vertical" className="h-5 mx-1" />
+                <Button variant={isUl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><ListIcon className="h-4 w-4" /></Button>
+                <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
+                 <Separator orientation="vertical" className="h-5 mx-1" />
+                 <Button variant="ghost" size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleLink(e)}><LinkIcon className="h-4 w-4" /></Button>
+            </div>
+            <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                className="prose-preview min-h-[200px] w-full p-3 ring-offset-background focus-visible:outline-none"
+                onInput={handleInput}
+            />
+        </div>
+    );
+};
 
 
 interface EssentialsStepProps {
@@ -34,7 +155,7 @@ export default function EssentialsStep({ title, setTitle, description, setDescri
     const noCategoryValue = "__none__";
 
     return (
-        <div className="max-w-3xl mx-auto animate-in fade-in-50">
+        <div className="max-w-4xl mx-auto animate-in fade-in-50 w-full">
             <Card>
                 <CardHeader>
                     <CardTitle>{isTemplateFlow ? 'Template Essentials' : 'Request Essentials'}</CardTitle>
@@ -57,13 +178,7 @@ export default function EssentialsStep({ title, setTitle, description, setDescri
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="description">Description</Label>
-                            <Textarea
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="min-h-32"
-                                placeholder={isTemplateFlow ? 'A short description of what this template is for.' : 'Instructions or a welcome message for your client.'}
-                            />
+                            <RichTextEditor value={description} onChange={setDescription} />
                         </div>
                         {isTemplateFlow && setIcon && (
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
