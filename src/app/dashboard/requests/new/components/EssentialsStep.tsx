@@ -37,6 +37,13 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
     const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [savedRange, setSavedRange] = useState<Range | null>(null);
 
+    const [viewMode, setViewMode] = useState<'editor' | 'html'>('editor');
+    const [htmlContent, setHtmlContent] = useState(value || '');
+
+    useEffect(() => {
+        setHtmlContent(value);
+    }, [value]);
+
     const updateToolbarState = useCallback(() => {
         if (editorRef.current) {
             setIsBold(document.queryCommandState('bold'));
@@ -60,7 +67,9 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         if (editorRef.current) {
             editorRef.current.focus();
             document.execCommand(command, false, valueArg);
-            onChange(editorRef.current.innerHTML);
+            const newContent = editorRef.current.innerHTML;
+            setHtmlContent(newContent);
+            onChange(newContent);
             updateToolbarState();
         }
     };
@@ -80,16 +89,11 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
 
      const handleInput = () => {
         if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
+            const newContent = editorRef.current.innerHTML;
+            setHtmlContent(newContent);
+            onChange(newContent);
         }
     };
-
-    useEffect(() => {
-      const editor = editorRef.current;
-      if (editor && editor.innerHTML !== value) {
-        editor.innerHTML = value;
-      }
-    }, [value]);
     
      useEffect(() => {
         const editor = editorRef.current;
@@ -114,6 +118,24 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         };
     }, [updateToolbarState]);
 
+    const toggleViewMode = () => {
+        setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
+    };
+
+    useEffect(() => {
+        if (viewMode === 'editor' && editorRef.current) {
+            if (editorRef.current.innerHTML !== htmlContent) {
+                editorRef.current.innerHTML = htmlContent;
+            }
+        }
+    }, [viewMode, htmlContent]);
+    
+    const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newContent = e.target.value;
+        setHtmlContent(newContent);
+        onChange(newContent);
+    };
+
     return (
         <div className="rounded-md border border-input bg-background">
             <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
@@ -125,14 +147,27 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                 <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
                  <Separator orientation="vertical" className="h-5 mx-1" />
                  <Button variant="ghost" size="icon" className="h-8 w-8" type="button" onMouseDown={(e) => handleLink(e)}><LinkIcon className="h-4 w-4" /></Button>
+                 <Separator orientation="vertical" className="h-5 mx-1" />
+                <Button variant={viewMode === 'html' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={toggleViewMode} title="Toggle HTML View">
+                    <Code className="h-4 w-4" />
+                </Button>
             </div>
-            <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                className="prose-preview min-h-[200px] w-full p-3 ring-offset-background focus-visible:outline-none"
-                onInput={handleInput}
-            />
+            {viewMode === 'editor' ? (
+                <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="prose-preview min-h-[200px] w-full p-3 ring-offset-background focus-visible:outline-none"
+                    onInput={handleInput}
+                />
+            ) : (
+                <textarea
+                    value={htmlContent}
+                    onChange={handleHtmlChange}
+                    className="prose-preview min-h-[200px] w-full p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
+                    placeholder="Enter HTML here..."
+                />
+            )}
         </div>
     );
 };
