@@ -55,12 +55,12 @@ const renderQuestionPreview = (question: Question) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue} disabled>
+                <RadioGroup defaultValue={question.defaultValue}>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -74,7 +74,7 @@ const renderQuestionPreview = (question: Question) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} disabled />
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -82,7 +82,7 @@ const renderQuestionPreview = (question: Question) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue} disabled>
+                <Select defaultValue={question.defaultValue}>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -90,7 +90,7 @@ const renderQuestionPreview = (question: Question) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
+            return <Input id={questionId} type="text" placeholder={question.label} />;
     }
 }
 
@@ -117,7 +117,7 @@ const TemplateCard = ({ template, onSelect, onPreview }: { template: Template; o
   <Card className="hover:shadow-lg transition-shadow group flex flex-col bg-card">
     <div className="flex flex-col flex-grow cursor-pointer" onClick={onSelect}>
       <CardContent className="p-4 flex gap-4 items-start flex-grow">
-        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+        <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} className="h-12 w-12" />
         <div className="flex-grow">
           <h3 className="font-semibold">{template.title}</h3>
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
@@ -153,10 +153,9 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const [activePageIndex, setActivePageIndex] = useState(0);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-    const observer = useRef<IntersectionObserver | null>(null);
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string>('');
 
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
@@ -195,71 +194,60 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
 
     }, [token, toast, router]);
 
-    const handlePreviewClick = useCallback(async (template: Template | MyTemplate) => {
+     const handlePreviewClick = useCallback((template: Template | MyTemplate) => {
         if (!token) return;
         setPreviewTemplate(template);
-    }, [token]);
-
-    useEffect(() => {
-        if (!previewTemplate) return;
-
-        async function fetchFullTemplate() {
-             if (!token) return;
-            setIsPreviewLoading(true);
-            setActivePageIndex(0);
-            setActiveAccordionItem('');
-            try {
-                const fetchFunction = 'created_by' in previewTemplate ? getMyTemplate : getTemplate;
-                const fullTemplate = await fetchFunction(token, previewTemplate.id);
+        setIsPreviewLoading(true);
+        setActivePageIndex(0);
+        setActiveAccordionItem('');
+    
+        const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
+        
+        fetchFunction(token, template.id)
+            .then(fullTemplate => {
                 setPreviewTemplate(fullTemplate);
                 if (fullTemplate.form_data?.length) {
                     setActivePageIndex(0);
                     setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
                 }
-            } catch (error: any) {
+            })
+            .catch(error => {
                 toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
                 setPreviewTemplate(null);
-            } finally {
+            })
+            .finally(() => {
                 setIsPreviewLoading(false);
-            }
-        }
-        fetchFullTemplate();
-    }, [previewTemplate, token, toast]);
+            });
+    }, [token, toast]);
     
      useEffect(() => {
-        const currentObserver = observer.current;
-        if (currentObserver) {
-            currentObserver.disconnect();
-        }
+        if (!scrollContainerRef.current || isPreviewLoading) return;
 
-        if (!scrollContainerRef.current) return;
-    
-        const options = {
-            root: scrollContainerRef.current,
-            rootMargin: '0px 0px -60% 0px',
-            threshold: 0.5, 
-        };
-    
-        observer.current = new IntersectionObserver((entries) => {
-            const intersectingEntry = entries.find(entry => entry.isIntersecting);
-            if (intersectingEntry) {
-                const { id } = intersectingEntry.target;
-                if (id.startsWith('section-')) {
-                    setActiveSectionId(id);
-                } else if (id.startsWith('question-')) {
-                    const sectionId = intersectingEntry.target.closest('[id^="section-"]')?.id;
-                    if (sectionId) setActiveSectionId(sectionId);
-                    setActiveQuestionId(id);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const intersectingEntry = entries.find(entry => entry.isIntersecting);
+                if (intersectingEntry) {
+                    const { id } = intersectingEntry.target;
+                    if (id.startsWith('section-')) {
+                        setActiveSectionId(id);
+                    } else if (id.startsWith('question-')) {
+                        const sectionId = intersectingEntry.target.closest('[id^="section-"]')?.id;
+                        if (sectionId) setActiveSectionId(sectionId);
+                        setActiveQuestionId(id);
+                    }
                 }
+            },
+            {
+                root: scrollContainerRef.current,
+                rootMargin: '0px 0px -60% 0px',
+                threshold: 0.5,
             }
-        }, options);
-    
+        );
+
         const elements = scrollContainerRef.current?.querySelectorAll('[id^="section-"], [id^="question-"]');
-        elements?.forEach(el => observer.current!.observe(el));
-    
-        return () => {
-            currentObserver?.disconnect();
-        };
+        elements?.forEach(el => observer.observe(el));
+
+        return () => observer.disconnect();
     }, [previewTemplate, activePageIndex, isPreviewLoading]);
 
     const handleScrollToElement = (elementId: string) => {
