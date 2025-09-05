@@ -1,6 +1,6 @@
 
 
-'use client'
+'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
@@ -258,7 +258,7 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
             <PreviewSidebar pages={pages} activePageId={activePageIndex} setActivePageId={setActivePageIndex} />
             <main className="flex-1 p-6 overflow-y-auto">
                 <div className="max-w-3xl mx-auto">
-                     <h2 className="text-3xl font-bold">{title}</h2>
+                     <h2 className="text-3xl font-bold mb-4">{title}</h2>
                     {description && (
                          <div className="mt-4 p-6 border rounded-md h-[250px] overflow-y-auto mb-6 bg-slate-50 shadow-sm">
                             <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: description }} />
