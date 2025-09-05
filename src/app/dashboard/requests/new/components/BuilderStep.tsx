@@ -260,7 +260,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
         
         <main className="flex-1 overflow-y-scroll bg-white">
             <div className="max-w-4xl mx-auto p-6">
-                <div className="mb-4">
+                <div className="mb-6">
                     <h1 className="text-2xl font-bold">{requestTitle}</h1>
                     {requestDescription && (
                         <div className="mt-2 p-4 border rounded-md h-[250px] overflow-y-auto">
@@ -337,7 +337,7 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                 <DropdownMenuItem onClick={() => duplicateSection(page.id, section.id)}>Duplicate</DropdownMenuItem>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
