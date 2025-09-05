@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { iconList } from '@/components/ui/icon-selector';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,8 +38,8 @@ const TemplateIconDisplay = ({ iconName, categoryColor, isMyTemplate, className 
 
 
     return (
-        <div className={cn("p-3 rounded-lg flex items-center justify-center", className)} style={{ backgroundColor: bgColor }}>
-            <IconComponent className="h-full w-full" style={{ color: iconColor }} />
+        <div className={cn("p-3 rounded-lg flex items-center justify-center flex-shrink-0", className)} style={{ backgroundColor: bgColor }}>
+            <IconComponent className="h-6 w-6" style={{ color: iconColor }} />
         </div>
     );
 };
@@ -55,12 +55,12 @@ const renderQuestionPreview = (question: Question) => {
         case 'number':
         case 'date':
         case 'currency':
-             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'textarea':
-             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'radio':
             return (
-                <RadioGroup defaultValue={question.defaultValue}>
+                <RadioGroup defaultValue={question.defaultValue} disabled>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
@@ -74,7 +74,7 @@ const renderQuestionPreview = (question: Question) => {
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} />
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} disabled />
                             <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
                         </div>
                     ))}
@@ -82,7 +82,7 @@ const renderQuestionPreview = (question: Question) => {
             )
         case 'dropdown':
             return (
-                <Select defaultValue={question.defaultValue}>
+                <Select defaultValue={question.defaultValue} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -90,7 +90,7 @@ const renderQuestionPreview = (question: Question) => {
         case 'formatted-text':
             return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         default:
-            return <Input id={questionId} type="text" placeholder={question.label} />;
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
     }
 }
 
@@ -198,25 +198,33 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
     const handlePreviewClick = useCallback(async (template: Template | MyTemplate) => {
         if (!token) return;
         setPreviewTemplate(template);
-        setActivePageIndex(0);
-        setActiveAccordionItem('');
-    
-        try {
+    }, [token]);
+
+    useEffect(() => {
+        if (!previewTemplate) return;
+
+        async function fetchFullTemplate() {
+             if (!token) return;
             setIsPreviewLoading(true);
-            const fetchFunction = 'created_by' in template ? getMyTemplate : getTemplate;
-            const fullTemplate = await fetchFunction(token, template.id);
-            setPreviewTemplate(fullTemplate);
-            if (fullTemplate.form_data?.length) {
-                setActivePageIndex(0);
-                setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
+            setActivePageIndex(0);
+            setActiveAccordionItem('');
+            try {
+                const fetchFunction = 'created_by' in previewTemplate ? getMyTemplate : getTemplate;
+                const fullTemplate = await fetchFunction(token, previewTemplate.id);
+                setPreviewTemplate(fullTemplate);
+                if (fullTemplate.form_data?.length) {
+                    setActivePageIndex(0);
+                    setActiveAccordionItem(`page-${fullTemplate.form_data[0].id}`);
+                }
+            } catch (error: any) {
+                toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
+                setPreviewTemplate(null);
+            } finally {
+                setIsPreviewLoading(false);
             }
-        } catch (error: any) {
-            toast({ title: 'Error fetching preview', description: error.message, variant: 'destructive' });
-            setPreviewTemplate(null);
-        } finally {
-            setIsPreviewLoading(false);
         }
-    }, [token, toast]);
+        fetchFullTemplate();
+    }, [previewTemplate, token, toast]);
     
      useEffect(() => {
         const currentObserver = observer.current;
@@ -465,7 +473,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                     </div>
                 </main>
             </div>
-            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => { if (!isOpen) setPreviewTemplate(null); }}>
+            <Dialog open={!!previewTemplate} onOpenChange={(isOpen) => !isOpen && setPreviewTemplate(null)}>
                 <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b flex-row items-center justify-between">
                         <DialogTitle className="text-base truncate">Template Preview: {previewTemplate?.title}</DialogTitle>
@@ -497,7 +505,7 @@ export default function TemplatesStep({ onProceed }: TemplatesStepProps) {
                                 </div>
                              </aside>
                              
-                             <div className="flex flex-1 overflow-hidden p-6 bg-muted/40 gap-6">
+                             <div className="flex flex-1 overflow-hidden gap-2 p-6 bg-muted/40">
                                 <aside className="w-72 flex-shrink-0 bg-white border rounded-lg p-6 flex flex-col gap-6">
                                 <Button variant="link" className="text-primary p-0 h-auto justify-start" onClick={() => setPreviewTemplate(null)}>
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to templates
