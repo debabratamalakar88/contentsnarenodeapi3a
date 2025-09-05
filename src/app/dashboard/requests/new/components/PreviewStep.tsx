@@ -34,248 +34,7 @@ interface PreviewStepProps {
 }
 
 const RichTextEditorPreview = ({ question }: { question: Question }) => {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [wordCount, setWordCount] = useState(0);
-
-    const [isBold, setIsBold] = useState(false);
-    const [isItalic, setIsItalic] = useState(false);
-    const [isUnderline, setIsUnderline] = useState(false);
-    const [isUl, setIsUl] = useState(false);
-    const [isOl, setIsOl] = useState(false);
-    const [isLeftAligned, setIsLeftAligned] = useState(true);
-    const [isCenterAligned, setIsCenterAligned] = useState(false);
-    const [isRightAligned, setIsRightAligned] = useState(false);
-    const [isJustifyAligned, setIsJustifyAligned] = useState(false);
-    
-    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-    const [savedRange, setSavedRange] = useState<Range | null>(null);
-
-    const [viewMode, setViewMode] = useState<'editor' | 'html'>('editor');
-    const [htmlContent, setHtmlContent] = useState(question.defaultValue || '');
-
-    const updateToolbarState = useCallback(() => {
-        if (editorRef.current) {
-            setIsBold(document.queryCommandState('bold'));
-            setIsItalic(document.queryCommandState('italic'));
-            setIsUnderline(document.queryCommandState('underline'));
-            setIsUl(document.queryCommandState('insertUnorderedList'));
-            setIsOl(document.queryCommandState('insertOrderedList'));
-            
-            const center = document.queryCommandState('justifyCenter');
-            const right = document.queryCommandState('justifyRight');
-            const justify = document.queryCommandState('justifyFull');
-            
-            setIsCenterAligned(center);
-            setIsRightAligned(right);
-            setIsJustifyAligned(justify);
-            setIsLeftAligned(!center && !right && !justify);
-        }
-    }, []);
-
-    const updateWordCount = useCallback(() => {
-        if (editorRef.current) {
-            const textContent = editorRef.current.innerText || "";
-            const words = textContent.trim().split(/\s+/).filter(Boolean);
-            setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
-        }
-    }, []);
-
-    const execCmd = (command: string, value?: string) => {
-        if (editorRef.current) {
-            editorRef.current.focus();
-            document.execCommand(command, false, value);
-            updateToolbarState();
-            setHtmlContent(editorRef.current.innerHTML);
-            updateWordCount();
-        }
-    };
-
-    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
-        e.preventDefault();
-        execCmd(command);
-    };
-
-    const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        const selection = window.getSelection();
-        let rangeToSave: Range | null = null;
-        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            rangeToSave = selection.getRangeAt(0).cloneRange();
-        }
-
-        const url = window.prompt("Enter the URL:", "https://");
-
-        if (url) {
-            editorRef.current?.focus();
-            if(rangeToSave) {
-                const currentSelection = window.getSelection();
-                if (currentSelection) {
-                    currentSelection.removeAllRanges();
-                    currentSelection.addRange(rangeToSave);
-                }
-            }
-            document.execCommand('createLink', false, url);
-            updateToolbarState();
-            setHtmlContent(editorRef.current!.innerHTML);
-            updateWordCount();
-        }
-    };
-    
-    const handleEmojiButtonMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            setSavedRange(selection.getRangeAt(0).cloneRange());
-        } else if (editorRef.current) {
-            editorRef.current.focus();
-            const range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
-            setSavedRange(range);
-        }
-    };
-
-    const onEmojiClick = (emojiObject: { emoji: string }) => {
-        if (editorRef.current) {
-            editorRef.current.focus();
-            if (savedRange) {
-                const selection = window.getSelection();
-                if (selection) {
-                    selection.removeAllRanges();
-                    selection.addRange(savedRange);
-                }
-            }
-            document.execCommand('insertText', false, emojiObject.emoji);
-            setEmojiPickerOpen(false);
-            setHtmlContent(editorRef.current.innerHTML);
-            updateWordCount();
-            setSavedRange(null);
-        }
-    };
-    
-    const handleHeadingChange = (value: string) => {
-        execCmd('formatBlock', value);
-    };
-
-    const handleInput = () => {
-        if (editorRef.current) {
-            setHtmlContent(editorRef.current.innerHTML);
-            updateToolbarState();
-            updateWordCount();
-        }
-    }
-
-    const toggleViewMode = () => {
-        setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
-    };
-
-    useEffect(() => {
-        if (viewMode === 'editor' && editorRef.current) {
-            if (editorRef.current.innerHTML !== htmlContent) {
-                editorRef.current.innerHTML = htmlContent;
-            }
-            updateWordCount();
-            updateToolbarState();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [viewMode]); 
-    
-    useEffect(() => {
-        const editor = editorRef.current;
-        const handleSelectionChange = () => {
-            if (document.activeElement === editor) {
-                updateToolbarState();
-            }
-        };
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-        if (editor) {
-            editor.addEventListener('focus', updateToolbarState);
-        }
-
-        return () => {
-            document.removeEventListener('selectionchange', handleSelectionChange);
-            if (editor) {
-                editor.removeEventListener('focus', updateToolbarState);
-            }
-        };
-    }, [updateToolbarState]);
-    
-    const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
-
-    return (
-      <div className="rounded-md border border-input bg-background">
-        <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
-          <Select onValueChange={handleHeadingChange} defaultValue="p">
-              <SelectTrigger className="w-[120px] h-8 text-sm focus:ring-0 focus:ring-offset-0 border-none shadow-none">
-                  <SelectValue placeholder="Style" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="p">Normal</SelectItem>
-                  <SelectItem value="h1">Heading 1</SelectItem>
-                  <SelectItem value="h2">Heading 2</SelectItem>
-                  <SelectItem value="h3">Heading 3</SelectItem>
-              </SelectContent>
-          </Select>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isBold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
-          <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
-          <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isUl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
-          <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isLeftAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
-          <Button variant={isCenterAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
-          <Button variant={isRightAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
-          <Button variant={isJustifyAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LucideLink className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
-          <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
-              <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonMouseDown} onClick={() => setEmojiPickerOpen(o => !o)}>
-                      <Smile className="h-4 w-4" />
-                  </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border-0">
-                  <EmojiPicker onEmojiClick={onEmojiClick} />
-              </PopoverContent>
-          </Popover>
-           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={viewMode === 'html' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={toggleViewMode} title="Toggle HTML View">
-              <Code className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {viewMode === 'editor' ? (
-            <div className="relative">
-                 {isPlaceholderVisible && (
-                     <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
-                )}
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  suppressContentEditableWarning
-                  className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
-                  onInput={handleInput}
-                />
-            </div>
-        ) : (
-            <textarea
-                value={htmlContent}
-                onChange={(e) => setHtmlContent(e.target.value)}
-                className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
-                placeholder="Enter HTML here..."
-            />
-        )}
-
-        <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
-            <span>Words: {wordCount}</span>
-        </div>
-        <textarea name={question.apiId} value={htmlContent} className="hidden" readOnly />
-      </div>
-    );
+    return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
 };
 
 const DateRangePicker = ({ question }: { question: Question }) => {
@@ -469,13 +228,13 @@ const PreviewSidebar = ({ pages, activePageId, setActivePageId }: { pages: Page[
                 <h2 className="font-semibold text-sm">PAGES</h2>
             </div>
             <div className="flex-grow p-2 space-y-1 overflow-y-auto">
-                {pages.map(page => (
+                {pages.map((page, index) => (
                     <div key={page.id}>
                          <button
-                            onClick={() => setActivePageId(page.id)}
+                            onClick={() => setActivePageId(index)}
                             className={cn(
                                 "w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold",
-                                activePageId === page.id
+                                activePageId === index
                                   ? "bg-primary/10 text-primary"
                                   : "text-foreground hover:bg-accent/50"
                               )}
@@ -490,24 +249,29 @@ const PreviewSidebar = ({ pages, activePageId, setActivePageId }: { pages: Page[
 }
 
 export default function PreviewStep({ title, description, pages }: PreviewStepProps) {    
-    const [activePageId, setActivePageId] = useState<number | null>(pages[0]?.id || null);
+    const [activePageIndex, setActivePageIndex] = useState<number>(0);
 
-    const activePage = pages.find(p => p.id === activePageId);
+    const activePage = pages[activePageIndex];
 
     return (
         <div className="flex h-full bg-background animate-in fade-in-50">
-            <PreviewSidebar pages={pages} activePageId={activePageId} setActivePageId={setActivePageId} />
+            <PreviewSidebar pages={pages} activePageId={activePageIndex} setActivePageId={setActivePageIndex} />
             <main className="flex-1 p-6 overflow-y-auto">
                 <div className="max-w-3xl mx-auto">
+                     <h2 className="text-3xl font-bold">{title}</h2>
+                    {description && (
+                         <div className="mt-4 p-6 border rounded-md h-[250px] overflow-y-auto mb-6 bg-slate-50 shadow-sm">
+                            <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: description }} />
+                        </div>
+                    )}
                     <Card>
                         <CardHeader>
-                            <CardTitle>{title}</CardTitle>
-                            <CardDescription>{description}</CardDescription>
+                            <CardTitle>{activePage?.title}</CardTitle>
+                            {activePage?.instructions && <CardDescription>{activePage.instructions}</CardDescription>}
                         </CardHeader>
                         <CardContent className="space-y-8">
                             {activePage ? (
                                 <div key={activePage.id}>
-                                    <h3 className="text-xl font-semibold border-b pb-2 mb-4">{activePage.title}</h3>
                                     <div className="space-y-6">
                                         {activePage.sections.map(section => (
                                             <div key={section.id}>
