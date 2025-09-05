@@ -208,9 +208,13 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
               </SelectTrigger>
               <SelectContent>
                   <SelectItem value="p">Normal</SelectItem>
+                  <SelectItem value="blockquote">Blockquote</SelectItem>
+                  <SelectItem value="pre">Code</SelectItem>
                   <SelectItem value="h1">Heading 1</SelectItem>
                   <SelectItem value="h2">Heading 2</SelectItem>
                   <SelectItem value="h3">Heading 3</SelectItem>
+                  <SelectItem value="h4">Heading 4</SelectItem>
+                  <SelectItem value="h5">Heading 5</SelectItem>
               </SelectContent>
           </Select>
           <Separator orientation="vertical" className="h-5 mx-1" />
