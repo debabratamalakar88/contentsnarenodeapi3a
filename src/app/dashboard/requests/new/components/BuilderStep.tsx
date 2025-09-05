@@ -262,7 +262,11 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
             <div className="max-w-4xl mx-auto p-6">
                 <div className="mb-4">
                     <h1 className="text-2xl font-bold">{requestTitle}</h1>
-                    {requestDescription && <div className="text-muted-foreground mt-1 prose-preview" dangerouslySetInnerHTML={{ __html: requestDescription }} />}
+                    {requestDescription && (
+                        <div className="mt-2 p-4 border rounded-md">
+                           <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: requestDescription }} />
+                        </div>
+                    )}
                 </div>
 
 
