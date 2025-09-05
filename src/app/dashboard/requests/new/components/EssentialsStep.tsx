@@ -172,7 +172,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
     useEffect(() => {
         if (viewMode === 'editor' && editorRef.current) {
             if (editorRef.current.innerHTML !== htmlContent) {
-                editorRef.current.innerHTML = htmlContent;
+                editorRef.current.innerHTML = htmlContent || '';
             }
             updateWordCount();
             updateToolbarState();
@@ -201,7 +201,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         };
     }, [updateToolbarState]);
     
-    const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
+    const isPlaceholderVisible = viewMode === 'editor' && !(htmlContent || '').replace(/<p><br><\/p>/g, '').trim();
 
     return (
       <div className={cn(
@@ -272,11 +272,12 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                   suppressContentEditableWarning
                   className={cn("prose-preview min-h-[200px] w-full resize-y p-3 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
                   onInput={handleInput}
+                  dangerouslySetInnerHTML={{ __html: htmlContent || '' }}
                 />
             </div>
         ) : (
             <textarea
-                value={htmlContent}
+                value={htmlContent || ''}
                 onChange={(e) => {
                     setHtmlContent(e.target.value);
                     onChange(e.target.value);
@@ -290,7 +291,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
             <span>Words: {wordCount}</span>
         </div>
-        <textarea name="description" value={htmlContent} className="hidden" readOnly />
+        <textarea name="description" value={htmlContent || ''} className="hidden" readOnly />
       </div>
     );
 };
