@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -145,7 +144,6 @@ const PublicRequestSidebar = ({ request, pages, activePageIndex, setActivePageIn
             <div className="flex-shrink-0">
                 <div className="p-4 border-b">
                     <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{request.description}</p>
                     {request.due_date && (
                         <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
                             <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
@@ -454,9 +452,14 @@ export default function SharedRequestPage() {
             <div className="flex flex-1 overflow-hidden">
                 <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
                 <main className="flex-1 overflow-y-auto">
-                    <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
-                         {clientId && <input type="hidden" name="client_id" value={clientId} />}
-                        <div className="max-w-3xl mx-auto p-6">
+                    <div className="max-w-3xl mx-auto p-6">
+                        {request.description && (
+                            <div className="p-6 border rounded-md h-[250px] overflow-y-auto mb-6 bg-slate-50 shadow-sm">
+                               <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: request.description }} />
+                            </div>
+                        )}
+                        <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
+                             {clientId && <input type="hidden" name="client_id" value={clientId} />}
                             {currentPage ? (
                                 <Card>
                                     <CardHeader>
@@ -506,11 +509,10 @@ export default function SharedRequestPage() {
                             ) : (
                                  <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
                             )}
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </main>
             </div>
         </div>
     );
 }
-
