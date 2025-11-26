@@ -5,10 +5,10 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '../components/StepNavigation';
 import TemplatesStep from '../components/TemplatesStep';
-import EssentialsStep from '../components/EssentialsStep';
-import BuilderStep from '../components/BuilderStep';
-import PreviewStep from '../components/PreviewStep';
-import FinalizeStep from '../components/FinalizeStep';
+import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
+import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
+import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
 import Link from "next/link";
@@ -698,11 +698,11 @@ export default function NewRequestWizardPage() {
                 {renderStep()}
             </div>
 
-            <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Select a field type</DialogTitle>
-                    </DialogHeader>
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader>
+                        <SheetTitle>Select a field type</SheetTitle>
+                    </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -712,7 +712,7 @@ export default function NewRequestWizardPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
                             <div key={category.name}>
                                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
@@ -740,8 +740,8 @@ export default function NewRequestWizardPage() {
                             <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>
                         )}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
                 <SheetContent className="sm:max-w-md p-0">
