@@ -23,10 +23,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Logo } from "@/components/icons"
 import { NavLinks } from "./NavLinks"
 import { logoutUser, switchCompany, getCompany, type Company } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
 
 export default function DashboardLayout({
   children,
@@ -132,10 +141,25 @@ export default function DashboardLayout({
         <nav className="flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+            className="flex items-center gap-3 text-lg font-semibold md:text-base"
           >
-            <Logo className="h-7 w-7 text-white" />
-            <span className="font-bold text-xl">NARLAX</span>
+            {company ? (
+              <>
+                 <Avatar className="h-8 w-8 text-sm">
+                    <AvatarFallback className="bg-pink-500 text-white font-bold border-pink-600">
+                        {getInitials(company.company_name)}
+                    </AvatarFallback>
+                </Avatar>
+                <span className="font-bold text-xl">{company.company_name}</span>
+              </>
+            ) : (
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-pink-500 flex items-center justify-center font-bold">
+                        N
+                    </div>
+                    <span className="font-bold text-xl">NARLAX</span>
+                </div>
+            )}
           </Link>
           <NavLinks />
         </nav>
