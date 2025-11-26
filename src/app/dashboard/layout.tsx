@@ -141,7 +141,7 @@ export default function DashboardLayout({
         <nav className="flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 text-lg font-semibold md:text-base min-w-[200px]"
+            className="flex items-center gap-3 text-base font-semibold min-w-[200px]"
           >
             {company ? (
               <>
@@ -150,7 +150,7 @@ export default function DashboardLayout({
                         {getInitials(company.company_name)}
                     </AvatarFallback>
                 </Avatar>
-                <span className="font-bold text-xl">{company.company_name}</span>
+                <span className="font-bold">{company.company_name}</span>
               </>
             ) : (
                 <div className="flex items-center gap-2">
