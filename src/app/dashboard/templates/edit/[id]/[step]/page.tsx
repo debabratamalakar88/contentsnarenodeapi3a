@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -13,20 +14,29 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate } from "@/lib/api";
+import { getAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, getAdminTemplateCategories, TemplateCategory } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 
 
 const steps = [
@@ -88,7 +98,7 @@ const questionCategories: {
 ];
 
 
-export default function EditMyTemplateWizardPage() {
+export default function EditAdminTemplateWizardPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
@@ -102,42 +112,48 @@ export default function EditMyTemplateWizardPage() {
     }, [stepSlug]);
     const currentStep = steps[currentStepIndex].name;
     
+    // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [categoryId, setCategoryId] = useState<number | null>(null);
     const [templateIcon, setTemplateIcon] = useState<string>("");
+    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [initialTemplateData, setInitialTemplateData] = useState<MyTemplate | null>(null);
-    const [userRole, setUserRole] = useState<string | null>(null);
+    const [initialTemplateData, setInitialTemplateData] = useState<Template | null>(null);
 
+    // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     
+    // Question Settings Dialog State
     const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
     
     useEffect(() => {
-        const role = localStorage.getItem('userRole');
-        setUserRole(role);
-        
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('adminAuthToken');
         if (!token || !id) {
             toast({ title: "Error", description: "Invalid template or not logged in.", variant: "destructive" });
-            router.push('/dashboard/templates');
+            router.push('/admin/dashboard/templates');
             return;
         }
 
         async function fetchTemplateData() {
             try {
-                const data = await getMyTemplate(token, id);
+                const [data, categoriesData] = await Promise.all([
+                    getAdminTemplate(token, id),
+                    getAdminTemplateCategories(token)
+                ]);
                 
                 setTemplateTitle(data.title);
                 setTemplateDescription(data.description || "");
+                setCategoryId(data.category_id || null);
                 setTemplateIcon(data.icon || "");
+                setCategories(categoriesData.data.filter(cat => cat.deleted_at === null));
                 setPages(data.form_data || []);
                 setInitialTemplateData(data);
 
@@ -146,7 +162,7 @@ export default function EditMyTemplateWizardPage() {
                 }
             } catch (error: any) {
                 toast({ title: "Failed to load template", description: error.message || "Could not fetch template data.", variant: "destructive" });
-                router.push('/dashboard/templates');
+                router.push('/admin/dashboard/templates');
             } finally {
                 setIsLoading(false);
             }
@@ -157,26 +173,29 @@ export default function EditMyTemplateWizardPage() {
 
     const saveProgress = async () => {
         setIsSubmitting(true);
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('adminAuthToken');
         if (!token) {
             toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
             setIsSubmitting(false);
             return false;
         }
+
+        const isPublishedTemplate = initialTemplateData?.status === 'published';
         
         try {
-            const payload: Partial<MyTemplate> = {
+            const payload: Partial<Template> = {
                 title: templateTitle,
                 description: templateDescription,
                 form_data: pages,
+                category_id: categoryId,
                 icon: templateIcon,
-                status: 'published'
+                status: initialTemplateData?.status || 'draft'
             };
 
-            await updateMyTemplate(token, id, payload);
-            toast({ title: "Template updated" });
+            await updateAdminTemplate(token, id, payload);
+            toast({ title: isPublishedTemplate ? "Template updated" : "Template draft saved" });
             return true;
-        } catch (error: any) {
+        } catch (error: any) => {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
             return false;
@@ -196,25 +215,60 @@ export default function EditMyTemplateWizardPage() {
         const saved = await saveProgress();
         if (saved) {
             const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/dashboard/templates/edit/${id}/${nextStepSlug}`);
+            router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
 
+    const handlePublishOrUpdate = async () => {
+       if (!templateTitle.trim()) {
+           toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
+           return;
+       }
+
+       setIsSubmitting(true);
+       const token = localStorage.getItem('adminAuthToken');
+       if (!token) {
+           toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+           setIsSubmitting(false);
+           return;
+       }
+       
+       const isAlreadyPublished = initialTemplateData?.status === 'published';
+
+       const payload: Partial<Template> = {
+           title: templateTitle,
+           description: templateDescription,
+           form_data: pages,
+           category_id: categoryId,
+           icon: templateIcon,
+           status: 'published',
+       };
+
+       try {
+           await updateAdminTemplate(token, id, payload);
+           const successMessage = isAlreadyPublished ? "Template updated successfully." : "Template Published! Your template is now live.";
+           toast({ title: "Success", description: successMessage });
+           router.push('/admin/dashboard/templates');
+           router.refresh();
+       } catch(error: any) {
+           const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+           toast({ title: "Action Failed", description, variant: "destructive" });
+       } finally {
+           setIsSubmitting(false);
+       }
+   };
+
     const handleBack = () => {
-        if (isViewerRole) {
-            router.push('/dashboard/templates');
-            return;
-        }
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/dashboard/templates/edit/${id}/${prevStepSlug}`);
+            router.push(`/admin/dashboard/templates/edit/${id}/${prevStepSlug}`);
         } else {
-            router.push('/dashboard/templates');
+            router.push('/admin/dashboard/templates');
         }
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/dashboard/templates/edit/${id}/${slug}`);
+        router.push(`/admin/dashboard/templates/edit/${id}/${slug}`);
     };
 
     const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
@@ -485,16 +539,17 @@ export default function EditMyTemplateWizardPage() {
         switch (currentStep) {
             case "Essentials": 
                 return (
-                    <div className="p-6 h-full flex flex-col items-center justify-center">
-                        <EssentialsStep 
-                            title={templateTitle} 
-                            setTitle={setTemplateTitle} 
-                            description={templateDescription} 
-                            setDescription={setTemplateDescription}
-                            icon={templateIcon}
-                            setIcon={setTemplateIcon}
-                        />
-                    </div>
+                    <EssentialsStep 
+                        title={templateTitle} 
+                        setTitle={setTemplateTitle} 
+                        description={templateDescription} 
+                        setDescription={setTemplateDescription}
+                        categoryId={categoryId}
+                        setCategoryId={setCategoryId}
+                        icon={templateIcon}
+                        setIcon={setTemplateIcon}
+                        categories={categories}
+                    />
                 );
             case "Builder": return <BuilderStep
                                         requestTitle={templateTitle}
@@ -516,48 +571,42 @@ export default function EditMyTemplateWizardPage() {
         if (currentStep === 'Builder' || currentStep === 'Preview') {
             return 'bg-white';
         }
-        return 'flex justify-center items-start bg-muted/40';
+        return 'p-6 flex justify-center items-start';
     };
 
     const isLastStep = currentStepIndex === steps.length - 1;
-    const canUseTemplate = userRole === 'Administrator' || userRole === 'Editor';
-    const isViewerRole = userRole === 'Reviewer' || userRole === 'Viewer';
-    const isPreviewForViewer = isViewerRole && currentStep === 'Preview';
+    const isPublished = initialTemplateData?.status === 'published';
 
     return (
         <div className="flex flex-col h-full bg-background">
-             <header className="flex-shrink-0 bg-background">
-                <div className="flex items-center justify-between gap-4 p-4 border-b">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    
-                    {!isPreviewForViewer && (
-                        <StepNavigation
-                            steps={steps}
-                            currentStepSlug={stepSlug}
-                            onStepClick={handleStepClick}
-                            maxVisitedStepIndex={steps.length}
-                        />
+            <div className="flex items-center gap-4 p-4 border-b">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <StepNavigation
+                    steps={steps}
+                    currentStepSlug={stepSlug}
+                    onStepClick={handleStepClick}
+                    maxVisitedStepIndex={steps.length}
+                />
+                <div className="ml-auto flex items-center gap-2">
+                    {isLastStep ? (
+                        <Button onClick={handlePublishOrUpdate} disabled={isSubmitting || isLoading}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isPublished ? 'Update' : 'Publish'}
+                        </Button>
+                    ) : (
+                        <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
                     )}
-                    
-                    <div className="flex items-center gap-2 min-w-[150px] justify-end">
-                        {!isPreviewForViewer && !isLastStep && (
-                             <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {steps[currentStepIndex + 1]?.name || 'Next'} <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        )}
-                        {!isPreviewForViewer && isLastStep && canUseTemplate && (
-                           <Button asChild><Link href={`/dashboard/requests/new/essentials?myTemplateId=${id}`}>Use Template</Link></Button>
-                        )}
-                    </div>
                 </div>
-            </header>
+            </div>
             
-            <main className={cn("flex-1 overflow-y-auto", stepContainerClasses())}>
+            <div className={cn("flex-grow overflow-y-scroll", stepContainerClasses())}>
                 {renderStep()}
-            </main>
+            </div>
 
             <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
                 <DialogContent className="sm:max-w-3xl">
@@ -592,32 +641,109 @@ export default function EditMyTemplateWizardPage() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Field Settings</DialogTitle>
-                        <DialogDescription>Make changes to your field. Click save when you're done.</DialogDescription>
-                    </DialogHeader>
+            <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
+                <SheetContent className="sm:max-w-md p-0">
+                    <SheetHeader className="p-6 border-b">
+                        <SheetTitle>Field Options</SheetTitle>
+                        <SheetDescription>{editingQuestion?.label}</SheetDescription>
+                    </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-                            <div className="grid gap-2"><Label htmlFor="label">Label</Label><Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} /></div>
-                             <div className="flex items-center space-x-2"><Checkbox id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} /><Label htmlFor="required">Required</Label></div>
-                            <div className="grid gap-2"><Label htmlFor="instructions">Instructions</Label><Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" /></div>
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (<div className="grid gap-2"><Label htmlFor="placeholder">Placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>)}
-                             {tempQuestion.type === 'formatted-text' && (<div className="grid gap-2"><Label htmlFor="content">Content</Label><Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" /></div>)}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (<div className="grid gap-2"><Label htmlFor="defaultValue">Default Value</Label><Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} /></div>)}
+                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                            <div className="grid gap-2">
+                                <Label htmlFor="label">Label</Label>
+                                <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
+                            </div>
+                             <div className="flex items-center justify-between p-3 rounded-lg border">
+                                <Label htmlFor="required">Required</Label>
+                                <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                            </div>
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="placeholder">Custom placeholder</Label>
+                                    <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
+                                </div>
+                            )}
+                             {tempQuestion.type === 'formatted-text' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="content">Content</Label>
+                                    <Textarea 
+                                        id="content" 
+                                        value={tempQuestion.defaultValue || ''} 
+                                        onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} 
+                                        placeholder="Enter your formatted text content here. You can use basic HTML for styling."
+                                        className="min-h-[120px]"
+                                    />
+                                </div>
+                            )}
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="defaultValue">Default Value</Label>
+                                    <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
+                                </div>
+                            )}
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
                                 <div className="grid gap-4">
                                     <Label>Options</Label>
-                                    <div className="space-y-3">{tempQuestion.options?.map((option, index) => (<div key={index} className="flex items-center gap-2"><div className="grid gap-1.5 flex-1"><Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label><Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} /></div><div className="grid gap-1.5 flex-1"><Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label><Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} /></div><Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button></div>))}</div>
+                                    <div className="space-y-3">
+                                        {tempQuestion.options?.map((option, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <div className="grid gap-1.5 flex-1">
+                                                  <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
+                                                  <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
+                                                </div>
+                                                <div className="grid gap-1.5 flex-1">
+                                                    <Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label>
+                                                    <Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} />
+                                                </div>
+                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button>
+                                            </div>
+                                        ))}
+                                    </div>
                                     <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
                                 </div>
                             )}
-                             {tempQuestion.type === 'button' && (<div className="grid grid-cols-2 gap-4"><div className="grid gap-2"><Label htmlFor="buttonVariant">Button Style</Label><Select value={tempQuestion.buttonVariant || 'default'} onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}><SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="default">Default</SelectItem><SelectItem value="destructive">Destructive</SelectItem><SelectItem value="outline">Outline</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem><SelectItem value="link">Link</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="buttonType">Button Type</Label><Select value={tempQuestion.buttonType || 'button'} onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}><SelectTrigger id="buttonType"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="button">Button</SelectItem><SelectItem value="submit">Submit</SelectItem></SelectContent></Select></div></div>)}
+                             {tempQuestion.type === 'button' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="buttonVariant">Button Style</Label>
+                                        <Select
+                                            value={tempQuestion.buttonVariant || 'default'}
+                                            onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
+                                        >
+                                            <SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="default">Default</SelectItem>
+                                                <SelectItem value="destructive">Destructive</SelectItem>
+                                                <SelectItem value="outline">Outline</SelectItem>
+                                                <SelectItem value="secondary">Secondary</SelectItem>
+                                                <SelectItem value="ghost">Ghost</SelectItem>
+                                                <SelectItem value="link">Link</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="buttonType">Button Type</Label>
+                                        <Select
+                                            value={tempQuestion.buttonType || 'button'}
+                                            onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}
+                                        >
+                                            <SelectTrigger id="buttonType"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="button">Button</SelectItem>
+                                                <SelectItem value="submit">Submit</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            )}
                              <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="advanced">
-                                    <AccordionTrigger className="text-sm">Advanced Settings</AccordionTrigger>
-                                    <AccordionContent className="space-y-4">
+                                    <AccordionTrigger>Advanced Settings</AccordionTrigger>
+                                    <AccordionContent className="space-y-4 pt-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
@@ -628,9 +754,12 @@ export default function EditMyTemplateWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                    <DialogFooter><Button variant="outline" onClick={() => setQuestionSettingsOpen(false)}>Cancel</Button><Button onClick={updateQuestion}>Save changes</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
+                     <SheetFooter className="p-6 border-t">
+                        <Button onClick={updateQuestion}>Save changes</Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
+

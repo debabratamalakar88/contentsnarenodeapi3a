@@ -327,12 +327,7 @@ export default function NewRequestWizardPage() {
             id: newPageId,
             title: `New Page`,
             instructions: "",
-            sections: [{
-                id: Date.now() + 1,
-                title: `New Section`,
-                instructions: '',
-                questions: [newQuestion]
-            }]
+            sections: [{ id: Date.now() + 1, title: `New Section`, instructions: '', questions: [newQuestion] }]
         };
         const newPages = renumberItems([...pages, newPage]);
         setPages(newPages);
@@ -386,12 +381,12 @@ export default function NewRequestWizardPage() {
           return renumberItems(newPages);
       });
     };
-
+    
     const addSection = (pageId: number) => {
         setPages(prevPages => {
             const newPages = prevPages.map(page => {
                 if (page.id === pageId) {
-                    const newQuestion: Question = {
+                     const newQuestion: Question = {
                         id: Date.now() + 1,
                         type: 'text',
                         label: 'Single Line Text',
@@ -400,12 +395,7 @@ export default function NewRequestWizardPage() {
                         required: false,
                         apiId: slugify(`single_line_text_${Date.now()}`),
                     };
-                    const newSection: Section = {
-                        id: Date.now(),
-                        title: `New Section`,
-                        instructions: '',
-                        questions: [newQuestion]
-                    };
+                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [newQuestion] };
                     return { ...page, sections: [...page.sections, newSection] };
                 }
                 return page;
@@ -558,12 +548,7 @@ export default function NewRequestWizardPage() {
                     const questionIndex = section.questions.findIndex((q: Question) => q.id === questionId);
                     if (questionIndex > -1) {
                         const originalQuestion = section.questions[questionIndex];
-                        const duplicatedQuestion: Question = {
-                            ...originalQuestion,
-                            id: Date.now(),
-                            label: `${originalQuestion.label} (Copy)`,
-                            apiId: slugify(`${originalQuestion.label} (Copy) ${Date.now()}`),
-                        };
+                        const duplicatedQuestion: Question = { ...originalQuestion, id: Date.now(), label: `${originalQuestion.label} (Copy)`, apiId: slugify(`${originalQuestion.label} (Copy) ${Date.now()}`) };
                         section.questions.splice(questionIndex + 1, 0, duplicatedQuestion);
                     }
                 }
@@ -752,7 +737,7 @@ export default function NewRequestWizardPage() {
                                 </div>
                             </div>
                         ))}
-                        {filteredCategories.length === 0 && (
+                         {filteredCategories.length === 0 && (
                             <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>
                         )}
                     </div>
@@ -762,30 +747,31 @@ export default function NewRequestWizardPage() {
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
                 <SheetContent className="sm:max-w-md p-0">
                     <SheetHeader className="p-6 border-b">
-                        <SheetTitle className="text-sm uppercase text-muted-foreground font-semibold tracking-wider">Field Options</SheetTitle>
-                        <SheetDescription className="text-lg text-foreground font-bold !mt-0">{tempQuestion?.label}</SheetDescription>
+                        <SheetTitle>Field Options</SheetTitle>
+                        <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
                         <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
-                            <div className="space-y-1">
-                                <Label htmlFor="label">Field Label</Label>
+                            <div className="grid gap-2">
+                                <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-
-                            <div className="flex items-center justify-between p-3 rounded-lg border">
+                             <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
-                            
+                            <div className="grid gap-2">
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                            </div>
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
-                                <div className="space-y-1">
+                                <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Custom placeholder</Label>
                                     <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
-
                              {tempQuestion.type === 'formatted-text' && (
-                                <div className="space-y-1">
+                                <div className="grid gap-2">
                                     <Label htmlFor="content">Content</Label>
                                     <Textarea 
                                         id="content" 
@@ -796,23 +782,25 @@ export default function NewRequestWizardPage() {
                                     />
                                 </div>
                             )}
-
-                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
-                                <div className="space-y-1">
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
+                                <div className="grid gap-2">
                                     <Label htmlFor="defaultValue">Default Value</Label>
                                     <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
                                 </div>
                             )}
-                            
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
-                                <div className="space-y-4">
+                                <div className="grid gap-4">
                                     <Label>Options</Label>
                                     <div className="space-y-3">
                                         {tempQuestion.options?.map((option, index) => (
                                             <div key={index} className="flex items-center gap-2">
-                                                <div className="space-y-1 flex-1">
+                                                <div className="grid gap-1.5 flex-1">
                                                   <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
                                                   <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
+                                                </div>
+                                                <div className="grid gap-1.5 flex-1">
+                                                    <Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label>
+                                                    <Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} />
                                                 </div>
                                                 <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button>
                                             </div>
@@ -821,10 +809,9 @@ export default function NewRequestWizardPage() {
                                     <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
                                 </div>
                             )}
-
                              {tempQuestion.type === 'button' && (
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
+                                    <div className="grid gap-2">
                                         <Label htmlFor="buttonVariant">Button Style</Label>
                                         <Select
                                             value={tempQuestion.buttonVariant || 'default'}
@@ -841,7 +828,7 @@ export default function NewRequestWizardPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="grid gap-2">
                                         <Label htmlFor="buttonType">Button Type</Label>
                                         <Select
                                             value={tempQuestion.buttonType || 'button'}
@@ -856,12 +843,11 @@ export default function NewRequestWizardPage() {
                                     </div>
                                 </div>
                             )}
-
                              <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="advanced">
                                     <AccordionTrigger>Advanced Settings</AccordionTrigger>
                                     <AccordionContent className="space-y-4 pt-4">
-                                        <div className="space-y-1">
+                                        <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
                                             <p className="text-xs text-muted-foreground">Used as the 'name' attribute. Must be unique.</p>
@@ -879,4 +865,3 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
-
