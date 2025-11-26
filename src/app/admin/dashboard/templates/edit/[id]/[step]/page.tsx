@@ -14,7 +14,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +36,7 @@ import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 
 
 const steps = [
@@ -599,16 +608,16 @@ export default function EditAdminTemplateWizardPage() {
                 {renderStep()}
             </div>
 
-            <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Select a field type</DialogTitle>
-                    </DialogHeader>
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader>
+                        <SheetTitle>Select a field type</SheetTitle>
+                    </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
                             <div key={category.name}>
                                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
@@ -629,21 +638,30 @@ export default function EditAdminTemplateWizardPage() {
                         ))}
                          {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
-            <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Field Settings</DialogTitle>
-                        <DialogDescription>Make changes to your field. Click save when you're done.</DialogDescription>
-                    </DialogHeader>
+            <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
+                <SheetContent className="sm:max-w-md p-0">
+                     <SheetHeader className="p-6 border-b">
+                        <SheetTitle>Field Options</SheetTitle>
+                        <SheetDescription>{editingQuestion?.label}</SheetDescription>
+                    </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-                            <div className="grid gap-2"><Label htmlFor="label">Label</Label><Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} /></div>
-                             <div className="flex items-center space-x-2"><Checkbox id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} /><Label htmlFor="required">Required</Label></div>
-                            <div className="grid gap-2"><Label htmlFor="instructions">Instructions</Label><Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" /></div>
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (<div className="grid gap-2"><Label htmlFor="placeholder">Placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>)}
+                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                            <div className="grid gap-2">
+                                <Label htmlFor="label">Label</Label>
+                                <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
+                            </div>
+                             <div className="flex items-center justify-between p-3 rounded-lg border">
+                                <Label htmlFor="required">Required</Label>
+                                <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="instructions">Instructions</Label>
+                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                            </div>
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (<div className="grid gap-2"><Label htmlFor="placeholder">Custom placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>)}
                              {tempQuestion.type === 'formatted-text' && (<div className="grid gap-2"><Label htmlFor="content">Content</Label><Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" /></div>)}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (<div className="grid gap-2"><Label htmlFor="defaultValue">Default Value</Label><Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} /></div>)}
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
@@ -656,8 +674,8 @@ export default function EditAdminTemplateWizardPage() {
                              {tempQuestion.type === 'button' && (<div className="grid grid-cols-2 gap-4"><div className="grid gap-2"><Label htmlFor="buttonVariant">Button Style</Label><Select value={tempQuestion.buttonVariant || 'default'} onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}><SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="default">Default</SelectItem><SelectItem value="destructive">Destructive</SelectItem><SelectItem value="outline">Outline</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem><SelectItem value="link">Link</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="buttonType">Button Type</Label><Select value={tempQuestion.buttonType || 'button'} onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}><SelectTrigger id="buttonType"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="button">Button</SelectItem><SelectItem value="submit">Submit</SelectItem></SelectContent></Select></div></div>)}
                              <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="advanced">
-                                    <AccordionTrigger className="text-sm">Advanced Settings</AccordionTrigger>
-                                    <AccordionContent className="space-y-4">
+                                    <AccordionTrigger>Advanced Settings</AccordionTrigger>
+                                    <AccordionContent className="space-y-4 pt-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
@@ -668,9 +686,11 @@ export default function EditAdminTemplateWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                    <DialogFooter><Button variant="outline" onClick={() => setQuestionSettingsOpen(false)}>Cancel</Button><Button onClick={updateQuestion}>Save changes</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    <SheetFooter className="p-6 border-t">
+                        <Button onClick={updateQuestion}>Save changes</Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

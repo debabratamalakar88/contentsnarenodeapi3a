@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -28,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getAdminTemplate, updateAdminTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, getAdminTemplateCategories, TemplateCategory } from "@/lib/api";
+import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -97,7 +98,7 @@ const questionCategories: {
 ];
 
 
-export default function EditAdminTemplateWizardPage() {
+export default function EditMyTemplateWizardPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
@@ -114,14 +115,11 @@ export default function EditAdminTemplateWizardPage() {
     // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
-    const [categoryId, setCategoryId] = useState<number | null>(null);
-    const [templateIcon, setTemplateIcon] = useState<string>("");
-    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [initialTemplateData, setInitialTemplateData] = useState<Template | null>(null);
+    const [initialTemplateData, setInitialTemplateData] = useState<MyTemplate | null>(null);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -134,25 +132,19 @@ export default function EditAdminTemplateWizardPage() {
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
     
     useEffect(() => {
-        const token = localStorage.getItem('adminAuthToken');
+        const token = localStorage.getItem('authToken');
         if (!token || !id) {
             toast({ title: "Error", description: "Invalid template or not logged in.", variant: "destructive" });
-            router.push('/admin/dashboard/templates');
+            router.push('/dashboard/templates');
             return;
         }
 
         async function fetchTemplateData() {
             try {
-                const [data, categoriesData] = await Promise.all([
-                    getAdminTemplate(token, id),
-                    getAdminTemplateCategories(token)
-                ]);
+                const data = await getMyTemplate(token, id);
                 
                 setTemplateTitle(data.title);
                 setTemplateDescription(data.description || "");
-                setCategoryId(data.category_id || null);
-                setTemplateIcon(data.icon || "");
-                setCategories(categoriesData.data.filter(cat => cat.deleted_at === null));
                 setPages(data.form_data || []);
                 setInitialTemplateData(data);
 
@@ -161,7 +153,7 @@ export default function EditAdminTemplateWizardPage() {
                 }
             } catch (error: any) {
                 toast({ title: "Failed to load template", description: error.message || "Could not fetch template data.", variant: "destructive" });
-                router.push('/admin/dashboard/templates');
+                router.push('/dashboard/templates');
             } finally {
                 setIsLoading(false);
             }
@@ -172,27 +164,22 @@ export default function EditAdminTemplateWizardPage() {
 
     const saveProgress = async () => {
         setIsSubmitting(true);
-        const token = localStorage.getItem('adminAuthToken');
+        const token = localStorage.getItem('authToken');
         if (!token) {
             toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
             setIsSubmitting(false);
             return false;
         }
-
-        const isPublishedTemplate = initialTemplateData?.status === 'published';
         
         try {
-            const payload: Partial<Template> = {
+            const payload: Partial<MyTemplate> = {
                 title: templateTitle,
                 description: templateDescription,
                 form_data: pages,
-                category_id: categoryId,
-                icon: templateIcon,
-                status: initialTemplateData?.status || 'draft'
             };
 
-            await updateAdminTemplate(token, id, payload);
-            toast({ title: isPublishedTemplate ? "Template updated" : "Template draft saved" });
+            await updateMyTemplate(token, id, payload);
+            toast({ title: "Template draft saved" });
             return true;
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -214,60 +201,21 @@ export default function EditAdminTemplateWizardPage() {
         const saved = await saveProgress();
         if (saved) {
             const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
+            router.push(`/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
-
-    const handlePublishOrUpdate = async () => {
-       if (!templateTitle.trim()) {
-           toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
-           return;
-       }
-
-       setIsSubmitting(true);
-       const token = localStorage.getItem('adminAuthToken');
-       if (!token) {
-           toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
-           setIsSubmitting(false);
-           return;
-       }
-       
-       const isAlreadyPublished = initialTemplateData?.status === 'published';
-
-       const payload: Partial<Template> = {
-           title: templateTitle,
-           description: templateDescription,
-           form_data: pages,
-           category_id: categoryId,
-           icon: templateIcon,
-           status: 'published',
-       };
-
-       try {
-           await updateAdminTemplate(token, id, payload);
-           const successMessage = isAlreadyPublished ? "Template updated successfully." : "Template Published! Your template is now live.";
-           toast({ title: "Success", description: successMessage });
-           router.push('/admin/dashboard/templates');
-           router.refresh();
-       } catch(error: any) {
-           const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
-           toast({ title: "Action Failed", description, variant: "destructive" });
-       } finally {
-           setIsSubmitting(false);
-       }
-   };
 
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/admin/dashboard/templates/edit/${id}/${prevStepSlug}`);
+            router.push(`/dashboard/templates/edit/${id}/${prevStepSlug}`);
         } else {
-            router.push('/admin/dashboard/templates');
+            router.push('/dashboard/templates');
         }
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/admin/dashboard/templates/edit/${id}/${slug}`);
+        router.push(`/dashboard/templates/edit/${id}/${slug}`);
     };
 
     const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
@@ -543,11 +491,6 @@ export default function EditAdminTemplateWizardPage() {
                         setTitle={setTemplateTitle} 
                         description={templateDescription} 
                         setDescription={setTemplateDescription}
-                        categoryId={categoryId}
-                        setCategoryId={setCategoryId}
-                        icon={templateIcon}
-                        setIcon={setTemplateIcon}
-                        categories={categories}
                     />
                 );
             case "Builder": return <BuilderStep
@@ -574,7 +517,6 @@ export default function EditAdminTemplateWizardPage() {
     };
 
     const isLastStep = currentStepIndex === steps.length - 1;
-    const isPublished = initialTemplateData?.status === 'published';
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -590,9 +532,9 @@ export default function EditAdminTemplateWizardPage() {
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {isLastStep ? (
-                        <Button onClick={handlePublishOrUpdate} disabled={isSubmitting || isLoading}>
+                        <Button onClick={saveProgress} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isPublished ? 'Update' : 'Publish'}
+                            Save Template
                         </Button>
                     ) : (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
@@ -607,16 +549,16 @@ export default function EditAdminTemplateWizardPage() {
                 {renderStep()}
             </div>
 
-            <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Select a field type</DialogTitle>
-                    </DialogHeader>
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader>
+                        <SheetTitle>Select a field type</SheetTitle>
+                    </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
                             <div key={category.name}>
                                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
@@ -637,12 +579,12 @@ export default function EditAdminTemplateWizardPage() {
                         ))}
                          {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
                 <SheetContent className="sm:max-w-md p-0">
-                    <SheetHeader className="p-6 border-b">
+                     <SheetHeader className="p-6 border-b">
                         <SheetTitle>Field Options</SheetTitle>
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>

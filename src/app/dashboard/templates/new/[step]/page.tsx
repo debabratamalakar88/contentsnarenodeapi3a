@@ -1,4 +1,5 @@
 
+
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -28,14 +29,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { createRequest, updateRequest, getTemplate, getMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, MyTemplate } from "@/lib/api";
+import { createMyTemplate, updateMyTemplate, getTemplate, getMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, Template, MyTemplate } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -127,7 +127,7 @@ const questionCategories: {
 ];
 
 
-export default function NewRequestWizardPage() {
+export default function NewMyTemplateWizardPage() {
     const router = useRouter();
     const params = useParams();
     const searchParams = useSearchParams();
@@ -145,11 +145,11 @@ export default function NewRequestWizardPage() {
     const currentStep = steps[currentStepIndex].name;
     
     // State for the whole wizard
-    const [requestTitle, setRequestTitle] = useState("");
-    const [requestDescription, setRequestDescription] = useState("");
+    const [templateTitle, setTemplateTitle] = useState("");
+    const [templateDescription, setTemplateDescription] = useState("");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
-    const [requestId, setRequestId] = useState<number | null>(null);
+    const [myTemplateRequestId, setMyTemplateRequestId] = useState<number | null>(null);
     const [startedFromScratch, setStartedFromScratch] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | MyTemplate | null>(null);
@@ -181,8 +181,8 @@ export default function NewRequestWizardPage() {
             fetchFunction(token, Number(sourceTemplateId))
                 .then(templateData => {
                     setSelectedTemplate(templateData);
-                    setRequestTitle(templateData.title);
-                    setRequestDescription(templateData.description || "");
+                    setTemplateTitle(templateData.title);
+                    setTemplateDescription(templateData.description || "");
                     if (templateData.form_data && templateData.form_data.length > 0) {
                         setPages(templateData.form_data);
                         setActivePageId(templateData.form_data[0].id);
@@ -199,15 +199,15 @@ export default function NewRequestWizardPage() {
         setStartedFromScratch(isFromScratch);
         if (template) {
             if ('created_by' in template) { // It's a MyTemplate
-                 router.push(`/dashboard/requests/new/essentials?myTemplateId=${template.id}`);
+                 router.push(`/dashboard/templates/new/essentials?myTemplateId=${template.id}`);
             } else { // It's a public Template
-                 router.push(`/dashboard/requests/new/essentials?templateId=${template.id}`);
+                 router.push(`/dashboard/templates/new/essentials?templateId=${template.id}`);
             }
         } else {
             setPages(initialPagesData);
-            setRequestTitle("New Request");
-            setRequestDescription("Please provide all the necessary documents and information.");
-            router.push('/dashboard/requests/new/essentials');
+            setTemplateTitle("New Template");
+            setTemplateDescription("A description for your new template.");
+            router.push('/dashboard/templates/new/essentials');
         }
     };
 
@@ -215,10 +215,10 @@ export default function NewRequestWizardPage() {
         if (currentStepIndex >= steps.length - 1) return;
 
         if (currentStepIndex >= 1) {
-             if (currentStepIndex === 1 && !requestTitle.trim()) {
+             if (currentStepIndex === 1 && !templateTitle.trim()) {
                 toast({
-                    title: "Request Title Required",
-                    description: "Please provide a title for your request.",
+                    title: "Template Title Required",
+                    description: "Please provide a title for your template.",
                     variant: "destructive",
                 });
                 return;
@@ -234,23 +234,22 @@ export default function NewRequestWizardPage() {
             
             try {
                 const payload = {
-                    title: requestTitle,
-                    description: requestDescription,
+                    title: templateTitle,
+                    description: templateDescription,
                     form_data: pages,
-                    status: 'draft' as const,
-                    started_from_scratch: startedFromScratch,
+                    status: 'published' as const,
                 };
 
-                if (requestId) {
-                    await updateRequest(token, requestId, payload);
-                    toast({ title: "Request draft updated" });
+                if (myTemplateRequestId) {
+                    await updateMyTemplate(token, myTemplateRequestId, payload);
+                    toast({ title: "Template draft updated" });
                     const nextStepSlug = steps[currentStepIndex + 1].slug;
-                    router.push(`/dashboard/requests/edit/${requestId}/${nextStepSlug}`);
+                    router.push(`/dashboard/templates/edit/${myTemplateRequestId}/${nextStepSlug}`);
                 } else {
-                    const newRequest = await createRequest(token, payload);
-                    setRequestId(newRequest.id);
-                    toast({ title: "Request draft created" });
-                    router.push(`/dashboard/requests/edit/${newRequest.id}/${steps[currentStepIndex + 1].slug}`);
+                    const newTemplate = await createMyTemplate(token, payload);
+                    setMyTemplateRequestId(newTemplate.id);
+                    toast({ title: "Template draft created" });
+                    router.push(`/dashboard/templates/edit/${newTemplate.id}/${steps[currentStepIndex + 1].slug}`);
                 }
 
             } catch (error: any) {
@@ -265,7 +264,7 @@ export default function NewRequestWizardPage() {
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            let url = `/dashboard/requests/new/${prevStepSlug}`;
+            let url = `/dashboard/templates/new/${prevStepSlug}`;
             
             if (prevStepSlug !== 'templates') {
                 if(templateId) url += `?templateId=${templateId}`;
@@ -273,14 +272,14 @@ export default function NewRequestWizardPage() {
             }
             router.push(url);
         } else {
-            router.push('/dashboard/requests');
+            router.push('/dashboard/templates');
         }
     };
 
     const handleStepClick = (slug: string) => {
         const targetIndex = steps.findIndex(s => s.slug === slug);
         if (targetIndex <= maxVisitedStepIndex) {
-            let url = `/dashboard/requests/new/${slug}`;
+            let url = `/dashboard/templates/new/${slug}`;
             if (slug !== 'templates') {
                  if(templateId) url += `?templateId=${templateId}`;
                  if(myTemplateId) url += `?myTemplateId=${myTemplateId}`;
@@ -336,7 +335,7 @@ export default function NewRequestWizardPage() {
     const deletePage = (pageId: number) => {
         setPages(prevPages => {
             if (prevPages.length <= 1) {
-                toast({ title: "Action Forbidden", description: "You cannot delete the only page in a request.", variant: "destructive" });
+                toast({ title: "Action Forbidden", description: "You cannot delete the only page in a template.", variant: "destructive" });
                 return prevPages;
             }
             
@@ -698,11 +697,11 @@ export default function NewRequestWizardPage() {
                 {renderStep()}
             </div>
 
-            <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Select a field type</DialogTitle>
-                    </DialogHeader>
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader>
+                        <SheetTitle>Select a field type</SheetTitle>
+                    </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -712,7 +711,7 @@ export default function NewRequestWizardPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
                             <div key={category.name}>
                                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
@@ -740,8 +739,8 @@ export default function NewRequestWizardPage() {
                             <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>
                         )}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
                 <SheetContent className="sm:max-w-md p-0">
