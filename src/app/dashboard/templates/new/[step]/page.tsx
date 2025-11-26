@@ -5,10 +5,10 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '../components/StepNavigation';
 import TemplatesStep from '../components/TemplatesStep';
-import EssentialsStep from '../components/EssentialsStep';
-import BuilderStep from '../components/BuilderStep';
-import PreviewStep from '../components/PreviewStep';
-import FinalizeStep from '../components/FinalizeStep';
+import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
+import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
+import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
 import Link from "next/link";
