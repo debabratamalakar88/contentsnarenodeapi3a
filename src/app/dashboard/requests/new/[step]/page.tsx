@@ -14,7 +14,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +36,8 @@ import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
 
 const initialPagesData: Page[] = [
@@ -749,40 +759,33 @@ export default function NewRequestWizardPage() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Field Settings</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your field here. Click save when you're done.
-                        </DialogDescription>
-                    </DialogHeader>
+            <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
+                <SheetContent className="sm:max-w-md p-0">
+                    <SheetHeader className="p-6 border-b">
+                        <SheetTitle className="text-sm uppercase text-muted-foreground font-semibold tracking-wider">Field Options</SheetTitle>
+                        <SheetDescription className="text-lg text-foreground font-bold !mt-0">{tempQuestion?.label}</SheetDescription>
+                    </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="label">Label</Label>
+                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                            <div className="space-y-1">
+                                <Label htmlFor="label">Field Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-                             <div className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id="required" 
-                                    checked={tempQuestion.required} 
-                                    onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)}
-                                />
+
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
+                                <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users on how to fill this field" />
-                            </div>
+                            
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="placeholder">Placeholder</Label>
+                                <div className="space-y-1">
+                                    <Label htmlFor="placeholder">Custom placeholder</Label>
                                     <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
                                 </div>
                             )}
-                            {tempQuestion.type === 'formatted-text' && (
-                                <div className="grid gap-2">
+
+                             {tempQuestion.type === 'formatted-text' && (
+                                <div className="space-y-1">
                                     <Label htmlFor="content">Content</Label>
                                     <Textarea 
                                         id="content" 
@@ -793,49 +796,41 @@ export default function NewRequestWizardPage() {
                                     />
                                 </div>
                             )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
-                                <div className="grid gap-2">
+
+                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
+                                <div className="space-y-1">
                                     <Label htmlFor="defaultValue">Default Value</Label>
                                     <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
                                 </div>
                             )}
                             
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
-                                <div className="grid gap-4">
+                                <div className="space-y-4">
                                     <Label>Options</Label>
                                     <div className="space-y-3">
                                         {tempQuestion.options?.map((option, index) => (
                                             <div key={index} className="flex items-center gap-2">
-                                                <div className="grid gap-1.5 flex-1">
-                                                    <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
-                                                    <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
+                                                <div className="space-y-1 flex-1">
+                                                  <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
+                                                  <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
                                                 </div>
-                                                <div className="grid gap-1.5 flex-1">
-                                                    <Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label>
-                                                    <Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} />
-                                                </div>
-                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end">
-                                                    <X className="h-4 w-4" />
-                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button>
                                             </div>
                                         ))}
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2">
-                                        <Plus className="h-4 w-4 mr-2" /> Add Option
-                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
                                 </div>
                             )}
-                            {tempQuestion.type === 'button' && (
+
+                             {tempQuestion.type === 'button' && (
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
+                                    <div className="space-y-1">
                                         <Label htmlFor="buttonVariant">Button Style</Label>
                                         <Select
                                             value={tempQuestion.buttonVariant || 'default'}
                                             onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
                                         >
-                                            <SelectTrigger id="buttonVariant">
-                                                <SelectValue />
-                                            </SelectTrigger>
+                                            <SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="default">Default</SelectItem>
                                                 <SelectItem value="destructive">Destructive</SelectItem>
@@ -846,15 +841,13 @@ export default function NewRequestWizardPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
+                                    <div className="space-y-1">
                                         <Label htmlFor="buttonType">Button Type</Label>
                                         <Select
                                             value={tempQuestion.buttonType || 'button'}
                                             onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}
                                         >
-                                            <SelectTrigger id="buttonType">
-                                                <SelectValue />
-                                            </SelectTrigger>
+                                            <SelectTrigger id="buttonType"><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="button">Button</SelectItem>
                                                 <SelectItem value="submit">Submit</SelectItem>
@@ -866,24 +859,24 @@ export default function NewRequestWizardPage() {
 
                              <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="advanced">
-                                    <AccordionTrigger className="text-sm">Advanced Settings</AccordionTrigger>
-                                    <AccordionContent className="space-y-4">
-                                        <div className="grid gap-2">
+                                    <AccordionTrigger>Advanced Settings</AccordionTrigger>
+                                    <AccordionContent className="space-y-4 pt-4">
+                                        <div className="space-y-1">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
-                                            <p className="text-xs text-muted-foreground">Used as the 'name' attribute in the form. Must be unique.</p>
+                                            <p className="text-xs text-muted-foreground">Used as the 'name' attribute. Must be unique.</p>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setQuestionSettingsOpen(false)}>Cancel</Button>
+                     <SheetFooter className="p-6 border-t">
                         <Button onClick={updateQuestion}>Save changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
+
