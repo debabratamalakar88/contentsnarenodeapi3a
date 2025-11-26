@@ -3,7 +3,7 @@
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, type DropResult } from "react-beautiful-dnd";
 
 import StepNavigation from '../../../new/components/StepNavigation';
 import EssentialsStep from '../../../new/components/EssentialsStep';
@@ -41,6 +41,7 @@ import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-i
 import { countries } from "@/lib/countries";
 import { IconSelector } from '@/components/ui/icon-selector';
 import PreviewStep from "../../../new/components/PreviewStep";
+import { Switch } from "@/components/ui/switch";
 
 
 const steps = [
@@ -742,3 +743,4 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
+
