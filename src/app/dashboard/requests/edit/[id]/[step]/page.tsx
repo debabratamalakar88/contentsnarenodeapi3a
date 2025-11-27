@@ -40,7 +40,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from "@/lib/countries";
-import { IconSelector } from '@/components/ui/icon-selector';
+import { IconSelector } from "@/components/ui/icon-selector";
 import PreviewStep from "../../../new/components/PreviewStep";
 import { Switch } from "@/components/ui/switch";
 
@@ -251,11 +251,16 @@ export default function EditRequestWizardPage() {
         }
         
         try {
-            const payload = {
+            const payload: Partial<Request> = {
                 title: requestTitle,
                 description: requestDescription,
                 form_data: pages,
             };
+
+            // Preserve client_id if the request is already published
+            if (initialRequestData?.status === 'published' && initialRequestData.client_id) {
+                payload.client_id = initialRequestData.client_id;
+            }
 
             await updateRequest(token, requestId, payload);
             const isPublished = initialRequestData?.status === 'published';
@@ -677,39 +682,6 @@ export default function EditRequestWizardPage() {
                 {renderStep()}
             </div>
 
-            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <SheetContent className="sm:max-w-3xl">
-                    <SheetHeader>
-                        <SheetTitle>Select a field type</SheetTitle>
-                    </SheetHeader>
-                    <div className="relative my-4">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                    </div>
-                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
-                        {filteredCategories.map(category => (
-                            <div key={category.name}>
-                                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    {category.fields.map((field) => (
-                                        <button
-                                            key={field.type}
-                                            onClick={() => addQuestion(field.type)}
-                                            className={cn("relative flex flex-col items-center justify-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center h-24", field.isHighlighted && "border-primary ring-1 ring-primary")}
-                                        >
-                                            {field.isNew && <Badge className="absolute top-1 right-1 bg-primary text-primary-foreground px-1.5 py-0.5 text-xs h-auto">NEW</Badge>}
-                                            <field.icon className="h-5 w-5 text-muted-foreground" />
-                                            <span className="text-xs font-medium leading-tight">{field.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                         {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
-                    </div>
-                </SheetContent>
-            </Sheet>
-
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
                 <SheetContent className="sm:max-w-md p-0 flex flex-col">
                      <SheetHeader className="p-6 border-b">
@@ -717,7 +689,7 @@ export default function EditRequestWizardPage() {
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 p-6 overflow-y-auto flex-1">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
@@ -726,7 +698,7 @@ export default function EditRequestWizardPage() {
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
-                             <div className="flex items-center justify-between p-3 rounded-lg border">
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="showInstructions">Add Instructions</Label>
                                 <Switch id="showInstructions" checked={showInstructions} onCheckedChange={setShowInstructions} />
                             </div>
@@ -802,3 +774,4 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
+
