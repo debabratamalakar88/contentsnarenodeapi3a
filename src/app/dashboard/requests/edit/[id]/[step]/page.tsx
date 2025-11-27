@@ -1,6 +1,7 @@
 
 
 'use client'
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DragDropContext, Droppable, type DropResult } from "react-beautiful-dnd";
@@ -10,7 +11,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '../../../new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -683,12 +684,7 @@ export default function EditRequestWizardPage() {
                     </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search for a field type..."
-                            className="pl-9"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                     <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
@@ -699,14 +695,9 @@ export default function EditRequestWizardPage() {
                                         <button
                                             key={field.type}
                                             onClick={() => addQuestion(field.type)}
-                                            className={cn(
-                                                "relative flex flex-col items-center justify-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center h-24",
-                                                field.isHighlighted && "border-primary ring-1 ring-primary"
-                                            )}
+                                            className={cn("relative flex flex-col items-center justify-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center h-24", field.isHighlighted && "border-primary ring-1 ring-primary")}
                                         >
-                                            {field.isNew && (
-                                                <Badge className="absolute top-1 right-1 bg-primary text-primary-foreground px-1.5 py-0.5 text-xs h-auto">NEW</Badge>
-                                            )}
+                                            {field.isNew && <Badge className="absolute top-1 right-1 bg-primary text-primary-foreground px-1.5 py-0.5 text-xs h-auto">NEW</Badge>}
                                             <field.icon className="h-5 w-5 text-muted-foreground" />
                                             <span className="text-xs font-medium leading-tight">{field.label}</span>
                                         </button>
@@ -714,21 +705,19 @@ export default function EditRequestWizardPage() {
                                 </div>
                             </div>
                         ))}
-                         {filteredCategories.length === 0 && (
-                            <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>
-                        )}
+                         {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
                     </div>
                 </SheetContent>
             </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <SheetContent className="sm:max-w-md p-0">
+                <SheetContent className="sm:max-w-md p-0 flex flex-col">
                      <SheetHeader className="p-6 border-b">
                         <SheetTitle>Field Options</SheetTitle>
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                        <div className="space-y-4 p-6 overflow-y-auto flex-1">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
@@ -805,7 +794,7 @@ export default function EditRequestWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                    <SheetFooter className="p-6 border-t">
+                    <SheetFooter className="p-6 border-t mt-auto">
                         <Button onClick={updateQuestion}>Save changes</Button>
                     </SheetFooter>
                 </SheetContent>
