@@ -1,11 +1,10 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '../components/StepNavigation';
-import TemplatesStep from '../components/TemplatesStep';
+import TemplatesStep from '@/app/dashboard/requests/new/components/TemplatesStep';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
@@ -909,3 +908,5 @@ export default function NewMyTemplateWizardPage() {
         </div>
     );
 }
+
+    
