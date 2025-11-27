@@ -527,7 +527,6 @@ export default function NewMyTemplateWizardPage() {
         setShowInstructions(hasInstructions);
         setShowLengthValidation(hasLength);
         setShowPlaceholder(hasPlaceholder);
-
         setEditingQuestion(question);
         setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
         setQuestionSettingsOpen(true);
@@ -756,18 +755,18 @@ export default function NewMyTemplateWizardPage() {
             </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <SheetContent className="sm:max-w-md p-0">
+                <SheetContent className="sm:max-w-md p-0 flex flex-col">
                     <SheetHeader className="p-6 border-b">
                         <SheetTitle>Field Options</SheetTitle>
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                        <div className="space-y-4 p-6 overflow-y-auto flex-1">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-                             <div className="flex items-center justify-between p-3 rounded-lg border">
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
@@ -902,7 +901,7 @@ export default function NewMyTemplateWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                     <SheetFooter className="p-6 border-t">
+                     <SheetFooter className="p-6 border-t mt-auto">
                         <Button onClick={updateQuestion}>Save changes</Button>
                     </SheetFooter>
                 </SheetContent>

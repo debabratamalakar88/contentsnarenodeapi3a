@@ -414,7 +414,7 @@ export default function EditMyTemplateWizardPage() {
         setShowPlaceholder(hasPlaceholder);
         
         setEditingQuestion(question);
-        setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
+        setTempQuestion(JSON.parse(JSON.stringify(question)));
         setQuestionSettingsOpen(true);
     };
     
@@ -613,18 +613,18 @@ export default function EditMyTemplateWizardPage() {
             </Sheet>
 
             <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <SheetContent className="sm:max-w-md p-0">
+                <SheetContent className="sm:max-w-md p-0 flex flex-col">
                      <SheetHeader className="p-6 border-b">
                         <SheetTitle>Field Options</SheetTitle>
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+                        <div className="space-y-4 p-6 overflow-y-auto flex-1">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-                             <div className="flex items-center justify-between p-3 rounded-lg border">
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
@@ -671,7 +671,6 @@ export default function EditMyTemplateWizardPage() {
                                 )}
                                 </>
                             )}
-                            
                              {tempQuestion.type === 'formatted-text' && (<div className="grid gap-2"><Label htmlFor="content">Content</Label><Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" /></div>)}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (<div className="grid gap-2"><Label htmlFor="defaultValue">Default Value</Label><Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} /></div>)}
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
@@ -696,7 +695,7 @@ export default function EditMyTemplateWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                    <SheetFooter className="p-6 border-t">
+                    <SheetFooter className="p-6 border-t mt-auto">
                         <Button onClick={updateQuestion}>Save changes</Button>
                     </SheetFooter>
                 </SheetContent>
