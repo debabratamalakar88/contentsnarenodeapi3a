@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState } from 'react'
@@ -34,6 +35,7 @@ interface BuilderStepProps {
   onAddFieldClick: (pageId: number, sectionId: number) => void;
   updatePageTitle: (pageId: number, newTitle: string) => void;
   updateSectionTitle: (pageId: number, sectionId: number, newTitle: string) => void;
+  updateQuestionLabel: (pageId: number, sectionId: number, questionId: number, newLabel: string) => void;
   openQuestionSettings: (question: Question) => void;
   duplicateQuestion: (pageId: number, sectionId: number, questionId: number) => void;
   deleteQuestion: (pageId: number, sectionId: number, questionId: number) => void;
@@ -175,13 +177,16 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
     )
 }
 
-export default function BuilderStep({ requestTitle, requestDescription, pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, deleteSection, reorderQuestions }: BuilderStepProps) {
+export default function BuilderStep({ requestTitle, requestDescription, pages, addPage, addSection, onAddFieldClick, updatePageTitle, updateSectionTitle, updateQuestionLabel, openQuestionSettings, duplicateQuestion, deleteQuestion, activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, deleteSection, reorderQuestions }: BuilderStepProps) {
 
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
 
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState("");
+  
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [editingQuestionLabel, setEditingQuestionLabel] = useState("");
 
   const getTitleParts = (title: string) => {
     const match = title.match(/^([0-9\.]+)\s*(.*)/);
@@ -221,6 +226,17 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
     }
     setEditingSectionId(null);
     setEditingSectionTitle("");
+  }
+  
+  const handleQuestionLabelEdit = (question: Question) => {
+      setEditingQuestionId(question.id);
+      setEditingQuestionLabel(question.label);
+  }
+  
+  const handleQuestionLabelSave = (pageId: number, sectionId: number, questionId: number) => {
+      updateQuestionLabel(pageId, sectionId, questionId, editingQuestionLabel);
+      setEditingQuestionId(null);
+      setEditingQuestionLabel("");
   }
 
   const onDragEnd = (result: DropResult) => {
@@ -373,14 +389,28 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                                 className="bg-white border rounded-lg"
                                                             >
                                                                 <div className="p-3 flex items-center justify-between border-b">
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-2 group/field">
                                                                         <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move">
                                                                             <GripVertical className="h-full w-full"/>
                                                                         </div>
                                                                         <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded">
                                                                             <QuestionIcon type={question.type} />
                                                                         </div>
-                                                                        <span className="font-semibold">{question.label}</span>
+                                                                        {editingQuestionId === question.id ? (
+                                                                            <Input 
+                                                                                value={editingQuestionLabel}
+                                                                                onChange={(e) => setEditingQuestionLabel(e.target.value)}
+                                                                                onBlur={() => handleQuestionLabelSave(page.id, section.id, question.id)}
+                                                                                onKeyDown={(e) => { if (e.key === 'Enter') handleQuestionLabelSave(page.id, section.id, question.id); }}
+                                                                                autoFocus
+                                                                                className="font-semibold"
+                                                                            />
+                                                                        ) : (
+                                                                            <span className="font-semibold cursor-pointer" onClick={() => handleQuestionLabelEdit(question)}>{question.label}</span>
+                                                                        )}
+                                                                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => handleQuestionLabelEdit(question)}>
+                                                                            <Pencil className="h-3 w-3" />
+                                                                        </Button>
                                                                     </div>
                                                                     <div className="flex items-center gap-1">
                                                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}>
@@ -393,9 +423,6 @@ export default function BuilderStep({ requestTitle, requestDescription, pages, a
                                                                             <DropdownMenuContent align="end">
                                                                                 <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>
                                                                                     Duplicate
-                                                                                </DropdownMenuItem>
-                                                                                <DropdownMenuItem onClick={() => openQuestionSettings(question)}>
-                                                                                    Rename
                                                                                 </DropdownMenuItem>
                                                                                 <DropdownMenuItem
                                                                                     onClick={() => deleteQuestion(page.id, section.id, question.id)}

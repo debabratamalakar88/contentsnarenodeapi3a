@@ -454,6 +454,23 @@ export default function EditRequestWizardPage() {
     const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => {
         setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, title: newTitle } : section) } : page));
     };
+    
+    const updateQuestionLabel = (pageId: number, sectionId: number, questionId: number, newLabel: string) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const page = newPages.find(p => p.id === pageId);
+            if (page) {
+                const section = page.sections.find(s => s.id === sectionId);
+                if (section) {
+                    const question = section.questions.find(q => q.id === questionId);
+                    if (question) {
+                        question.label = newLabel;
+                    }
+                }
+            }
+            return newPages;
+        });
+    };
 
     const handleAddFieldClick = (pageId: number, sectionId: number) => {
         setCurrentLocation({ pageId, sectionId });
@@ -603,6 +620,7 @@ export default function EditRequestWizardPage() {
                                         requestDescription={requestDescription}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
+                                        updateQuestionLabel={updateQuestionLabel}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}
                                         duplicatePage={duplicatePage} deletePage={deletePage} 
