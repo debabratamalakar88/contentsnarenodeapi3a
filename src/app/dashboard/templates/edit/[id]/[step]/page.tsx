@@ -131,6 +131,11 @@ export default function EditMyTemplateWizardPage() {
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
     
+    // State for showing/hiding settings inputs
+    const [showInstructions, setShowInstructions] = useState(false);
+    const [showLengthValidation, setShowLengthValidation] = useState(false);
+    const [showPlaceholder, setShowPlaceholder] = useState(false);
+    
     useEffect(() => {
         const token = localStorage.getItem('authToken');
         if (!token || !id) {
@@ -384,8 +389,16 @@ export default function EditMyTemplateWizardPage() {
     };
 
     const openQuestionSettings = (question: Question) => {
+        const hasInstructions = !!question.instructions;
+        const hasLength = !!question.minLength || !!question.maxLength;
+        const hasPlaceholder = !!question.placeholder;
+
+        setShowInstructions(hasInstructions);
+        setShowLengthValidation(hasLength);
+        setShowPlaceholder(hasPlaceholder);
+        
         setEditingQuestion(question);
-        setTempQuestion(JSON.parse(JSON.stringify(question)));
+        setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
         setQuestionSettingsOpen(true);
     };
     
@@ -598,23 +611,50 @@ export default function EditMyTemplateWizardPage() {
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
+                                <Label htmlFor="showInstructions">Add Instructions</Label>
+                                <Switch id="showInstructions" checked={showInstructions} onCheckedChange={setShowInstructions} />
                             </div>
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="minLength">Min Length</Label>
-                                        <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="maxLength">Max Length</Label>
-                                        <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
-                                    </div>
+                            {showInstructions && (
+                                <div className="grid gap-2 pl-4">
+                                    <Label htmlFor="instructions" className="sr-only">Instructions</Label>
+                                    <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
                                 </div>
                             )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (<div className="grid gap-2"><Label htmlFor="placeholder">Custom placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>)}
+
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
+                                <>
+                                <div className="flex items-center justify-between p-3 rounded-lg border">
+                                    <Label htmlFor="showLength">Set Min/Max Length</Label>
+                                    <Switch id="showLength" checked={showLengthValidation} onCheckedChange={setShowLengthValidation} />
+                                </div>
+                                {showLengthValidation && (
+                                    <div className="grid grid-cols-2 gap-4 pl-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="minLength">Min Length</Label>
+                                            <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="maxLength">Max Length</Label>
+                                            <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                        </div>
+                                    </div>
+                                )}
+                                </>
+                            )}
+                            
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
+                                <>
+                                 <div className="flex items-center justify-between p-3 rounded-lg border">
+                                    <Label htmlFor="showPlaceholder">Add Placeholder</Label>
+                                    <Switch id="showPlaceholder" checked={showPlaceholder} onCheckedChange={setShowPlaceholder} />
+                                </div>
+                                {showPlaceholder && (
+                                <div className="grid gap-2 pl-4"><Label htmlFor="placeholder" className="sr-only">Custom placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>
+                                )}
+                                </>
+                            )}
+                            
                              {tempQuestion.type === 'formatted-text' && (<div className="grid gap-2"><Label htmlFor="content">Content</Label><Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" /></div>)}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (<div className="grid gap-2"><Label htmlFor="defaultValue">Default Value</Label><Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} /></div>)}
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
