@@ -97,7 +97,10 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     useEffect(() => {
         if (initialData) {
             setDueDate(initialData.due_date ? parseISO(initialData.due_date) : undefined);
-            setSelectedClients(initialData.client_id?.map(String) || []);
+            const clientIds = Array.isArray(initialData.client_id)
+                ? initialData.client_id
+                : initialData.client_id ? [initialData.client_id] : [];
+            setSelectedClients(clientIds.map(String) || []);
             setAllowComments(initialData.allow_comments);
             setSendOption(initialData.send_option === 'later' ? 'scheduled' : initialData.send_option);
             setCommunicationMode(initialData.communication_mode);
@@ -122,7 +125,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
 
         const clientIds = selectedClients.length > 0
             ? selectedClients.map(Number)
-            : initialData?.client_id || [];
+            : (initialData?.client_id ?? []);
 
         return {
             client_id: clientIds,

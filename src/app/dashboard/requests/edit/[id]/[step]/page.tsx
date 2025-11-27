@@ -694,7 +694,7 @@ export default function EditRequestWizardPage() {
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-                            <div className="flex items-center justify-between p-3 rounded-lg border">
+                             <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
                                 <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
