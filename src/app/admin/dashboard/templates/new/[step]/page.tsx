@@ -2,17 +2,27 @@
 
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
+import TemplatesStep from '@/app/dashboard/requests/new/components/TemplatesStep';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
+import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ListOrdered, UploadCloud, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
+import { Switch } from "@/components/ui/switch";
+
 
 const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
@@ -147,6 +159,11 @@ export default function NewAdminTemplateWizardPage() {
     const [isQuestionSettingsOpen, setQuestionSettingsOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
+    
+    // State for showing/hiding settings inputs
+    const [showInstructions, setShowInstructions] = useState(false);
+    const [showLengthValidation, setShowLengthValidation] = useState(false);
+    const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('adminAuthToken');
@@ -406,6 +423,13 @@ export default function NewAdminTemplateWizardPage() {
     };
 
     const openQuestionSettings = (question: Question) => {
+        const hasInstructions = !!question.instructions;
+        const hasLength = !!question.minLength || !!question.maxLength;
+        const hasPlaceholder = !!question.placeholder;
+
+        setShowInstructions(hasInstructions);
+        setShowLengthValidation(hasLength);
+        setShowPlaceholder(hasPlaceholder);
         setEditingQuestion(question);
         setTempQuestion(JSON.parse(JSON.stringify(question)));
         setQuestionSettingsOpen(true);
@@ -518,6 +542,7 @@ export default function NewAdminTemplateWizardPage() {
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
                                         deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}
                                         duplicatePage={duplicatePage} deletePage={deletePage} reorderQuestions={reorderQuestions}
+                                        duplicateSection={duplicateSection} deleteSection={deleteSection}
                                     />;
             case "Preview": return <PreviewStep title={templateTitle} description={templateDescription} pages={pages} />;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
@@ -531,6 +556,8 @@ export default function NewAdminTemplateWizardPage() {
         return 'p-6 flex justify-center items-start';
     };
 
+    const isLastStep = currentStepIndex === steps.length - 1;
+
     return (
         <div className="flex flex-col h-full bg-background">
             <div className="flex items-center gap-4 p-4 border-b">
@@ -541,18 +568,18 @@ export default function NewAdminTemplateWizardPage() {
                     steps={steps}
                     currentStepSlug={stepSlug}
                     onStepClick={handleStepClick}
-                    maxVisitedStepIndex={steps.length}
+                    maxVisitedStepIndex={steps.length} // Allow navigation to all steps
                 />
                  <div className="ml-auto flex items-center gap-2">
-                    {currentStepIndex < steps.length - 1 ? (
+                    {isLastStep ? (
+                         <Button onClick={handlePublish} disabled={isSubmitting}>
+                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Publish Template
+                        </Button>
+                    ) : (
                         <Button onClick={nextStep} disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    ) : (
-                        <Button onClick={handlePublish} disabled={isSubmitting}>
-                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                             Publish
                         </Button>
                     )}
                 </div>
@@ -562,16 +589,16 @@ export default function NewAdminTemplateWizardPage() {
                 {renderStep()}
             </div>
 
-            <Dialog open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Select a field type</DialogTitle>
-                    </DialogHeader>
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader>
+                        <SheetTitle>Select a field type</SheetTitle>
+                    </SheetHeader>
                     <div className="relative my-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
-                    <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
                         {filteredCategories.map(category => (
                             <div key={category.name}>
                                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
@@ -592,78 +619,83 @@ export default function NewAdminTemplateWizardPage() {
                         ))}
                          {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
-            <Dialog open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Field Settings</DialogTitle>
-                        <DialogDescription>Make changes to your field. Click save when you're done.</DialogDescription>
-                    </DialogHeader>
+            <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
+                <SheetContent className="sm:max-w-md p-0 flex flex-col">
+                    <SheetHeader className="p-6 border-b">
+                        <SheetTitle>Field Options</SheetTitle>
+                        <SheetDescription>{editingQuestion?.label}</SheetDescription>
+                    </SheetHeader>
                     {tempQuestion && (
-                        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+                        <div className="space-y-4 p-6 overflow-y-auto flex-1">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
                                 <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
                             </div>
-                             <div className="flex items-center space-x-2">
-                                <Checkbox id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
                                 <Label htmlFor="required">Required</Label>
+                                <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                            <div className="flex items-center justify-between p-3 rounded-lg border">
+                                <Label htmlFor="showInstructions">Add Instructions</Label>
+                                <Switch id="showInstructions" checked={showInstructions} onCheckedChange={setShowInstructions} />
                             </div>
+                            {showInstructions && (
+                                <div className="grid gap-2 pl-4">
+                                    <Label htmlFor="instructions" className="sr-only">Instructions</Label>
+                                    <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
+                                </div>
+                            )}
+
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
+                                <>
+                                <div className="flex items-center justify-between p-3 rounded-lg border">
+                                    <Label htmlFor="showLength">Set Min/Max Length</Label>
+                                    <Switch id="showLength" checked={showLengthValidation} onCheckedChange={setShowLengthValidation} />
+                                </div>
+                                {showLengthValidation && (
+                                    <div className="grid grid-cols-2 gap-4 pl-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="minLength">Min Length</Label>
+                                            <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="maxLength">Max Length</Label>
+                                            <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                        </div>
+                                    </div>
+                                )}
+                                </>
+                            )}
+                            
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="placeholder">Placeholder</Label>
-                                    <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
+                                <>
+                                 <div className="flex items-center justify-between p-3 rounded-lg border">
+                                    <Label htmlFor="showPlaceholder">Add Placeholder</Label>
+                                    <Switch id="showPlaceholder" checked={showPlaceholder} onCheckedChange={setShowPlaceholder} />
                                 </div>
+                                {showPlaceholder && (
+                                <div className="grid gap-2 pl-4"><Label htmlFor="placeholder" className="sr-only">Custom placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>
+                                )}
+                                </>
                             )}
-                             {tempQuestion.type === 'formatted-text' && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="content">Content</Label>
-                                    <Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" />
-                                </div>
-                            )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="defaultValue">Default Value</Label>
-                                    <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
-                                </div>
-                            )}
+
+                             {tempQuestion.type === 'formatted-text' && (<div className="grid gap-2"><Label htmlFor="content">Content</Label><Textarea id="content" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} placeholder="Enter your formatted text content here. You can use basic HTML for styling." className="min-h-[120px]" /></div>)}
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (<div className="grid gap-2"><Label htmlFor="defaultValue">Default Value</Label><Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} /></div>)}
                             {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
                                 <div className="grid gap-4">
                                     <Label>Options</Label>
-                                    <div className="space-y-3">
-                                        {tempQuestion.options?.map((option, index) => (
-                                            <div key={index} className="flex items-center gap-2">
-                                                <div className="grid gap-1.5 flex-1"><Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label><Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} /></div>
-                                                <div className="grid gap-1.5 flex-1"><Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label><Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} /></div>
-                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <div className="space-y-3">{tempQuestion.options?.map((option, index) => (<div key={index} className="flex items-center gap-2"><div className="grid gap-1.5 flex-1"><Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label><Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} /></div><div className="grid gap-1.5 flex-1"><Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label><Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} /></div><Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button></div>))}</div>
                                     <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
                                 </div>
                             )}
-                             {tempQuestion.type === 'button' && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="buttonVariant">Button Style</Label>
-                                        <Select value={tempQuestion.buttonVariant || 'default'} onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}><SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="default">Default</SelectItem><SelectItem value="destructive">Destructive</SelectItem><SelectItem value="outline">Outline</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem><SelectItem value="link">Link</SelectItem></SelectContent></Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="buttonType">Button Type</Label>
-                                        <Select value={tempQuestion.buttonType || 'button'} onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}><SelectTrigger id="buttonType"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="button">Button</SelectItem><SelectItem value="submit">Submit</SelectItem></SelectContent></Select>
-                                    </div>
-                                </div>
-                            )}
+                             {tempQuestion.type === 'button' && (<div className="grid grid-cols-2 gap-4"><div className="grid gap-2"><Label htmlFor="buttonVariant">Button Style</Label><Select value={tempQuestion.buttonVariant || 'default'} onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}><SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="default">Default</SelectItem><SelectItem value="destructive">Destructive</SelectItem><SelectItem value="outline">Outline</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem><SelectItem value="link">Link</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="buttonType">Button Type</Label><Select value={tempQuestion.buttonType || 'button'} onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}><SelectTrigger id="buttonType"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="button">Button</SelectItem><SelectItem value="submit">Submit</SelectItem></SelectContent></Select></div></div>)}
                              <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="advanced">
-                                    <AccordionTrigger className="text-sm">Advanced Settings</AccordionTrigger>
-                                    <AccordionContent className="space-y-4">
+                                    <AccordionTrigger>Advanced Settings</AccordionTrigger>
+                                    <AccordionContent className="space-y-4 pt-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="apiId">API Identifier</Label>
                                             <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
@@ -674,12 +706,11 @@ export default function NewAdminTemplateWizardPage() {
                             </Accordion>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setQuestionSettingsOpen(false)}>Cancel</Button>
+                    <SheetFooter className="p-6 border-t mt-auto">
                         <Button onClick={updateQuestion}>Save changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
