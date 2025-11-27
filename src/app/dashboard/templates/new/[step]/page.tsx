@@ -36,6 +36,7 @@ import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -640,10 +641,10 @@ export default function NewMyTemplateWizardPage() {
     const renderStep = () => {
         switch (currentStep) {
             case "Templates": return <TemplatesStep onProceed={handleProceedFromTemplates} />;
-            case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
+            case "Essentials": return <EssentialsStep title={templateTitle} setTitle={setTemplateTitle} description={templateDescription} setDescription={setTemplateDescription} />;
             case "Builder": return <BuilderStep 
-                                        requestTitle={requestTitle}
-                                        requestDescription={requestDescription}
+                                        requestTitle={templateTitle}
+                                        requestDescription={templateDescription}
                                         pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}
@@ -661,7 +662,7 @@ export default function NewMyTemplateWizardPage() {
                                         deleteSection={deleteSection}
                                         reorderQuestions={reorderQuestions}
                                     />;
-            case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
+            case "Preview": return <PreviewStep title={templateTitle} description={templateDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep initialData={null} onPublish={() => {}} onSaveDraft={() => {}} isSubmitting={false} />;
             default: return <div>Not Found</div>;
         }
@@ -762,6 +763,18 @@ export default function NewMyTemplateWizardPage() {
                                 <Label htmlFor="instructions">Instructions</Label>
                                 <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
                             </div>
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="minLength">Min Length</Label>
+                                        <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="maxLength">Max Length</Label>
+                                        <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                    </div>
+                                </div>
+                            )}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Custom placeholder</Label>

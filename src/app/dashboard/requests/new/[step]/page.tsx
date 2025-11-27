@@ -1,4 +1,5 @@
 
+
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -763,6 +764,18 @@ export default function NewRequestWizardPage() {
                                 <Label htmlFor="instructions">Instructions</Label>
                                 <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
                             </div>
+                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="minLength">Min Length</Label>
+                                        <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="maxLength">Max Length</Label>
+                                        <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                    </div>
+                                </div>
+                            )}
                             {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="placeholder">Custom placeholder</Label>

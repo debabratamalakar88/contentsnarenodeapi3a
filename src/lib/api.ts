@@ -148,6 +148,8 @@ export interface Question {
   required?: boolean;
   defaultValue?: string;
   apiId?: string;
+  minLength?: number;
+  maxLength?: number;
   buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   buttonType?: 'button' | 'submit';
 }
