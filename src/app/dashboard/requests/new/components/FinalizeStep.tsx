@@ -103,7 +103,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             setSelectedClients(clientIds.map(String) || []);
             setAllowComments(initialData.allow_comments);
             setSendOption(initialData.send_option === 'later' ? 'scheduled' : initialData.send_option);
-            setCommunicationMode(initialData.communication_mode);
+            setCommunicationMode(initialData.communication_mode || 'none');
             if (initialData.scheduled_at) {
                 const date = parseISO(initialData.scheduled_at);
                 setScheduledAt(date);
@@ -387,4 +387,3 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
         </div>
     )
 }
-
