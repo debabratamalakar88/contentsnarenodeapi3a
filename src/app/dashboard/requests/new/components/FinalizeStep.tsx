@@ -120,8 +120,12 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
             combinedScheduledAt = date;
         }
 
+        const clientIds = selectedClients.length > 0
+            ? selectedClients.map(Number)
+            : initialData?.client_id || [];
+
         return {
-            client_id: selectedClients.map(Number),
+            client_id: clientIds,
             due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
             allow_comments: allowComments,
             send_option: sendOption,
@@ -380,3 +384,4 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
         </div>
     )
 }
+
