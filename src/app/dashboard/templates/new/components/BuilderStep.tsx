@@ -22,7 +22,7 @@ import {
 
 import type { Page, Question, QuestionType, Section, QuestionOption } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { StrictModeDroppable } from './StrictModeDroppable';
+import { StrictModeDroppable } from '../../../../dashboard/requests/new/components/StrictModeDroppable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
