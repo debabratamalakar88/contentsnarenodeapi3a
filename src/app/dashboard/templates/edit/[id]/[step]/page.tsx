@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -27,14 +28,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate, getAdminTemplate, updateAdminTemplate, Template, getAdminTemplateCategories, TemplateCategory } from "@/lib/api";
+import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 const steps = [
@@ -182,7 +183,7 @@ export default function EditMyTemplateWizardPage() {
             await updateMyTemplate(token, id, payload);
             toast({ title: "Template saved" });
             return true;
-        } catch (error: any) {
+        } catch (error: any) => {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
             return false;
@@ -598,5 +599,3 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
-
-

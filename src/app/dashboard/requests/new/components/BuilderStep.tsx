@@ -207,8 +207,7 @@ const SettingsPanel = (props: any) => {
     }, [tempQuestion]);
     
     useEffect(() => {
-        // This effect ensures that if instructions exist, the switch is on.
-        if (tempQuestion && tempQuestion.instructions !== undefined && tempQuestion.hideInstructions === undefined) {
+        if (tempQuestion && tempQuestion.hideInstructions === undefined) {
              handleTempQuestionChange('hideInstructions', false);
         }
     }, [tempQuestion, handleTempQuestionChange]);
@@ -309,7 +308,6 @@ export default function BuilderStep(props: BuilderStepProps) {
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState("");
   
-  // This effect syncs changes from the settings panel (tempQuestion) back to the main state (pages)
   useEffect(() => {
     if (tempQuestion) {
       setPages(currentPages => 
