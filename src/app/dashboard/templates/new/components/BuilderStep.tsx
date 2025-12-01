@@ -194,17 +194,26 @@ const SettingsPanel = (props: any) => {
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
     
-    const [showInstructions, setShowInstructions] = useState(!!tempQuestion?.instructions);
-    const [showLengthValidation, setShowLengthValidation] = useState(!!(tempQuestion?.minLength || tempQuestion?.maxLength));
-    const [showPlaceholder, setShowPlaceholder] = useState(!!tempQuestion?.placeholder);
+    const [showInstructions, setShowInstructions] = useState(true);
+    const [showLengthValidation, setShowLengthValidation] = useState(false);
+    const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
-        setShowInstructions(!!tempQuestion?.instructions);
-        setShowLengthValidation(!!(tempQuestion?.minLength || tempQuestion?.maxLength));
-        setShowPlaceholder(!!tempQuestion?.placeholder);
+        if (tempQuestion) {
+            setShowInstructions(!!tempQuestion.instructions);
+            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
+            setShowPlaceholder(!!tempQuestion.placeholder);
+        }
     }, [tempQuestion]);
 
     if (!tempQuestion) return null;
+    
+    const handleShowInstructionsToggle = (checked: boolean) => {
+        setShowInstructions(checked);
+        if (!checked) {
+            handleTempQuestionChange('instructions', '');
+        }
+    };
 
     return (
         <div className="flex flex-col h-full bg-white border-l">
@@ -223,7 +232,7 @@ const SettingsPanel = (props: any) => {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                     <Label htmlFor="showInstructions">Add Instructions</Label>
-                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={setShowInstructions} />
+                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={handleShowInstructionsToggle} />
                 </div>
                 {showInstructions && (
                     <div className="grid gap-2 pl-4">
@@ -365,7 +374,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
             <div className="flex flex-1 overflow-hidden relative">
-                <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
+                 <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6 group flex items-center gap-2">
                             {editingMainTitle ? (
@@ -385,7 +394,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                 <Pencil className="h-4 w-4" />
                             </Button>
                         </div>
-
                         <div className="space-y-6">
                             {pages.filter(p => p.id === activePageId).map(page => (
                                 <div key={page.id} id={`page-${page.id}`}>
@@ -468,7 +476,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                 </DropdownMenu>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="p-3"><Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} /></div>
+                                                                        {question.instructions && <div className="p-3"><Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} /></div>}
                                                                     </div>
                                                                 )}
                                                             </Draggable>
@@ -486,7 +494,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                         </div>
                     </div>
                 </div>
-                <div className={cn(
+                 <div className={cn(
                     "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden",
                     editingQuestion ? 'w-80' : 'w-0 p-0 border-l-0'
                 )}>

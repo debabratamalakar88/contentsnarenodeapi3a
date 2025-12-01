@@ -194,17 +194,26 @@ const SettingsPanel = (props: any) => {
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
     
-    const [showInstructions, setShowInstructions] = useState(!!tempQuestion?.instructions);
-    const [showLengthValidation, setShowLengthValidation] = useState(!!(tempQuestion?.minLength || tempQuestion?.maxLength));
-    const [showPlaceholder, setShowPlaceholder] = useState(!!tempQuestion?.placeholder);
+    const [showInstructions, setShowInstructions] = useState(true);
+    const [showLengthValidation, setShowLengthValidation] = useState(false);
+    const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
-        setShowInstructions(!!tempQuestion?.instructions);
-        setShowLengthValidation(!!(tempQuestion?.minLength || tempQuestion?.maxLength));
-        setShowPlaceholder(!!tempQuestion?.placeholder);
+        if (tempQuestion) {
+            setShowInstructions(!!tempQuestion.instructions);
+            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
+            setShowPlaceholder(!!tempQuestion.placeholder);
+        }
     }, [tempQuestion]);
 
     if (!tempQuestion) return null;
+    
+    const handleShowInstructionsToggle = (checked: boolean) => {
+        setShowInstructions(checked);
+        if (!checked) {
+            handleTempQuestionChange('instructions', '');
+        }
+    };
 
     return (
         <div className="flex flex-col h-full bg-white border-l">
@@ -223,7 +232,7 @@ const SettingsPanel = (props: any) => {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                     <Label htmlFor="showInstructions">Add Instructions</Label>
-                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={setShowInstructions} />
+                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={handleShowInstructionsToggle} />
                 </div>
                 {showInstructions && (
                     <div className="grid gap-2 pl-4">
@@ -300,7 +309,7 @@ export default function BuilderStep(props: BuilderStepProps) {
     requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
-    deleteSection, reorderQuestions, editingQuestion
+    deleteSection, reorderQuestions, editingQuestion, tempQuestion, handleTempQuestionChange
   } = props;
 
   const [editingMainTitle, setEditingMainTitle] = useState(false);
@@ -356,6 +365,35 @@ export default function BuilderStep(props: BuilderStepProps) {
     if (page) reorderQuestions(page.id, sectionId, source.index, destination.index);
   };
 
+  const onQuestionInstructionChange = (pageId: number, sectionId: number, questionId: number, newInstruction: string) => {
+    const newPages = pages.map(page => {
+        if(page.id === pageId) {
+            return {
+                ...page,
+                sections: page.sections.map(section => {
+                    if(section.id === sectionId) {
+                        return {
+                            ...section,
+                            questions: section.questions.map(question => {
+                                if(question.id === questionId) {
+                                    return {...question, instructions: newInstruction};
+                                }
+                                return question;
+                            })
+                        }
+                    }
+                    return section;
+                })
+            }
+        }
+        return page;
+    });
+    // This is a direct update, so we need to find a way to let the parent know.
+    // The parent only exposes functions to add/delete/reorder, not edit in place.
+    // For now, let's just log it. A better way would be to pass an `updatePages` function from the parent.
+    console.log("New pages structure", newPages);
+    // Ideally: props.setPages(newPages);
+  }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -365,7 +403,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
             <div className="flex flex-1 overflow-hidden relative">
-                <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
+                 <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6 group flex items-center gap-2">
                             {editingMainTitle ? (
@@ -385,7 +423,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                 <Pencil className="h-4 w-4" />
                             </Button>
                         </div>
-
                         <div className="space-y-6">
                             {pages.filter(p => p.id === activePageId).map(page => (
                                 <div key={page.id} id={`page-${page.id}`}>
@@ -445,34 +482,47 @@ export default function BuilderStep(props: BuilderStepProps) {
                                             <StrictModeDroppable droppableId={`section-${section.id}`} isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
                                                 {(provided) => (
                                                     <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
-                                                        {section.questions.map((question, index) => (
-                                                            <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
-                                                                {(provided) => (
-                                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="bg-white border rounded-lg">
-                                                                        <div className="p-3 flex items-center justify-between border-b">
-                                                                            <div className="flex items-center gap-2 group/field">
-                                                                                <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move"><GripVertical className="h-full w-full"/></div>
-                                                                                <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
-                                                                                <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
-                                                                                {question.required && <Badge variant="destructive" className="ml-2">Required</Badge>}
-                                                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
+                                                        {section.questions.map((question, index) => {
+                                                            const showInstructionsInBuilder = !(tempQuestion && tempQuestion.id === question.id && tempQuestion.instructions === '') && question.instructions !== '';
+                                                            
+                                                            return (
+                                                                <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
+                                                                    {(provided) => (
+                                                                        <div ref={provided.innerRef} {...provided.draggableProps} className="bg-white border rounded-lg">
+                                                                            <div className="p-3 flex items-center justify-between border-b">
+                                                                                <div className="flex items-center gap-2 group/field">
+                                                                                    <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move"><GripVertical className="h-full w-full"/></div>
+                                                                                    <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
+                                                                                    <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
+                                                                                    {question.required && <Badge variant="destructive" className="ml-2">Required</Badge>}
+                                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}><Settings className="h-4 w-4" /></Button>
+                                                                                    <DropdownMenu>
+                                                                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                                        <DropdownMenuContent align="end">
+                                                                                            <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>Duplicate</DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => deleteQuestion(page.id, section.id, question.id)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
+                                                                                        </DropdownMenuContent>
+                                                                                    </DropdownMenu>
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="flex items-center gap-1">
-                                                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}><Settings className="h-4 w-4" /></Button>
-                                                                                <DropdownMenu>
-                                                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                                    <DropdownMenuContent align="end">
-                                                                                        <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>Duplicate</DropdownMenuItem>
-                                                                                        <DropdownMenuItem onClick={() => deleteQuestion(page.id, section.id, question.id)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
-                                                                                    </DropdownMenuContent>
-                                                                                </DropdownMenu>
-                                                                            </div>
+                                                                             {showInstructionsInBuilder && (
+                                                                                <div className="p-3 border-t">
+                                                                                    <Textarea 
+                                                                                        placeholder="Enter field instructions here..." 
+                                                                                        className="border-none shadow-none focus-visible:ring-0 px-2" 
+                                                                                        defaultValue={question.instructions} 
+                                                                                        onChange={(e) => onQuestionInstructionChange(page.id, section.id, question.id, e.target.value)}
+                                                                                    />
+                                                                                </div>
+                                                                             )}
                                                                         </div>
-                                                                        <div className="p-3"><Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} /></div>
-                                                                    </div>
-                                                                )}
-                                                            </Draggable>
-                                                        ))}
+                                                                    )}
+                                                                </Draggable>
+                                                            )
+                                                         })}
                                                         {provided.placeholder}
                                                     </div>
                                                 )}
@@ -486,7 +536,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                         </div>
                     </div>
                 </div>
-                <div className={cn(
+                 <div className={cn(
                     "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden",
                     editingQuestion ? 'w-80' : 'w-0 p-0 border-l-0'
                 )}>

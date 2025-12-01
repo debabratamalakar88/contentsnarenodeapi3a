@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate } from "@/lib/api";
+import { getMyTemplate, updateMyTemplate, type Page, type Section, type Question, type QuestionOption, type QuestionType, MyTemplate, getAdminTemplate, updateAdminTemplate, Template, getAdminTemplateCategories, TemplateCategory } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
@@ -97,7 +97,7 @@ const questionCategories: {
 ];
 
 
-export default function EditMyTemplateWizardPage() {
+export default function EditAdminTemplateWizardPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
@@ -114,11 +114,14 @@ export default function EditMyTemplateWizardPage() {
     // State for the whole wizard
     const [templateTitle, setTemplateTitle] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [categoryId, setCategoryId] = useState<number | null>(null);
+    const [templateIcon, setTemplateIcon] = useState<string>("");
+    const [categories, setCategories] = useState<TemplateCategory[]>([]);
     const [pages, setPages] = useState<Page[]>([]);
     const [activePageId, setActivePageId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [initialTemplateData, setInitialTemplateData] = useState<MyTemplate | null>(null);
+    const [initialTemplateData, setInitialTemplateData] = useState<Template | null>(null);
 
     // Question Type Dialog State
     const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
@@ -130,19 +133,25 @@ export default function EditMyTemplateWizardPage() {
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
     
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('adminAuthToken');
         if (!token || !id) {
             toast({ title: "Error", description: "Invalid template or not logged in.", variant: "destructive" });
-            router.push('/dashboard/templates');
+            router.push('/admin/dashboard/templates');
             return;
         }
 
         async function fetchTemplateData() {
             try {
-                const data = await getMyTemplate(token, id);
+                const [data, categoriesData] = await Promise.all([
+                    getAdminTemplate(token, id),
+                    getAdminTemplateCategories(token)
+                ]);
                 
                 setTemplateTitle(data.title);
                 setTemplateDescription(data.description || "");
+                setCategoryId(data.category_id || null);
+                setTemplateIcon(data.icon || "");
+                setCategories(categoriesData.data.filter(cat => cat.deleted_at === null));
                 setPages(data.form_data || []);
                 setInitialTemplateData(data);
 
@@ -151,7 +160,7 @@ export default function EditMyTemplateWizardPage() {
                 }
             } catch (error: any) {
                 toast({ title: "Failed to load template", description: error.message || "Could not fetch template data.", variant: "destructive" });
-                router.push('/dashboard/templates');
+                router.push('/admin/dashboard/templates');
             } finally {
                 setIsLoading(false);
             }
@@ -162,22 +171,27 @@ export default function EditMyTemplateWizardPage() {
 
     const saveProgress = async () => {
         setIsSubmitting(true);
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('adminAuthToken');
         if (!token) {
             toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
             setIsSubmitting(false);
             return false;
         }
+
+        const isPublishedTemplate = initialTemplateData?.status === 'published';
         
         try {
-            const payload: Partial<MyTemplate> = {
+            const payload: Partial<Template> = {
                 title: templateTitle,
                 description: templateDescription,
                 form_data: pages,
+                category_id: categoryId,
+                icon: templateIcon,
+                status: initialTemplateData?.status || 'draft'
             };
 
-            await updateMyTemplate(token, id, payload);
-            toast({ title: "Template draft saved" });
+            await updateAdminTemplate(token, id, payload);
+            toast({ title: isPublishedTemplate ? "Template updated" : "Template draft saved" });
             return true;
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -199,7 +213,7 @@ export default function EditMyTemplateWizardPage() {
         const saved = await saveProgress();
         if (saved) {
             const nextStepSlug = steps[currentStepIndex + 1].slug;
-            router.push(`/dashboard/templates/edit/${id}/${nextStepSlug}`);
+            router.push(`/admin/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
 
@@ -210,23 +224,29 @@ export default function EditMyTemplateWizardPage() {
        }
 
        setIsSubmitting(true);
-       const token = localStorage.getItem('authToken');
+       const token = localStorage.getItem('adminAuthToken');
        if (!token) {
            toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
            setIsSubmitting(false);
            return;
        }
        
-       const payload: Partial<MyTemplate> = {
+       const isAlreadyPublished = initialTemplateData?.status === 'published';
+
+       const payload: Partial<Template> = {
            title: templateTitle,
            description: templateDescription,
            form_data: pages,
+           category_id: categoryId,
+           icon: templateIcon,
+           status: 'published',
        };
 
        try {
-           await updateMyTemplate(token, id, payload);
-           toast({ title: "Success", description: "Template saved successfully." });
-           router.push('/dashboard/templates');
+           await updateAdminTemplate(token, id, payload);
+           const successMessage = isAlreadyPublished ? "Template updated successfully." : "Template Published! Your template is now live.";
+           toast({ title: "Success", description: successMessage });
+           router.push('/admin/dashboard/templates');
            router.refresh();
        } catch(error: any) {
            const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -239,14 +259,14 @@ export default function EditMyTemplateWizardPage() {
     const handleBack = () => {
         if (currentStepIndex > 0) {
             const prevStepSlug = steps[currentStepIndex - 1].slug;
-            router.push(`/dashboard/templates/edit/${id}/${prevStepSlug}`);
+            router.push(`/admin/dashboard/templates/edit/${id}/${prevStepSlug}`);
         } else {
-            router.push('/dashboard/templates');
+            router.push('/admin/dashboard/templates');
         }
     };
 
     const handleStepClick = (slug: string) => {
-        router.push(`/dashboard/templates/edit/${id}/${slug}`);
+        router.push(`/admin/dashboard/templates/edit/${id}/${slug}`);
     };
 
     const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
@@ -520,6 +540,11 @@ export default function EditMyTemplateWizardPage() {
                         setTitle={setTemplateTitle} 
                         description={templateDescription} 
                         setDescription={setTemplateDescription}
+                        categoryId={categoryId}
+                        setCategoryId={setCategoryId}
+                        icon={templateIcon}
+                        setIcon={setTemplateIcon}
+                        categories={categories}
                     />
                 );
             case "Builder": return <BuilderStep
@@ -547,6 +572,7 @@ export default function EditMyTemplateWizardPage() {
     };
 
     const isLastStep = currentStepIndex === steps.length - 1;
+    const isPublished = initialTemplateData?.status === 'published';
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -564,7 +590,7 @@ export default function EditMyTemplateWizardPage() {
                     {isLastStep ? (
                         <Button onClick={handlePublishOrUpdate} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save
+                            {isPublished ? 'Update' : 'Publish'}
                         </Button>
                     ) : (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
@@ -614,6 +640,11 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
+
+
+
+
+
 
 
     
