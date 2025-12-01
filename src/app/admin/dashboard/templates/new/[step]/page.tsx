@@ -546,7 +546,7 @@ export default function NewAdminTemplateWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="flex items-center gap-4 p-4 border-b">
+            <header className="sticky top-0 z-20 flex items-center gap-4 p-4 border-b bg-background">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -569,7 +569,7 @@ export default function NewAdminTemplateWizardPage() {
                         </Button>
                     )}
                 </div>
-            </div>
+            </header>
             
             <div className={cn("flex-grow overflow-y-scroll", (currentStep === 'Builder' || currentStep === 'Preview') ? "" : "p-6 flex justify-center items-start")}>
                 {renderStep()}

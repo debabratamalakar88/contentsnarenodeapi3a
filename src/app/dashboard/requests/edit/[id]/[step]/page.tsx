@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -232,7 +233,7 @@ export default function EditRequestWizardPage() {
 
     const nextStep = async () => {
         if (currentStepIndex >= steps.length - 1) return;
-
+    
         setIsSubmitting(true);
         const token = localStorage.getItem('authToken');
         const requestId = id;
@@ -248,19 +249,18 @@ export default function EditRequestWizardPage() {
                 description: requestDescription,
                 form_data: pages,
             };
-
-            // Preserve client_id if the request is already published
+    
             if (initialRequestData?.status === 'published' && initialRequestData.client_id) {
                 payload.client_id = initialRequestData.client_id;
             }
-
+    
             await updateRequest(token, requestId, payload);
             const isPublished = initialRequestData?.status === 'published';
             toast({ title: isPublished ? "Request updated" : "Request draft updated" });
-
+    
             const nextStepSlug = steps[currentStepIndex + 1].slug;
             router.push(`/dashboard/requests/edit/${requestId}/${nextStepSlug}`);
-
+    
         } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
@@ -620,7 +620,7 @@ export default function EditRequestWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="flex items-center gap-4 p-4 border-b">
+            <header className="sticky top-0 z-20 flex items-center gap-4 p-4 border-b bg-background">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -648,9 +648,9 @@ export default function EditRequestWizardPage() {
                         </div>
                     </>
                 )}
-            </div>
+            </header>
             
-            <div className={cn("flex-grow overflow-y-scroll", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
+            <div className={cn("flex-grow overflow-y-auto", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
                 {renderStep()}
             </div>
 
