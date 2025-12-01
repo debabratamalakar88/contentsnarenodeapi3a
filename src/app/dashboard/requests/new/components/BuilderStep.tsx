@@ -347,124 +347,117 @@ export default function BuilderStep(props: BuilderStepProps) {
                 pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId}
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
-            
-            <main className="flex-1 overflow-y-auto">
-                <div className="max-w-4xl mx-auto p-6">
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold">{requestTitle}</h1>
-                        {requestDescription && (
-                            <div className="mt-2 p-6 border rounded-md h-[250px] overflow-y-auto mb-6 bg-slate-50 shadow-sm">
-                               <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: requestDescription }} />
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-6">
-                        {pages.filter(p => p.id === activePageId).map(page => (
-                            <div key={page.id} id={`page-${page.id}`}>
-                                <div className="flex items-center gap-2 mb-2 group">
-                                    {editingPageId === page.id ? (
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-xl font-bold">{getTitleParts(page.title).number}</span>
-                                            <Input
-                                                value={editingPageTitle} onChange={(e) => setEditingPageTitle(e.target.value)}
-                                                onBlur={() => handlePageTitleSave(page.id)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') handlePageTitleSave(page.id); }}
-                                                className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
-                                            />
-                                        </div>
-                                    ) : (
-                                        <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => handlePageTitleEdit(page)}>{page.title}</h2>
-                                    )}
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handlePageTitleEdit(page)}><Pencil className="h-4 w-4" /></Button>
+            <div className="flex-1 flex overflow-hidden">
+                <main className="flex-1 overflow-y-auto">
+                    <div className="max-w-4xl mx-auto p-6">
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold">{requestTitle}</h1>
+                            {requestDescription && (
+                                <div className="mt-2 p-6 border rounded-md h-[250px] overflow-y-auto bg-slate-50 shadow-sm">
+                                <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: requestDescription }} />
                                 </div>
-                                
-                                {page.instructions && <Textarea placeholder="Enter page instructions here..." className="mb-4 min-h-[60px]" defaultValue={page.instructions}/>}
+                            )}
+                        </div>
 
-                                {page.sections.map(section => (
-                                    <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
-                                        <div className="flex items-center gap-2 mb-2 group">
-                                            {editingSectionId === section.id ? (
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <span className="text-lg font-semibold">{getTitleParts(section.title).number}</span>
-                                                    <Input
-                                                        value={editingSectionTitle} onChange={(e) => setEditingSectionTitle(e.target.value)}
-                                                        onBlur={() => handleSectionTitleSave(page.id, section.id)}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') handleSectionTitleSave(page.id, section.id); }}
-                                                        className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => handleSectionTitleEdit(section)}>{section.title}</h3>
-                                            )}
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleSectionTitleEdit(section)}><Pencil className="h-4 w-4" /></Button>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => duplicateSection(page.id, section.id)}>Duplicate</DropdownMenuItem>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem></AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this section and all its questions.</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteSection(page.id, section.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                        
-                                        <StrictModeDroppable droppableId={`section-${section.id}`} isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
-                                            {(provided) => (
-                                                <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
-                                                    {section.questions.map((question, index) => (
-                                                        <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
-                                                            {(provided) => (
-                                                                <div ref={provided.innerRef} {...provided.draggableProps} className="bg-white border rounded-lg">
-                                                                    <div className="p-3 flex items-center justify-between border-b">
-                                                                        <div className="flex items-center gap-2 group/field">
-                                                                            <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move"><GripVertical className="h-full w-full"/></div>
-                                                                            <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
-                                                                             {editingQuestion?.id === question.id && props.tempQuestion ? (
-                                                                                <Input
-                                                                                    value={props.tempQuestion.label}
-                                                                                    onChange={(e) => props.handleTempQuestionChange('label', e.target.value)}
-                                                                                    className="font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto"
-                                                                                    autoFocus
-                                                                                />
-                                                                            ) : (
-                                                                                <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}><Settings className="h-4 w-4" /></Button>
-                                                                            <DropdownMenu>
-                                                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                                <DropdownMenuContent align="end">
-                                                                                    <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>Duplicate</DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => deleteQuestion(page.id, section.id, question.id)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
-                                                                                </DropdownMenuContent>
-                                                                            </DropdownMenu>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="p-3"><Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} /></div>
-                                                                </div>
-                                                            )}
-                                                        </Draggable>
-                                                    ))}
-                                                    {provided.placeholder}
-                                                </div>
-                                            )}
-                                        </StrictModeDroppable>
-                                        <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)} className="mt-4">Add a Field</Button>
+                        <div className="space-y-6">
+                            {pages.filter(p => p.id === activePageId).map(page => (
+                                <div key={page.id} id={`page-${page.id}`}>
+                                    <div className="flex items-center gap-2 mb-2 group">
+                                        {editingPageId === page.id ? (
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <span className="text-xl font-bold">{getTitleParts(page.title).number}</span>
+                                                <Input
+                                                    value={editingPageTitle} onChange={(e) => setEditingPageTitle(e.target.value)}
+                                                    onBlur={() => handlePageTitleSave(page.id)}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') handlePageTitleSave(page.id); }}
+                                                    className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
+                                                />
+                                            </div>
+                                        ) : (
+                                            <h2 className="text-xl font-bold flex-1 cursor-pointer" onClick={() => handlePageTitleEdit(page)}>{page.title}</h2>
+                                        )}
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handlePageTitleEdit(page)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
-                                ))}
-                                <Button variant="outline" size="sm" onClick={() => addSection(page.id)}>Add a Section</Button>
-                            </div>
-                        ))}
+                                    
+                                    {page.instructions && <Textarea placeholder="Enter page instructions here..." className="mb-4 min-h-[60px]" defaultValue={page.instructions}/>}
+
+                                    {page.sections.map(section => (
+                                        <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
+                                            <div className="flex items-center gap-2 mb-2 group">
+                                                {editingSectionId === section.id ? (
+                                                    <div className="flex items-center gap-2 flex-1">
+                                                        <span className="text-lg font-semibold">{getTitleParts(section.title).number}</span>
+                                                        <Input
+                                                            value={editingSectionTitle} onChange={(e) => setEditingSectionTitle(e.target.value)}
+                                                            onBlur={() => handleSectionTitleSave(page.id, section.id)}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter') handleSectionTitleSave(page.id, section.id); }}
+                                                            className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <h3 className="text-lg font-semibold flex-1 cursor-pointer" onClick={() => handleSectionTitleEdit(section)}>{section.title}</h3>
+                                                )}
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleSectionTitleEdit(section)}><Pencil className="h-4 w-4" /></Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => duplicateSection(page.id, section.id)}>Duplicate</DropdownMenuItem>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this section and all its questions.</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteSection(page.id, section.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                            
+                                            <StrictModeDroppable droppableId={`section-${section.id}`} isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
+                                                {(provided) => (
+                                                    <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
+                                                        {section.questions.map((question, index) => (
+                                                            <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
+                                                                {(provided) => (
+                                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="bg-white border rounded-lg">
+                                                                        <div className="p-3 flex items-center justify-between border-b">
+                                                                            <div className="flex items-center gap-2 group/field">
+                                                                                <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move"><GripVertical className="h-full w-full"/></div>
+                                                                                <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
+                                                                                <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
+                                                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}><Settings className="h-4 w-4" /></Button>
+                                                                                <DropdownMenu>
+                                                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                                    <DropdownMenuContent align="end">
+                                                                                        <DropdownMenuItem onClick={() => duplicateQuestion(page.id, section.id, question.id)}>Duplicate</DropdownMenuItem>
+                                                                                        <DropdownMenuItem onClick={() => deleteQuestion(page.id, section.id, question.id)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">Delete</DropdownMenuItem>
+                                                                                    </DropdownMenuContent>
+                                                                                </DropdownMenu>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="p-3"><Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} /></div>
+                                                                    </div>
+                                                                )}
+                                                            </Draggable>
+                                                        ))}
+                                                        {provided.placeholder}
+                                                    </div>
+                                                )}
+                                            </StrictModeDroppable>
+                                            <Button variant="outline" size="sm" onClick={() => onAddFieldClick(page.id, section.id)} className="mt-4">Add a Field</Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="outline" size="sm" onClick={() => addSection(page.id)}>Add a Section</Button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </main>
-            {editingQuestion && <SettingsPanel {...props} />}
+                </main>
+                {editingQuestion && <SettingsPanel {...props} />}
+            </div>
         </div>
     </DragDropContext>
   )
