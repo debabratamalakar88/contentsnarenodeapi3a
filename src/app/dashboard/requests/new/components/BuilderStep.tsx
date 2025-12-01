@@ -200,7 +200,7 @@ const SettingsPanel = (props: any) => {
 
     useEffect(() => {
         if (tempQuestion) {
-            setShowInstructions(!!tempQuestion.instructions);
+            setShowInstructions(true); // Keep instructions on by default
             setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
             setShowPlaceholder(!!tempQuestion.placeholder);
         }
@@ -366,33 +366,7 @@ export default function BuilderStep(props: BuilderStepProps) {
   };
 
   const onQuestionInstructionChange = (pageId: number, sectionId: number, questionId: number, newInstruction: string) => {
-    const newPages = pages.map(page => {
-        if(page.id === pageId) {
-            return {
-                ...page,
-                sections: page.sections.map(section => {
-                    if(section.id === sectionId) {
-                        return {
-                            ...section,
-                            questions: section.questions.map(question => {
-                                if(question.id === questionId) {
-                                    return {...question, instructions: newInstruction};
-                                }
-                                return question;
-                            })
-                        }
-                    }
-                    return section;
-                })
-            }
-        }
-        return page;
-    });
-    // This is a direct update, so we need to find a way to let the parent know.
-    // The parent only exposes functions to add/delete/reorder, not edit in place.
-    // For now, let's just log it. A better way would be to pass an `updatePages` function from the parent.
-    console.log("New pages structure", newPages);
-    // Ideally: props.setPages(newPages);
+        handleTempQuestionChange('instructions', newInstruction);
   }
 
   return (
@@ -483,7 +457,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                 {(provided) => (
                                                     <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
                                                         {section.questions.map((question, index) => {
-                                                            const showInstructionsInBuilder = !(tempQuestion && tempQuestion.id === question.id && tempQuestion.instructions === '') && question.instructions !== '';
+                                                            const showInstructionsInBuilder = !!question.instructions;
                                                             
                                                             return (
                                                                 <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
@@ -508,16 +482,11 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     </DropdownMenu>
                                                                                 </div>
                                                                             </div>
-                                                                             {showInstructionsInBuilder && (
+                                                                            {showInstructionsInBuilder && (
                                                                                 <div className="p-3 border-t">
-                                                                                    <Textarea 
-                                                                                        placeholder="Enter field instructions here..." 
-                                                                                        className="border-none shadow-none focus-visible:ring-0 px-2" 
-                                                                                        defaultValue={question.instructions} 
-                                                                                        onChange={(e) => onQuestionInstructionChange(page.id, section.id, question.id, e.target.value)}
-                                                                                    />
+                                                                                    <p className="text-sm text-muted-foreground px-2">{question.instructions}</p>
                                                                                 </div>
-                                                                             )}
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </Draggable>
