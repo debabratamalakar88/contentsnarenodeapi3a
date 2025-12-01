@@ -190,34 +190,21 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
 
 const SettingsPanel = (props: any) => {
     const { 
-        tempQuestion, handleTempQuestionChange, updateQuestion, removeTempOption, 
+        tempQuestion, handleTempQuestionChange, removeTempOption, 
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
     
-    const [showInstructions, setShowInstructions] = useState(true);
     const [showLengthValidation, setShowLengthValidation] = useState(false);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
-
+    
     useEffect(() => {
-        if (tempQuestion) {
-            setShowInstructions(!tempQuestion.hideInstructions);
-            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
-            setShowPlaceholder(!!tempQuestion.placeholder);
-        }
+      if (tempQuestion) {
+          setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
+          setShowPlaceholder(!!tempQuestion.placeholder);
+      }
     }, [tempQuestion]);
-
-    useEffect(() => {
-        updateQuestion();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tempQuestion]);
-
 
     if (!tempQuestion) return null;
-
-    const handleShowInstructionsToggle = (checked: boolean) => {
-        setShowInstructions(checked);
-        handleTempQuestionChange('hideInstructions', !checked);
-    };
 
     return (
         <div className="flex flex-col h-full bg-white border-l">
@@ -234,9 +221,9 @@ const SettingsPanel = (props: any) => {
                     <Label htmlFor="required">Required</Label>
                     <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                    <Label htmlFor="showInstructions">Add Instructions</Label>
-                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={handleShowInstructionsToggle} />
+                 <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <Label htmlFor="showInstructions">Show Instructions</Label>
+                    <Switch id="showInstructions" checked={!tempQuestion.hideInstructions} onCheckedChange={(checked) => handleTempQuestionChange('hideInstructions', !checked)} />
                 </div>
 
                 {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
@@ -304,7 +291,7 @@ export default function BuilderStep(props: BuilderStepProps) {
     requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
-    deleteSection, reorderQuestions, editingQuestion, handleTempQuestionChange, updateQuestion
+    deleteSection, reorderQuestions, editingQuestion
   } = props;
 
   const [editingMainTitle, setEditingMainTitle] = useState(false);
@@ -486,7 +473,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                         onBlur={(e) => {
                                                                                             const updatedQuestion = { ...question, instructions: e.target.value };
                                                                                             handleTempQuestionChange('instructions', e.target.value);
-                                                                                            updateQuestion();
                                                                                         }}
                                                                                     />
                                                                                 </div>
@@ -510,7 +496,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                  <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden w-0",
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden",
                     editingQuestion ? 'w-80' : 'w-0'
                 )}>
                     <div className="w-80 h-full">
@@ -524,4 +510,3 @@ export default function BuilderStep(props: BuilderStepProps) {
     </DragDropContext>
   )
 }
-
