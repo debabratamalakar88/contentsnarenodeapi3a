@@ -194,25 +194,17 @@ const SettingsPanel = (props: any) => {
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
     
-    const [showInstructions, setShowInstructions] = React.useState(true);
     const [showLengthValidation, setShowLengthValidation] = useState(false);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
         if (tempQuestion) {
-            setShowInstructions(true); // Keep instructions on by default
             setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
             setShowPlaceholder(!!tempQuestion.placeholder);
         }
     }, [tempQuestion]);
 
     if (!tempQuestion) return null;
-    
-    const handleShowInstructionsToggle = (checked: boolean) => {
-        setShowInstructions(checked);
-        // We only toggle the visibility here, we don't clear the content
-        // The visibility is handled in the main component.
-    };
 
     return (
         <div className="flex flex-col h-full bg-white border-l">
@@ -231,7 +223,7 @@ const SettingsPanel = (props: any) => {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border">
                     <Label htmlFor="showInstructions">Add Instructions</Label>
-                    <Switch id="showInstructions" checked={showInstructions} onCheckedChange={handleShowInstructionsToggle} />
+                    <Switch id="showInstructions" checked={!tempQuestion.hideInstructions} onCheckedChange={(checked) => handleTempQuestionChange('hideInstructions', !checked)} />
                 </div>
 
                 {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
@@ -358,9 +350,6 @@ export default function BuilderStep(props: BuilderStepProps) {
     if (page) reorderQuestions(page.id, sectionId, source.index, destination.index);
   };
 
-  const handleInstructionChange = (pageId: number, sectionId: number, questionId: number, value: string) => {
-      handleTempQuestionChange('instructions', value);
-  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -372,24 +361,27 @@ export default function BuilderStep(props: BuilderStepProps) {
             <div className="flex flex-1 overflow-hidden relative">
                  <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
-                        <div className="mb-6 group flex items-center gap-2">
-                            {editingMainTitle ? (
-                                <Input
-                                    value={requestTitle}
-                                    onChange={(e) => props.setRequestTitle(e.target.value)}
-                                    onBlur={() => setEditingMainTitle(false)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') setEditingMainTitle(false); }}
-                                    className="text-2xl font-bold h-auto p-2 border border-input focus-visible:ring-2 focus-visible:ring-ring"
-                                    style={{ borderColor: '#ddd' }}
-                                    autoFocus
-                                />
-                            ) : (
-                                <h1 className="text-2xl font-bold cursor-pointer" onClick={() => setEditingMainTitle(true)}>{requestTitle}</h1>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingMainTitle(true)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
+                        <div className="mb-6">
+                            <div className="group flex items-center gap-2">
+                                {editingMainTitle ? (
+                                    <Input
+                                        value={requestTitle}
+                                        onChange={(e) => props.setRequestTitle(e.target.value)}
+                                        onBlur={() => setEditingMainTitle(false)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') setEditingMainTitle(false); }}
+                                        className="text-2xl font-bold h-auto p-2 border border-input focus-visible:ring-2 focus-visible:ring-ring"
+                                        style={{ borderColor: '#ddd' }}
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <h1 className="text-2xl font-bold cursor-pointer" onClick={() => setEditingMainTitle(true)}>{requestTitle}</h1>
+                                )}
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingMainTitle(true)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
+
                         <div className="space-y-6">
                             {pages.filter(p => p.id === activePageId).map(page => (
                                 <div key={page.id} id={`page-${page.id}`}>
@@ -474,9 +466,17 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     </DropdownMenu>
                                                                                 </div>
                                                                             </div>
-                                                                            <div className="p-3">
-                                                                                <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} onChange={(e) => handleInstructionChange(page.id, section.id, question.id, e.target.value)} />
-                                                                            </div>
+                                                                            {!question.hideInstructions && (
+                                                                                <div className="p-3">
+                                                                                    <Textarea 
+                                                                                        placeholder="Enter field instructions here..." 
+                                                                                        className="border-none shadow-none focus-visible:ring-0 px-2" 
+                                                                                        value={question.instructions || ''}
+                                                                                        onChange={(e) => handleTempQuestionChange('instructions', e.target.value)}
+                                                                                        onBlur={() => props.updateQuestion()}
+                                                                                    />
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </Draggable>
@@ -496,8 +496,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                  <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden w-0 p-0 border-l-0",
-                    editingQuestion && 'w-80 p-0 border-l'
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden",
+                    editingQuestion ? 'w-80' : 'w-0'
                 )}>
                     <div className="w-80 h-full">
                        {editingQuestion && (

@@ -152,6 +152,7 @@ export interface Question {
   maxLength?: number;
   buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   buttonType?: 'button' | 'submit';
+  hideInstructions?: boolean;
 }
 
 export interface Section {
