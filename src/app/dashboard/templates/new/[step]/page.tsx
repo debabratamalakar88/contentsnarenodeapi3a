@@ -168,10 +168,6 @@ export default function NewMyTemplateWizardPage() {
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
 
-    // State for showing/hiding settings inputs
-    const [showInstructions, setShowInstructions] = useState(false);
-    const [showLengthValidation, setShowLengthValidation] = useState(false);
-    const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
         if (currentStepIndex > maxVisitedStepIndex) {
@@ -520,16 +516,8 @@ export default function NewMyTemplateWizardPage() {
     };
 
     const openQuestionSettings = (question: Question) => {
-        const hasInstructions = !!question.instructions;
-        const hasLength = !!question.minLength || !!question.maxLength;
-        const hasPlaceholder = !!question.placeholder;
-
-        setShowInstructions(hasInstructions);
-        setShowLengthValidation(hasLength);
-        setShowPlaceholder(hasPlaceholder);
         setEditingQuestion(question);
         setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
-        setQuestionSettingsOpen(true);
     };
     
     const updateQuestion = () => {
@@ -543,7 +531,6 @@ export default function NewMyTemplateWizardPage() {
                 )
             }))
         })));
-        setQuestionSettingsOpen(false);
         setEditingQuestion(null);
         setTempQuestion(null);
     };
@@ -767,3 +754,4 @@ export default function NewMyTemplateWizardPage() {
 }
 
     
+
