@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -6,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '../../../new/components/StepNavigation';
 import EssentialsStep from '../../../new/components/EssentialsStep';
-import BuilderStep from '../../../new/components/BuilderStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
@@ -620,7 +621,6 @@ export default function EditRequestWizardPage() {
                                         addTempOption={addTempOption}
                                         handleTempOptionChange={handleTempOptionChange}
                                         removeTempOption={removeTempOption}
-                                        updateQuestion={updateQuestion}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return (

@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -195,15 +194,7 @@ const SettingsPanel = (props: any) => {
         tempQuestion, handleTempQuestionChange, removeTempOption, 
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
-    
-    const [showLengthValidation, setShowLengthValidation] = useState(false);
-    
-    useEffect(() => {
-        if (tempQuestion) {
-            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
-        }
-    }, [tempQuestion]);
-    
+        
     if (!tempQuestion) return null;
 
     return (
@@ -230,9 +221,9 @@ const SettingsPanel = (props: any) => {
                     <>
                     <div className="flex items-center justify-between p-3 rounded-lg border">
                         <Label htmlFor="showLength">Set Min/Max Length</Label>
-                        <Switch id="showLength" checked={showLengthValidation} onCheckedChange={setShowLengthValidation} />
+                        <Switch id="showLength" checked={!!tempQuestion.showLengthValidation} onCheckedChange={(checked) => handleTempQuestionChange('showLengthValidation', checked)} />
                     </div>
-                    {showLengthValidation && (
+                    {tempQuestion.showLengthValidation && (
                         <div className="grid grid-cols-2 gap-4 pl-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="minLength">Min Length</Label>
@@ -303,18 +294,22 @@ export default function BuilderStep(props: BuilderStepProps) {
   useEffect(() => {
     if (tempQuestion) {
       setPages(currentPages => 
-        currentPages.map(page => ({
-          ...page,
-          sections: page.sections.map(section => ({
-            ...section,
-            questions: section.questions.map(q => 
-              q.id === tempQuestion.id ? tempQuestion : q
-            )
-          }))
-        }))
+        currentPages.map(page => 
+          page.id === activePageId 
+          ? {
+              ...page,
+              sections: page.sections.map(section => ({
+                ...section,
+                questions: section.questions.map(q => 
+                  q.id === tempQuestion.id ? tempQuestion : q
+                )
+              }))
+            }
+          : page
+        )
       );
     }
-  }, [tempQuestion, setPages]);
+  }, [tempQuestion, setPages, activePageId]);
 
 
   const getTitleParts = (title: string) => {
@@ -469,8 +464,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
                                                                                     {question.required && <Badge variant="destructive" className="ml-2">Required</Badge>}
                                                                                     {question.showPlaceholder && question.placeholder && <Badge variant="secondary" className="ml-2">Placeholder</Badge>}
-                                                                                    {question.minLength && <Badge variant="outline" className="ml-2">Min: {question.minLength}</Badge>}
-                                                                                    {question.maxLength && <Badge variant="outline" className="ml-2">Max: {question.maxLength}</Badge>}
+                                                                                    {question.showLengthValidation && question.minLength && <Badge variant="outline" className="ml-2">Min: {question.minLength}</Badge>}
+                                                                                    {question.showLengthValidation && question.maxLength && <Badge variant="outline" className="ml-2">Max: {question.maxLength}</Badge>}
                                                                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
                                                                                 </div>
                                                                                 <div className="flex items-center gap-1">

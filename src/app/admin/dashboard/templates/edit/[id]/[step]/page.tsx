@@ -5,9 +5,9 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
+import StepNavigation from '@/app/dashboard/templates/new/components/StepNavigation';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
-import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
@@ -548,6 +548,7 @@ export default function EditAdminTemplateWizardPage() {
                     />
                 );
             case "Builder": return <BuilderStep
+                                        setPages={setPages}
                                         requestTitle={templateTitle}
                                         setRequestTitle={setTemplateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
@@ -564,7 +565,6 @@ export default function EditAdminTemplateWizardPage() {
                                         addTempOption={addTempOption}
                                         handleTempOptionChange={handleTempOptionChange}
                                         removeTempOption={removeTempOption}
-                                        updateQuestion={updateQuestion}
                                     />;
             case "Preview": return <PreviewStep title={templateTitle} description={templateDescription} pages={pages} />;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
@@ -640,11 +640,3 @@ export default function EditAdminTemplateWizardPage() {
         </div>
     );
 }
-
-
-
-
-
-
-
-    
