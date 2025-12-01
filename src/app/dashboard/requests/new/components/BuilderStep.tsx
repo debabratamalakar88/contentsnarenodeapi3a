@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -29,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BuilderStepProps {
   requestTitle: string;
@@ -198,7 +198,7 @@ const SettingsPanel = (props: any) => {
     
     const [showLengthValidation, setShowLengthValidation] = useState(false);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
-
+    
     useEffect(() => {
         if (tempQuestion) {
             setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
@@ -465,7 +465,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                 {(provided) => (
                                                     <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
                                                         {section.questions.map((question, index) => {
-                                                            
+                                                            const hasPlaceholderText = !!question.placeholder;
+                                                            const showPlaceholderBadge = !question.hideInstructions && hasPlaceholderText;
                                                             return (
                                                                 <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
                                                                     {(provided) => (
@@ -476,7 +477,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
                                                                                     <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
                                                                                     {question.required && <Badge variant="destructive" className="ml-2">Required</Badge>}
-                                                                                    {question.placeholder && <Badge variant="secondary" className="ml-2">Placeholder</Badge>}
+                                                                                    {showPlaceholderBadge && <Badge variant="secondary" className="ml-2">Placeholder</Badge>}
                                                                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
                                                                                 </div>
                                                                                 <div className="flex items-center gap-1">
@@ -535,3 +536,5 @@ export default function BuilderStep(props: BuilderStepProps) {
     </DragDropContext>
   )
 }
+
+    
