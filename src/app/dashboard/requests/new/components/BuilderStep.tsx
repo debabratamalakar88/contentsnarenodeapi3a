@@ -359,11 +359,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6">
                             <h1 className="text-2xl font-bold">{requestTitle}</h1>
-                            {requestDescription && (
-                                <div className="mt-2 p-6 border rounded-md h-[250px] overflow-y-auto bg-slate-50 shadow-sm">
-                                <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: requestDescription }} />
-                                </div>
-                            )}
                         </div>
 
                         <div className="space-y-6">
@@ -474,5 +469,3 @@ export default function BuilderStep(props: BuilderStepProps) {
     </DragDropContext>
   )
 }
-
-    
