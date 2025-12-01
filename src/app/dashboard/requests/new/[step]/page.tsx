@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import StepNavigation from '../components/StepNavigation';
 import TemplatesStep from '@/app/dashboard/requests/new/components/TemplatesStep';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
-import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
 import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
@@ -643,8 +643,9 @@ export default function NewRequestWizardPage() {
             case "Templates": return <TemplatesStep onProceed={handleProceedFromTemplates} />;
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep 
+                                        setPages={setPages}
                                         requestTitle={requestTitle}
-                                        requestDescription={requestDescription}
+                                        setRequestTitle={setRequestTitle}
                                         pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}
@@ -678,7 +679,7 @@ export default function NewRequestWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="flex items-center gap-4 p-4 border-b">
+            <header className="sticky top-16 z-20 flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -700,7 +701,7 @@ export default function NewRequestWizardPage() {
                         </Button>
                     )}
                 </div>
-            </div>
+            </header>
             
             <div className={cn("flex-grow", (currentStep === 'Builder' || currentStep === 'Templates' || currentStep === 'Preview') ? "" : "p-6 flex justify-center items-start")}>
                 {renderStep()}
@@ -754,5 +755,7 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
+
+    
 
     

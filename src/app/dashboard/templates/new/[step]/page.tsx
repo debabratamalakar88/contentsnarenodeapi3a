@@ -1,5 +1,4 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -643,6 +642,7 @@ export default function NewMyTemplateWizardPage() {
             case "Templates": return <TemplatesStep onProceed={handleProceedFromTemplates} />;
             case "Essentials": return <EssentialsStep title={templateTitle} setTitle={setTemplateTitle} description={templateDescription} setDescription={setTemplateDescription} />;
             case "Builder": return <BuilderStep 
+                                        setPages={setPages}
                                         requestTitle={templateTitle}
                                         setRequestTitle={setTemplateTitle}
                                         pages={pages}

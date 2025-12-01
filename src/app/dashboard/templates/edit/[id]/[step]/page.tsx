@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -507,6 +506,7 @@ export default function EditMyTemplateWizardPage() {
                     />
                 );
             case "Builder": return <BuilderStep
+                                        setPages={setPages}
                                         requestTitle={templateTitle}
                                         setRequestTitle={setTemplateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
@@ -598,4 +598,5 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
+
 

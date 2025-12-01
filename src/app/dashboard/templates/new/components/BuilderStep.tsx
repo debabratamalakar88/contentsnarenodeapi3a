@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -197,14 +196,14 @@ const SettingsPanel = (props: any) => {
     
     const [showLengthValidation, setShowLengthValidation] = useState(false);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
-    
-    useEffect(() => {
-      if (tempQuestion) {
-          setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
-          setShowPlaceholder(!!tempQuestion.placeholder);
-      }
-    }, [tempQuestion]);
 
+    useEffect(() => {
+        if (tempQuestion) {
+            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
+            setShowPlaceholder(!!tempQuestion.placeholder);
+        }
+    }, [tempQuestion]);
+    
     useEffect(() => {
         // This effect ensures that if instructions exist, the switch is on.
         if (tempQuestion && tempQuestion.instructions !== undefined && tempQuestion.hideInstructions === undefined) {
@@ -385,22 +384,24 @@ export default function BuilderStep(props: BuilderStepProps) {
                  <div className="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6">
-                            <div className="group flex items-center gap-2">
-                                {editingMainTitle ? (
+                             <div className="group flex items-center gap-2">
+                                {editingMainTitle && props.setRequestTitle ? (
                                     <Input
                                         value={requestTitle}
-                                        onChange={(e) => props.setRequestTitle(e.target.value)}
+                                        onChange={(e) => props.setRequestTitle!(e.target.value)}
                                         onBlur={() => setEditingMainTitle(false)}
                                         onKeyDown={(e) => { if (e.key === 'Enter') setEditingMainTitle(false); }}
                                         className="text-2xl font-bold h-auto p-2 border border-input focus-visible:ring-2 focus-visible:ring-ring"
                                         autoFocus
                                     />
                                 ) : (
-                                    <h1 className="text-2xl font-bold cursor-pointer" onClick={() => setEditingMainTitle(true)}>{requestTitle}</h1>
+                                    <h1 className="text-2xl font-bold cursor-pointer" onClick={() => props.setRequestTitle && setEditingMainTitle(true)}>{requestTitle}</h1>
                                 )}
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingMainTitle(true)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
+                                {props.setRequestTitle && 
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingMainTitle(true)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                }
                             </div>
                         </div>
 
