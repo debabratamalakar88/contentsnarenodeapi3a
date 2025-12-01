@@ -200,11 +200,16 @@ const SettingsPanel = (props: any) => {
     const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
-        if (tempQuestion) {
-            setShowInstructions(!tempQuestion.hideInstructions);
-            setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
-            setShowPlaceholder(!!tempQuestion.placeholder);
-        }
+      if (tempQuestion) {
+          setShowInstructions(!tempQuestion.hideInstructions);
+          setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
+          setShowPlaceholder(!!tempQuestion.placeholder);
+      }
+    }, [tempQuestion]);
+
+    useEffect(() => {
+        updateQuestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tempQuestion]);
 
     if (!tempQuestion) return null;
@@ -290,9 +295,6 @@ const SettingsPanel = (props: any) => {
                     </AccordionItem>
                 </Accordion>
             </div>
-            <div className="p-4 border-t mt-auto bg-background flex-shrink-0">
-                <Button onClick={updateQuestion} className="w-full">Save Changes</Button>
-            </div>
         </div>
     )
 }
@@ -302,7 +304,7 @@ export default function BuilderStep(props: BuilderStepProps) {
     requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
-    deleteSection, reorderQuestions, editingQuestion, handleTempQuestionChange
+    deleteSection, reorderQuestions, editingQuestion, handleTempQuestionChange, updateQuestion
   } = props;
 
   const [editingMainTitle, setEditingMainTitle] = useState(false);
@@ -482,10 +484,9 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                         className="border-none shadow-none focus-visible:ring-0 px-2" 
                                                                                         defaultValue={question.instructions || ''}
                                                                                         onBlur={(e) => {
-                                                                                            // A bit of a hacky way to update without a dedicated save button
-                                                                                            const tempQ = { ...question, instructions: e.target.value };
-                                                                                            props.handleTempQuestionChange('instructions', e.target.value);
-                                                                                            props.updateQuestion();
+                                                                                            const updatedQuestion = { ...question, instructions: e.target.value };
+                                                                                            handleTempQuestionChange('instructions', e.target.value);
+                                                                                            updateQuestion();
                                                                                         }}
                                                                                     />
                                                                                 </div>
@@ -509,8 +510,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                  <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden w-0 p-0",
-                    editingQuestion && 'w-80 p-0 border-l'
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden w-0",
+                    editingQuestion ? 'w-80' : 'w-0'
                 )}>
                     <div className="w-80 h-full">
                        {editingQuestion && (
@@ -523,3 +524,4 @@ export default function BuilderStep(props: BuilderStepProps) {
     </DragDropContext>
   )
 }
+
