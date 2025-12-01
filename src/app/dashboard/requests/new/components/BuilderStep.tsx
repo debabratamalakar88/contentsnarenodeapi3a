@@ -18,7 +18,7 @@ import {
   MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil,
   Type, Pilcrow, FileUp, CheckSquare, MenuSquare, CalendarClock, Mail, Phone, Link2, CircleDot,
   PenSquare, ImageUp, MapPin, Hash, DollarSign, Globe, CalendarRange, GalleryVertical, 
-  Table as TableIcon, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, X
+  Table as TableIcon, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, X, Plus
 } from "lucide-react"
 
 import type { Page, Question, QuestionType, Section, QuestionOption } from "@/lib/api"
@@ -99,7 +99,7 @@ const QuestionIcon = ({ type }: { type: QuestionType }) => {
 
 const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicatePage, deletePage, addSection }: PagesSidebarProps) => {
     return (
-        <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
+        <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col h-full">
             <div className="p-4 border-b">
                 <h2 className="font-semibold text-sm">PAGES</h2>
             </div>
@@ -187,16 +187,12 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
     )
 }
 
-const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange, updateQuestion, removeTempOption, addTempOption, handleTempOptionChange, closeQuestionSettings }: any) => {
-    const [showInstructions, setShowInstructions] = useState(!!editingQuestion?.instructions);
-    const [showLengthValidation, setShowLengthValidation] = useState(!!(editingQuestion?.minLength || editingQuestion?.maxLength));
-    const [showPlaceholder, setShowPlaceholder] = useState(!!editingQuestion?.placeholder);
-
+const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange, updateQuestion, removeTempOption, addTempOption, handleTempOptionChange, closeQuestionSettings, showInstructions, setShowInstructions, showLengthValidation, setShowLengthValidation, showPlaceholder, setShowPlaceholder }: any) => {
     if (!editingQuestion || !tempQuestion) return null;
 
     return (
-        <aside className="w-80 flex-shrink-0 bg-white border-l flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
+        <aside className="w-80 flex-shrink-0 bg-white border-l flex flex-col h-full">
+            <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
                 <h2 className="font-semibold text-sm uppercase text-muted-foreground">Field Options</h2>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={closeQuestionSettings}><X className="h-4 w-4" /></Button>
             </div>
@@ -276,7 +272,7 @@ const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange
                     </AccordionItem>
                 </Accordion>
             </div>
-            <div className="p-4 border-t mt-auto bg-background">
+            <div className="p-4 border-t mt-auto bg-background flex-shrink-0">
                 <Button onClick={updateQuestion} className="w-full">Save Changes</Button>
             </div>
         </aside>
@@ -428,7 +424,16 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                         <div className="flex items-center gap-2 group/field">
                                                                             <div {...provided.dragHandleProps} className="h-5 w-5 flex items-center justify-center text-muted-foreground cursor-move"><GripVertical className="h-full w-full"/></div>
                                                                             <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
-                                                                            <span className="font-semibold">{question.label}</span>
+                                                                             {editingQuestion?.id === question.id && props.tempQuestion ? (
+                                                                                <Input
+                                                                                    value={props.tempQuestion.label}
+                                                                                    onChange={(e) => props.handleTempQuestionChange('label', e.target.value)}
+                                                                                    className="font-semibold border-none shadow-none focus-visible:ring-0 p-0 h-auto"
+                                                                                    autoFocus
+                                                                                />
+                                                                            ) : (
+                                                                                <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
+                                                                            )}
                                                                         </div>
                                                                         <div className="flex items-center gap-1">
                                                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openQuestionSettings(question)}><Settings className="h-4 w-4" /></Button>
