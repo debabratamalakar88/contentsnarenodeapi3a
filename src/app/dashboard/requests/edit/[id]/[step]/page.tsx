@@ -492,7 +492,15 @@ export default function EditRequestWizardPage() {
     
     const updateQuestion = () => {
         if (!tempQuestion) return;
-        setPages(prevPages => prevPages.map(page => ({ ...page, sections: page.sections.map(section => ({ ...section, questions: section.questions.map(q => q.id === tempQuestion.id ? tempQuestion : q) })) })));
+        setPages(prevPages => prevPages.map(page => ({
+            ...page,
+            sections: page.sections.map(section => ({
+                ...section,
+                questions: section.questions.map(q =>
+                    q.id === tempQuestion.id ? tempQuestion : q
+                )
+            }))
+        })));
         setEditingQuestion(null);
         setTempQuestion(null);
     };
@@ -547,7 +555,9 @@ export default function EditRequestWizardPage() {
         if (tempQuestion && tempQuestion.options) {
             const newOptions = [...tempQuestion.options];
             newOptions[index] = {...newOptions[index], [field]: value};
-            if(field === 'label' && (!newOptions[index].value || slugify(newOptions[index].value) === slugify(tempQuestion.options[index].label))) newOptions[index].value = slugify(value);
+            if(field === 'label' && (!newOptions[index].value || slugify(newOptions[index].value) === slugify(tempQuestion.options[index].label))) {
+                newOptions[index].value = slugify(value);
+            }
             setTempQuestion({ ...tempQuestion, options: newOptions });
         }
     };
@@ -555,13 +565,20 @@ export default function EditRequestWizardPage() {
     const addTempOption = () => {
         if (tempQuestion) {
             const nextOptionNum = (tempQuestion.options?.length || 0) + 1;
-            const newOption: QuestionOption = { label: `Option ${nextOptionNum}`, value: `option_${nextOptionNum}` };
-            setTempQuestion({ ...tempQuestion, options: [...(tempQuestion.options || []), newOption] });
+            const newOption: QuestionOption = {
+                label: `Option ${nextOptionNum}`,
+                value: `option_${nextOptionNum}`
+            }
+            const newOptions = [...(tempQuestion.options || []), newOption];
+            setTempQuestion({ ...tempQuestion, options: newOptions });
         }
     };
 
     const removeTempOption = (index: number) => {
-        if (tempQuestion && tempQuestion.options) setTempQuestion({ ...tempQuestion, options: tempQuestion.options.filter((_, i) => i !== index) });
+        if (tempQuestion && tempQuestion.options) {
+            const newOptions = tempQuestion.options.filter((_, i) => i !== index);
+            setTempQuestion({ ...tempQuestion, options: newOptions });
+        }
     };
 
     const filteredCategories = questionCategories.map(category => ({

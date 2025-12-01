@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -6,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '@/app/dashboard/templates/new/components/StepNavigation';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
-import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
@@ -201,6 +202,39 @@ export default function EditMyTemplateWizardPage() {
             router.push(`/dashboard/templates/edit/${id}/${nextStepSlug}`);
         }
     };
+
+    const handlePublishOrUpdate = async () => {
+       if (!templateTitle.trim()) {
+           toast({ title: "Template Title Required", description: "Please provide a title for your template.", variant: "destructive" });
+           return;
+       }
+
+       setIsSubmitting(true);
+       const token = localStorage.getItem('authToken');
+       if (!token) {
+           toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+           setIsSubmitting(false);
+           return;
+       }
+       
+       const payload: Partial<MyTemplate> = {
+           title: templateTitle,
+           description: templateDescription,
+           form_data: pages,
+       };
+
+       try {
+           await updateMyTemplate(token, id, payload);
+           toast({ title: "Success", description: "Template saved successfully." });
+           router.push('/dashboard/templates');
+           router.refresh();
+       } catch(error: any) {
+           const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+           toast({ title: "Action Failed", description, variant: "destructive" });
+       } finally {
+           setIsSubmitting(false);
+       }
+   };
 
     const handleBack = () => {
         if (currentStepIndex > 0) {
@@ -528,9 +562,9 @@ export default function EditMyTemplateWizardPage() {
                 />
                 <div className="ml-auto flex items-center gap-2">
                     {isLastStep ? (
-                        <Button onClick={saveProgress} disabled={isSubmitting || isLoading}>
+                        <Button onClick={handlePublishOrUpdate} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Template
+                            Save
                         </Button>
                     ) : (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
@@ -580,8 +614,4 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
-
-
-
-
 
