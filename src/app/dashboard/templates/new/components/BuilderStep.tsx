@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -31,7 +32,8 @@ import { Badge } from '@/components/ui/badge';
 
 interface BuilderStepProps {
   requestTitle: string;
-  setRequestTitle: (title: string) => void;
+  setRequestTitle?: (title: string) => void;
+  requestDescription?: string;
   pages: Page[];
   addPage: () => void;
   addSection: (pageId: number) => void;
