@@ -55,6 +55,12 @@ interface BuilderStepProps {
   handleTempOptionChange: (index: number, field: keyof QuestionOption, value: string) => void;
   removeTempOption: (index: number) => void;
   updateQuestion: () => void;
+  showInstructions?: boolean;
+  setShowInstructions?: (value: boolean) => void;
+  showLengthValidation?: boolean;
+  setShowLengthValidation?: (value: boolean) => void;
+  showPlaceholder?: boolean;
+  setShowPlaceholder?: (value: boolean) => void;
 }
 
 interface PagesSidebarProps {
@@ -190,8 +196,8 @@ const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange
     return (
         <aside 
             className={cn(
-                "absolute top-0 right-0 h-full w-80 bg-white border-l transition-transform duration-300 ease-in-out z-10 flex flex-col",
-                editingQuestion ? "translate-x-0" : "translate-x-full"
+                "h-full w-80 bg-white border-l transition-all duration-300 ease-in-out z-10 flex flex-col flex-shrink-0",
+                editingQuestion ? "translate-x-0" : "translate-x-full absolute"
             )}
         >
             <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
@@ -353,8 +359,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                 pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId}
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
-             <div className="flex-1 flex overflow-hidden relative">
-                <main className="flex-1 h-full overflow-y-auto">
+             <div className="flex-1 flex h-full overflow-hidden">
+                <div className="flex-1 h-full overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6">
                             <h1 className="text-2xl font-bold">{requestTitle}</h1>
@@ -461,7 +467,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                             ))}
                         </div>
                     </div>
-                </main>
+                </div>
                 <SettingsPanel {...props} />
             </div>
         </div>
