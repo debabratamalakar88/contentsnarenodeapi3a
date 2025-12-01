@@ -194,13 +194,13 @@ const SettingsPanel = (props: any) => {
         addTempOption, handleTempOptionChange, closeQuestionSettings 
     } = props;
     
-    const [showInstructions, setShowInstructions] = useState(true);
+    const [showInstructions, setShowInstructions] = React.useState(true);
     const [showLengthValidation, setShowLengthValidation] = useState(false);
     const [showPlaceholder, setShowPlaceholder] = useState(false);
 
     useEffect(() => {
         if (tempQuestion) {
-            setShowInstructions(true);
+            setShowInstructions(true); // Keep instructions on by default
             setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
             setShowPlaceholder(!!tempQuestion.placeholder);
         }
@@ -210,9 +210,8 @@ const SettingsPanel = (props: any) => {
     
     const handleShowInstructionsToggle = (checked: boolean) => {
         setShowInstructions(checked);
-        if (!checked) {
-            handleTempQuestionChange('instructions', '');
-        }
+        // We only toggle the visibility here, we don't clear the content
+        // The visibility is handled in the main component.
     };
 
     return (
@@ -234,12 +233,6 @@ const SettingsPanel = (props: any) => {
                     <Label htmlFor="showInstructions">Add Instructions</Label>
                     <Switch id="showInstructions" checked={showInstructions} onCheckedChange={handleShowInstructionsToggle} />
                 </div>
-                {showInstructions && (
-                    <div className="grid gap-2 pl-4">
-                        <Label htmlFor="instructions" className="sr-only">Instructions</Label>
-                        <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
-                    </div>
-                )}
 
                 {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
                     <>
@@ -309,7 +302,7 @@ export default function BuilderStep(props: BuilderStepProps) {
     requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
-    deleteSection, reorderQuestions, editingQuestion, tempQuestion, handleTempQuestionChange
+    deleteSection, reorderQuestions, editingQuestion, handleTempQuestionChange
   } = props;
 
   const [editingMainTitle, setEditingMainTitle] = useState(false);
@@ -364,6 +357,12 @@ export default function BuilderStep(props: BuilderStepProps) {
     const page = pages.find(p => p.sections.some(s => s.id === sectionId));
     if (page) reorderQuestions(page.id, sectionId, source.index, destination.index);
   };
+
+  const handleInstructionChange = (pageId: number, sectionId: number, questionId: number, value: string) => {
+    // This is a temporary function to handle local state change for instructions
+    // The actual update will happen via the main state management
+  }
+
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -453,7 +452,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                 {(provided) => (
                                                     <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
                                                         {section.questions.map((question, index) => {
-                                                            const showInstructionsInBuilder = !!question.instructions;
                                                             
                                                             return (
                                                                 <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
@@ -478,11 +476,9 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     </DropdownMenu>
                                                                                 </div>
                                                                             </div>
-                                                                            {showInstructionsInBuilder && (
-                                                                                <div className="p-3 border-t">
-                                                                                    <p className="text-sm text-muted-foreground px-2">{question.instructions}</p>
-                                                                                </div>
-                                                                            )}
+                                                                            <div className="p-3">
+                                                                                <Textarea placeholder="Enter field instructions here..." className="border-none shadow-none focus-visible:ring-0 px-2" defaultValue={question.instructions} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} />
+                                                                            </div>
                                                                         </div>
                                                                     )}
                                                                 </Draggable>
@@ -502,8 +498,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                  <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden",
-                    editingQuestion ? 'w-80' : 'w-0 p-0 border-l-0'
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent overflow-hidden w-0 p-0 border-l-0",
+                    editingQuestion && 'w-80 p-0 border-l'
                 )}>
                     <div className="w-80 h-full">
                        {editingQuestion && (
