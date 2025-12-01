@@ -642,7 +642,7 @@ export default function NewMyTemplateWizardPage() {
             case "Essentials": return <EssentialsStep title={templateTitle} setTitle={setTemplateTitle} description={templateDescription} setDescription={setTemplateDescription} />;
             case "Builder": return <BuilderStep 
                                         requestTitle={templateTitle}
-                                        requestDescription={templateDescription}
+                                        setRequestTitle={setTemplateTitle}
                                         pages={pages}
                                         addPage={addPage}
                                         addSection={addSection}
@@ -752,8 +752,3 @@ export default function NewMyTemplateWizardPage() {
         </div>
     );
 }
-
-    
-
-
-

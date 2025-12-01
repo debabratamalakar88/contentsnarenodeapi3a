@@ -30,7 +30,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 interface BuilderStepProps {
   requestTitle: string;
-  requestDescription?: string;
+  setRequestTitle: (title: string) => void;
   pages: Page[];
   addPage: () => void;
   addSection: (pageId: number) => void;
@@ -288,12 +288,13 @@ const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange
 
 export default function BuilderStep(props: BuilderStepProps) {
   const { 
-    requestTitle, requestDescription, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
+    requestTitle, setRequestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
     deleteSection, reorderQuestions, editingQuestion
   } = props;
 
+  const [editingMainTitle, setEditingMainTitle] = useState(false);
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
   const [editingPageTitle, setEditingPageTitle] = useState("");
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
@@ -358,7 +359,23 @@ export default function BuilderStep(props: BuilderStepProps) {
                 <div className="flex-1 h-full overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6">
-                            <h1 className="text-2xl font-bold">{requestTitle}</h1>
+                            {editingMainTitle ? (
+                                <Input
+                                    value={requestTitle}
+                                    onChange={(e) => setRequestTitle(e.target.value)}
+                                    onBlur={() => setEditingMainTitle(false)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') setEditingMainTitle(false); }}
+                                    className="text-2xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0"
+                                    autoFocus
+                                />
+                            ) : (
+                                <div className="group flex items-center gap-2">
+                                     <h1 className="text-2xl font-bold cursor-pointer" onClick={() => setEditingMainTitle(true)}>{requestTitle}</h1>
+                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => setEditingMainTitle(true)}>
+                                         <Pencil className="h-4 w-4" />
+                                     </Button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-6">
@@ -459,10 +476,17 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                 <div className={cn(
-                    "flex-shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out",
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-white",
                     editingQuestion ? 'w-80' : 'w-0'
                 )}>
-                    <SettingsPanel {...props} />
+                   {editingQuestion && (
+                        <div className={cn(
+                            "transition-opacity duration-300",
+                            editingQuestion ? "opacity-100" : "opacity-0"
+                        )}>
+                            <SettingsPanel {...props} />
+                        </div>
+                   )}
                 </div>
             </div>
         </div>

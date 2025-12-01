@@ -588,7 +588,7 @@ export default function EditRequestWizardPage() {
             case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep
                                         requestTitle={requestTitle}
-                                        requestDescription={requestDescription}
+                                        setRequestTitle={setRequestTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
@@ -701,4 +701,3 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
-

@@ -521,7 +521,7 @@ export default function NewAdminTemplateWizardPage() {
                 );
             case "Builder": return <BuilderStep
                                         requestTitle={templateTitle}
-                                        requestDescription={templateDescription}
+                                        setRequestTitle={setTemplateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
