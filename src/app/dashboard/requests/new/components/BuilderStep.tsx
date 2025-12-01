@@ -355,9 +355,9 @@ export default function BuilderStep(props: BuilderStepProps) {
                 pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId}
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
-            <div className="flex-1 flex overflow-hidden relative">
-                <div className={cn(
-                    "flex-1 h-full overflow-y-auto transition-all duration-300 ease-in-out",
+            <div className="flex flex-1 overflow-hidden relative">
+                 <div className={cn(
+                    "h-full overflow-y-auto transition-all duration-300 ease-in-out",
                     editingQuestion ? "w-[calc(100%-20rem)]" : "w-full"
                 )}>
                     <div className="max-w-4xl mx-auto p-6">
@@ -392,7 +392,9 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                     value={editingPageTitle} onChange={(e) => setEditingPageTitle(e.target.value)}
                                                     onBlur={() => handlePageTitleSave(page.id)}
                                                     onKeyDown={(e) => { if (e.key === 'Enter') handlePageTitleSave(page.id); }}
-                                                    className="text-xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
+                                                    className="text-xl font-bold p-2 h-auto border focus-visible:ring-2 focus-visible:ring-ring"
+                                                    style={{ borderColor: '#ddd' }}
+                                                    autoFocus
                                                 />
                                             </div>
                                         ) : (
@@ -401,8 +403,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handlePageTitleEdit(page)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
                                     
-                                    {page.instructions && <Textarea placeholder="Enter page instructions here..." className="mb-4 min-h-[60px]" defaultValue={page.instructions}/>}
-
                                     {page.sections.map(section => (
                                         <div key={section.id} id={`section-${section.id}`} className="ml-4 border-l-2 pl-4 mb-4">
                                             <div className="flex items-center gap-2 mb-2 group">
@@ -413,7 +413,9 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                             value={editingSectionTitle} onChange={(e) => setEditingSectionTitle(e.target.value)}
                                                             onBlur={() => handleSectionTitleSave(page.id, section.id)}
                                                             onKeyDown={(e) => { if (e.key === 'Enter') handleSectionTitleSave(page.id, section.id); }}
-                                                            className="text-lg font-semibold border-none shadow-none p-0 h-auto focus-visible:ring-0 flex-1" autoFocus
+                                                            className="text-lg font-semibold p-2 h-auto border focus-visible:ring-2 focus-visible:ring-ring flex-1" 
+                                                            style={{ borderColor: '#ddd' }}
+                                                            autoFocus
                                                         />
                                                     </div>
                                                 ) : (
@@ -479,8 +481,8 @@ export default function BuilderStep(props: BuilderStepProps) {
                     </div>
                 </div>
                  <div className={cn(
-                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-white overflow-hidden",
-                    editingQuestion ? 'w-80' : 'w-0'
+                    "flex-shrink-0 transition-all duration-300 ease-in-out bg-white overflow-y-auto",
+                    editingQuestion ? 'w-80' : 'w-0 invisible p-0 border-none'
                 )}>
                     <div className="w-80 h-full">
                        {editingQuestion && (
