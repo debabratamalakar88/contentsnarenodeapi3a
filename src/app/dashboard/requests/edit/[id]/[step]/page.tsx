@@ -620,7 +620,7 @@ export default function EditRequestWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <header className="sticky top-0 z-20 flex items-center gap-4 p-4 border-b bg-background">
+            <header className="sticky top-16 z-20 flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -701,3 +701,4 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
+

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -92,7 +93,7 @@ export default function NewMyTemplateEssentialsPage() {
 
     return (
         <div className="flex flex-col h-full bg-muted/40">
-            <header className="flex-shrink-0 bg-background">
+            <header className="sticky top-16 z-20 flex-shrink-0 bg-background/95 backdrop-blur">
                 <div className="flex items-center justify-between gap-4 p-4 border-b">
                     <Button variant="outline" size="icon" className="h-8 w-8" asChild>
                         <Link href="/dashboard/templates">
@@ -126,3 +127,4 @@ export default function NewMyTemplateEssentialsPage() {
         </div>
     );
 }
+
