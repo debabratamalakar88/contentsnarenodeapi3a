@@ -7,7 +7,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import StepNavigation from '../components/StepNavigation';
 import TemplatesStep from '@/app/dashboard/requests/new/components/TemplatesStep';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
-import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
 import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
@@ -518,6 +518,7 @@ export default function NewMyTemplateWizardPage() {
     const openQuestionSettings = (question: Question) => {
         setEditingQuestion(question);
         setTempQuestion(JSON.parse(JSON.stringify(question))); // Deep copy
+        setQuestionSettingsOpen(true);
     };
     
     const updateQuestion = () => {
@@ -531,6 +532,7 @@ export default function NewMyTemplateWizardPage() {
                 )
             }))
         })));
+        setQuestionSettingsOpen(false);
         setEditingQuestion(null);
         setTempQuestion(null);
     };
@@ -752,3 +754,7 @@ export default function NewMyTemplateWizardPage() {
         </div>
     );
 }
+
+    
+
+    
