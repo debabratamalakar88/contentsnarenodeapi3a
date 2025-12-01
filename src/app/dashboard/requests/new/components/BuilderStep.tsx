@@ -57,7 +57,6 @@ interface BuilderStepProps {
   addTempOption: () => void;
   handleTempOptionChange: (index: number, field: keyof QuestionOption, value: string) => void;
   removeTempOption: (index: number) => void;
-  updateQuestion: () => void;
   setPages: React.Dispatch<React.SetStateAction<Page[]>>;
 }
 
@@ -197,21 +196,13 @@ const SettingsPanel = (props: any) => {
     } = props;
     
     const [showLengthValidation, setShowLengthValidation] = useState(false);
-    const [showPlaceholder, setShowPlaceholder] = useState(false);
     
     useEffect(() => {
         if (tempQuestion) {
             setShowLengthValidation(!!(tempQuestion.minLength || tempQuestion.maxLength));
-            setShowPlaceholder(!!tempQuestion.placeholder);
         }
     }, [tempQuestion]);
     
-    useEffect(() => {
-        if (tempQuestion && tempQuestion.hideInstructions === undefined) {
-             handleTempQuestionChange('hideInstructions', false);
-        }
-    }, [tempQuestion, handleTempQuestionChange]);
-
     if (!tempQuestion) return null;
 
     return (
@@ -259,9 +250,9 @@ const SettingsPanel = (props: any) => {
                     <>
                     <div className="flex items-center justify-between p-3 rounded-lg border">
                         <Label htmlFor="showPlaceholder">Add Placeholder</Label>
-                        <Switch id="showPlaceholder" checked={showPlaceholder} onCheckedChange={setShowPlaceholder} />
+                        <Switch id="showPlaceholder" checked={!!tempQuestion.showPlaceholder} onCheckedChange={(checked) => handleTempQuestionChange('showPlaceholder', checked)} />
                     </div>
-                    {showPlaceholder && (
+                    {tempQuestion.showPlaceholder && (
                     <div className="grid gap-2 pl-4"><Label htmlFor="placeholder" className="sr-only">Custom placeholder</Label><Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} /></div>
                     )}
                     </>
@@ -465,8 +456,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                 {(provided) => (
                                                     <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
                                                         {section.questions.map((question, index) => {
-                                                            const hasPlaceholderText = !!question.placeholder;
-                                                            const showPlaceholderBadge = !question.hideInstructions && hasPlaceholderText;
+                                                            
                                                             return (
                                                                 <Draggable key={question.id} draggableId={`${question.id}`} index={index}>
                                                                     {(provided) => (
@@ -477,7 +467,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                     <div className="flex items-center justify-center h-6 w-6 bg-pink-100 rounded"><QuestionIcon type={question.type} /></div>
                                                                                     <span className="font-semibold cursor-pointer" onClick={() => openQuestionSettings(question)}>{question.label}</span>
                                                                                     {question.required && <Badge variant="destructive" className="ml-2">Required</Badge>}
-                                                                                    {showPlaceholderBadge && <Badge variant="secondary" className="ml-2">Placeholder</Badge>}
+                                                                                    {question.showPlaceholder && question.placeholder && <Badge variant="secondary" className="ml-2">Placeholder</Badge>}
                                                                                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/field:opacity-100" onClick={() => openQuestionSettings(question)}><Pencil className="h-3 w-3" /></Button>
                                                                                 </div>
                                                                                 <div className="flex items-center gap-1">
@@ -536,5 +526,3 @@ export default function BuilderStep(props: BuilderStepProps) {
     </DragDropContext>
   )
 }
-
-    

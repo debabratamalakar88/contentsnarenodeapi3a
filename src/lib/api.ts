@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -153,6 +152,7 @@ export interface Question {
   buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   buttonType?: 'button' | 'submit';
   hideInstructions?: boolean;
+  showPlaceholder?: boolean;
 }
 
 export interface Section {
