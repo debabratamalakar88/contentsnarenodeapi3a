@@ -194,12 +194,7 @@ const PagesSidebar = ({ pages, addPage, activePageId, setActivePageId, duplicate
 
 const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange, updateQuestion, removeTempOption, addTempOption, handleTempOptionChange, closeQuestionSettings, showInstructions, setShowInstructions, showLengthValidation, setShowLengthValidation, showPlaceholder, setShowPlaceholder }: any) => {
     return (
-        <aside 
-            className={cn(
-                "h-full w-80 bg-white border-l transition-all duration-300 ease-in-out z-10 flex flex-col flex-shrink-0",
-                editingQuestion ? "translate-x-0" : "translate-x-full absolute"
-            )}
-        >
+        <div className="flex flex-col h-full bg-white border-l">
             <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
                 <h2 className="font-semibold text-sm uppercase text-muted-foreground">Field Options</h2>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={closeQuestionSettings}><X className="h-4 w-4" /></Button>
@@ -287,7 +282,7 @@ const SettingsPanel = ({ editingQuestion, tempQuestion, handleTempQuestionChange
                 </div>
                 </>
             )}
-        </aside>
+        </div>
     )
 }
 
@@ -354,12 +349,12 @@ export default function BuilderStep(props: BuilderStepProps) {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex h-full bg-muted/40">
+        <div className="flex h-full bg-muted/40 overflow-hidden">
             <PagesSidebar
                 pages={pages} addPage={addPage} activePageId={activePageId} setActivePageId={setActivePageId}
                 duplicatePage={duplicatePage} deletePage={deletePage} addSection={addSection}
             />
-             <div className="flex-1 flex h-full overflow-hidden">
+             <div className="flex-1 flex overflow-hidden">
                 <div className="flex-1 h-full overflow-y-auto">
                     <div className="max-w-4xl mx-auto p-6">
                         <div className="mb-6">
@@ -468,9 +463,16 @@ export default function BuilderStep(props: BuilderStepProps) {
                         </div>
                     </div>
                 </div>
-                <SettingsPanel {...props} />
+                <div className={cn(
+                    "flex-shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out",
+                    editingQuestion ? 'w-80' : 'w-0'
+                )}>
+                    <SettingsPanel {...props} />
+                </div>
             </div>
         </div>
     </DragDropContext>
   )
 }
+
+    
