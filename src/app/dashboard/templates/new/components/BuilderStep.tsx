@@ -57,6 +57,7 @@ interface BuilderStepProps {
   handleTempOptionChange: (index: number, field: keyof QuestionOption, value: string) => void;
   removeTempOption: (index: number) => void;
   updateQuestion: () => void;
+  setPages: React.Dispatch<React.SetStateAction<Page[]>>;
 }
 
 interface PagesSidebarProps {
@@ -204,6 +205,13 @@ const SettingsPanel = (props: any) => {
       }
     }, [tempQuestion]);
 
+    useEffect(() => {
+        // This effect ensures that if instructions exist, the switch is on.
+        if (tempQuestion && tempQuestion.instructions !== undefined && tempQuestion.hideInstructions === undefined) {
+             handleTempQuestionChange('hideInstructions', false);
+        }
+    }, [tempQuestion, handleTempQuestionChange]);
+
     if (!tempQuestion) return null;
 
     return (
@@ -222,7 +230,7 @@ const SettingsPanel = (props: any) => {
                     <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
                 </div>
                  <div className="flex items-center justify-between p-3 rounded-lg border">
-                    <Label htmlFor="showInstructions">Show Instructions</Label>
+                    <Label htmlFor="showInstructions">Add Instructions</Label>
                     <Switch id="showInstructions" checked={!tempQuestion.hideInstructions} onCheckedChange={(checked) => handleTempQuestionChange('hideInstructions', !checked)} />
                 </div>
 
@@ -291,7 +299,7 @@ export default function BuilderStep(props: BuilderStepProps) {
     requestTitle, pages, addPage, addSection, onAddFieldClick, updatePageTitle, 
     updateSectionTitle, openQuestionSettings, duplicateQuestion, deleteQuestion, 
     activePageId, setActivePageId, duplicatePage, deletePage, duplicateSection, 
-    deleteSection, reorderQuestions, editingQuestion
+    deleteSection, reorderQuestions, editingQuestion, tempQuestion, setPages
   } = props;
 
   const [editingMainTitle, setEditingMainTitle] = useState(false);
@@ -300,6 +308,24 @@ export default function BuilderStep(props: BuilderStepProps) {
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState("");
   
+  // This effect syncs changes from the settings panel (tempQuestion) back to the main state (pages)
+  useEffect(() => {
+    if (tempQuestion) {
+      setPages(currentPages => 
+        currentPages.map(page => ({
+          ...page,
+          sections: page.sections.map(section => ({
+            ...section,
+            questions: section.questions.map(q => 
+              q.id === tempQuestion.id ? tempQuestion : q
+            )
+          }))
+        }))
+      );
+    }
+  }, [tempQuestion, setPages]);
+
+
   const getTitleParts = (title: string) => {
     const match = title.match(/^([0-9\.]+)\s*(.*)/);
     if (match) return { number: match[1], text: match[2] };
@@ -367,7 +393,6 @@ export default function BuilderStep(props: BuilderStepProps) {
                                         onBlur={() => setEditingMainTitle(false)}
                                         onKeyDown={(e) => { if (e.key === 'Enter') setEditingMainTitle(false); }}
                                         className="text-2xl font-bold h-auto p-2 border border-input focus-visible:ring-2 focus-visible:ring-ring"
-                                        style={{ borderColor: '#ddd' }}
                                         autoFocus
                                     />
                                 ) : (
@@ -471,8 +496,7 @@ export default function BuilderStep(props: BuilderStepProps) {
                                                                                         className="border-none shadow-none focus-visible:ring-0 px-2" 
                                                                                         defaultValue={question.instructions || ''}
                                                                                         onBlur={(e) => {
-                                                                                            const updatedQuestion = { ...question, instructions: e.target.value };
-                                                                                            handleTempQuestionChange('instructions', e.target.value);
+                                                                                            props.handleTempQuestionChange('instructions', e.target.value);
                                                                                         }}
                                                                                     />
                                                                                 </div>
