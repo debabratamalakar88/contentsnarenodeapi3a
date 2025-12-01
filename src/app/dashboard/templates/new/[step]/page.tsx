@@ -1,4 +1,5 @@
 
+
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -760,6 +761,7 @@ export default function NewMyTemplateWizardPage() {
                         <SheetDescription>{editingQuestion?.label}</SheetDescription>
                     </SheetHeader>
                     {tempQuestion && (
+                        <>
                         <div className="space-y-4 p-6 overflow-y-auto flex-1">
                             <div className="grid gap-2">
                                 <Label htmlFor="label">Label</Label>
@@ -899,10 +901,11 @@ export default function NewMyTemplateWizardPage() {
                                 </AccordionItem>
                             </Accordion>
                         </div>
+                        <SheetFooter className="p-6 border-t mt-auto">
+                            <Button onClick={updateQuestion}>Save changes</Button>
+                        </SheetFooter>
+                        </>
                     )}
-                     <SheetFooter className="p-6 border-t mt-auto">
-                        <Button onClick={updateQuestion}>Save changes</Button>
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>
