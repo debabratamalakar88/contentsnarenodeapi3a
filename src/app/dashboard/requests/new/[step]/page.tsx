@@ -1,11 +1,10 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import StepNavigation from '../components/StepNavigation';
-import TemplatesStep from '../components/TemplatesStep';
+import TemplatesStep from '@/app/dashboard/requests/new/components/TemplatesStep';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/requests/new/components/BuilderStep';
 import PreviewStep from '@/app/dashboard/requests/new/components/PreviewStep';
@@ -662,6 +661,14 @@ export default function NewRequestWizardPage() {
                                         duplicateSection={duplicateSection}
                                         deleteSection={deleteSection}
                                         reorderQuestions={reorderQuestions}
+                                        editingQuestion={editingQuestion}
+                                        closeQuestionSettings={() => setEditingQuestion(null)}
+                                        tempQuestion={tempQuestion}
+                                        handleTempQuestionChange={handleTempQuestionChange}
+                                        addTempOption={addTempOption}
+                                        handleTempOptionChange={handleTempOptionChange}
+                                        removeTempOption={removeTempOption}
+                                        updateQuestion={updateQuestion}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return <FinalizeStep initialData={null} onPublish={() => {}} onSaveDraft={() => {}} isSubmitting={false} />;
@@ -744,136 +751,8 @@ export default function NewRequestWizardPage() {
                 </SheetContent>
             </Sheet>
 
-            <Sheet open={isQuestionSettingsOpen} onOpenChange={setQuestionSettingsOpen}>
-                <SheetContent className="sm:max-w-md p-0">
-                    <SheetHeader className="p-6 border-b">
-                        <SheetTitle>Field Options</SheetTitle>
-                        <SheetDescription>{editingQuestion?.label}</SheetDescription>
-                    </SheetHeader>
-                    {tempQuestion && (
-                        <div className="space-y-4 p-6 max-h-[calc(100vh-140px)] overflow-y-auto">
-                            <div className="grid gap-2">
-                                <Label htmlFor="label">Label</Label>
-                                <Input id="label" value={tempQuestion.label} onChange={(e) => handleTempQuestionChange('label', e.target.value)} />
-                            </div>
-                             <div className="flex items-center justify-between p-3 rounded-lg border">
-                                <Label htmlFor="required">Required</Label>
-                                <Switch id="required" checked={tempQuestion.required} onCheckedChange={(checked) => handleTempQuestionChange('required', !!checked)} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="instructions">Instructions</Label>
-                                <Textarea id="instructions" value={tempQuestion.instructions || ''} onChange={(e) => handleTempQuestionChange('instructions', e.target.value)} placeholder="Optional: Guide users" />
-                            </div>
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea') && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="minLength">Min Length</Label>
-                                        <Input id="minLength" type="number" value={tempQuestion.minLength || ''} onChange={(e) => handleTempQuestionChange('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="maxLength">Max Length</Label>
-                                        <Input id="maxLength" type="number" value={tempQuestion.maxLength || ''} onChange={(e) => handleTempQuestionChange('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
-                                    </div>
-                                </div>
-                            )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'date') && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="placeholder">Custom placeholder</Label>
-                                    <Input id="placeholder" value={tempQuestion.placeholder || ''} onChange={(e) => handleTempQuestionChange('placeholder', e.target.value)} />
-                                </div>
-                            )}
-                             {tempQuestion.type === 'formatted-text' && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="content">Content</Label>
-                                    <Textarea 
-                                        id="content" 
-                                        value={tempQuestion.defaultValue || ''} 
-                                        onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} 
-                                        placeholder="Enter your formatted text content here. You can use basic HTML for styling."
-                                        className="min-h-[120px]"
-                                    />
-                                </div>
-                            )}
-                            {(tempQuestion.type === 'text' || tempQuestion.type === 'textarea' || tempQuestion.type === 'date' || tempQuestion.type === 'email' || tempQuestion.type === 'tel' || tempQuestion.type === 'url' || tempQuestion.type === 'radio' ) && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="defaultValue">Default Value</Label>
-                                    <Input id="defaultValue" value={tempQuestion.defaultValue || ''} onChange={(e) => handleTempQuestionChange('defaultValue', e.target.value)} />
-                                </div>
-                            )}
-                            {(tempQuestion.type === 'dropdown' || tempQuestion.type === 'radio' || tempQuestion.type === 'checkbox') && (
-                                <div className="grid gap-4">
-                                    <Label>Options</Label>
-                                    <div className="space-y-3">
-                                        {tempQuestion.options?.map((option, index) => (
-                                            <div key={index} className="flex items-center gap-2">
-                                                <div className="grid gap-1.5 flex-1">
-                                                  <Label htmlFor={`option-label-${index}`} className="text-xs">Label</Label>
-                                                  <Input id={`option-label-${index}`} value={option.label} onChange={(e) => handleTempOptionChange(index, 'label', e.target.value)} />
-                                                </div>
-                                                <div className="grid gap-1.5 flex-1">
-                                                    <Label htmlFor={`option-value-${index}`} className="text-xs">Value</Label>
-                                                    <Input id={`option-value-${index}`} value={option.value} onChange={(e) => handleTempOptionChange(index, 'value', e.target.value)} />
-                                                </div>
-                                                <Button variant="ghost" size="icon" onClick={() => removeTempOption(index)} className="self-end"><X className="h-4 w-4" /></Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={addTempOption} className="mt-2"><Plus className="h-4 w-4 mr-2" /> Add Option</Button>
-                                </div>
-                            )}
-                             {tempQuestion.type === 'button' && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="buttonVariant">Button Style</Label>
-                                        <Select
-                                            value={tempQuestion.buttonVariant || 'default'}
-                                            onValueChange={(value) => handleTempQuestionChange('buttonVariant', value as Question['buttonVariant'])}
-                                        >
-                                            <SelectTrigger id="buttonVariant"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="default">Default</SelectItem>
-                                                <SelectItem value="destructive">Destructive</SelectItem>
-                                                <SelectItem value="outline">Outline</SelectItem>
-                                                <SelectItem value="secondary">Secondary</SelectItem>
-                                                <SelectItem value="ghost">Ghost</SelectItem>
-                                                <SelectItem value="link">Link</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="buttonType">Button Type</Label>
-                                        <Select
-                                            value={tempQuestion.buttonType || 'button'}
-                                            onValueChange={(value) => handleTempQuestionChange('buttonType', value as Question['buttonType'])}
-                                        >
-                                            <SelectTrigger id="buttonType"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="button">Button</SelectItem>
-                                                <SelectItem value="submit">Submit</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            )}
-                             <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="advanced">
-                                    <AccordionTrigger>Advanced Settings</AccordionTrigger>
-                                    <AccordionContent className="space-y-4 pt-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="apiId">API Identifier</Label>
-                                            <Input id="apiId" value={tempQuestion.apiId || ''} onChange={(e) => handleTempQuestionChange('apiId', e.target.value)} />
-                                            <p className="text-xs text-muted-foreground">Used as the 'name' attribute. Must be unique.</p>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </div>
-                    )}
-                     <SheetFooter className="p-6 border-t">
-                        <Button onClick={updateQuestion}>Save changes</Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
         </div>
     );
 }
+
+    
