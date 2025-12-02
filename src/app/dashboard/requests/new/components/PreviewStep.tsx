@@ -281,14 +281,13 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                                                         {question.type !== 'formatted-text' && question.type !== 'button' && (
                                                             <div className="space-y-1">
                                                                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                                    {question.required && <Badge variant="destructive">Required</Badge>}
-                                                                    {question.showPlaceholder && question.placeholder && <Badge variant="secondary">Placeholder</Badge>}
+                                                                    <Label htmlFor={`preview-${question.id}`}>
+                                                                        {question.label}
+                                                                        {question.required && <span className="text-destructive ml-1">*</span>}
+                                                                    </Label>
                                                                     {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
                                                                     {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
                                                                 </div>
-                                                                <Label htmlFor={`preview-${question.id}`}>
-                                                                    {question.label}
-                                                                </Label>
                                                             </div>
                                                         )}
                                                         {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
