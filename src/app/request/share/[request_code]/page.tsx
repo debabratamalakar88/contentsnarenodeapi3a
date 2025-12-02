@@ -37,9 +37,9 @@ const renderQuestionInput = (
 
     switch(question.type) {
         case 'text':
-            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} minLength={question.minLength} maxLength={question.maxLength} />;
         case 'textarea':
-            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} minLength={question.minLength} maxLength={question.maxLength} />;
         case 'file':
             return <Input id={questionId} name={`${questionName}[]`} type="file" required={question.required} className={inputClassName} multiple />;
         case 'checkbox':
@@ -487,8 +487,8 @@ export default function SharedRequestPage() {
                                                                                 {question.label}
                                                                                 {question.required && <span className="text-destructive ml-1">*</span>}
                                                                             </Label>
-                                                                            {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
-                                                                            {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
+                                                                            {question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
+                                                                            {question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -529,3 +529,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
