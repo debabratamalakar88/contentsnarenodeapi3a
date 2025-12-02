@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -25,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
+import { Badge } from '@/components/ui/badge';
 
 
 interface PreviewStepProps {
@@ -279,10 +279,17 @@ export default function PreviewStep({ title, description, pages }: PreviewStepPr
                                                 {section.questions.map(question => (
                                                     <div key={question.id} className="grid gap-2 mb-4">
                                                         {question.type !== 'formatted-text' && question.type !== 'button' && (
-                                                            <Label htmlFor={`preview-${question.id}`}>
-                                                                {question.label}
-                                                                {question.required && <span className="text-destructive"> *</span>}
-                                                            </Label>
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                    {question.required && <Badge variant="destructive">Required</Badge>}
+                                                                    {question.showPlaceholder && question.placeholder && <Badge variant="secondary">Placeholder</Badge>}
+                                                                    {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
+                                                                    {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
+                                                                </div>
+                                                                <Label htmlFor={`preview-${question.id}`}>
+                                                                    {question.label}
+                                                                </Label>
+                                                            </div>
                                                         )}
                                                         {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
                                                         {renderQuestionInput(question)}
