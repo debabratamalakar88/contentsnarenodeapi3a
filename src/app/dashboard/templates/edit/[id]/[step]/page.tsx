@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -183,7 +182,7 @@ export default function EditMyTemplateWizardPage() {
             await updateMyTemplate(token, id, payload);
             toast({ title: "Template saved" });
             return true;
-        } catch (error: any) => {
+        } catch (error: any) {
             const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
             toast({ title: "Save Failed", description, variant: "destructive" });
             return false;
@@ -599,3 +598,5 @@ export default function EditMyTemplateWizardPage() {
         </div>
     );
 }
+
+    
