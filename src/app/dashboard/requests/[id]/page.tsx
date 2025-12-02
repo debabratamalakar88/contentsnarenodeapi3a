@@ -360,17 +360,17 @@ const renderQuestionInput = (question: Question) => {
 
     switch(question.type) {
         case 'text':
-            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'textarea':
-            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} />;
+            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'file':
-            return <Input id={questionId} name={questionName} type="file" required={question.required} />;
+            return <Input id={questionId} name={questionName} type="file" required={question.required} disabled />;
         case 'checkbox':
             return (
                 <div className="space-y-2 pt-2">
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} name={`${questionName}[]`} value={opt.value} />
+                            <Checkbox id={`${questionId}-${i}`} name={`${questionName}[]`} value={opt.value} disabled />
                             <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
                         </div>
                     ))}
@@ -378,25 +378,25 @@ const renderQuestionInput = (question: Question) => {
             );
         case 'dropdown':
             return (
-                <Select name={questionName} defaultValue={question.defaultValue} required={question.required}>
+                <Select name={questionName} defaultValue={question.defaultValue} required={question.required} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
                     <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                 </Select>
             );
         case 'date':
-            return <Input id={questionId} name={questionName} type="date" defaultValue={question.defaultValue} required={question.required} className="max-w-[240px]" />;
+            return <Input id={questionId} name={questionName} type="date" defaultValue={question.defaultValue} required={question.required} className="max-w-[240px]" disabled />;
         case 'email':
-            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'tel':
-            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'url':
-            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={question.defaultValue} required={question.required} />;
+            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'radio':
             return (
                 <RadioGroup name={questionName} defaultValue={question.defaultValue}>
                     {question.options?.map((opt, i) => (
                         <div key={i} className="flex items-center space-x-2 pt-2">
-                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
+                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} disabled />
                             <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
                         </div>
                     ))}
@@ -405,16 +405,16 @@ const renderQuestionInput = (question: Question) => {
         case 'formatted-text':
              return <RichTextEditorPreview question={question} />;
         case 'image-upload':
-             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple />;
+             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple disabled />;
         case 'address':
              return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'number':
-             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} />;
+             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
         case 'currency':
              return <CurrencyInput question={question} />;
         case 'country':
             return (
-                <Select name={questionName} defaultValue={question.defaultValue} required={question.required}>
+                <Select name={questionName} defaultValue={question.defaultValue} required={question.required} disabled>
                     <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
                     <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
                 </Select>
@@ -426,8 +426,8 @@ const renderQuestionInput = (question: Question) => {
         case 'color-picker':
             return (
                 <div className="flex items-center gap-2">
-                    <Input type="color" className="w-12 h-10 p-1" defaultValue={question.defaultValue || '#000000'} />
-                    <Input type="text" name={questionName} placeholder="#000000" defaultValue={question.defaultValue || '#000000'} className="max-w-[150px]"/>
+                    <Input type="color" className="w-12 h-10 p-1" defaultValue={question.defaultValue || '#000000'} disabled />
+                    <Input type="text" name={questionName} placeholder="#000000" defaultValue={question.defaultValue || '#000000'} className="max-w-[150px]" readOnly/>
                 </div>
             );
         case 'button':
@@ -657,7 +657,18 @@ export default function ViewRequestPage() {
                                                         {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
                                                         {section.questions.map(question => (
                                                             <div key={question.id} className="grid gap-2 mb-4">
-                                                                {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
+                                                                {question.type !== 'button' && question.type !== 'formatted-text' && (
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                            <Label htmlFor={`preview-${question.id}`}>
+                                                                                {question.label}
+                                                                                {question.required && <span className="text-destructive ml-1">*</span>}
+                                                                            </Label>
+                                                                            {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
+                                                                            {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                                 {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
                                                                 {renderQuestionInput(question)}
                                                             </div>

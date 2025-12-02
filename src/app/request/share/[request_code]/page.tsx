@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, type FormEvent } from 'react';
@@ -21,6 +22,7 @@ import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 
 const renderQuestionInput = (
@@ -478,7 +480,18 @@ export default function SharedRequestPage() {
                                                         
                                                         return (
                                                             <div key={question.id} className="grid gap-2">
-                                                                {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
+                                                                {question.type !== 'button' && question.type !== 'formatted-text' && (
+                                                                     <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                            <Label htmlFor={`q-${question.id}`}>
+                                                                                {question.label}
+                                                                                {question.required && <span className="text-destructive ml-1">*</span>}
+                                                                            </Label>
+                                                                            {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
+                                                                            {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                                 {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
                                                                 {renderQuestionInput(question, value, handleAnswerChange, fieldError)}
                                                                 {fieldError && <p className="text-sm font-medium text-destructive">{fieldError}</p>}
