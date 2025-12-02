@@ -326,6 +326,18 @@ export default function SharedRequestPage() {
                          errors[fieldName] = "Please enter a valid phone number.";
                     }
                 }
+
+                if ((question.type === 'text' || question.type === 'textarea') && value) {
+                    const valueLength = String(value).length;
+                    if (question.minLength && valueLength < question.minLength) {
+                        isValid = false;
+                        errors[fieldName] = `This field must be at least ${question.minLength} characters long.`;
+                    }
+                    if (question.maxLength && valueLength > question.maxLength) {
+                        isValid = false;
+                        errors[fieldName] = `This field must be no more than ${question.maxLength} characters long.`;
+                    }
+                }
             });
         });
     
