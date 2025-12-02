@@ -402,6 +402,15 @@ export default function SharedRequestPage() {
         }
     };
     
+    const handleAnotherSubmission = () => {
+        setIsComplete(false);
+        setAllAnswers({});
+        setSubmissionCode(null);
+        localStorage.removeItem(`submission_code_${requestCode}`);
+        setActivePageIndex(0);
+        setValidationErrors({});
+    };
+
     if (isLoading) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-muted">
@@ -432,6 +441,9 @@ export default function SharedRequestPage() {
                     <CardTitle>Submission Complete</CardTitle>
                     <CardDescription>Thank you! Your information has been successfully submitted.</CardDescription>
                 </CardHeader>
+                <CardContent>
+                    <Button onClick={handleAnotherSubmission}>Submit Another Response</Button>
+                </CardContent>
             </Card>
         </div>
       )
