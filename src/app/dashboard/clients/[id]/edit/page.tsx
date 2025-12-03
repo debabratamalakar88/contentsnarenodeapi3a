@@ -666,7 +666,7 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                 )}
             </CardContent>
             <CardFooter className="p-4 border-t flex justify-between items-center">
-                 <Badge className={cn("capitalize", 
+                 <Badge variant="outline" className={cn("capitalize", 
                     isArchived ? "bg-red-100 text-red-800" :
                     isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>
                     {isArchived ? 'archived' : request.status}
@@ -685,7 +685,7 @@ const RequestRow = ({ request, onDuplicate, onArchive, onRestore, onForceDelete,
             <TableCell className="font-medium">{request.title}</TableCell>
             <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
             <TableCell>
-                <Badge className={cn("capitalize", 
+                <Badge variant="outline" className={cn("capitalize", 
                     isArchived ? "bg-red-100 text-red-800" :
                     request.status === 'published' ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>
                     {isArchived ? 'archived' : request.status}
