@@ -52,6 +52,8 @@ const getInitials = (name: string): string => {
 
 const RequestCard = ({ request, clientName, clientInitials }: { request: RequestType, clientName: string, clientInitials: string }) => {
     const isPublished = request.status === 'published';
+    const hasHoverEffect = false;
+    
     return (
         <Card className="flex flex-col shadow-sm">
             <CardHeader className="p-4 border-b">
@@ -329,14 +331,6 @@ function EditClientPageComponent() {
                         </TabsContent>
                         <TabsContent value="client-portal">
                             <div className="max-w-2xl mx-auto text-center py-16">
-                                <Image
-                                    src={placeholderImages.clientPortalEmpty.src}
-                                    alt={placeholderImages.clientPortalEmpty.alt}
-                                    width={250}
-                                    height={250}
-                                    className="mx-auto mb-8"
-                                    data-ai-hint={placeholderImages.clientPortalEmpty['data-ai-hint']}
-                                />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
                                 <p className="text-muted-foreground max-w-lg mx-auto">
                                     Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
@@ -510,5 +504,3 @@ export default function EditClientPage() {
         </Suspense>
     )
 }
-
-    
