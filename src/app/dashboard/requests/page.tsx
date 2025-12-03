@@ -1,6 +1,6 @@
 
 
-'use client'
+'use client';
 
 import { 
     Users, 
@@ -76,7 +76,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const getInitials = (name: string): string => {
@@ -310,15 +309,13 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
 
 export default function RequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [activeRequests, setActiveRequests] = useState<Request[]>([]);
-    const [archivedRequests, setArchivedRequests] = useState<Request[]>([]);
+    const [allRequests, setAllRequests] = useState<Request[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
 
-    const [currentTab, setCurrentTab] = useState('active');
     const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -344,22 +341,22 @@ export default function RequestsPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const [clientsResponse, profileResponse] = await Promise.all([
+                const [clientsResponse, profileResponse, requestsResponse, archivedResponse] = await Promise.all([
                     getClients(token),
                     getProfile(token),
+                    getRequests(token),
+                    getArchivedRequests(token)
                 ]);
+
                 setClients(clientsResponse || []);
                 setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
-                
-                if (currentTab === 'active') {
-                    const requestsResponse = await getRequests(token);
-                    const sortedRequests = (requestsResponse.data || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                    setActiveRequests(sortedRequests);
-                } else {
-                    const requestsResponse = await getArchivedRequests(token);
-                    const sortedArchivedRequests = (requestsResponse.data || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                    setArchivedRequests(sortedArchivedRequests);
-                }
+
+                const active = requestsResponse.data || [];
+                const archived = archivedResponse.data || [];
+
+                const combinedRequests = [...active, ...archived].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                setAllRequests(combinedRequests);
+
             } catch (err: any) {
                 setError(err.message || "Failed to load data.");
                 toast({
@@ -372,7 +369,7 @@ export default function RequestsPage() {
             }
         }
         loadData();
-    }, [router, toast, currentTab, dataVersion]);
+    }, [router, toast, dataVersion]);
     
     const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
 
@@ -434,7 +431,7 @@ export default function RequestsPage() {
         }
     };
 
-    const filteredActiveRequests = useMemo(() => activeRequests.filter(request => {
+    const filteredRequests = useMemo(() => allRequests.filter(request => {
       const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
       const searchLower = searchQuery.toLowerCase();
       return (
@@ -442,17 +439,7 @@ export default function RequestsPage() {
         (request.description && request.description.toLowerCase().includes(searchLower)) ||
         clientNames.includes(searchLower)
       );
-    }), [activeRequests, searchQuery, clientMap]);
-
-    const filteredArchivedRequests = useMemo(() => archivedRequests.filter(request => {
-      const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
-      const searchLower = searchQuery.toLowerCase();
-      return (
-        request.title.toLowerCase().includes(searchLower) ||
-        (request.description && request.description.toLowerCase().includes(searchLower)) ||
-        clientNames.includes(searchLower)
-      );
-    }), [archivedRequests, searchQuery, clientMap]);
+    }), [allRequests, searchQuery, clientMap]);
 
 
     const renderLoadingSkeleton = () => (
@@ -472,23 +459,17 @@ export default function RequestsPage() {
         )
     );
 
-    const renderContent = (requests: Request[], isArchivedTab: boolean) => {
+    const renderContent = () => {
         if (isLoading) {
             return renderLoadingSkeleton();
         }
         if (error) {
             return <div className="text-center text-destructive py-10">{error}</div>;
         }
-        if (requests.length === 0) {
-            const message = isArchivedTab 
-                ? "No archived requests" 
-                : searchQuery
-                ? `No requests found for "${searchQuery}"`
-                : "No active requests";
+        if (filteredRequests.length === 0) {
+            const message = searchQuery ? `No requests found for "${searchQuery}"` : "No requests yet";
             
-            const description = isArchivedTab
-                ? "Your archived requests will appear here."
-                : searchQuery
+            const description = searchQuery
                 ? "Try a different search term."
                 : "Get started by creating your first content request.";
 
@@ -500,7 +481,7 @@ export default function RequestsPage() {
                     <p className="text-sm mb-4">
                        {description}
                     </p>
-                    {!isArchivedTab && !searchQuery && canManageRequests && (
+                    {!searchQuery && canManageRequests && (
                         <Button asChild>
                             <Link href="/dashboard/requests/new"><PlusCircle className="mr-2 h-4 w-4"/>Create Request</Link>
                         </Button>
@@ -509,23 +490,22 @@ export default function RequestsPage() {
             );
         }
         const viewProps = {
-            requests,
+            requests: filteredRequests,
             clientMap,
             onDuplicate: handleDuplicate,
             onArchive: setRequestToArchive,
             onRestore: setRequestToRestore,
             onForceDelete: setRequestToForceDelete,
-            isArchived: isArchivedTab,
             canManage: canManageRequests,
             currentUser: currentUser,
             userRole: userRole,
         };
         return viewMode === 'grid' ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                {requests.map(request => (
-                    <RequestCard key={request.id} {...viewProps} request={request} />
+                {filteredRequests.map(request => (
+                    <RequestCard key={request.id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
                 ))}
-                {!isArchivedTab && canManageRequests && (
+                {canManageRequests && (
                   <Link href="/dashboard/requests/new">
                       <Card className="flex flex-col items-center justify-center bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary/50 min-h-[290px] h-full">
                         <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
@@ -551,10 +531,10 @@ export default function RequestsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {requests.map((request) => (
-                           <RequestRow key={request.id} {...viewProps} request={request} />
+                        {filteredRequests.map((request) => (
+                           <RequestRow key={request.id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
                         ))}
-                        {!isArchivedTab && canManageRequests && (
+                        {canManageRequests && (
                             <TableRow>
                                 <TableCell colSpan={5} className="py-2">
                                     <Link href="/dashboard/requests/new" className="text-primary hover:underline text-sm font-medium">
@@ -572,13 +552,10 @@ export default function RequestsPage() {
     return (
         <>
             <div className="flex flex-col h-full bg-muted/40">
-                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap sticky top-16 z-10">
-                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
-                        <TabsList>
-                            <TabsTrigger value="active">Active</TabsTrigger>
-                            <TabsTrigger value="archived">Archived</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                <header className="sticky top-16 z-10 flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                    <div className="flex-grow">
+                        <h1 className="text-xl font-bold">Requests</h1>
+                    </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <span className="text-sm text-muted-foreground">View:</span>
                         <DropdownMenu>
@@ -612,14 +589,7 @@ export default function RequestsPage() {
                 </header>
 
                 <main className="flex-1 p-6 overflow-y-auto">
-                     <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                        <TabsContent value="active" className="mt-0">
-                            {renderContent(filteredActiveRequests, false)}
-                        </TabsContent>
-                        <TabsContent value="archived" className="mt-0">
-                            {renderContent(filteredArchivedRequests, true)}
-                        </TabsContent>
-                    </Tabs>
+                    {renderContent()}
                 </main>
             </div>
             
