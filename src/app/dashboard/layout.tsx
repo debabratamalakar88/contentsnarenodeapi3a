@@ -138,61 +138,58 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-[#1e2029] px-4 md:px-6 text-white z-50">
-        <nav className="flex items-center gap-6 text-lg font-medium">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 text-base font-semibold min-w-[200px]"
-          >
-            {company ? (
-              <>
-                 <Avatar className="h-8 w-8 text-sm">
-                    <AvatarFallback className="bg-pink-500 text-white font-bold border-pink-600">
-                        {getInitials(company.company_name)}
-                    </AvatarFallback>
-                </Avatar>
-                <span className="font-bold">{company.company_name}</span>
-              </>
-            ) : (
-                <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-pink-500 flex items-center justify-center font-bold">
-                        N
-                    </div>
-                    <span className="font-bold text-xl">NARLAX</span>
-                </div>
-            )}
-          </Link>
-        </nav>
+        <div className="flex items-center gap-3 text-base font-semibold min-w-[200px]">
+          {company ? (
+            <>
+                <Avatar className="h-8 w-8 text-sm">
+                  <AvatarFallback className="bg-pink-500 text-white font-bold border-pink-600">
+                      {getInitials(company.company_name)}
+                  </AvatarFallback>
+              </Avatar>
+              <span className="font-bold">{company.company_name}</span>
+            </>
+          ) : (
+              <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-pink-500 flex items-center justify-center font-bold">
+                      N
+                  </div>
+                  <span className="font-bold text-xl">NARLAX</span>
+              </div>
+          )}
+        </div>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-          <nav className="hidden md:flex items-center gap-5 text-sm lg:gap-6 ml-auto">
+          <nav className="ml-auto flex items-center gap-5 text-sm lg:gap-6">
             <NavLinks />
           </nav>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
-                <User className="h-5 w-5 text-white" />
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-               {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.company_name}</DropdownMenuLabel>}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/dashboard/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSwitchCompany} className="cursor-pointer">
-                <Building className="mr-2 h-4 w-4"/> Switch Company
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="mr-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
+                  <User className="h-5 w-5 text-white" />
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                {company && <DropdownMenuLabel className="font-normal text-muted-foreground -mt-2">{company.company_name}</DropdownMenuLabel>}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/dashboard/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSwitchCompany} className="cursor-pointer">
+                  <Building className="mr-2 h-4 w-4"/> Switch Company
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
       <main className="flex flex-1 flex-col">
