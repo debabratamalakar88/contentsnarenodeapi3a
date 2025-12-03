@@ -25,8 +25,14 @@ const nextConfig: NextConfig = {
         hostname: 'narlaxsoftware.com',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
     ],
   },
 };
 
 export default nextConfig;
+
+    

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useParams } from "next/navigation"
 import { format, parseISO } from 'date-fns';
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import placeholderImages from '@/app/lib/placeholder-images.json'
 
 const clientFormSchema = z.object({
   full_name: z.string().min(1, "Full name is required."),
@@ -318,7 +320,29 @@ export default function EditClientPage() {
                             </div>
                         </TabsContent>
                         <TabsContent value="client-portal">
-                            <Card className="max-w-xl mx-auto"><CardContent className="p-6 text-center text-muted-foreground">Client portal settings will be available here.</CardContent></Card>
+                            <div className="max-w-2xl mx-auto text-center py-16">
+                                <Image
+                                    src={placeholderImages.clientPortalEmpty.src}
+                                    alt={placeholderImages.clientPortalEmpty.alt}
+                                    width={250}
+                                    height={250}
+                                    className="mx-auto mb-8"
+                                    data-ai-hint="file folder"
+                                />
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
+                                <p className="text-muted-foreground max-w-lg mx-auto">
+                                    Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
+                                </p>
+                                <p className="text-muted-foreground max-w-lg mx-auto mt-4">
+                                    Upload anything you like: invoices, completed docs, past advice, communication, and more.
+                                </p>
+                                <p className="text-muted-foreground max-w-lg mx-auto mt-4">
+                                    Everything's in one spot, ready to download on demand.
+                                </p>
+                                <Button size="lg" className="mt-8 bg-blue-600 hover:bg-blue-700 text-base font-bold rounded-full">
+                                    UPLOAD YOUR FIRST FILES HERE
+                                </Button>
+                            </div>
                         </TabsContent>
                         <TabsContent value="client-details">
                             <Card className="max-w-xl mx-auto">
@@ -469,4 +493,3 @@ export default function EditClientPage() {
             </form>
         </Form>
     )
-}
