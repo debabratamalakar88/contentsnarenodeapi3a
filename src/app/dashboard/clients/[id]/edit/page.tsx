@@ -1,11 +1,12 @@
 
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useParams } from "next/navigation"
+import { format, parseISO } from 'date-fns';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,15 +14,18 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChevronLeft, Info, Loader2, User, X } from "lucide-react"
+import { ChevronLeft, Info, Loader2, User, X, LayoutGrid, List, Search, Layers, MoreHorizontal, Eye, Edit, Archive, ArchiveRestore, Trash2, PlusCircle, Download, Upload } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { getClient, updateClient } from "@/lib/api"
+import { getClient, updateClient, getRequests, type Request as RequestType } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
 const clientFormSchema = z.object({
   full_name: z.string().min(1, "Full name is required."),
@@ -35,12 +39,66 @@ const clientFormSchema = z.object({
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
+
+const RequestCard = ({ request, clientName, clientInitials }: { request: RequestType, clientName: string, clientInitials: string }) => {
+    const isPublished = request.status === 'published';
+    return (
+        <Card className="flex flex-col shadow-sm">
+            <CardHeader className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 text-sm"><AvatarFallback className="bg-pink-100 text-pink-700">{clientInitials}</AvatarFallback></Avatar>
+                        <div>
+                            <p className="font-semibold">{clientName}</p>
+                            <p className="text-xs text-muted-foreground">Client</p>
+                        </div>
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem>View</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 flex-grow space-y-3">
+                <h3 className="font-bold text-lg">{request.title}</h3>
+                <p className="text-sm text-muted-foreground">Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</p>
+                <Progress value={0} className="h-2" />
+                <div className="grid grid-cols-3 text-center">
+                    <div><p className="font-bold text-lg">0</p><p className="text-xs text-muted-foreground">Approved</p></div>
+                    <div><p className="font-bold text-lg">0</p><p className="text-xs text-muted-foreground">Complete</p></div>
+                    <div><p className="font-bold text-lg">37</p><p className="text-xs text-muted-foreground">To Do</p></div>
+                </div>
+            </CardContent>
+            <CardFooter className="p-4 border-t flex justify-between items-center">
+                <Badge className={cn("capitalize", isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>{request.status}</Badge>
+                {request.communication_mode && <Info className="h-4 w-4 text-muted-foreground" />}
+            </CardFooter>
+        </Card>
+    );
+};
+
+
 export default function EditClientPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
     const [companyInput, setCompanyInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [allRequests, setAllRequests] = useState<RequestType[]>([]);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const id = Number(params.id);
 
@@ -60,7 +118,7 @@ export default function EditClientPage() {
     useEffect(() => {
         if (!id) return;
 
-        async function fetchClient() {
+        async function fetchClientData() {
             const token = localStorage.getItem('authToken');
             if (!token) {
                 toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
@@ -69,19 +127,24 @@ export default function EditClientPage() {
             }
 
             try {
-                const fetchedClient = await getClient(token, id);
+                const [fetchedClient, requestsData] = await Promise.all([
+                    getClient(token, id),
+                    getRequests(token),
+                ]);
+                
                 form.reset(fetchedClient);
+                setAllRequests(requestsData.data || []);
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
-                    title: 'Error fetching client',
+                    title: 'Error fetching client data',
                     description: err.message || 'An unexpected error occurred.',
                 });
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchClient();
+        fetchClientData();
     }, [id, router, toast, form]);
 
     const { isSubmitting } = form.formState;
@@ -114,6 +177,18 @@ export default function EditClientPage() {
     const fullName = form.watch("full_name");
     const email = form.watch("email");
 
+    const clientRequests = useMemo(() => {
+        return allRequests.filter(req => 
+            Array.isArray(req.client_id) && req.client_id.includes(id)
+        );
+    }, [allRequests, id]);
+    
+    const filteredRequests = useMemo(() => {
+        if (!searchQuery) return clientRequests;
+        return clientRequests.filter(req => req.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [clientRequests, searchQuery]);
+
+
     const handleCompanyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && companyInput.trim()) {
             e.preventDefault();
@@ -129,14 +204,6 @@ export default function EditClientPage() {
         form.setValue("companies", companies.filter(company => company !== companyToRemove));
     };
 
-    const getInitials = (name: string): string => {
-        if (!name) return '';
-        const words = name.trim().split(' ').filter(Boolean);
-        if (words.length === 0) return '';
-        if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-        return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
-    }
-    
     const initials = getInitials(fullName);
 
     if (isLoading) {
@@ -202,14 +269,41 @@ export default function EditClientPage() {
                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto p-6">
-                    <Tabs defaultValue="client-details" className="w-full">
+                    <Tabs defaultValue="requests" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
                             <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
                             <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
                             <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
                         </TabsList>
                         <TabsContent value="requests">
-                            <Card className="max-w-xl mx-auto"><CardContent className="p-6 text-center text-muted-foreground">Requests for this client will be shown here.</CardContent></Card>
+                            <div className="max-w-6xl mx-auto">
+                                <div className="flex justify-end items-center gap-2 mb-4">
+                                     <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" className="text-pink-600 border-pink-200">View: {viewMode === 'grid' ? 'Grid' : 'List'}</Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                     </DropdownMenu>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input placeholder="Search requests..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                    </div>
+                                </div>
+                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {filteredRequests.map(req => (
+                                        <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} />
+                                    ))}
+                                    <Card className="border-2 border-dashed bg-transparent shadow-none flex flex-col items-center justify-center min-h-[300px]">
+                                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                                          <Layers className="h-8 w-8 text-slate-400" />
+                                        </div>
+                                        <Button variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">ADD NEW REQUEST</Button>
+                                    </Card>
+                                </div>
+                            </div>
                         </TabsContent>
                         <TabsContent value="client-portal">
                             <Card className="max-w-xl mx-auto"><CardContent className="p-6 text-center text-muted-foreground">Client portal settings will be available here.</CardContent></Card>
