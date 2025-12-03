@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -571,7 +572,7 @@ export default function RequestsPage() {
     return (
         <>
             <div className="flex flex-col h-full bg-muted/40">
-                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap sticky top-16 z-10">
                     <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
                         <TabsList>
                             <TabsTrigger value="active">Active</TabsTrigger>
