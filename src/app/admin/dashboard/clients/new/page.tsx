@@ -131,15 +131,16 @@ export default function NewAdminClientPage() {
                 </header>
                 <main className="flex-1 overflow-y-auto p-8">
                     <div className="max-w-xl mx-auto space-y-8">
-                        <div className="flex flex-col items-center gap-2">
-                            <Avatar className="h-24 w-24">
-                                <AvatarFallback className="bg-green-100 text-green-800 text-4xl font-bold border">
-                                    {initials ? initials : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M20 13.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5c0 1.93 1.57 3.5 3.5 3.5H8a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1.5c1.93 0 3.5-1.57 3.5-3.5Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
-                                    )}
+                        <div className="flex items-center gap-4">
+                             <Avatar className="h-16 w-16">
+                                <AvatarFallback className="bg-blue-100 text-blue-800 text-2xl font-bold border">
+                                    {initials || <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M20 13.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5c0 1.93 1.57 3.5 3.5 3.5H8a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1.5c1.93 0 3.5-1.57 3.5-3.5Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>}
                                 </AvatarFallback>
                             </Avatar>
-                            <Button variant="link" type="button" className="text-primary font-semibold">Change Image</Button>
+                            <div>
+                                <p className="font-semibold text-lg">{fullName || 'New Client'}</p>
+                                <Button variant="link" type="button" className="text-pink-600 font-semibold p-0 h-auto">Change Image</Button>
+                            </div>
                         </div>
 
                         <div className="space-y-6">

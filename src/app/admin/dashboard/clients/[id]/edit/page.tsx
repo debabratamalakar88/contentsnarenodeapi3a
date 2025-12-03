@@ -144,7 +144,15 @@ export default function EditAdminClientPage() {
         return (
              <div className="flex flex-col h-full bg-white">
                 <header className="sticky top-0 bg-white z-10"><div className="h-16 flex items-center justify-between px-6 border-b"><Skeleton className="h-8 w-48" /><div className="flex items-center gap-2"><Skeleton className="h-9 w-24" /><Skeleton className="h-9 w-24" /></div></div></header>
-                 <main className="flex-1 overflow-y-auto p-8"><div className="max-w-xl mx-auto space-y-8"><Skeleton className="h-24 w-24 rounded-full mx-auto" /><div className="space-y-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div></div></main>
+                 <main className="flex-1 overflow-y-auto p-8"><div className="max-w-xl mx-auto space-y-8">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-24 w-24 rounded-full" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-6 w-40" />
+                            <Skeleton className="h-5 w-28" />
+                        </div>
+                    </div>
+                    <div className="space-y-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div></div></main>
             </div>
         )
     }
@@ -166,9 +174,12 @@ export default function EditAdminClientPage() {
                 </header>
                 <main className="flex-1 overflow-y-auto p-8">
                     <div className="max-w-xl mx-auto space-y-8">
-                        <div className="flex flex-col items-center gap-2">
-                            <Avatar className="h-24 w-24"><AvatarFallback className="bg-green-100 text-green-800 text-4xl font-bold border">{initials || 'CL'}</AvatarFallback></Avatar>
-                            <Button variant="link" type="button" className="text-primary font-semibold">Change Image</Button>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-16 w-16"><AvatarFallback className="bg-blue-100 text-blue-800 text-2xl font-bold border">{initials || 'CL'}</AvatarFallback></Avatar>
+                            <div>
+                                <p className="font-semibold text-lg">{fullName}</p>
+                                <Button variant="link" type="button" className="text-pink-600 font-semibold p-0 h-auto">Change Image</Button>
+                            </div>
                         </div>
                         <div className="space-y-6">
                             <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label><FormControl><Input id="fullName" placeholder="Client full name..." className="bg-gray-50 mt-1" {...field} /></FormControl><FormMessage /></FormItem>)} />

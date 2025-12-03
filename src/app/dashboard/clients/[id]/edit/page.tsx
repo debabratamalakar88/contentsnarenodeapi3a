@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChevronLeft, Info, Loader2, X } from "lucide-react"
+import { ChevronLeft, Info, Loader2, User, X } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
@@ -153,7 +153,13 @@ export default function EditClientPage() {
                 </header>
                  <main className="flex-1 overflow-y-auto p-8">
                     <div className="max-w-xl mx-auto space-y-8">
-                        <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-24 w-24 rounded-full" />
+                             <div className="space-y-2">
+                                <Skeleton className="h-6 w-40" />
+                                <Skeleton className="h-5 w-28" />
+                            </div>
+                        </div>
                         <div className="space-y-6">
                             <Skeleton className="h-10 w-full" />
                             <Skeleton className="h-10 w-full" />
@@ -211,13 +217,16 @@ export default function EditClientPage() {
                         <TabsContent value="client-details">
                             <Card className="max-w-xl mx-auto">
                                 <CardContent className="p-8 space-y-8">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Avatar className="h-24 w-24">
-                                            <AvatarFallback className="bg-blue-100 text-blue-800 text-4xl font-bold border">
+                                    <div className="flex items-center gap-4">
+                                        <Avatar className="h-16 w-16">
+                                            <AvatarFallback className="bg-blue-100 text-blue-800 text-2xl font-bold border">
                                                 {initials || '?'}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <Button variant="link" type="button" className="text-pink-600 font-semibold">Change Image</Button>
+                                        <div>
+                                            <p className="font-semibold text-lg">{fullName}</p>
+                                            <Button variant="link" type="button" className="text-pink-600 font-semibold p-0 h-auto">Change Image</Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-6">
                                         <FormField
