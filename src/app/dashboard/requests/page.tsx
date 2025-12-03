@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { 
@@ -153,7 +152,14 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                                     <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                                     {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                                     {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
-                                    {canManage && <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>}
+                                    {canManage && (
+                                      <>
+                                        <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
                                 </>
                              )}
                         </DropdownMenuContent>
@@ -296,7 +302,14 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                             <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                             {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                             {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
-                            {canManage && <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>}
+                            {canManage && (
+                              <>
+                                <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                </DropdownMenuItem>
+                              </>
+                            )}
                         </>
                      )}
                   </DropdownMenuContent>
@@ -560,7 +573,7 @@ export default function RequestsPage() {
                         <span className="text-sm text-muted-foreground">View:</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 h-9">
+                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 hover:bg-primary/10 hover:text-primary h-9">
                                     <ViewIcon className="h-4 w-4" />
                                     {viewMode === 'grid' ? 'Grid' : 'List'}
                                     <ChevronDown className="h-4 w-4" />
