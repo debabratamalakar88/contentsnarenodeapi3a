@@ -161,7 +161,7 @@ export default function DashboardLayout({
           <nav className="ml-auto flex items-center gap-5 text-sm lg:gap-6">
             <NavLinks />
           </nav>
-          <div className="ml-4 mr-2">
+          <div className="ml-6 mr-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full h-9 w-9 bg-pink-500 hover:bg-pink-600">
