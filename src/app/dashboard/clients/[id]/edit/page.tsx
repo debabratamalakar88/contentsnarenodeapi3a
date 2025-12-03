@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChevronLeft, Info, Loader2, User, X, LayoutGrid, List, Search, Layers, MoreHorizontal, Eye, Edit, Archive, ArchiveRestore, Trash2, PlusCircle, Download, Upload } from "lucide-react"
+import { ChevronLeft, Info, Loader2, User, X, LayoutGrid, List, Search, Layers, MoreHorizontal, Eye, Edit, Archive, ArchiveRestore, Trash2, PlusCircle, Download, Upload, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
@@ -99,6 +99,7 @@ export default function EditClientPage() {
     const [allRequests, setAllRequests] = useState<RequestType[]>([]);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState("requests");
 
     const id = Number(params.id);
 
@@ -205,6 +206,7 @@ export default function EditClientPage() {
     };
 
     const initials = getInitials(fullName);
+    const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
     if (isLoading) {
         return (
@@ -258,29 +260,16 @@ export default function EditClientPage() {
                             <p className="text-xs text-muted-foreground">{email}</p>
                         </div>
                         <div className="w-1/3 flex justify-end items-center gap-2">
-                            <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
-                                <Link href="/dashboard/clients">CANCEL</Link>
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                SAVE
-                            </Button>
-                        </div>
-                    </div>
-                </header>
-                <main className="flex-1 overflow-y-auto p-6">
-                    <Tabs defaultValue="requests" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
-                            <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
-                            <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
-                            <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="requests">
-                            <div className="max-w-6xl mx-auto">
-                                <div className="flex justify-end items-center gap-2 mb-4">
-                                     <DropdownMenu>
+                            {activeTab === 'requests' ? (
+                                <>
+                                    <span className="text-sm text-muted-foreground">View:</span>
+                                    <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="text-pink-600 border-pink-200">View: {viewMode === 'grid' ? 'Grid' : 'List'}</Button>
+                                            <Button variant="outline" className="text-pink-600 border-pink-200">
+                                                <ViewIcon className="mr-2 h-4 w-4" />
+                                                {viewMode === 'grid' ? 'Grid' : 'List'}
+                                                <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
+                                            </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
@@ -291,7 +280,30 @@ export default function EditClientPage() {
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input placeholder="Search requests..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                                     </div>
-                                </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
+                                        <Link href="/dashboard/clients">CANCEL</Link>
+                                    </Button>
+                                    <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        SAVE
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </header>
+                <main className="flex-1 overflow-y-auto p-6">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
+                            <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
+                            <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
+                            <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="requests">
+                            <div className="max-w-6xl mx-auto">
                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {filteredRequests.map(req => (
                                         <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} />
@@ -365,12 +377,6 @@ export default function EditClientPage() {
                                                 placeholder="Type a company name and press Enter..."
                                                 className="bg-gray-50 mt-2"
                                             />
-                                             <Alert className="bg-cyan-50 border-cyan-200 text-cyan-900 [&>svg]:text-cyan-600 mt-2">
-                                                <Info className="h-4 w-4" />
-                                                <AlertDescription>
-                                                    Press ENTER after typing the name of a company to add multiple companies to this client.
-                                                </AlertDescription>
-                                            </Alert>
                                         </div>
                                         <FormField
                                             control={form.control}
