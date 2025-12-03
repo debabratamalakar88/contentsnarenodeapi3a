@@ -142,7 +142,7 @@ export default function EditClientPage() {
     if (isLoading) {
         return (
              <div className="flex flex-col h-full bg-white">
-                <header className="sticky top-0 bg-white z-10">
+                <header className="sticky top-16 bg-white z-10">
                     <div className="h-16 flex items-center justify-between px-6 border-b">
                         <Skeleton className="h-8 w-48" />
                         <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export default function EditClientPage() {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full bg-muted/40">
-                <header className="sticky top-0 bg-white z-10">
+                <header className="sticky top-16 bg-white z-10">
                     <div className="h-16 flex items-center justify-between px-6 border-b">
                         <div className="w-1/3">
                             <Button variant="ghost" size="icon" asChild>
