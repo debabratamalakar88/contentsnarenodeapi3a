@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { 
@@ -618,7 +619,7 @@ export default function RequestsPage() {
                         )}
                     </div>
                 </header>
-                 <header className="sticky top-[112px] z-10 flex items-center gap-4 px-6 py-3 border-b bg-background/95 backdrop-blur-sm flex-wrap">
+                 <header className="sticky top-[112px] z-10 flex items-center gap-4 px-6 py-3 border-b bg-card flex-wrap">
                     <div className="flex items-center gap-2 flex-grow">
                         <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
                         <DropdownMenu>
