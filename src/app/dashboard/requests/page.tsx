@@ -618,24 +618,26 @@ export default function RequestsPage() {
                         )}
                     </div>
                 </header>
-                <header className="sticky top-[112px] z-10 flex items-center gap-2 px-6 py-3 border-b bg-background/95 backdrop-blur-sm flex-wrap">
-                    <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
-                    <div className="relative flex-1 max-w-xs">
+                 <header className="sticky top-[112px] z-10 flex items-center gap-4 px-6 py-3 border-b bg-background/95 backdrop-blur-sm flex-wrap">
+                    <div className="flex items-center gap-2 flex-grow">
+                        <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}><DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem><DropdownMenuSeparator/>{requestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                        </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{teamMembers.map(member => <DropdownMenuRadioItem key={member.id} value={String(member.id)}>{member.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                        </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                     <div className="relative max-w-xs w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="Search requests..." className="pl-9 h-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}><DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem><DropdownMenuSeparator/>{requestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{teamMembers.map(member => <DropdownMenuRadioItem key={member.id} value={String(member.id)}>{member.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
                 </header>
                 <main className="flex-1 p-6 overflow-y-auto">
                     {renderContent()}
