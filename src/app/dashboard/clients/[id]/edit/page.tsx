@@ -19,7 +19,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { getClient, updateClient, getRequests, type Request as RequestType, duplicateRequest, softDeleteRequest, forceDeleteRequest } from "@/lib/api"
+import { getClient, updateClient, getRequests, getArchivedRequests, type Request as RequestType, duplicateRequest, softDeleteRequest, forceDeleteRequest, restoreRequest } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
@@ -66,6 +66,7 @@ function EditClientPageComponent() {
     const [dataVersion, setDataVersion] = useState(0);
 
     const [requestToArchive, setRequestToArchive] = useState<RequestType | null>(null);
+    const [requestToRestore, setRequestToRestore] = useState<RequestType | null>(null);
     const [requestToForceDelete, setRequestToForceDelete] = useState<RequestType | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -101,13 +102,17 @@ function EditClientPageComponent() {
             }
 
             try {
-                const [fetchedClient, requestsData] = await Promise.all([
+                const [fetchedClient, requestsData, archivedRequestsData] = await Promise.all([
                     getClient(token, id),
                     getRequests(token),
+                    getArchivedRequests(token)
                 ]);
                 
                 form.reset(fetchedClient);
-                setAllRequests(requestsData.data || []);
+                const activeReqs = requestsData.data || [];
+                const archivedReqs = archivedRequestsData.data || [];
+                setAllRequests([...activeReqs, ...archivedReqs]);
+
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
@@ -180,6 +185,20 @@ function EditClientPageComponent() {
             setRequestToArchive(null);
         }
     };
+    
+    const handleRestore = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToRestore) return;
+        try {
+            await restoreRequest(token, requestToRestore.id);
+            toast({ title: 'Request restored' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error restoring request', description: err.message });
+        } finally {
+            setRequestToRestore(null);
+        }
+    };
 
     const handleForceDelete = async () => {
         const token = localStorage.getItem('authToken');
@@ -201,7 +220,7 @@ function EditClientPageComponent() {
 
     const clientRequests = useMemo(() => {
         return allRequests.filter(req => 
-            req.deleted_at === null && Array.isArray(req.client_id) && req.client_id.includes(id)
+            Array.isArray(req.client_id) && req.client_id.includes(id)
         );
     }, [allRequests, id]);
     
@@ -328,14 +347,18 @@ function EditClientPageComponent() {
                                 <div className="w-full">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         {filteredRequests.map(req => (
-                                            <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} onArchive={setRequestToArchive} onForceDelete={setRequestToForceDelete} onDuplicate={handleDuplicate} canManage={canManageRequests} />
+                                            <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} onArchive={setRequestToArchive} onRestore={setRequestToRestore} onForceDelete={setRequestToForceDelete} onDuplicate={handleDuplicate} canManage={canManageRequests} />
                                         ))}
-                                        <Card className="border-2 border-dashed bg-transparent shadow-none flex flex-col items-center justify-center min-h-[300px]">
-                                            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
-                                            <Layers className="h-8 w-8 text-slate-400" />
-                                            </div>
-                                            <Button variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">ADD NEW REQUEST</Button>
-                                        </Card>
+                                        {canManageRequests && (
+                                            <Card className="border-2 border-dashed bg-transparent shadow-none flex flex-col items-center justify-center min-h-[300px]">
+                                                <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                                                <Layers className="h-8 w-8 text-slate-400" />
+                                                </div>
+                                                <Button variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20" asChild>
+                                                   <Link href={`/dashboard/requests/new?clientId=${id}`}>ADD NEW REQUEST</Link>
+                                                </Button>
+                                            </Card>
+                                        )}
                                     </div>
                                 </div>
                             </TabsContent>
@@ -511,6 +534,13 @@ function EditClientPageComponent() {
                     <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            <AlertDialog open={!!requestToRestore} onOpenChange={(open) => !open && setRequestToRestore(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Restore Request?</AlertDialogTitle><AlertDialogDescription>This will move the request back to the active list.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRestore}>Restore</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
                 <AlertDialogContent>
@@ -522,8 +552,9 @@ function EditClientPageComponent() {
     )
 }
 
-const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchive, onForceDelete, canManage }: { request: RequestType, clientName: string, clientInitials: string, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
+const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchive, onRestore, onForceDelete, canManage }: { request: RequestType, clientName: string, clientInitials: string, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onRestore: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
     const isPublished = request.status === 'published';
+    const isArchived = !!request.deleted_at;
     const enableHoverEffect = canManage;
 
     return (
@@ -543,12 +574,21 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                                 <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
-                                {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
-                                <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => onArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                {isArchived ? (
+                                    <>
+                                        <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                        {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                        <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => onArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
@@ -559,7 +599,7 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                     <h3 className="font-bold">{request.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1">Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</p>
                 </div>
-                 {enableHoverEffect && (
+                 {enableHoverEffect && !isArchived && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                          {isPublished ? (
                             <Button size="sm" className="rounded-full px-8" asChild>
@@ -575,7 +615,11 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                 )}
             </CardContent>
             <CardFooter className="p-4 border-t flex justify-between items-center">
-                <Badge className={cn("capitalize", isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>{request.status}</Badge>
+                 <Badge className={cn("capitalize", 
+                    isArchived ? "bg-red-100 text-red-800" :
+                    isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>
+                    {isArchived ? 'archived' : request.status}
+                </Badge>
             </CardFooter>
         </Card>
     );
@@ -588,3 +632,4 @@ export default function EditClientPage() {
         </Suspense>
     )
 }
+
