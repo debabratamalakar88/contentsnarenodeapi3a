@@ -305,7 +305,7 @@ export default function EditClientPage() {
                             <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
                         </TabsList>
                         <TabsContent value="requests">
-                            <div className="max-w-6xl mx-auto">
+                            <div className="w-full">
                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {filteredRequests.map(req => (
                                         <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} />
@@ -321,14 +321,6 @@ export default function EditClientPage() {
                         </TabsContent>
                         <TabsContent value="client-portal">
                              <div className="max-w-2xl mx-auto text-center py-16">
-                                <Image
-                                    src={placeholderImages.clientPortalEmpty.src}
-                                    alt={placeholderImages.clientPortalEmpty.alt}
-                                    width={250}
-                                    height={250}
-                                    className="mx-auto mb-8"
-                                    data-ai-hint={placeholderImages.clientPortalEmpty["data-ai-hint"]}
-                                />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
                                 <p className="text-muted-foreground max-w-lg mx-auto">
                                     Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
@@ -494,5 +486,3 @@ export default function EditClientPage() {
         </Form>
     )
 }
-
-    
