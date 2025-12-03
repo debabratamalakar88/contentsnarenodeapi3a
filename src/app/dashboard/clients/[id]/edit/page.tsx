@@ -384,6 +384,15 @@ function EditClientPageComponent() {
                                                     {filteredRequests.map(req => (
                                                         <RequestRow key={req.id} request={req} onArchive={setRequestToArchive} onRestore={setRequestToRestore} onForceDelete={setRequestToForceDelete} onDuplicate={handleDuplicate} canManage={canManageRequests} />
                                                     ))}
+                                                    {canManageRequests && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="py-4">
+                                                                <Link href={`/dashboard/requests/new?clientId=${id}`} className="text-primary hover:underline text-sm font-medium">
+                                                                    Add new request...
+                                                                </Link>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
                                                 </TableBody>
                                             </Table>
                                         </Card>
@@ -642,10 +651,16 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                                 <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                             </Button>
                          ) : (
-                            <>
-                                <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
-                                <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
-                            </>
+                            canManage ? (
+                                <>
+                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                                    <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                                </>
+                            ) : (
+                                 <Button size="sm" className="rounded-full px-8" asChild>
+                                    <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
+                                </Button>
+                            )
                          )}
                     </div>
                 )}
@@ -663,7 +678,7 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
 
 const RequestRow = ({ request, onDuplicate, onArchive, onRestore, onForceDelete, canManage }: { request: RequestType, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onRestore: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
     const isArchived = !!request.deleted_at;
-    const canDeletePermanently = canManage; // Simplified for now
+    const canDeletePermanently = canManage;
     
     return (
         <TableRow>
@@ -710,5 +725,3 @@ export default function EditClientPage() {
         </Suspense>
     )
 }
-
-    
