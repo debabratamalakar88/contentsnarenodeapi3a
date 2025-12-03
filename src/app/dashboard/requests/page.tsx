@@ -16,7 +16,8 @@ import {
     ArchiveRestore,
     Trash2,
     Eye,
-    PenSquare
+    PenSquare,
+    Filter
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
@@ -37,6 +38,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import {
   Table,
@@ -58,8 +61,10 @@ import {
   restoreRequest,
   forceDeleteRequest,
   duplicateRequest,
+  getTeamMembers,
   type Request, 
   type Client,
+  type TeamMember,
   getProfile,
   type User as UserType
 } from "@/lib/api";
@@ -283,7 +288,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
             {showActions && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                    <Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -324,6 +329,7 @@ export default function RequestsPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [allRequests, setAllRequests] = useState<Request[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -337,6 +343,11 @@ export default function RequestsPage() {
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
     const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+    
+    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedOwnerId, setSelectedOwnerId] = useState('all');
+    const [selectedClientId, setSelectedClientId] = useState('all');
+
 
     const refetchData = () => setDataVersion(v => v + 1);
 
@@ -354,15 +365,17 @@ export default function RequestsPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const [clientsResponse, profileResponse, requestsResponse, archivedResponse] = await Promise.all([
+                const [clientsResponse, profileResponse, requestsResponse, archivedResponse, teamMembersResponse] = await Promise.all([
                     getClients(token),
                     getProfile(token),
                     getRequests(token),
-                    getArchivedRequests(token)
+                    getArchivedRequests(token),
+                    getTeamMembers(token),
                 ]);
 
                 setClients(clientsResponse || []);
                 setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
+                setTeamMembers(teamMembersResponse || []);
 
                 const active = requestsResponse.data || [];
                 const archived = archivedResponse.data || [];
@@ -387,6 +400,8 @@ export default function RequestsPage() {
     const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
 
     const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
+    const ownerMap = useMemo(() => new Map(teamMembers.map(m => [m.id, m.name])), [teamMembers]);
+
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
     const handleDuplicate = async (requestId: number) => {
@@ -447,13 +462,27 @@ export default function RequestsPage() {
     const filteredRequests = useMemo(() => allRequests.filter(request => {
       const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
       const searchLower = searchQuery.toLowerCase();
-      return (
+      
+      const searchMatch = (
         request.title.toLowerCase().includes(searchLower) ||
         (request.description && request.description.toLowerCase().includes(searchLower)) ||
         clientNames.includes(searchLower)
       );
-    }), [allRequests, searchQuery, clientMap]);
 
+      const status = request.deleted_at ? 'archived' : request.status;
+      const statusMatch = selectedStatus === 'all' || status === selectedStatus;
+      
+      const ownerMatch = selectedOwnerId === 'all' || String(request.created_by) === selectedOwnerId;
+      
+      const clientMatch = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
+      
+      return searchMatch && statusMatch && ownerMatch && clientMatch;
+    }), [allRequests, searchQuery, clientMap, selectedStatus, selectedOwnerId, selectedClientId]);
+
+    const requestStatuses = ['draft', 'published', 'scheduled', 'completed', 'archived'];
+    const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : requestStatuses.find(s => s === selectedStatus) || 'All Statuses';
+    const selectedOwnerName = selectedOwnerId === 'all' ? 'All Owners' : ownerMap.get(Number(selectedOwnerId)) || 'All Owners';
+    const selectedClientName = selectedClientId === 'all' ? 'All Clients' : clientMap.get(Number(selectedClientId)) || 'All Clients';
 
     const renderLoadingSkeleton = () => (
         viewMode === 'grid' ? (
@@ -565,15 +594,13 @@ export default function RequestsPage() {
     return (
         <>
             <div className="flex flex-col h-full bg-muted/40">
-                <header className="sticky top-16 z-10 flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
-                    <div className="flex-grow">
-                        <h1 className="text-xl font-bold">Requests</h1>
-                    </div>
-                    <div className="flex items-center gap-2 ml-auto">
+                <header className="sticky top-16 z-10 flex items-center justify-between gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                    <h1 className="text-xl font-bold">Requests</h1>
+                    <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">View:</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 hover:bg-primary/10 hover:text-primary h-9">
+                                <Button variant="outline" className="flex items-center gap-2 font-semibold border-primary text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary h-9">
                                     <ViewIcon className="h-4 w-4" />
                                     {viewMode === 'grid' ? 'Grid' : 'List'}
                                     <ChevronDown className="h-4 w-4" />
@@ -584,15 +611,6 @@ export default function RequestsPage() {
                                 <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search requests..." 
-                                className="pl-9 h-9"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
                          {canManageRequests && (
                             <Button asChild className="h-9">
                                 <Link href="/dashboard/requests/new"><PlusCircle className="h-4 w-4 mr-2"/>New Request</Link>
@@ -600,7 +618,25 @@ export default function RequestsPage() {
                         )}
                     </div>
                 </header>
-
+                <header className="sticky top-[112px] z-10 flex items-center gap-2 px-6 py-3 border-b bg-background/95 backdrop-blur-sm flex-wrap">
+                    <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
+                    <div className="relative flex-1 max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search requests..." className="pl-9 h-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}><DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem><DropdownMenuSeparator/>{requestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{teamMembers.map(member => <DropdownMenuRadioItem key={member.id} value={String(member.id)}>{member.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    </DropdownMenu>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    </DropdownMenu>
+                </header>
                 <main className="flex-1 p-6 overflow-y-auto">
                     {renderContent()}
                 </main>
