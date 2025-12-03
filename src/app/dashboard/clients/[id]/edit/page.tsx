@@ -179,18 +179,18 @@ export default function EditClientPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full bg-muted/40">
                 <header className="sticky top-0 bg-white z-10">
                     <div className="h-16 flex items-center justify-between px-6 border-b">
-                        <div className="flex items-center gap-2">
+                        <div className="w-1/3">
                             <Button variant="ghost" size="icon" asChild>
                                 <Link href="/dashboard/clients">
                                     <ChevronLeft className="h-5 w-5" />
                                 </Link>
                             </Button>
-                            <div className="text-center">
-                                <h1 className="text-sm font-semibold">{fullName}</h1>
-                                <p className="text-xs text-muted-foreground">{email}</p>
-                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="w-1/3 text-center">
+                            <h1 className="text-sm font-semibold">{fullName}</h1>
+                            <p className="text-xs text-muted-foreground">{email}</p>
+                        </div>
+                        <div className="w-1/3 flex justify-end items-center gap-2">
                             <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
                                 <Link href="/dashboard/clients">CANCEL</Link>
                             </Button>
