@@ -297,14 +297,17 @@ export default function ClientsPage() {
                         {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                         </>
                     )
-                    ) : canManageClients ? (
+                    ) : (
                     <>
                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                        {canManageClients && (
+                            <>
+                                <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                            </>
+                        )}
                     </>
-                    ) : (
-                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
                 </DropdownMenu>
@@ -379,14 +382,17 @@ export default function ClientsPage() {
                                             {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                                         </>
                                         )
-                                    ) : canManageClients ? (
+                                    ) : (
                                         <>
                                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                                        {canManageClients && (
+                                            <>
+                                                <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                            </>
+                                        )}
+                                    </>
                                     )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
