@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useParams, usePathname, useSearchParams } from "next/navigation"
 import { format, parseISO } from 'date-fns';
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,19 +14,19 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChevronLeft, Info, Loader2, User, X, LayoutGrid, List, Search, Layers, MoreHorizontal, Eye, Edit, Archive, ArchiveRestore, Trash2, PlusCircle, Download, Upload, ChevronDown } from "lucide-react"
+import { ChevronLeft, Info, Loader2, User, X, LayoutGrid, List, Search, Layers, MoreHorizontal, Eye, Edit, Archive, ArchiveRestore, Trash2, PlusCircle, Download, Upload, ChevronDown, Copy, Users as UsersIcon } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { getClient, updateClient, getRequests, type Request as RequestType } from "@/lib/api"
+import { getClient, updateClient, getRequests, type Request as RequestType, duplicateRequest, softDeleteRequest, forceDeleteRequest } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils"
-import placeholderImages from '@/app/lib/placeholder-images.json'
 
 const clientFormSchema = z.object({
   full_name: z.string().min(1, "Full name is required."),
@@ -50,49 +49,6 @@ const getInitials = (name: string): string => {
 }
 
 
-const RequestCard = ({ request, clientName, clientInitials }: { request: RequestType, clientName: string, clientInitials: string }) => {
-    const isPublished = request.status === 'published';
-    const hasHoverEffect = false;
-    
-    return (
-        <Card className="flex flex-col shadow-sm">
-            <CardHeader className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 text-sm"><AvatarFallback className="bg-pink-100 text-pink-700">{clientInitials}</AvatarFallback></Avatar>
-                        <div>
-                            <p className="font-semibold">{clientName}</p>
-                            <p className="text-xs text-muted-foreground">Client</p>
-                        </div>
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem>View</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 flex-grow space-y-3">
-                <h3 className="font-bold text-lg">{request.title}</h3>
-                <p className="text-sm text-muted-foreground">Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</p>
-                <Progress value={0} className="h-2" />
-                <div className="grid grid-cols-3 text-center">
-                    <div><p className="font-bold text-lg">0</p><p className="text-xs text-muted-foreground">Approved</p></div>
-                    <div><p className="font-bold text-lg">0</p><p className="text-xs text-muted-foreground">Complete</p></div>
-                    <div><p className="font-bold text-lg">37</p><p className="text-xs text-muted-foreground">To Do</p></div>
-                </div>
-            </CardContent>
-            <CardFooter className="p-4 border-t flex justify-between items-center">
-                <Badge className={cn("capitalize", isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>{request.status}</Badge>
-                {request.communication_mode && <Info className="h-4 w-4 text-muted-foreground" />}
-            </CardFooter>
-        </Card>
-    );
-};
-
 function EditClientPageComponent() {
     const router = useRouter();
     const params = useParams();
@@ -107,6 +63,11 @@ function EditClientPageComponent() {
     
     const initialTab = searchParams.get('tab') || 'requests';
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [dataVersion, setDataVersion] = useState(0);
+
+    const [requestToArchive, setRequestToArchive] = useState<RequestType | null>(null);
+    const [requestToForceDelete, setRequestToForceDelete] = useState<RequestType | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const id = Number(params.id);
 
@@ -123,7 +84,12 @@ function EditClientPageComponent() {
         }
     });
 
+    const refetchData = () => setDataVersion(v => v + 1);
+
     useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        setUserRole(role);
+        
         if (!id) return;
 
         async function fetchClientData() {
@@ -153,7 +119,9 @@ function EditClientPageComponent() {
             }
         }
         fetchClientData();
-    }, [id, router, toast, form]);
+    }, [id, router, toast, form, dataVersion]);
+
+    const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
 
     const { isSubmitting } = form.formState;
 
@@ -185,6 +153,47 @@ function EditClientPageComponent() {
         setActiveTab(tab);
         router.push(`${pathname}?tab=${tab}`, { scroll: false });
     };
+    
+    const handleDuplicate = async (requestId: number) => {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        toast({ title: 'Duplicating request...', description: 'Please wait.'});
+        try {
+            await duplicateRequest(token, requestId);
+            toast({ title: 'Success', description: 'Request duplicated successfully.' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error duplicating request', description: err.message });
+        }
+    };
+    
+    const handleArchive = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToArchive) return;
+        try {
+            await softDeleteRequest(token, requestToArchive.id);
+            toast({ title: 'Request archived' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
+        } finally {
+            setRequestToArchive(null);
+        }
+    };
+
+    const handleForceDelete = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !requestToForceDelete) return;
+        try {
+            await forceDeleteRequest(token, requestToForceDelete.id);
+            toast({ title: 'Request permanently deleted' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
+        } finally {
+            setRequestToForceDelete(null);
+        }
+    };
 
     const companies = form.watch("companies", []);
     const fullName = form.watch("full_name");
@@ -192,7 +201,7 @@ function EditClientPageComponent() {
 
     const clientRequests = useMemo(() => {
         return allRequests.filter(req => 
-            Array.isArray(req.client_id) && req.client_id.includes(id)
+            req.deleted_at === null && Array.isArray(req.client_id) && req.client_id.includes(id)
         );
     }, [allRequests, id]);
     
@@ -256,246 +265,321 @@ function EditClientPageComponent() {
     }
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full bg-muted/40">
-                <header className="sticky top-16 bg-white z-10">
-                    <div className="h-16 flex items-center justify-between px-6 border-b">
-                        <div className="w-1/3">
-                            <Button variant="ghost" size="icon" asChild>
-                                <Link href="/dashboard/clients">
-                                    <ChevronLeft className="h-5 w-5" />
-                                </Link>
-                            </Button>
-                        </div>
-                        <div className="w-1/3 text-center">
-                            <h1 className="text-sm font-semibold">{fullName}</h1>
-                            <p className="text-xs text-muted-foreground">{email}</p>
-                        </div>
-                        <div className="w-1/3 flex justify-end items-center gap-2">
-                            {activeTab === 'requests' ? (
-                                <>
-                                    <span className="text-sm text-muted-foreground">View:</span>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="text-pink-600 border-pink-200">
-                                                <ViewIcon className="mr-2 h-4 w-4" />
-                                                {viewMode === 'grid' ? 'Grid' : 'List'}
-                                                <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                            <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                     </DropdownMenu>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input placeholder="Search requests..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                                    </div>
-                                </>
-                            ) : activeTab === 'client-details' ? (
-                                <>
-                                    <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
-                                        <Link href="/dashboard/clients">CANCEL</Link>
-                                    </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        SAVE
-                                    </Button>
-                                </>
-                            ) : null}
-                        </div>
-                    </div>
-                </header>
-                <main className="flex-1 overflow-y-auto p-6">
-                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
-                            <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
-                            <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
-                            <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="requests">
-                            <div className="w-full">
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {filteredRequests.map(req => (
-                                        <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} />
-                                    ))}
-                                    <Card className="border-2 border-dashed bg-transparent shadow-none flex flex-col items-center justify-center min-h-[300px]">
-                                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
-                                          <Layers className="h-8 w-8 text-slate-400" />
-                                        </div>
-                                        <Button variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">ADD NEW REQUEST</Button>
-                                    </Card>
-                                </div>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="client-portal">
-                            <div className="max-w-2xl mx-auto text-center py-16">
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
-                                <p className="text-muted-foreground max-w-lg mx-auto">
-                                    Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
-                                </p>
-                                <p className="text-muted-foreground max-w-lg mx-auto mt-4">
-                                    Upload anything you like: invoices, completed docs, past advice, communication, and more.
-                                </p>
-                                <p className="text-muted-foreground max-w-lg mx-auto mt-4">
-                                    Everything's in one spot, ready to download on demand.
-                                </p>
-                                <Button size="lg" className="mt-8 bg-blue-600 hover:bg-blue-700 text-base font-bold rounded-full">
-                                    UPLOAD YOUR FIRST FILES HERE
+        <>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full bg-muted/40">
+                    <header className="sticky top-16 bg-white z-10">
+                        <div className="h-16 flex items-center justify-between px-6 border-b">
+                            <div className="w-1/3">
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link href="/dashboard/clients">
+                                        <ChevronLeft className="h-5 w-5" />
+                                    </Link>
                                 </Button>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="client-details">
-                            <Card className="max-w-xl mx-auto">
-                                <CardContent className="p-8 space-y-8">
-                                    <div className="flex items-center gap-4">
-                                        <Avatar className="h-16 w-16">
-                                            <AvatarFallback className="bg-blue-100 text-blue-800 text-2xl font-bold border">
-                                                {initials || '?'}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold text-lg">{fullName}</p>
-                                            <Button variant="link" type="button" className="text-pink-600 font-semibold p-0 h-auto">Change Image</Button>
+                            <div className="w-1/3 text-center">
+                                <h1 className="text-sm font-semibold">{fullName}</h1>
+                                <p className="text-xs text-muted-foreground">{email}</p>
+                            </div>
+                            <div className="w-1/3 flex justify-end items-center gap-2">
+                                {activeTab === 'requests' ? (
+                                    <>
+                                        <span className="text-sm text-muted-foreground">View:</span>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="text-pink-600 border-pink-200">
+                                                    <ViewIcon className="mr-2 h-4 w-4" />
+                                                    {viewMode === 'grid' ? 'Grid' : 'List'}
+                                                    <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input placeholder="Search requests..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                                         </div>
-                                    </div>
-                                    <div className="space-y-6">
-                                        <FormField
-                                            control={form.control}
-                                            name="full_name"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label>
-                                                    <FormControl><Input id="fullName" className="bg-gray-50 mt-1" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label>
-                                                    <FormControl><Input id="emailAddress" type="email" className="bg-gray-50 mt-1" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <div>
-                                            <Label htmlFor="companyName" className="font-semibold text-gray-700">Company Name (optional)</Label>
-                                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                {companies?.map((company, index) => (
-                                                    <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">
-                                                        {company}
-                                                        <button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary">
-                                                            <X className="h-3 w-3" />
-                                                        </button>
-                                                    </Badge>
-                                                ))}
+                                    </>
+                                ) : activeTab === 'client-details' ? (
+                                    <>
+                                        <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
+                                            <Link href="/dashboard/clients">CANCEL</Link>
+                                        </Button>
+                                        <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            SAVE
+                                        </Button>
+                                    </>
+                                ) : null}
+                            </div>
+                        </div>
+                    </header>
+                    <main className="flex-1 overflow-y-auto p-6">
+                        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
+                                <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
+                                <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
+                                <TabsTrigger value="client-details" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT DETAILS</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="requests">
+                                <div className="w-full">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {filteredRequests.map(req => (
+                                            <RequestCard key={req.id} request={req} clientName={fullName} clientInitials={initials} onArchive={setRequestToArchive} onForceDelete={setRequestToForceDelete} onDuplicate={handleDuplicate} canManage={canManageRequests} />
+                                        ))}
+                                        <Card className="border-2 border-dashed bg-transparent shadow-none flex flex-col items-center justify-center min-h-[300px]">
+                                            <div className="flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-4">
+                                            <Layers className="h-8 w-8 text-slate-400" />
                                             </div>
-                                            <Input
-                                                id="companyName"
-                                                value={companyInput}
-                                                onChange={(e) => setCompanyInput(e.target.value)}
-                                                onKeyDown={handleCompanyKeyDown}
-                                                placeholder="Type a company name and press Enter..."
-                                                className="bg-gray-50 mt-2"
-                                            />
+                                            <Button variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">ADD NEW REQUEST</Button>
+                                        </Card>
+                                    </div>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="client-portal">
+                                <div className="max-w-2xl mx-auto text-center py-16">
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
+                                    <p className="text-muted-foreground max-w-lg mx-auto">
+                                        Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
+                                    </p>
+                                    <p className="text-muted-foreground max-w-lg mx-auto mt-4">
+                                        Upload anything you like: invoices, completed docs, past advice, communication, and more.
+                                    </p>
+                                    <p className="text-muted-foreground max-w-lg mx-auto mt-4">
+                                        Everything's in one spot, ready to download on demand.
+                                    </p>
+                                    <Button size="lg" className="mt-8 bg-blue-600 hover:bg-blue-700 text-base font-bold rounded-full">
+                                        UPLOAD YOUR FIRST FILES HERE
+                                    </Button>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="client-details">
+                                <Card className="max-w-xl mx-auto">
+                                    <CardContent className="p-8 space-y-8">
+                                        <div className="flex items-center gap-4">
+                                            <Avatar className="h-16 w-16">
+                                                <AvatarFallback className="bg-blue-100 text-blue-800 text-2xl font-bold border">
+                                                    {initials || '?'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold text-lg">{fullName}</p>
+                                                <Button variant="link" type="button" className="text-pink-600 font-semibold p-0 h-auto">Change Image</Button>
+                                            </div>
                                         </div>
-                                        <FormField
-                                            control={form.control}
-                                            name="phone_number"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="phoneNumber" className="font-semibold text-gray-700">Phone Number (optional)</Label>
-                                                    <div className="flex items-center mt-1">
-                                                        <Select defaultValue="us">
-                                                            <SelectTrigger className="w-[80px] rounded-r-none bg-gray-50"><SelectValue /></SelectTrigger>
+                                        <div className="space-y-6">
+                                            <FormField
+                                                control={form.control}
+                                                name="full_name"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="fullName" className="font-semibold text-gray-700">Full Name</Label>
+                                                        <FormControl><Input id="fullName" className="bg-gray-50 mt-1" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="email"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="emailAddress" className="font-semibold text-gray-700">Email Address</Label>
+                                                        <FormControl><Input id="emailAddress" type="email" className="bg-gray-50 mt-1" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <div>
+                                                <Label htmlFor="companyName" className="font-semibold text-gray-700">Company Name (optional)</Label>
+                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                    {companies?.map((company, index) => (
+                                                        <Badge key={index} variant="secondary" className="pl-3 pr-2 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-md">
+                                                            {company}
+                                                            <button type="button" onClick={() => removeCompany(company)} className="ml-1.5 rounded-full hover:bg-gray-300/50 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary">
+                                                                <X className="h-3 w-3" />
+                                                            </button>
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                                <Input
+                                                    id="companyName"
+                                                    value={companyInput}
+                                                    onChange={(e) => setCompanyInput(e.target.value)}
+                                                    onKeyDown={handleCompanyKeyDown}
+                                                    placeholder="Type a company name and press Enter..."
+                                                    className="bg-gray-50 mt-2"
+                                                />
+                                            </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="phone_number"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="phoneNumber" className="font-semibold text-gray-700">Phone Number (optional)</Label>
+                                                        <div className="flex items-center mt-1">
+                                                            <Select defaultValue="us">
+                                                                <SelectTrigger className="w-[80px] rounded-r-none bg-gray-50"><SelectValue /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="in">🇮🇳</SelectItem>
+                                                                    <SelectItem value="us">🇺🇸</SelectItem>
+                                                                    <SelectItem value="gb">🇬🇧</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormControl>
+                                                                <Input id="phoneNumber" type="tel" placeholder="(415) 555-1212" className="rounded-l-none bg-gray-50" {...field} value={field.value ?? ''} />
+                                                            </FormControl>
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="app_language"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="appLanguage" className="flex items-center gap-1.5 font-semibold text-gray-700">
+                                                            Application Language <Info className="w-4 h-4 text-gray-400" />
+                                                        </Label>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl><SelectTrigger id="appLanguage" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
-                                                                <SelectItem value="in">🇮🇳</SelectItem>
-                                                                <SelectItem value="us">🇺🇸</SelectItem>
-                                                                <SelectItem value="gb">🇬🇧</SelectItem>
+                                                                <SelectItem value="english">English</SelectItem>
+                                                                <SelectItem value="spanish">Spanish</SelectItem>
                                                             </SelectContent>
                                                         </Select>
-                                                        <FormControl>
-                                                            <Input id="phoneNumber" type="tel" placeholder="(415) 555-1212" className="rounded-l-none bg-gray-50" {...field} value={field.value ?? ''} />
-                                                        </FormControl>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="app_language"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="appLanguage" className="flex items-center gap-1.5 font-semibold text-gray-700">
-                                                        Application Language <Info className="w-4 h-4 text-gray-400" />
-                                                    </Label>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger id="appLanguage" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="english">English</SelectItem>
-                                                            <SelectItem value="spanish">Spanish</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="date_format"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">Date Format <Info className="w-4 h-4 text-gray-400" /></Label>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger id="dateFormat" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
-                                                            <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
-                                                            <SelectItem value="yyyy/mm/dd">YYYY/MM/DD</SelectItem>
-                                                            <SelectItem value="mm-dd-yyyy">MM-DD-YYYY</SelectItem>
-                                                            <SelectItem value="dd-mm-yyyy">DD-MM-YYYY</SelectItem>
-                                                            <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
-                                                            <SelectItem value="dd.mm.yyyy">DD.MM.YYYY</SelectItem>
-                                                            <SelectItem value="yyyy.mm.dd">YYYY.MM.DD</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="time_zone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label htmlFor="timeZone" className="flex items-center gap-1.5 font-semibold text-gray-700">Time Zone <Info className="w-4 h-4 text-gray-400" /></Label>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger id="timeZone" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="ist">(+05:30) India Standard Time</SelectItem>
-                                                            <SelectItem value="pst">(-08:00) Pacific Standard Time</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
-                </main>
-            </form>
-        </Form>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="date_format"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">Date Format <Info className="w-4 h-4 text-gray-400" /></Label>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl><SelectTrigger id="dateFormat" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                                                                <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                                                                <SelectItem value="yyyy/mm/dd">YYYY/MM/DD</SelectItem>
+                                                                <SelectItem value="mm-dd-yyyy">MM-DD-YYYY</SelectItem>
+                                                                <SelectItem value="dd-mm-yyyy">DD-MM-YYYY</SelectItem>
+                                                                <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                                                                <SelectItem value="dd.mm.yyyy">DD.MM.YYYY</SelectItem>
+                                                                <SelectItem value="yyyy.mm.dd">YYYY.MM.DD</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="time_zone"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <Label htmlFor="timeZone" className="flex items-center gap-1.5 font-semibold text-gray-700">Time Zone <Info className="w-4 h-4 text-gray-400" /></Label>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl><SelectTrigger id="timeZone" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="ist">(+05:30) India Standard Time</SelectItem>
+                                                                <SelectItem value="pst">(-08:00) Pacific Standard Time</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </main>
+                </form>
+            </Form>
+            
+            <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Delete Permanently?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. All data for this request will be permanently deleted.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleForceDelete}>Delete</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }
+
+const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchive, onForceDelete, canManage }: { request: RequestType, clientName: string, clientInitials: string, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
+    const isPublished = request.status === 'published';
+    const enableHoverEffect = canManage;
+
+    return (
+        <Card className={cn("flex flex-col shadow-sm", enableHoverEffect && "group")}>
+            <CardHeader className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 text-sm"><AvatarFallback className="bg-pink-100 text-pink-700">{clientInitials}</AvatarFallback></Avatar>
+                        <div>
+                            <p className="font-semibold">{clientName}</p>
+                            <p className="text-xs text-muted-foreground">Client</p>
+                        </div>
+                    </div>
+                     {canManage && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => onArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 flex-grow space-y-3 relative min-h-[120px]">
+                <div className={cn("transition-opacity duration-200", enableHoverEffect && "group-hover:opacity-0")}>
+                    <h3 className="font-bold">{request.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</p>
+                </div>
+                 {enableHoverEffect && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                         {isPublished ? (
+                            <Button size="sm" className="rounded-full px-8" asChild>
+                                <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
+                            </Button>
+                         ) : (
+                            <>
+                                <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                                <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                            </>
+                         )}
+                    </div>
+                )}
+            </CardContent>
+            <CardFooter className="p-4 border-t flex justify-between items-center">
+                <Badge className={cn("capitalize", isPublished ? "bg-cyan-100 text-cyan-800" : "bg-gray-100 text-gray-800")}>{request.status}</Badge>
+            </CardFooter>
+        </Card>
+    );
+};
 
 export default function EditClientPage() {
     return (
