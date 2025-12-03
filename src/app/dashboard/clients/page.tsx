@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye, Edit, Archive, ArchiveRestore, Trash2, Upload, Download } from "lucide-react";
+import { Search, LayoutGrid, MoreHorizontal, ChevronDown, List, ArrowUpDown, Layers, Loader2, PlusCircle, Eye, Edit, Archive, ArchiveRestore, Trash2, Upload, Download, Layers2 } from "lucide-react";
 import { getClients, getArchivedClients, createClient, deleteClient, restoreClient, forceDeleteClient, type Client, getProfile, type User } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -301,10 +301,11 @@ export default function ClientsPage() {
                     <>
                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
                         {canManageClients && (
                             <>
                                 <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                             </>
                         )}
                     </>
@@ -386,10 +387,11 @@ export default function ClientsPage() {
                                         <>
                                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
                                         {canManageClients && (
                                             <>
                                                 <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
+                                                {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                                             </>
                                         )}
                                     </>
@@ -598,5 +600,5 @@ export default function ClientsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
+  )
 }
