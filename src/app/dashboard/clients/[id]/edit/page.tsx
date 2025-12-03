@@ -109,8 +109,8 @@ function EditClientPageComponent() {
                 ]);
                 
                 form.reset(fetchedClient);
-                const activeReqs = requestsData.data || [];
-                const archivedReqs = archivedRequestsData.data || [];
+                const activeReqs = (requestsData.data || []).map(r => ({...r, deleted_at: null}));
+                const archivedReqs = (archivedRequestsData.data || []).map(r => ({...r, deleted_at: r.deleted_at || new Date().toISOString()}));
                 setAllRequests([...activeReqs, ...archivedReqs]);
 
             } catch (err: any) {
@@ -555,7 +555,7 @@ function EditClientPageComponent() {
 const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchive, onRestore, onForceDelete, canManage }: { request: RequestType, clientName: string, clientInitials: string, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onRestore: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
     const isPublished = request.status === 'published';
     const isArchived = !!request.deleted_at;
-    const enableHoverEffect = canManage;
+    const enableHoverEffect = canManage || isArchived;
 
     return (
         <Card className={cn("flex flex-col shadow-sm", enableHoverEffect && "group")}>
@@ -568,27 +568,18 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                             <p className="text-xs text-muted-foreground">Client</p>
                         </div>
                     </div>
-                     {canManage && (
+                     {canManage && !isArchived && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                {isArchived ? (
-                                    <>
-                                        <DropdownMenuItem onClick={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                                    </>
-                                ) : (
-                                    <>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
-                                        {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
-                                        <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => onArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                                    </>
-                                )}
+                                <DropdownMenuItem asChild><Link href={`/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => onArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
@@ -599,9 +590,14 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
                     <h3 className="font-bold">{request.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1">Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</p>
                 </div>
-                 {enableHoverEffect && !isArchived && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                         {isPublished ? (
+                 {enableHoverEffect && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-card/80">
+                         {isArchived ? (
+                             <>
+                                <Button size="sm" className="rounded-full px-8 bg-blue-600 hover:bg-blue-700" onClick={() => onRestore(request)}>RESTORE</Button>
+                                <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                             </>
+                         ) : isPublished ? (
                             <Button size="sm" className="rounded-full px-8" asChild>
                                 <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
                             </Button>
@@ -632,4 +628,3 @@ export default function EditClientPage() {
         </Suspense>
     )
 }
-
