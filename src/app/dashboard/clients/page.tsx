@@ -299,12 +299,12 @@ export default function ClientsPage() {
                     )
                     ) : canManageClients ? (
                     <>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                     </>
                     ) : (
-                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
                 </DropdownMenu>
@@ -381,12 +381,12 @@ export default function ClientsPage() {
                                         )
                                     ) : canManageClients ? (
                                         <>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                                         <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                                         </>
                                     ) : (
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
                                     )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>

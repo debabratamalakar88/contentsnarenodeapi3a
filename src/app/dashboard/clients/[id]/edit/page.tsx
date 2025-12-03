@@ -1,11 +1,11 @@
 
 'use client'
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, Suspense } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { format, parseISO } from 'date-fns';
 import Image from "next/image"
 
@@ -91,17 +91,19 @@ const RequestCard = ({ request, clientName, clientInitials }: { request: Request
     );
 };
 
-
-export default function EditClientPage() {
+function EditClientPageComponent() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const [companyInput, setCompanyInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [allRequests, setAllRequests] = useState<RequestType[]>([]);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState("requests");
+    
+    const initialTab = searchParams.get('tab') || 'requests';
+    const [activeTab, setActiveTab] = useState(initialTab === 'client-details' ? initialTab : 'requests');
 
     const id = Number(params.id);
 
@@ -320,7 +322,15 @@ export default function EditClientPage() {
                             </div>
                         </TabsContent>
                         <TabsContent value="client-portal">
-                             <div className="max-w-2xl mx-auto text-center py-16">
+                            <div className="max-w-2xl mx-auto text-center py-16">
+                                <Image
+                                    src={placeholderImages.clientPortalEmpty.src}
+                                    alt={placeholderImages.clientPortalEmpty.alt}
+                                    width={250}
+                                    height={250}
+                                    className="mx-auto mb-8"
+                                    data-ai-hint={placeholderImages.clientPortalEmpty['data-ai-hint']}
+                                />
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">You haven't added any files for this client yet</h2>
                                 <p className="text-muted-foreground max-w-lg mx-auto">
                                     Client Portal gives your clients one easy place to access the files you've shared with them - anytime, without sending you yet another email.
@@ -484,5 +494,13 @@ export default function EditClientPage() {
                 </main>
             </form>
         </Form>
+    )
+}
+
+export default function EditClientPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>}>
+            <EditClientPageComponent />
+        </Suspense>
     )
 }
