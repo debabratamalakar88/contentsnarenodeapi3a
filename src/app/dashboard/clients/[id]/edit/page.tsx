@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, Suspense } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useRouter, useParams, useSearchParams } from "next/navigation"
+import { useRouter, useParams, usePathname, useSearchParams } from "next/navigation"
 import { format, parseISO } from 'date-fns';
 import Image from "next/image"
 
@@ -94,6 +94,7 @@ const RequestCard = ({ request, clientName, clientInitials }: { request: Request
 function EditClientPageComponent() {
     const router = useRouter();
     const params = useParams();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const [companyInput, setCompanyInput] = useState("");
@@ -103,7 +104,7 @@ function EditClientPageComponent() {
     const [searchQuery, setSearchQuery] = useState('');
     
     const initialTab = searchParams.get('tab') || 'requests';
-    const [activeTab, setActiveTab] = useState(initialTab === 'client-details' ? initialTab : 'requests');
+    const [activeTab, setActiveTab] = useState(initialTab);
 
     const id = Number(params.id);
 
@@ -177,6 +178,11 @@ function EditClientPageComponent() {
             });
         }
     }
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        router.push(`${pathname}?tab=${tab}`, { scroll: false });
+    };
 
     const companies = form.watch("companies", []);
     const fullName = form.watch("full_name");
@@ -300,7 +306,7 @@ function EditClientPageComponent() {
                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto p-6">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                         <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto bg-transparent mb-6">
                             <TabsTrigger value="requests" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">REQUESTS</TabsTrigger>
                             <TabsTrigger value="client-portal" className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-600 data-[state=active]:text-pink-600 rounded-none">CLIENT PORTAL</TabsTrigger>
@@ -504,3 +510,5 @@ export default function EditClientPage() {
         </Suspense>
     )
 }
+
+    
