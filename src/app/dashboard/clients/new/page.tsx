@@ -47,7 +47,7 @@ export default function NewClientPage() {
             companies: [],
             phone_number: "",
             app_language: "english",
-            date_format: "ddmmyyyy",
+            date_format: "mm/dd/yyyy",
             time_zone: "ist",
         }
     });
@@ -275,9 +275,14 @@ export default function NewClientPage() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="ddmmyyyy">DD/MM/YYYY</SelectItem>
-                                                <SelectItem value="mmddyyyy">MM/DD/YYYY</SelectItem>
-                                                <SelectItem value="yyyymmdd">YYYY-MM-DD</SelectItem>
+                                                <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                                                <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                                                <SelectItem value="yyyy/mm/dd">YYYY/MM/DD</SelectItem>
+                                                <SelectItem value="mm-dd-yyyy">MM-DD-YYYY</SelectItem>
+                                                <SelectItem value="dd-mm-yyyy">DD-MM-YYYY</SelectItem>
+                                                <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                                                <SelectItem value="dd.mm.yyyy">DD.MM.YYYY</SelectItem>
+                                                <SelectItem value="yyyy.mm.dd">YYYY.MM.DD</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

@@ -46,7 +46,7 @@ export default function NewAdminClientPage() {
             companies: [],
             phone_number: "",
             app_language: "english",
-            date_format: "ddmmyyyy",
+            date_format: "mm/dd/yyyy",
             time_zone: "ist",
         }
     });
@@ -169,7 +169,16 @@ export default function NewAdminClientPage() {
                             
                             <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem><Label htmlFor="phoneNumber" className="font-semibold text-gray-700">Phone Number (optional)</Label><div className="flex items-center mt-1"><Select defaultValue="in"><SelectTrigger className="w-[80px] rounded-r-none bg-gray-50"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="in">🇮🇳</SelectItem><SelectItem value="us">🇺🇸</SelectItem><SelectItem value="gb">🇬🇧</SelectItem></SelectContent></Select><FormControl><Input id="phoneNumber" type="tel" placeholder="(415) 555-1212" className="rounded-l-none bg-gray-50" {...field} value={field.value ?? ''} /></FormControl></div><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="app_language" render={({ field }) => (<FormItem><Label htmlFor="appLanguage" className="flex items-center gap-1.5 font-semibold text-gray-700">Application Language <Info className="w-4 h-4 text-gray-400" /></Label><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger id="appLanguage" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="english">English</SelectItem><SelectItem value="spanish">Spanish</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="date_format" render={({ field }) => (<FormItem><Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">Date Format <Info className="w-4 h-4 text-gray-400" /></Label><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger id="dateFormat" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ddmmyyyy">DD/MM/YYYY</SelectItem><SelectItem value="mmddyyyy">MM/DD/YYYY</SelectItem><SelectItem value="yyyymmdd">YYYY-MM-DD</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="date_format" render={({ field }) => (<FormItem><Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">Date Format <Info className="w-4 h-4 text-gray-400" /></Label><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger id="dateFormat" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl><SelectContent>
+                                                            <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                                                            <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                                                            <SelectItem value="yyyy/mm/dd">YYYY/MM/DD</SelectItem>
+                                                            <SelectItem value="mm-dd-yyyy">MM-DD-YYYY</SelectItem>
+                                                            <SelectItem value="dd-mm-yyyy">DD-MM-YYYY</SelectItem>
+                                                            <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                                                            <SelectItem value="dd.mm.yyyy">DD.MM.YYYY</SelectItem>
+                                                            <SelectItem value="yyyy.mm.dd">YYYY.MM.DD</SelectItem>
+                                                        </SelectContent></Select><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="time_zone" render={({ field }) => (<FormItem><Label htmlFor="timeZone" className="flex items-center gap-1.5 font-semibold text-gray-700">Time Zone <Info className="w-4 h-4 text-gray-400" /></Label><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger id="timeZone" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="ist">(+05:30) India Standard Time</SelectItem><SelectItem value="pst">(-08:00) Pacific Standard Time</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         </div>
                     </div>
