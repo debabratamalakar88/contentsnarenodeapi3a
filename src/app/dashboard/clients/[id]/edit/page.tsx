@@ -283,7 +283,7 @@ export default function EditClientPage() {
                                         <Input placeholder="Search requests..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                                     </div>
                                 </>
-                            ) : (
+                            ) : activeTab === 'client-details' ? (
                                 <>
                                     <Button variant="outline" type="button" asChild className="text-gray-700 font-semibold border-gray-300">
                                         <Link href="/dashboard/clients">CANCEL</Link>
@@ -293,7 +293,7 @@ export default function EditClientPage() {
                                         SAVE
                                     </Button>
                                 </>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </header>
