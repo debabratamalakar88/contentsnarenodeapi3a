@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { 
@@ -81,6 +80,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const getInitials = (name: string): string => {
@@ -155,7 +155,12 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                                 </>
                              ) : (
                                 <>
-                                    <DropdownMenuItem asChild><Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}>
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            {request.status === 'published' ? 'View Details' : 'Preview'}
+                                        </Link>
+                                    </DropdownMenuItem>
                                     {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                                     {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
                                     {canManage && (
@@ -305,7 +310,12 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                          </>
                      ) : (
                         <>
-                            <DropdownMenuItem asChild><Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    {request.status === 'published' ? 'View Details' : 'Preview'}
+                                </Link>
+                            </DropdownMenuItem>
                             {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                             {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
                             {canManage && (
