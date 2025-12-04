@@ -7,7 +7,7 @@ import { getRequest, type Request, type Page } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
