@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -177,7 +178,7 @@ export default function RequestPreviewPage() {
         }
     };
     
-    const { activeQuestion, activeSection, activePage, activePageIndex, activeQuestionIndex, totalQuestionsInSection } = useMemo(() => {
+    const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
         if (!request || !activeIds) return {};
 
         const page = request.form_data.find(p => p.id === activeIds.pageId);
@@ -190,10 +191,8 @@ export default function RequestPreviewPage() {
         if(!question) return {};
         
         const pageIndex = request.form_data.findIndex(p => p.id === page.id);
-        const questionIndex = section.questions.findIndex(q => q.id === question.id);
-        const totalQuestions = section.questions.length;
 
-        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex, activeQuestionIndex: questionIndex, totalQuestionsInSection: totalQuestions };
+        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex };
     }, [request, activeIds]);
     
     const navigatePage = (direction: 'next' | 'prev') => {
@@ -241,28 +240,33 @@ export default function RequestPreviewPage() {
             <div className="flex flex-col h-full bg-muted/40">
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} activeIds={activeIds!} setActiveIds={setActiveIds} />
-                    <main className="flex-1 overflow-y-auto">
+                    <main className="flex-1 flex flex-col overflow-hidden">
                         <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
-                            <div className="flex items-center justify-end gap-4">
-                                <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
-                                    <Sparkles className="mr-2 h-4 w-4"/> Activity
+                            <div className="flex items-center justify-between">
+                                <Button variant="outline" size="icon" asChild>
+                                    <Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
                                 </Button>
-                                <Button asChild>
-                                     <Link href={`/dashboard/requests/edit/${request.id}/finalize`}>
-                                        <Rocket className="mr-2 h-4 w-4"/> Publish
-                                     </Link>
-                                </Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setRequestToArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => setRequestToForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <div className="flex items-center gap-4">
+                                    <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
+                                        <Sparkles className="mr-2 h-4 w-4"/> Activity
+                                    </Button>
+                                    <Button asChild>
+                                        <Link href={`/dashboard/requests/edit/${request.id}/finalize`}>
+                                            <Rocket className="mr-2 h-4 w-4"/> Publish
+                                        </Link>
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setRequestToArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setRequestToForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -279,32 +283,34 @@ export default function RequestPreviewPage() {
                                 </div>
                             </div>
                         </header>
-                         <div className="p-8 max-w-4xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                         <div className="flex-1 overflow-y-auto">
+                            <div className="p-8 max-w-4xl mx-auto w-full">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                    </div>
                                 </div>
-                            </div>
-                             <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
-                                {activeQuestion ? (
-                                    <>
-                                        <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
-                                        {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
-                                        <div className="mt-6">
-                                            <Textarea
-                                                placeholder="Enter text here..."
-                                                className="min-h-[100px] bg-background text-foreground"
-                                            />
-                                        </div>
-                                         <div className="mt-6 flex justify-between items-center">
-                                            <Button variant="link" className="p-0 h-auto text-primary font-semibold">Continue to next question</Button>
-                                            <Button variant="outline" className="rounded-full">COMMENTS</Button>
-                                         </div>
-                                    </>
-                                ) : <p>Select a question to see the preview.</p>}
+                                <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                    {activeQuestion ? (
+                                        <>
+                                            <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                            {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
+                                            <div className="mt-6">
+                                                <Textarea
+                                                    placeholder="Enter text here..."
+                                                    className="min-h-[100px] bg-background text-foreground"
+                                                />
+                                            </div>
+                                            <div className="mt-6 flex justify-between items-center">
+                                                <Button variant="link" className="p-0 h-auto text-primary font-semibold">Continue to next question</Button>
+                                                <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                            </div>
+                                        </>
+                                    ) : <p>Select a question to see the preview.</p>}
+                                </div>
                             </div>
                          </div>
                     </main>
