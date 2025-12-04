@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -35,6 +34,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -42,6 +46,56 @@ const getInitials = (name: string): string => {
     if (words.length === 0) return '';
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
+const renderQuestionPreview = (question: Question) => {
+    const questionId = `preview-${question.id}`;
+    
+    switch (question.type) {
+        case 'text':
+        case 'email':
+        case 'tel':
+        case 'url':
+        case 'number':
+        case 'date':
+        case 'currency':
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+        case 'textarea':
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+        case 'radio':
+            return (
+                <RadioGroup defaultValue={question.defaultValue} disabled>
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            )
+        case 'checkbox':
+            return (
+                <div className="space-y-2 pt-2">
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} disabled />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </div>
+            )
+        case 'dropdown':
+            return (
+                <Select defaultValue={question.defaultValue} disabled>
+                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
+                    <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                </Select>
+            )
+        case 'formatted-text':
+            return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
+        default:
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
+    }
 }
 
 
@@ -69,9 +123,9 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                 maxWidth: '26rem',
                 minWidth: 'min(22rem, 100vw)',
                 minHeight: '0px',
-                borderRight: '1px solid rgb(217, 217, 217)',
-                backgroundColor: 'rgb(255, 255, 255)',
+                borderRight: '1px solid #d9d9d9',
             }}
+            className="bg-card"
         >
             <div className="p-6">
                 <h1 className="text-xl font-bold">{request.title}</h1>
@@ -370,10 +424,7 @@ export default function RequestPreviewPage() {
                                             <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
                                             {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
                                             <div className="mt-6">
-                                                <Textarea
-                                                    placeholder="Enter text here..."
-                                                    className="min-h-[100px] bg-background text-foreground"
-                                                />
+                                                {renderQuestionPreview(activeQuestion)}
                                             </div>
                                             <div className="mt-6 flex justify-between items-center">
                                                 <Button variant="link" className="p-0 h-auto text-primary font-semibold">Continue to next question</Button>
@@ -402,4 +453,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
