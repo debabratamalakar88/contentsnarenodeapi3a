@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -335,6 +336,65 @@ export default function RequestPreviewPage() {
         }
     };
 
+    const handleContinue = () => {
+        if (!request || !activeIds) return;
+
+        const { pageId, sectionId, questionId } = activeIds;
+
+        const pageIndex = request.form_data.findIndex(p => p.id === pageId);
+        if (pageIndex === -1) return;
+        const currentPage = request.form_data[pageIndex];
+
+        const sectionIndex = currentPage.sections.findIndex(s => s.id === sectionId);
+        if (sectionIndex === -1) return;
+        const currentSection = currentPage.sections[sectionIndex];
+
+        const questionIndex = currentSection.questions.findIndex(q => q.id === questionId);
+        if (questionIndex === -1) return;
+
+        // Try to find the next question in the current section
+        if (questionIndex < currentSection.questions.length - 1) {
+            const nextQuestion = currentSection.questions[questionIndex + 1];
+            setActiveIds({ pageId, sectionId, questionId: nextQuestion.id });
+            return;
+        }
+
+        // Try to find the next section in the current page
+        if (sectionIndex < currentPage.sections.length - 1) {
+            const nextSection = currentPage.sections[sectionIndex + 1];
+            if (nextSection.questions.length > 0) {
+                const nextQuestion = nextSection.questions[0];
+                setActiveIds({ pageId, sectionId: nextSection.id, questionId: nextQuestion.id });
+                return;
+            }
+        }
+
+        // Try to find the next page
+        if (pageIndex < request.form_data.length - 1) {
+            const nextPage = request.form_data[pageIndex + 1];
+            if (nextPage.sections.length > 0 && nextPage.sections[0].questions.length > 0) {
+                const nextSection = nextPage.sections[0];
+                const nextQuestion = nextSection.questions[0];
+                setActiveIds({ pageId: nextPage.id, sectionId: nextSection.id, questionId: nextQuestion.id });
+                return;
+            }
+        }
+
+        // If at the end, do nothing (or we could show a message)
+        toast({ title: "End of Form", description: "You have reached the last question."});
+    };
+    
+    const isLastQuestion = useMemo(() => {
+        if (!request || !activeIds) return true;
+        const { pageId, sectionId, questionId } = activeIds;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        if (pageId !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (sectionId !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return questionId === lastQuestion.id;
+    }, [request, activeIds]);
+
     if (isLoading) {
         return (
             <div className="p-6 h-full flex flex-col bg-muted/40">
@@ -366,7 +426,7 @@ export default function RequestPreviewPage() {
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 flex flex-col overflow-hidden">
-                        <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                         <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
                              <div className="flex items-center justify-between">
                                 <Button variant="outline" size="icon" asChild>
                                     <Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
@@ -427,7 +487,9 @@ export default function RequestPreviewPage() {
                                                 {renderQuestionPreview(activeQuestion)}
                                             </div>
                                             <div className="mt-6 flex justify-between items-center">
-                                                <Button variant="link" className="p-0 h-auto text-primary font-semibold">Continue to next question</Button>
+                                                <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
+                                                    {isLastQuestion ? "End of Form" : "Continue to next question"}
+                                                </Button>
                                                 <Button variant="outline" className="rounded-full">COMMENTS</Button>
                                             </div>
                                         </>
