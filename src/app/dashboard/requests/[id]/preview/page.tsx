@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -242,15 +243,8 @@ export default function RequestPreviewPage() {
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 overflow-y-auto">
-                        <header className="sticky top-16 z-10 flex items-center justify-between gap-4 p-4 border-b bg-background">
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}>
-                                    <ChevronLeft className="h-5 w-5" />
-                                </Button>
-                                <span className="text-sm font-medium text-muted-foreground">{activePageIndex > 0 && request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-4">
+                        <header className="sticky top-16 z-10 flex flex-col gap-4 p-4 border-b bg-background">
+                            <div className="flex items-center justify-end gap-4">
                                 <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
                                     <History className="mr-2 h-4 w-4"/> Activity
                                 </Button>
@@ -271,11 +265,19 @@ export default function RequestPreviewPage() {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
-                            <div className="flex items-center gap-2 text-right">
-                               <span className="text-sm font-medium text-muted-foreground">{activePageIndex < request.form_data.length - 1 && request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
-                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('next')} disabled={activePageIndex === request.form_data.length - 1}>
-                                    <ChevronRight className="h-5 w-5" />
-                                </Button>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}>
+                                        <ChevronLeft className="h-5 w-5" />
+                                    </Button>
+                                    <span className="text-sm font-medium text-muted-foreground">{activePageIndex > 0 && request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-right">
+                                   <span className="text-sm font-medium text-muted-foreground">{activePageIndex < request.form_data.length - 1 && request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('next')} disabled={activePageIndex === request.form_data.length - 1}>
+                                        <ChevronRight className="h-5 w-5" />
+                                    </Button>
+                                </div>
                             </div>
                         </header>
                          <div className="p-8 max-w-4xl mx-auto w-full">
