@@ -60,7 +60,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
     const assignedClient = clients.find(c => request.client_id?.includes(c.id));
 
     return (
-        <aside className="w-72 bg-background border-r p-6 flex flex-col gap-8 h-full overflow-y-auto">
+        <aside className="w-72 bg-card border-r p-6 flex flex-col gap-8 h-full overflow-y-auto">
             <div>
                 <h1 className="text-xl font-bold">{request.title}</h1>
                 <div className="flex items-center gap-2 mt-2">
@@ -79,7 +79,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                     </div>
                 )}
             </div>
-            <nav className="flex-1 -mx-6">
+            <nav className="flex-1 -mx-6" style={{borderTop: "1px solid #ddd"}}>
                 <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
                     {request.form_data.map((page) => {
                         const isPageActive = page.id === activePageId;
