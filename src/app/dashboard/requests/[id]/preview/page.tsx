@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { getRequest, softDeleteRequest, forceDeleteRequest, type Request, type Q
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -243,10 +242,10 @@ export default function RequestPreviewPage() {
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 overflow-y-auto">
-                        <header className="sticky top-16 z-10 flex flex-col gap-4 p-4 border-b bg-background">
+                        <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
                             <div className="flex items-center justify-end gap-4">
                                 <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
-                                    <History className="mr-2 h-4 w-4"/> Activity
+                                    <Sparkles className="mr-2 h-4 w-4"/> Activity
                                 </Button>
                                 <Button asChild>
                                      <Link href={`/dashboard/requests/edit/${request.id}/finalize`}>
