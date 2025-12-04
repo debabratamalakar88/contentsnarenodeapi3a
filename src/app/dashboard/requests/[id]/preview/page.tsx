@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -61,8 +61,8 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
 
     return (
         <aside 
-            className="flex flex-col h-full"
             style={{
+                display: 'flex',
                 width: '20vw',
                 height: '100%',
                 flexDirection: 'column',
@@ -92,7 +92,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                 )}
             </div>
             <div className="flex-1 min-h-0">
-                <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd"}}>
+                <nav className="h-full overflow-y-auto p-2.5" style={{borderTop: "1px solid #ddd"}}>
                     <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
                         {request.form_data.map((page) => {
                             const isPageActive = page.id === activePageId;
@@ -402,3 +402,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
