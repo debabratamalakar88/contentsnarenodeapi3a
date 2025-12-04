@@ -60,8 +60,18 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
     const assignedClient = clients.find(c => request.client_id?.includes(c.id));
 
     return (
-        <aside className="w-72 bg-card border-r p-6 flex flex-col gap-8 h-full overflow-y-auto">
-            <div>
+        <aside 
+            className="flex flex-col h-full"
+            style={{
+                width: '20vw',
+                maxWidth: '26rem',
+                minWidth: 'min(22rem, 100vw)',
+                minHeight: '0',
+                borderRight: '1px solid #d9d9d9',
+                backgroundColor: '#fff'
+            }}
+        >
+            <div className="p-6">
                 <h1 className="text-xl font-bold">{request.title}</h1>
                 <div className="flex items-center gap-2 mt-2">
                     {request.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}</Badge>}
@@ -79,7 +89,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                     </div>
                 )}
             </div>
-            <nav className="flex-1 -mx-6" style={{borderTop: "1px solid #ddd"}}>
+            <nav className="flex-1 -mx-6 overflow-y-auto" style={{borderTop: "1px solid #ddd"}}>
                 <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
                     {request.form_data.map((page) => {
                         const isPageActive = page.id === activePageId;
@@ -143,7 +153,9 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                     })}
                 </Accordion>
             </nav>
-            <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
+            <div className="p-6">
+                <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
+            </div>
         </aside>
     );
 };
@@ -297,7 +309,7 @@ export default function RequestPreviewPage() {
                     <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 flex flex-col overflow-hidden">
                         <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
-                            <div className="flex items-center justify-between">
+                             <div className="flex items-center justify-between">
                                 <Button variant="outline" size="icon" asChild>
                                     <Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
                                 </Button>
