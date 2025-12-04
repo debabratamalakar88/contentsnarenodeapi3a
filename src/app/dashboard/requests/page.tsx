@@ -196,12 +196,12 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                          ) : (
                             canManage ? (
                                 <>
-                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link></Button>
+                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/${request.id}/preview`}>PREVIEW</Link></Button>
                                     <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
                                 </>
                             ) : (
                                 <Button size="sm" className="rounded-full px-8" asChild>
-                                    <Link href={`/dashboard/requests/edit/${request.id}/preview`}>PREVIEW</Link>
+                                    <Link href={`/dashboard/requests/${request.id}/preview`}>PREVIEW</Link>
                                 </Button>
                             )
                          )}
