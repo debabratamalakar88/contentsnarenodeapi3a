@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -241,7 +242,7 @@ export default function RequestPreviewPage() {
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 overflow-y-auto">
-                        <header className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur-sm">
+                        <header className="sticky top-16 z-10 flex items-center justify-between gap-4 p-4 border-b bg-background">
                             <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}>
                                     <ChevronLeft className="h-5 w-5" />
