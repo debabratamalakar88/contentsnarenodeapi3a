@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -64,11 +64,13 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
             className="flex flex-col h-full"
             style={{
                 width: '20vw',
+                height: '100%',
+                flexDirection: 'column',
                 maxWidth: '26rem',
                 minWidth: 'min(22rem, 100vw)',
-                minHeight: '0',
-                borderRight: '1px solid #d9d9d9',
-                backgroundColor: '#fff'
+                minHeight: '0px',
+                borderRight: '1px solid rgb(217, 217, 217)',
+                backgroundColor: 'rgb(255, 255, 255)',
             }}
         >
             <div className="p-6">
@@ -89,70 +91,72 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                     </div>
                 )}
             </div>
-            <nav className="flex-1 -mx-6 overflow-y-auto" style={{borderTop: "1px solid #ddd"}}>
-                <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
-                    {request.form_data.map((page) => {
-                        const isPageActive = page.id === activePageId;
-                        const totalQuestions = page.sections.reduce((acc, s) => acc + s.questions.length, 0);
-                        return (
-                             <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
-                                <AccordionTrigger 
-                                    className={cn(
-                                        "w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline",
-                                        isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                                    )}
-                                    onClick={() => handleQuestionClick(page.id, page.sections[0].id, page.sections[0].questions[0].id)}
-                                >
-                                    <span className="truncate">{page.title}</span>
-                                    <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{totalQuestions}</span>
-                                </AccordionTrigger>
-                                <AccordionContent className="pl-4 mt-1 pb-0">
-                                    {page.sections.map(section => (
-                                        <div key={section.id} className="border-l">
-                                            <div 
-                                                className={cn(
-                                                    "w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2",
-                                                    section.id === activeSectionId && isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                                                )}
-                                                onClick={() => handleQuestionClick(page.id, section.id, section.questions[0].id)}
-                                            >
-                                                <span className="truncate">{section.title}</span>
-                                                <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{section.questions.length}</span>
+            <div className="flex-1 min-h-0">
+                <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd"}}>
+                    <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                        {request.form_data.map((page) => {
+                            const isPageActive = page.id === activePageId;
+                            const totalQuestions = page.sections.reduce((acc, s) => acc + s.questions.length, 0);
+                            return (
+                                <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
+                                    <AccordionTrigger 
+                                        className={cn(
+                                            "w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline",
+                                            isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                        )}
+                                        onClick={() => handleQuestionClick(page.id, page.sections[0].id, page.sections[0].questions[0].id)}
+                                    >
+                                        <span className="truncate">{page.title}</span>
+                                        <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{totalQuestions}</span>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pl-4 mt-1 pb-0">
+                                        {page.sections.map(section => (
+                                            <div key={section.id} className="border-l">
+                                                <div 
+                                                    className={cn(
+                                                        "w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2",
+                                                        section.id === activeSectionId && isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                    )}
+                                                    onClick={() => handleQuestionClick(page.id, section.id, section.questions[0].id)}
+                                                >
+                                                    <span className="truncate">{section.title}</span>
+                                                    <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{section.questions.length}</span>
+                                                </div>
+                                                <div className="pl-6 border-l ml-2">
+                                                    {section.questions.map(question => (
+                                                        <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "border-primary" : "border-transparent")}>
+                                                            <TooltipProvider delayDuration={100}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button 
+                                                                            className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors"
+                                                                            onClick={() => handleQuestionClick(page.id, section.id, question.id)}
+                                                                        >
+                                                                            <p className={cn(
+                                                                                "truncate",
+                                                                                question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                                                                            )}>
+                                                                                {question.label}
+                                                                            </p>
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent side="right" align="start">
+                                                                        <p className="max-w-xs">{question.label}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <div className="pl-6 border-l ml-2">
-                                                 {section.questions.map(question => (
-                                                    <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "border-primary" : "border-transparent")}>
-                                                         <TooltipProvider delayDuration={100}>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button 
-                                                                        className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors"
-                                                                        onClick={() => handleQuestionClick(page.id, section.id, question.id)}
-                                                                    >
-                                                                        <p className={cn(
-                                                                            "truncate",
-                                                                            question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
-                                                                        )}>
-                                                                            {question.label}
-                                                                        </p>
-                                                                    </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent side="right" align="start">
-                                                                    <p className="max-w-xs">{question.label}</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    </div>
-                                                 ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </AccordionContent>
-                             </AccordionItem>
-                        );
-                    })}
-                </Accordion>
-            </nav>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            );
+                        })}
+                    </Accordion>
+                </nav>
+            </div>
             <div className="p-6">
                 <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
             </div>
@@ -398,4 +402,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
