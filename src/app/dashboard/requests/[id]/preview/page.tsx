@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -119,14 +119,14 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
             style={{
                 display: 'flex',
                 width: '20vw',
-                height: '100%',
                 flexDirection: 'column',
                 maxWidth: '26rem',
                 minWidth: 'min(22rem, 100vw)',
                 minHeight: '0px',
                 borderRight: '1px solid #d9d9d9',
+                backgroundColor: '#fff',
             }}
-            className="bg-card"
+            className="bg-card h-screen"
         >
             <div className="p-6">
                 <h1 className="text-xl font-bold">{request.title}</h1>
@@ -515,3 +515,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
