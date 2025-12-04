@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -79,7 +80,6 @@ export default function RequestPreviewPage() {
         try {
             await softDeleteRequest(token, requestToArchive.id);
             toast({ title: 'Request archived' });
-            refetchData();
             router.push('/dashboard/requests');
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
@@ -93,7 +93,6 @@ export default function RequestPreviewPage() {
         try {
             await forceDeleteRequest(token, requestToForceDelete.id);
             toast({ title: 'Request permanently deleted' });
-            refetchData();
             router.push('/dashboard/requests');
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
@@ -247,3 +246,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
