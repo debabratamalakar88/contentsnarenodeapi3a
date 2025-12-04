@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Section } from '@/lib/api';
+import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,13 +31,32 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const Sidebar = ({ request, activeIds, setActiveIds }: { request: Request; activeIds: { pageId: number, sectionId: number, questionId: number }; setActiveIds: any }) => {
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
+
+const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Request; clients: Client[]; activeIds: { pageId: number, sectionId: number, questionId: number }; setActiveIds: any }) => {
     const { pageId: activePageId, sectionId: activeSectionId, questionId: activeQuestionId } = activeIds;
+    const [activeAccordionItem, setActiveAccordionItem] = useState<string>(`page-${activePageId}`);
+    
+    useEffect(() => {
+        setActiveAccordionItem(`page-${activePageId}`);
+    }, [activePageId]);
 
     const handleQuestionClick = (pageId: number, sectionId: number, questionId: number) => {
         setActiveIds({ pageId, sectionId, questionId });
     };
+
+    const assignedClient = clients.find(c => request.client_id?.includes(c.id));
 
     return (
         <aside className="w-72 bg-background border-r p-6 flex flex-col gap-8 h-full overflow-y-auto">
@@ -48,57 +66,81 @@ const Sidebar = ({ request, activeIds, setActiveIds }: { request: Request; activ
                     {request.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}</Badge>}
                     <Badge variant="secondary" className="capitalize">{request.status}</Badge>
                 </div>
+                 {assignedClient && (
+                    <div className="mt-4 flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                            <AvatarFallback>{getInitials(assignedClient.full_name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="text-sm font-semibold">{assignedClient.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{assignedClient.email}</p>
+                        </div>
+                    </div>
+                )}
             </div>
-            <nav className="flex-1">
-                <ul className="space-y-1">
+            <nav className="flex-1 -mx-6">
+                <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
                     {request.form_data.map((page) => {
                         const isPageActive = page.id === activePageId;
+                        const totalQuestions = page.sections.reduce((acc, s) => acc + s.questions.length, 0);
                         return (
-                            <li key={page.id}>
-                                <div 
+                             <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
+                                <AccordionTrigger 
                                     className={cn(
-                                        "w-full text-left p-3 rounded-lg font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer",
+                                        "w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline",
                                         isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
                                     )}
                                     onClick={() => handleQuestionClick(page.id, page.sections[0].id, page.sections[0].questions[0].id)}
                                 >
                                     <span className="truncate">{page.title}</span>
-                                    <span className="text-xs text-muted-foreground">0/{page.sections.reduce((acc, s) => acc + s.questions.length, 0)}</span>
-                                </div>
-                                {isPageActive && (
-                                    <div className="pl-4 mt-1">
-                                        {page.sections.map(section => (
-                                            <div key={section.id} className="border-l">
-                                                <div 
-                                                    className={cn(
-                                                        "w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2",
-                                                        section.id === activeSectionId ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                                                    )}
-                                                    onClick={() => handleQuestionClick(page.id, section.id, section.questions[0].id)}
-                                                >
-                                                    <span className="truncate">{section.title}</span>
-                                                    <span className="text-xs text-muted-foreground">0/{section.questions.length}</span>
-                                                </div>
-                                                <div className="pl-6 border-l ml-2">
-                                                     {section.questions.map(question => (
-                                                        <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeQuestionId ? "border-primary" : "border-transparent")}>
-                                                            <button 
-                                                                className={cn("w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors", question.id === activeQuestionId ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}
-                                                                onClick={() => handleQuestionClick(page.id, section.id, question.id)}
-                                                            >
-                                                                <span className="truncate">{question.label}</span>
-                                                            </button>
-                                                        </div>
-                                                     ))}
-                                                </div>
+                                    <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{totalQuestions}</span>
+                                </AccordionTrigger>
+                                <AccordionContent className="pl-4 mt-1 pb-0">
+                                    {page.sections.map(section => (
+                                        <div key={section.id} className="border-l">
+                                            <div 
+                                                className={cn(
+                                                    "w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2",
+                                                    section.id === activeSectionId && isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                )}
+                                                onClick={() => handleQuestionClick(page.id, section.id, section.questions[0].id)}
+                                            >
+                                                <span className="truncate">{section.title}</span>
+                                                <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{section.questions.length}</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </li>
+                                            <div className="pl-6 border-l ml-2">
+                                                 {section.questions.map(question => (
+                                                    <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "border-primary" : "border-transparent")}>
+                                                         <TooltipProvider delayDuration={100}>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <button 
+                                                                        className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors"
+                                                                        onClick={() => handleQuestionClick(page.id, section.id, question.id)}
+                                                                    >
+                                                                        <p className={cn(
+                                                                            "truncate",
+                                                                            question.id === activeQuestionId && section.id === activeSectionId && isPageActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                                                                        )}>
+                                                                            {question.label}
+                                                                        </p>
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="right" align="start">
+                                                                    <p className="max-w-xs">{question.label}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </div>
+                                                 ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </AccordionContent>
+                             </AccordionItem>
                         );
                     })}
-                </ul>
+                </Accordion>
             </nav>
             <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
         </aside>
@@ -110,6 +152,7 @@ export default function RequestPreviewPage() {
     const params = useParams();
     const { toast } = useToast();
     const [request, setRequest] = useState<Request | null>(null);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
@@ -132,13 +175,24 @@ export default function RequestPreviewPage() {
 
         async function fetchRequestData() {
             try {
-                const data = await getRequest(token!, id);
-                setRequest(data);
-                if (data.form_data && data.form_data.length > 0 && data.form_data[0].sections.length > 0 && data.form_data[0].sections[0].questions.length > 0) {
+                const [requestData, clientData] = await Promise.all([
+                    getRequest(token!, id),
+                    getClients(token!)
+                ]);
+                
+                if (requestData.status !== 'draft') {
+                    router.replace(`/dashboard/requests/${id}`);
+                    return;
+                }
+
+                setRequest(requestData);
+                setClients(clientData || []);
+
+                if (requestData.form_data && requestData.form_data.length > 0 && requestData.form_data[0].sections.length > 0 && requestData.form_data[0].sections[0].questions.length > 0) {
                     setActiveIds({
-                        pageId: data.form_data[0].id,
-                        sectionId: data.form_data[0].sections[0].id,
-                        questionId: data.form_data[0].sections[0].questions[0].id
+                        pageId: requestData.form_data[0].id,
+                        sectionId: requestData.form_data[0].sections[0].id,
+                        questionId: requestData.form_data[0].sections[0].questions[0].id
                     });
                 }
             } catch (err: any) {
@@ -239,9 +293,9 @@ export default function RequestPreviewPage() {
         <>
             <div className="flex flex-col h-full bg-muted/40">
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
-                    <Sidebar request={request} activeIds={activeIds!} setActiveIds={setActiveIds} />
+                    <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 flex flex-col overflow-hidden">
-                        <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                        <header className="sticky top-16 z-10 flex flex-col gap-4 p-4 border-b bg-card">
                             <div className="flex items-center justify-between">
                                 <Button variant="outline" size="icon" asChild>
                                     <Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
@@ -331,3 +385,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
