@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -295,7 +296,7 @@ export default function RequestPreviewPage() {
                 <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
                     <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
                     <main className="flex-1 flex flex-col overflow-hidden">
-                        <header className="sticky top-16 z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                        <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
                             <div className="flex items-center justify-between">
                                 <Button variant="outline" size="icon" asChild>
                                     <Link href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
