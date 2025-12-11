@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -116,7 +116,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
 
     return (
         <aside 
-            style={{
+             style={{
                 display: 'flex',
                 width: '20vw',
                 flexDirection: 'column',
@@ -124,7 +124,6 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                 minWidth: 'min(22rem, 100vw)',
                 minHeight: '0px',
                 borderRight: '1px solid #d9d9d9',
-                backgroundColor: '#fff',
             }}
             className="bg-card h-screen"
         >
@@ -147,7 +146,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                 )}
             </div>
             <div className="flex-1 min-h-0">
-                <nav className="h-full overflow-y-auto p-2.5" style={{borderTop: "1px solid #ddd"}}>
+                <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd", padding: '10px'}}>
                     <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
                         {request.form_data.map((page) => {
                             const isPageActive = page.id === activePageId;
@@ -446,7 +445,7 @@ export default function RequestPreviewPage() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
-                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setRequestToArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setRequestToForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
                                         </DropdownMenuContent>
