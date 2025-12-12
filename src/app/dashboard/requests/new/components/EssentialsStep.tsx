@@ -23,8 +23,9 @@ import { cn } from "@/lib/utils"
 
 const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
     const editorRef = useRef<HTMLDivElement>(null);
-    const [wordCount, setWordCount] = useState(0);
+    const isInitialMount = useRef(true);
 
+    const [wordCount, setWordCount] = useState(0);
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
     const [isUnderline, setIsUnderline] = useState(false);
@@ -114,7 +115,9 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
             }
             document.execCommand('createLink', false, url);
             updateToolbarState();
-            setHtmlContent(editorRef.current!.innerHTML);
+            const newContent = editorRef.current!.innerHTML;
+            setHtmlContent(newContent);
+            onChange(newContent);
             updateWordCount();
         }
     };
@@ -145,7 +148,9 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
             }
             document.execCommand('insertText', false, emojiObject.emoji);
             setEmojiPickerOpen(false);
-            setHtmlContent(editorRef.current.innerHTML);
+            const newContent = editorRef.current.innerHTML;
+            setHtmlContent(newContent);
+            onChange(newContent);
             updateWordCount();
             setSavedRange(null);
         }
@@ -155,30 +160,28 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         execCmd('formatBlock', value);
     };
 
-    const handleInput = () => {
+    const handleBlur = () => {
         if (editorRef.current) {
             const newContent = editorRef.current.innerHTML;
-            setHtmlContent(newContent);
             onChange(newContent);
-            updateToolbarState();
-            updateWordCount();
         }
-    }
+    };
 
     const toggleViewMode = () => {
         setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
     };
 
     useEffect(() => {
-        if (viewMode === 'editor' && editorRef.current) {
-            if (editorRef.current.innerHTML !== htmlContent) {
-                editorRef.current.innerHTML = htmlContent || '';
+        if (editorRef.current) {
+            if (isInitialMount.current || editorRef.current.innerHTML !== htmlContent) {
+                 editorRef.current.innerHTML = htmlContent || '';
+                 isInitialMount.current = false;
             }
             updateWordCount();
             updateToolbarState();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [viewMode]); 
+    }, [htmlContent, viewMode]); 
     
     useEffect(() => {
         const editor = editorRef.current;
@@ -271,8 +274,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                   contentEditable
                   suppressContentEditableWarning
                   className={cn("prose-preview min-h-[200px] w-full resize-y p-3 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
-                  onInput={handleInput}
-                  dangerouslySetInnerHTML={{ __html: htmlContent || '' }}
+                  onBlur={handleBlur}
                 />
             </div>
         ) : (
