@@ -23,8 +23,7 @@ import { cn } from "@/lib/utils"
 
 const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
     const editorRef = useRef<HTMLDivElement>(null);
-    const isInitialMount = useRef(true);
-
+    
     const [wordCount, setWordCount] = useState(0);
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
@@ -47,7 +46,12 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
 
 
     useEffect(() => {
-        setHtmlContent(value);
+        if (value !== htmlContent) {
+          setHtmlContent(value);
+          if (editorRef.current) {
+            editorRef.current.innerHTML = value;
+          }
+        }
     }, [value]);
 
     const updateToolbarState = useCallback(() => {
@@ -76,16 +80,23 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
             setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
         }
     }, []);
+    
+    const handleInput = () => {
+        if (editorRef.current) {
+            const newContent = editorRef.current.innerHTML;
+            setHtmlContent(newContent);
+            onChange(newContent);
+            updateWordCount();
+        }
+    }
+
 
     const execCmd = (command: string, valueArg?: string) => {
         if (editorRef.current) {
             editorRef.current.focus();
             document.execCommand(command, false, valueArg);
-            const newContent = editorRef.current.innerHTML;
-            setHtmlContent(newContent);
-            onChange(newContent);
+            handleInput();
             updateToolbarState();
-            updateWordCount();
         }
     };
 
@@ -115,10 +126,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
             }
             document.execCommand('createLink', false, url);
             updateToolbarState();
-            const newContent = editorRef.current!.innerHTML;
-            setHtmlContent(newContent);
-            onChange(newContent);
-            updateWordCount();
+            handleInput();
         }
     };
     
@@ -148,10 +156,7 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
             }
             document.execCommand('insertText', false, emojiObject.emoji);
             setEmojiPickerOpen(false);
-            const newContent = editorRef.current.innerHTML;
-            setHtmlContent(newContent);
-            onChange(newContent);
-            updateWordCount();
+            handleInput();
             setSavedRange(null);
         }
     };
@@ -160,28 +165,20 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         execCmd('formatBlock', value);
     };
 
-    const handleBlur = () => {
-        if (editorRef.current) {
-            const newContent = editorRef.current.innerHTML;
-            onChange(newContent);
-        }
-    };
-
     const toggleViewMode = () => {
         setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
     };
 
     useEffect(() => {
-        if (editorRef.current) {
-            if (isInitialMount.current || editorRef.current.innerHTML !== htmlContent) {
-                 editorRef.current.innerHTML = htmlContent || '';
-                 isInitialMount.current = false;
+        if (viewMode === 'editor' && editorRef.current) {
+            if (editorRef.current.innerHTML !== htmlContent) {
+                editorRef.current.innerHTML = htmlContent;
             }
             updateWordCount();
             updateToolbarState();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [htmlContent, viewMode]); 
+    }, [viewMode]); 
     
     useEffect(() => {
         const editor = editorRef.current;
@@ -194,17 +191,19 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
         document.addEventListener('selectionchange', handleSelectionChange);
         if (editor) {
             editor.addEventListener('focus', updateToolbarState);
+            editor.addEventListener('input', updateToolbarState);
         }
 
         return () => {
             document.removeEventListener('selectionchange', handleSelectionChange);
             if (editor) {
                 editor.removeEventListener('focus', updateToolbarState);
+                editor.removeEventListener('input', updateToolbarState);
             }
         };
     }, [updateToolbarState]);
     
-    const isPlaceholderVisible = viewMode === 'editor' && !(htmlContent || '').replace(/<p><br><\/p>/g, '').trim();
+    const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
 
     return (
       <div className={cn(
@@ -274,15 +273,16 @@ const RichTextEditor = ({ value, onChange }: { value: string, onChange: (value: 
                   contentEditable
                   suppressContentEditableWarning
                   className={cn("prose-preview min-h-[200px] w-full resize-y p-3 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
-                  onBlur={handleBlur}
+                  onInput={handleInput}
                 />
             </div>
         ) : (
             <textarea
                 value={htmlContent || ''}
                 onChange={(e) => {
-                    setHtmlContent(e.target.value);
-                    onChange(e.target.value);
+                    const newContent = e.target.value;
+                    setHtmlContent(newContent);
+                    onChange(newContent);
                 }}
                 className={cn("prose-preview min-h-[200px] w-full resize-y p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none", isFullScreen && "h-full")}
                 placeholder="Enter HTML here..."
