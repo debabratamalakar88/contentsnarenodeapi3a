@@ -183,7 +183,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                     <p className="text-xs text-muted-foreground mb-4">
                       Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'Not set'}
                     </p>
-                    <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
+                    <div className="text-sm text-muted-foreground line-clamp-3 prose-preview" dangerouslySetInnerHTML={{ __html: request.description || "No description provided." }} />
                 </div>
                 {enableHoverEffect && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
