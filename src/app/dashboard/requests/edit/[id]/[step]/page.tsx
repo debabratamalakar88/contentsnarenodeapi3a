@@ -10,7 +10,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, Link2Off, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Code, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket, Eye, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -37,7 +37,6 @@ import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
-import PreviewStep from "../../../new/components/PreviewStep";
 import { Switch } from "@/components/ui/switch";
 import { format, parseISO } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -172,9 +171,7 @@ const renderQuestionPreview = (question: Question) => {
 }
 
 
-const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, navigatePage, handleContinue, isLastQuestion, setRequestToArchive, setRequestToForceDelete, nextStep, isSubmitting, id }: any) => {
-    const isFinalizeStep = useMemo(() => window.location.pathname.endsWith('/finalize'), []);
-    
+const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, navigatePage, handleContinue, isLastQuestion, setRequestToArchive, setRequestToForceDelete, isSubmitting, id }: any) => {
     const assignedClient = useMemo(() => clients.find((c: Client) => initialRequestData.client_id?.includes(c.id)), [clients, initialRequestData.client_id]);
 
     const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
@@ -276,12 +273,6 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
             </aside>
             <main className="flex-1 flex flex-col overflow-hidden">
                  <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
-                     <div className="flex items-center justify-between">
-                        <div />
-                        <div className="flex items-center gap-4">
-                            
-                        </div>
-                    </div>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}><ChevronLeft className="h-5 w-5" /></Button>
@@ -990,7 +981,6 @@ export default function EditRequestWizardPage() {
                     isLastQuestion={isLastQuestion}
                     setRequestToArchive={setRequestToArchive}
                     setRequestToForceDelete={setRequestToForceDelete}
-                    nextStep={nextStep}
                     isSubmitting={isSubmitting}
                     id={id}
                 />;
@@ -1102,4 +1092,5 @@ export default function EditRequestWizardPage() {
 }
 
     
+
 
