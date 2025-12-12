@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -202,8 +203,6 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
                     flexDirection: 'column',
                     maxWidth: '26rem',
                     minWidth: 'min(22rem, 100vw)',
-                    minHeight: '0px',
-                    borderRight: '1px solid #d9d9d9',
                 }}
                 className="bg-card h-screen"
             >
@@ -274,18 +273,11 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
                 </div>
             </aside>
             <main className="flex-1 flex flex-col overflow-hidden">
-                <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
-                    <div className="flex items-center justify-between">
+                 <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                     <div className="flex items-center justify-between">
                         <div />
                         <div className="flex items-center gap-4">
-                            <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
-                                <Sparkles className="mr-2 h-4 w-4"/> Activity
-                            </Button>
-                            {isFinalizeStep ? <Button disabled>Publish</Button> : <Button onClick={nextStep} disabled={isSubmitting}>Publish</Button>}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent><DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem><DropdownMenuItem onSelect={() => setRequestToArchive(initialRequestData)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem><DropdownMenuItem onSelect={() => setRequestToForceDelete(initialRequestData)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem></DropdownMenuContent>
-                            </DropdownMenu>
+                            
                         </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -927,7 +919,7 @@ export default function EditRequestWizardPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToArchive) return;
         try {
-            await softDeleteRequest(token, requestToArchive.id);
+            await updateRequest(token, requestToArchive.id, { ...requestToArchive, status: 'archived' });
             toast({ title: 'Request archived' });
             router.push('/dashboard/requests');
         } catch (err: any) {
@@ -941,7 +933,7 @@ export default function EditRequestWizardPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToForceDelete) return;
         try {
-            await forceDeleteRequest(token, requestToForceDelete.id);
+            await updateRequest(token, requestToForceDelete.id, { ...requestToForceDelete, is_deleted: true });
             toast({ title: 'Request permanently deleted' });
             router.push('/dashboard/requests');
         } catch (err: any) {
