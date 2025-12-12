@@ -680,17 +680,19 @@ export default function NewRequestWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <header className="sticky top-16 z-20 flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur">
+            <header className="sticky top-16 z-20 flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <StepNavigation
-                    steps={steps}
-                    currentStepSlug={stepSlug}
-                    onStepClick={handleStepClick}
-                    maxVisitedStepIndex={maxVisitedStepIndex}
-                />
-                <div className="ml-auto flex items-center gap-2">
+                <div className="flex-1 flex justify-center">
+                    <StepNavigation
+                        steps={steps}
+                        currentStepSlug={stepSlug}
+                        onStepClick={handleStepClick}
+                        maxVisitedStepIndex={maxVisitedStepIndex}
+                    />
+                </div>
+                <div className="flex items-center gap-2">
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={isSubmitting || (currentStepIndex === 0)}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
