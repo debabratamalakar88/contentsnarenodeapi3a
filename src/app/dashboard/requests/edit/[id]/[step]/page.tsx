@@ -170,6 +170,175 @@ const renderQuestionPreview = (question: Question) => {
     }
 }
 
+const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, navigatePage, handleContinue, isLastQuestion, setRequestToArchive, setRequestToForceDelete, nextStep, isSubmitting, id }: any) => {
+    const isFinalizeStep = useMemo(() => window.location.pathname.endsWith('/finalize'), []);
+    
+    const assignedClient = useMemo(() => clients.find((c: Client) => initialRequestData.client_id?.includes(c.id)), [clients, initialRequestData.client_id]);
+
+    const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
+        if (!initialRequestData || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+
+        const page = initialRequestData.form_data.find((p: Page) => p.id === activeIds.pageId);
+        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        
+        const section = page.sections.find((s: Section) => s.id === activeIds.sectionId);
+        if (!section) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+
+        const question = section.questions.find((q: Question) => q.id === activeIds.questionId);
+        if(!question) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        
+        const pageIndex = initialRequestData.form_data.findIndex((p: Page) => p.id === page.id);
+
+        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex };
+    }, [initialRequestData, activeIds]);
+
+    return (
+        <div className="flex flex-1 overflow-hidden h-full">
+            <aside 
+                 style={{
+                    display: 'flex',
+                    width: '20vw',
+                    flexDirection: 'column',
+                    maxWidth: '26rem',
+                    minWidth: 'min(22rem, 100vw)',
+                    minHeight: '0px',
+                    borderRight: '1px solid #d9d9d9',
+                }}
+                className="bg-card h-screen"
+            >
+                <div className="p-6">
+                    <h1 className="text-xl font-bold">{initialRequestData.title}</h1>
+                    <div className="flex items-center gap-2 mt-2">
+                        {initialRequestData.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(initialRequestData.due_date), 'dd/MM/yyyy')}</Badge>}
+                        <Badge variant="secondary" className="capitalize">{initialRequestData.status}</Badge>
+                    </div>
+                     {assignedClient && (
+                        <div className="mt-4 flex items-center gap-3">
+                            <Avatar className="h-9 w-9"><AvatarFallback>{getInitials(assignedClient.full_name)}</AvatarFallback></Avatar>
+                            <div>
+                                <p className="text-sm font-semibold">{assignedClient.full_name}</p>
+                                <p className="text-xs text-muted-foreground">{assignedClient.email}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1 min-h-0">
+                    <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd", padding: '10px'}}>
+                        <Accordion type="single" collapsible className="w-full" value={`page-${activeIds?.pageId}`} onValueChange={(value) => {
+                            const pageId = Number(value.replace('page-', ''));
+                            const page = initialRequestData.form_data.find((p: Page) => p.id === pageId);
+                            if(page && page.sections.length > 0 && page.sections[0].questions.length > 0) {
+                                setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id });
+                            }
+                        }}>
+                            {initialRequestData.form_data.map((page: Page) => (
+                                <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
+                                    <AccordionTrigger 
+                                        className={cn("w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline", page.id === activeIds?.pageId ? "bg-primary/10 text-primary" : "hover:bg-muted")}
+                                    >
+                                        <span className="truncate">{page.title}</span>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pl-4 mt-1 pb-0">
+                                        {page.sections.map((section: Section) => (
+                                            <div key={section.id} className="border-l">
+                                                <div className={cn("w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2", section.id === activeIds?.sectionId && "bg-primary/10 text-primary")} onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}>
+                                                    <span className="truncate">{section.title}</span>
+                                                </div>
+                                                <div className="pl-6 border-l ml-2">
+                                                    {section.questions.map((question: Question) => (
+                                                        <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeIds?.questionId && section.id === activeIds.sectionId ? "border-primary" : "border-transparent")}>
+                                                            <TooltipProvider delayDuration={100}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors" onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })}>
+                                                                            <p className={cn("truncate", question.id === activeIds?.questionId && section.id === activeIds.sectionId ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>{question.label}</p>
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent side="right" align="start"><p className="max-w-xs">{question.label}</p></TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    </nav>
+                </div>
+                 <div className="p-6">
+                    <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
+                </div>
+            </aside>
+            <main className="flex-1 flex flex-col overflow-hidden">
+                <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                    <div className="flex items-center justify-between">
+                        <div />
+                        <div className="flex items-center gap-4">
+                            <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
+                                <Sparkles className="mr-2 h-4 w-4"/> Activity
+                            </Button>
+                            {isFinalizeStep ? <Button disabled>Publish</Button> : <Button onClick={nextStep} disabled={isSubmitting}>Publish</Button>}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setRequestToArchive(initialRequestData)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setRequestToForceDelete(initialRequestData)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}><ChevronLeft className="h-5 w-5" /></Button>
+                            <span className="text-sm font-medium text-muted-foreground">{activePageIndex > 0 && initialRequestData.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-right">
+                           <span className="text-sm font-medium text-muted-foreground">{activePageIndex < initialRequestData.form_data.length - 1 && initialRequestData.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('next')} disabled={activePageIndex === initialRequestData.form_data.length - 1}>
+                                <ChevronRight className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+                </header>
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-8 max-w-4xl mx-auto w-full">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                            </div>
+                        </div>
+                        <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                            {activeQuestion ? (
+                                <>
+                                    <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                    {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
+                                    <div className="mt-6">
+                                        {renderQuestionPreview(activeQuestion)}
+                                    </div>
+                                    <div className="mt-6 flex justify-between items-center">
+                                        <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
+                                            {isLastQuestion ? "End of Form" : "Continue to next question"}
+                                        </Button>
+                                        <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                    </div>
+                                </>
+                            ) : <p>Select a question to see the preview.</p>}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+};
+
+
 export default function EditRequestWizardPage() {
     const router = useRouter();
     const params = useParams();
@@ -675,27 +844,10 @@ export default function EditRequestWizardPage() {
     const isFinalizeStep = currentStepIndex === steps.length - 1;
 
     // Functions for Preview Step
-    const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
-        if (!initialRequestData || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
-
-        const page = initialRequestData.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
-        
-        const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
-
-        const question = section.questions.find(q => q.id === activeIds.questionId);
-        if(!question) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
-        
-        const pageIndex = initialRequestData.form_data.findIndex(p => p.id === page.id);
-
-        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex };
-    }, [initialRequestData, activeIds]);
-
     const navigatePage = (direction: 'next' | 'prev') => {
-        if (!initialRequestData || !activePage) return;
-        const currentIndex = initialRequestData.form_data.findIndex(p => p.id === activePage.id);
-        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        if (!initialRequestData || !activeIds) return;
+        const pageIndex = initialRequestData.form_data.findIndex(p => p.id === activeIds.pageId);
+        const newIndex = direction === 'next' ? pageIndex + 1 : pageIndex - 1;
 
         if (newIndex >= 0 && newIndex < initialRequestData.form_data.length) {
             const newPage = initialRequestData.form_data[newIndex];
@@ -822,95 +974,20 @@ export default function EditRequestWizardPage() {
                                         updateQuestion={updateQuestion}
                                     />;
             case "Preview": 
-                if (!initialRequestData || !activeIds) return <div className="p-6 text-center text-muted-foreground">Loading preview...</div>;
-
-                const assignedClient = clients.find(c => initialRequestData.client_id?.includes(c.id));
-                const pageIndex = initialRequestData.form_data.findIndex(p => p.id === activeIds.pageId);
-
-                return (
-                    <div className="flex flex-1 overflow-hidden h-full">
-                        <aside style={{ display: 'flex', width: '20vw', flexDirection: 'column', maxWidth: '26rem', minWidth: 'min(22rem, 100vw)', minHeight: '0px', borderRight: '1px solid #d9d9d9', backgroundColor: '#fff'}} className="h-full">
-                            <div className="p-6">
-                                <h1 className="text-xl font-bold">{initialRequestData.title}</h1>
-                                <div className="flex items-center gap-2 mt-2">
-                                    {initialRequestData.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(initialRequestData.due_date), 'dd/MM/yyyy')}</Badge>}
-                                    <Badge variant="secondary" className="capitalize">{initialRequestData.status}</Badge>
-                                </div>
-                                {assignedClient && (
-                                    <div className="mt-4 flex items-center gap-3">
-                                        <Avatar className="h-9 w-9"><AvatarFallback>{getInitials(assignedClient.full_name)}</AvatarFallback></Avatar>
-                                        <div>
-                                            <p className="text-sm font-semibold">{assignedClient.full_name}</p>
-                                            <p className="text-xs text-muted-foreground">{assignedClient.email}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex-1 min-h-0">
-                                <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd", padding: '10px'}}>
-                                    <Accordion type="single" collapsible className="w-full" value={`page-${activeIds.pageId}`}>
-                                        {initialRequestData.form_data.map((page) => (
-                                            <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
-                                                <AccordionTrigger className={cn("w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline", page.id === activeIds.pageId ? "bg-primary/10 text-primary" : "hover:bg-muted")} onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}><span className="truncate">{page.title}</span></AccordionTrigger>
-                                                <AccordionContent className="pl-4 mt-1 pb-0">
-                                                    {page.sections.map(section => (
-                                                        <div key={section.id} className="border-l">
-                                                            <div className={cn("w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2", section.id === activeIds.sectionId && "bg-primary/10 text-primary")} onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}><span className="truncate">{section.title}</span></div>
-                                                            <div className="pl-6 border-l ml-2">
-                                                                {section.questions.map(question => (
-                                                                    <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeIds.questionId && section.id === activeIds.sectionId ? "border-primary" : "border-transparent")}>
-                                                                        <TooltipProvider delayDuration={100}>
-                                                                            <Tooltip>
-                                                                                <TooltipTrigger asChild>
-                                                                                    <button className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors" onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })}>
-                                                                                        <p className={cn("truncate", question.id === activeIds.questionId && section.id === activeIds.sectionId ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>{question.label}</p>
-                                                                                    </button>
-                                                                                </TooltipTrigger>
-                                                                                <TooltipContent side="right" align="start"><p className="max-w-xs">{question.label}</p></TooltipContent>
-                                                                            </Tooltip>
-                                                                        </TooltipProvider>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
-                                    </Accordion>
-                                </nav>
-                            </div>
-                            <div className="p-6"><Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button></div>
-                        </aside>
-                        <main className="flex-1 flex flex-col overflow-hidden">
-                             <div className="flex-1 overflow-y-auto">
-                                <div className="p-8 max-w-4xl mx-auto w-full">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
-                                        {activeQuestion ? (
-                                            <>
-                                                <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
-                                                {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
-                                                <div className="mt-6">{renderQuestionPreview(activeQuestion)}</div>
-                                                <div className="mt-6 flex justify-between items-center">
-                                                    <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>{isLastQuestion ? "End of Form" : "Continue to next question"}</Button>
-                                                    <Button variant="outline" className="rounded-full">COMMENTS</Button>
-                                                </div>
-                                            </>
-                                        ) : <p>Select a question to see the preview.</p>}
-                                    </div>
-                                </div>
-                             </div>
-                        </main>
-                    </div>
-                );
+                return <RequestPreview 
+                    initialRequestData={initialRequestData} 
+                    clients={clients} 
+                    activeIds={activeIds} 
+                    setActiveIds={setActiveIds} 
+                    navigatePage={navigatePage}
+                    handleContinue={handleContinue}
+                    isLastQuestion={isLastQuestion}
+                    setRequestToArchive={setRequestToArchive}
+                    setRequestToForceDelete={setRequestToForceDelete}
+                    nextStep={nextStep}
+                    isSubmitting={isSubmitting}
+                    id={id}
+                />;
             case "Finalize": return (
                 <FinalizeStep
                     initialData={initialRequestData}
@@ -1021,3 +1098,4 @@ export default function EditRequestWizardPage() {
         </>
     );
 }
+
