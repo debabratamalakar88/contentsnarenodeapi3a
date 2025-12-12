@@ -10,7 +10,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -197,14 +197,16 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
     return (
         <div className="flex flex-1 overflow-hidden h-full">
             <aside 
+                 className="h-screen"
                  style={{
                     display: 'flex',
                     width: '20vw',
                     flexDirection: 'column',
                     maxWidth: '26rem',
                     minWidth: 'min(22rem, 100vw)',
+                    minHeight: '0px',
+                    borderRight: '1px solid #d9d9d9',
                 }}
-                className="bg-card h-screen"
             >
                 <div className="p-6">
                     <h1 className="text-xl font-bold">{initialRequestData.title}</h1>
@@ -960,7 +962,7 @@ export default function EditRequestWizardPage() {
             case "Builder": return <BuilderStep
                                         setPages={setPages}
                                         requestTitle={requestTitle}
-                                        setRequestTitle={setTemplateTitle}
+                                        setRequestTitle={setRequestTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
@@ -1013,7 +1015,7 @@ export default function EditRequestWizardPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </div>
-                <div className="flex-1 flex justify-center">
+                 <div className="flex-1 flex justify-center">
                     {!isViewerRole && (
                         <StepNavigation
                             steps={steps}
@@ -1100,3 +1102,4 @@ export default function EditRequestWizardPage() {
 }
 
     
+
