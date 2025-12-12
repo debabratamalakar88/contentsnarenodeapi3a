@@ -9,7 +9,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -28,7 +28,7 @@ import { getRequest, updateRequest, type Request, type Page, type Section, type 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -170,6 +170,7 @@ const renderQuestionPreview = (question: Question) => {
     }
 }
 
+
 const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, navigatePage, handleContinue, isLastQuestion, setRequestToArchive, setRequestToForceDelete, nextStep, isSubmitting, id }: any) => {
     const isFinalizeStep = useMemo(() => window.location.pathname.endsWith('/finalize'), []);
     
@@ -283,11 +284,7 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
                             {isFinalizeStep ? <Button disabled>Publish</Button> : <Button onClick={nextStep} disabled={isSubmitting}>Publish</Button>}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setRequestToArchive(initialRequestData)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setRequestToForceDelete(initialRequestData)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
-                                </DropdownMenuContent>
+                                <DropdownMenuContent><DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem><DropdownMenuItem onSelect={() => setRequestToArchive(initialRequestData)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem><DropdownMenuItem onSelect={() => setRequestToForceDelete(initialRequestData)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem></DropdownMenuContent>
                             </DropdownMenu>
                         </div>
                     </div>
@@ -703,7 +700,20 @@ export default function EditRequestWizardPage() {
     };
 
     const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => {
-        setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, title: newTitle } : section) } : page));
+        setPages(prevPages => prevPages.map(page => {
+            if (page.id === pageId) {
+                return {
+                    ...page,
+                    sections: page.sections.map(section => {
+                        if (section.id === sectionId) {
+                            return { ...section, title: newTitle };
+                        }
+                        return section;
+                    })
+                };
+            }
+            return page;
+        }));
     };
     
     const handleAddFieldClick = (pageId: number, sectionId: number) => {
@@ -914,6 +924,7 @@ export default function EditRequestWizardPage() {
     }, [initialRequestData, activeIds]);
 
     const handleArchive = async () => {
+        const token = localStorage.getItem('authToken');
         if (!token || !requestToArchive) return;
         try {
             await softDeleteRequest(token, requestToArchive.id);
@@ -927,6 +938,7 @@ export default function EditRequestWizardPage() {
     };
     
     const handleForceDelete = async () => {
+        const token = localStorage.getItem('authToken');
         if (!token || !requestToForceDelete) return;
         try {
             await forceDeleteRequest(token, requestToForceDelete.id);
@@ -956,7 +968,7 @@ export default function EditRequestWizardPage() {
             case "Builder": return <BuilderStep
                                         setPages={setPages}
                                         requestTitle={requestTitle}
-                                        setRequestTitle={setRequestTitle}
+                                        setRequestTitle={setTemplateTitle}
                                         pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
                                         updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
                                         openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
@@ -1021,11 +1033,7 @@ export default function EditRequestWizardPage() {
                     )}
                 </div>
                  <div className="flex items-center gap-2">
-                     {isFinalizeStep && initialRequestData?.status === 'published' ? (
-                        <Button asChild>
-                            <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
-                        </Button>
-                    ) : currentStepIndex < steps.length - 1 && !isViewerRole && (
+                     {currentStepIndex < steps.length - 1 && !isViewerRole && (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
@@ -1099,3 +1107,4 @@ export default function EditRequestWizardPage() {
     );
 }
 
+    
