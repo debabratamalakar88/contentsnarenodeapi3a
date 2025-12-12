@@ -621,6 +621,7 @@ export default function EditRequestWizardPage() {
                                         addTempOption={addTempOption}
                                         handleTempOptionChange={handleTempOptionChange}
                                         removeTempOption={removeTempOption}
+                                        updateQuestion={updateQuestion}
                                     />;
             case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
             case "Finalize": return (
@@ -637,12 +638,14 @@ export default function EditRequestWizardPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <header className="sticky top-16 z-20 flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                {!isViewerRole && (
-                     <>
+            <header className="sticky top-16 z-20 flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur">
+                <div>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="flex-1 flex justify-center">
+                    {!isViewerRole && (
                         <StepNavigation
                             steps={steps}
                             currentStepSlug={stepSlug}
@@ -650,21 +653,21 @@ export default function EditRequestWizardPage() {
                             maxVisitedStepIndex={maxVisitedStepIndex}
                             disabledSteps={disabledSteps}
                         />
-                        <div className="ml-auto flex items-center gap-2">
-                             {isFinalizeStep && initialRequestData?.status === 'published' && (
-                                <Button asChild>
-                                    <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
-                                </Button>
-                            )}
-                            {currentStepIndex < steps.length - 1 && (
-                                <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
-                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
-                                </Button>
-                            )}
-                        </div>
-                    </>
-                )}
+                    )}
+                </div>
+                 <div className="flex items-center gap-2">
+                     {isFinalizeStep && initialRequestData?.status === 'published' && (
+                        <Button asChild>
+                            <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
+                        </Button>
+                    )}
+                    {currentStepIndex < steps.length - 1 && !isViewerRole && (
+                        <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    )}
+                </div>
             </header>
             
             <div className={cn("flex-grow overflow-y-auto", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
@@ -718,3 +721,4 @@ export default function EditRequestWizardPage() {
         </div>
     );
 }
+
