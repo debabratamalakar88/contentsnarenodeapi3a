@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -10,7 +9,7 @@ import EssentialsStep from '../../../new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '../../../new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronRight, Type, Pilcrow, CheckSquare, ChevronDown as ChevronDownIcon, ListOrdered, UploadCloud, CalendarDays, AtSign, Phone, Link2, Plus, X, Loader2, Search, PenSquare, ImageUp, FileUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, GalleryVertical, Table, PenTool, ListChecks, BadgeCheck, Briefcase, Sparkles, Pipette, MousePointerClick, MoreHorizontal, Settings, GripVertical, Folder, ChevronDown, Pencil, MessageSquare, History, Info, Edit, Archive, Trash2, Rocket } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -18,9 +17,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
-  SheetFooter,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { getRequest, updateRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType } from "@/lib/api";
+import { getRequest, updateRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType, getClients, type Client } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,6 +38,18 @@ import { countries } from "@/lib/countries";
 import { IconSelector } from "@/components/ui/icon-selector";
 import PreviewStep from "../../../new/components/PreviewStep";
 import { Switch } from "@/components/ui/switch";
+import { format, parseISO } from "date-fns";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 const steps = [
@@ -104,6 +112,64 @@ const questionCategories: {
     },
 ];
 
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
+
+const renderQuestionPreview = (question: Question) => {
+    const questionId = `preview-${question.id}`;
+    
+    switch (question.type) {
+        case 'text':
+        case 'email':
+        case 'tel':
+        case 'url':
+        case 'number':
+        case 'date':
+        case 'currency':
+             return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+        case 'textarea':
+             return <Textarea id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
+        case 'radio':
+            return (
+                <RadioGroup defaultValue={question.defaultValue} disabled>
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            )
+        case 'checkbox':
+            return (
+                <div className="space-y-2 pt-2">
+                    {question.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <Checkbox id={`preview-${question.id}-${i}`} value={opt.value} disabled />
+                            <Label htmlFor={`${questionId}-${i}`}>{opt.label}</Label>
+                        </div>
+                    ))}
+                </div>
+            )
+        case 'dropdown':
+            return (
+                <Select defaultValue={question.defaultValue} disabled>
+                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
+                    <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                </Select>
+            )
+        case 'formatted-text':
+            return <div className="prose prose-sm max-w-none p-2 border rounded-md min-h-[60px]" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
+        default:
+            return <Input id={questionId} type="text" placeholder={question.label} disabled />;
+    }
+}
+
 export default function EditRequestWizardPage() {
     const router = useRouter();
     const params = useParams();
@@ -127,6 +193,7 @@ export default function EditRequestWizardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [initialRequestData, setInitialRequestData] = useState<Request | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [clients, setClients] = useState<Client[]>([]);
 
     // State to track wizard progress
     const [maxVisitedStepIndex, setMaxVisitedStepIndex] = useState(steps.length - 1); // Allow all steps in edit mode
@@ -139,6 +206,12 @@ export default function EditRequestWizardPage() {
     // Question Settings Dialog State
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
+
+    // Preview Step State
+    const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
+    const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
+    const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
@@ -154,14 +227,25 @@ export default function EditRequestWizardPage() {
 
         async function fetchRequestData() {
             try {
-                const data = await getRequest(token, requestId);
+                const [data, clientData] = await Promise.all([
+                    getRequest(token, requestId),
+                    getClients(token),
+                ]);
+
                 setRequestTitle(data.title);
                 setRequestDescription(data.description);
                 setPages(data.form_data || []);
                 if (data.form_data?.length > 0) {
                     setActivePageId(data.form_data[0].id);
+                    setActiveIds({
+                        pageId: data.form_data[0].id,
+                        sectionId: data.form_data[0].sections[0].id,
+                        questionId: data.form_data[0].sections[0].questions[0].id
+                    });
                 }
                 setInitialRequestData(data);
+                setClients(clientData);
+
             } catch (error: any) {
                 toast({ title: "Failed to load request", description: error.message || "Could not fetch request data.", variant: "destructive" });
                 router.push('/dashboard/requests');
@@ -590,6 +674,120 @@ export default function EditRequestWizardPage() {
 
     const isFinalizeStep = currentStepIndex === steps.length - 1;
 
+    // Functions for Preview Step
+    const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
+        if (!initialRequestData || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+
+        const page = initialRequestData.form_data.find(p => p.id === activeIds.pageId);
+        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        
+        const section = page.sections.find(s => s.id === activeIds.sectionId);
+        if (!section) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+
+        const question = section.questions.find(q => q.id === activeIds.questionId);
+        if(!question) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        
+        const pageIndex = initialRequestData.form_data.findIndex(p => p.id === page.id);
+
+        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex };
+    }, [initialRequestData, activeIds]);
+
+    const navigatePage = (direction: 'next' | 'prev') => {
+        if (!initialRequestData || !activePage) return;
+        const currentIndex = initialRequestData.form_data.findIndex(p => p.id === activePage.id);
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+
+        if (newIndex >= 0 && newIndex < initialRequestData.form_data.length) {
+            const newPage = initialRequestData.form_data[newIndex];
+            setActiveIds({
+                pageId: newPage.id,
+                sectionId: newPage.sections[0].id,
+                questionId: newPage.sections[0].questions[0].id,
+            });
+        }
+    };
+    
+    const handleContinue = () => {
+        if (!initialRequestData || !activeIds) return;
+
+        const { pageId, sectionId, questionId } = activeIds;
+
+        const pageIndex = initialRequestData.form_data.findIndex(p => p.id === pageId);
+        if (pageIndex === -1) return;
+        const currentPage = initialRequestData.form_data[pageIndex];
+
+        const sectionIndex = currentPage.sections.findIndex(s => s.id === sectionId);
+        if (sectionIndex === -1) return;
+        const currentSection = currentPage.sections[sectionIndex];
+
+        const questionIndex = currentSection.questions.findIndex(q => q.id === questionId);
+        if (questionIndex === -1) return;
+
+        if (questionIndex < currentSection.questions.length - 1) {
+            const nextQuestion = currentSection.questions[questionIndex + 1];
+            setActiveIds({ pageId, sectionId, questionId: nextQuestion.id });
+            return;
+        }
+
+        if (sectionIndex < currentPage.sections.length - 1) {
+            const nextSection = currentPage.sections[sectionIndex + 1];
+            if (nextSection.questions.length > 0) {
+                const nextQuestion = nextSection.questions[0];
+                setActiveIds({ pageId, sectionId: nextSection.id, questionId: nextQuestion.id });
+                return;
+            }
+        }
+
+        if (pageIndex < initialRequestData.form_data.length - 1) {
+            const nextPage = initialRequestData.form_data[pageIndex + 1];
+            if (nextPage.sections.length > 0 && nextPage.sections[0].questions.length > 0) {
+                const nextSection = nextPage.sections[0];
+                const nextQuestion = nextSection.questions[0];
+                setActiveIds({ pageId: nextPage.id, sectionId: nextSection.id, questionId: nextQuestion.id });
+                return;
+            }
+        }
+        toast({ title: "End of Form", description: "You have reached the last question."});
+    };
+    
+    const isLastQuestion = useMemo(() => {
+        if (!initialRequestData || !activeIds) return true;
+        const { pageId, sectionId, questionId } = activeIds;
+        const lastPage = initialRequestData.form_data[initialRequestData.form_data.length - 1];
+        if (pageId !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (sectionId !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return questionId === lastQuestion.id;
+    }, [initialRequestData, activeIds]);
+
+    const handleArchive = async () => {
+        if (!token || !requestToArchive) return;
+        try {
+            await softDeleteRequest(token, requestToArchive.id);
+            toast({ title: 'Request archived' });
+            router.push('/dashboard/requests');
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
+        } finally {
+            setRequestToArchive(null);
+        }
+    };
+    
+    const handleForceDelete = async () => {
+        if (!token || !requestToForceDelete) return;
+        try {
+            await forceDeleteRequest(token, requestToForceDelete.id);
+            toast({ title: 'Request permanently deleted' });
+            router.push('/dashboard/requests');
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
+        } finally {
+            setRequestToForceDelete(null);
+        }
+    };
+
+
     const renderStep = () => {
         if (isLoading) {
             return (
@@ -623,7 +821,96 @@ export default function EditRequestWizardPage() {
                                         removeTempOption={removeTempOption}
                                         updateQuestion={updateQuestion}
                                     />;
-            case "Preview": return <PreviewStep title={requestTitle} description={requestDescription} pages={pages} />;
+            case "Preview": 
+                if (!initialRequestData || !activeIds) return <div className="p-6 text-center text-muted-foreground">Loading preview...</div>;
+
+                const assignedClient = clients.find(c => initialRequestData.client_id?.includes(c.id));
+                const pageIndex = initialRequestData.form_data.findIndex(p => p.id === activeIds.pageId);
+
+                return (
+                    <div className="flex flex-1 overflow-hidden h-full">
+                        <aside style={{ display: 'flex', width: '20vw', flexDirection: 'column', maxWidth: '26rem', minWidth: 'min(22rem, 100vw)', minHeight: '0px', borderRight: '1px solid #d9d9d9', backgroundColor: '#fff'}} className="h-full">
+                            <div className="p-6">
+                                <h1 className="text-xl font-bold">{initialRequestData.title}</h1>
+                                <div className="flex items-center gap-2 mt-2">
+                                    {initialRequestData.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(initialRequestData.due_date), 'dd/MM/yyyy')}</Badge>}
+                                    <Badge variant="secondary" className="capitalize">{initialRequestData.status}</Badge>
+                                </div>
+                                {assignedClient && (
+                                    <div className="mt-4 flex items-center gap-3">
+                                        <Avatar className="h-9 w-9"><AvatarFallback>{getInitials(assignedClient.full_name)}</AvatarFallback></Avatar>
+                                        <div>
+                                            <p className="text-sm font-semibold">{assignedClient.full_name}</p>
+                                            <p className="text-xs text-muted-foreground">{assignedClient.email}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex-1 min-h-0">
+                                <nav className="h-full overflow-y-auto" style={{borderTop: "1px solid #ddd", padding: '10px'}}>
+                                    <Accordion type="single" collapsible className="w-full" value={`page-${activeIds.pageId}`}>
+                                        {initialRequestData.form_data.map((page) => (
+                                            <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
+                                                <AccordionTrigger className={cn("w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline", page.id === activeIds.pageId ? "bg-primary/10 text-primary" : "hover:bg-muted")} onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}><span className="truncate">{page.title}</span></AccordionTrigger>
+                                                <AccordionContent className="pl-4 mt-1 pb-0">
+                                                    {page.sections.map(section => (
+                                                        <div key={section.id} className="border-l">
+                                                            <div className={cn("w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2", section.id === activeIds.sectionId && "bg-primary/10 text-primary")} onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}><span className="truncate">{section.title}</span></div>
+                                                            <div className="pl-6 border-l ml-2">
+                                                                {section.questions.map(question => (
+                                                                    <div key={question.id} className={cn("pl-2 border-l -ml-4", question.id === activeIds.questionId && section.id === activeIds.sectionId ? "border-primary" : "border-transparent")}>
+                                                                        <TooltipProvider delayDuration={100}>
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger asChild>
+                                                                                    <button className="w-full text-left py-1.5 text-sm rounded-r-md pl-4 transition-colors" onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })}>
+                                                                                        <p className={cn("truncate", question.id === activeIds.questionId && section.id === activeIds.sectionId ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground")}>{question.label}</p>
+                                                                                    </button>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent side="right" align="start"><p className="max-w-xs">{question.label}</p></TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                </nav>
+                            </div>
+                            <div className="p-6"><Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button></div>
+                        </aside>
+                        <main className="flex-1 flex flex-col overflow-hidden">
+                             <div className="flex-1 overflow-y-auto">
+                                <div className="p-8 max-w-4xl mx-auto w-full">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                        {activeQuestion ? (
+                                            <>
+                                                <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                                {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
+                                                <div className="mt-6">{renderQuestionPreview(activeQuestion)}</div>
+                                                <div className="mt-6 flex justify-between items-center">
+                                                    <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>{isLastQuestion ? "End of Form" : "Continue to next question"}</Button>
+                                                    <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                                </div>
+                                            </>
+                                        ) : <p>Select a question to see the preview.</p>}
+                                    </div>
+                                </div>
+                             </div>
+                        </main>
+                    </div>
+                );
             case "Finalize": return (
                 <FinalizeStep
                     initialData={initialRequestData}
@@ -637,9 +924,10 @@ export default function EditRequestWizardPage() {
     };
 
     return (
+        <>
         <div className="flex flex-col h-full bg-background">
             <header className="sticky top-16 z-20 flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur">
-                <div>
+                <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
@@ -656,12 +944,11 @@ export default function EditRequestWizardPage() {
                     )}
                 </div>
                  <div className="flex items-center gap-2">
-                     {isFinalizeStep && initialRequestData?.status === 'published' && (
+                     {isFinalizeStep && initialRequestData?.status === 'published' ? (
                         <Button asChild>
                             <Link href={`/dashboard/requests/${id}`}>VIEW REQUEST</Link>
                         </Button>
-                    )}
-                    {currentStepIndex < steps.length - 1 && !isViewerRole && (
+                    ) : currentStepIndex < steps.length - 1 && !isViewerRole && (
                         <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
@@ -719,6 +1006,18 @@ export default function EditRequestWizardPage() {
                 </SheetContent>
             </Sheet>
         </div>
+        <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader><AlertDialogTitle>Delete Permanently?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. All data for this request will be permanently deleted.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleForceDelete}>Delete</AlertDialogAction></AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }
-
