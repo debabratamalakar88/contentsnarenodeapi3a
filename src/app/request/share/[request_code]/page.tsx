@@ -146,6 +146,7 @@ const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: Publi
                 <h2 className="font-bold text-2xl leading-tight">{request.title}</h2>
                 {request.due_date && (
                     <div className="text-sm font-medium text-muted-foreground mt-2 flex items-center">
+                        <CalendarDays className="mr-2 h-4 w-4" />
                         Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}
                     </div>
                 )}
@@ -159,7 +160,6 @@ const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: Publi
                                     "p-3 rounded-md font-semibold text-sm hover:no-underline",
                                     activeIds.pageId === page.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                                 )}
-                                onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}
                             >
                                 <div className="flex items-center gap-2 flex-1 truncate">
                                     <span className="truncate">{page.title}</span>
@@ -332,7 +332,7 @@ export default function SharedRequestPage() {
     }, [request, activeIds]);
 
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
-        if (!request) return;
+        if (!request || !activePage) return;
         const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
         if (newIndex >= 0 && newIndex < request.form_data.length) {
             const newPage = request.form_data[newIndex];
@@ -454,7 +454,9 @@ export default function SharedRequestPage() {
         setAllAnswers({});
         setSubmissionCode(null);
         localStorage.removeItem(`submission_code_${requestCode}`);
-        setActivePageIndex(0);
+        if(request && request.form_data.length > 0) {
+           setActiveIds({ pageId: request.form_data[0].id, sectionId: request.form_data[0].sections[0].id, questionId: request.form_data[0].sections[0].questions[0].id });
+        }
         setValidationErrors({});
     };
 
@@ -562,3 +564,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
