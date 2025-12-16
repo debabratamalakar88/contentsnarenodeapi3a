@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, type FormEvent } from 'react';
+import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, type Request, type Question, type Page, type Section } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
