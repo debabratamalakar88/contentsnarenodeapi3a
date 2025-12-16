@@ -24,7 +24,7 @@ import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -267,10 +267,12 @@ export default function ViewRequestPage() {
             <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} />
             <main className="flex-1 flex flex-col overflow-hidden">
                  <header className="flex items-center justify-between p-4 border-b bg-background">
-                    <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === 0}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        {activePage && request.form_data.findIndex(p => p.id === activePage.id) > 0 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === 0}>
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            {activePage && request.form_data.findIndex(p => p.id === activePage.id) > 0 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
+                        </Button>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" className="text-pink-600 border-pink-200">
                             <Sparkles className="mr-2 h-4 w-4"/> Activity
@@ -283,10 +285,12 @@ export default function ViewRequestPage() {
                             <DropdownMenuContent></DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                     <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === request.form_data.length - 1}>
-                        {activePage && request.form_data.findIndex(p => p.id === activePage.id) < request.form_data.length - 1 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === request.form_data.length - 1}>
+                            {activePage && request.form_data.findIndex(p => p.id === activePage.id) < request.form_data.length - 1 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                    </div>
                 </header>
                  <div className="flex-1 overflow-y-auto p-8">
                     <div className="max-w-3xl mx-auto">
@@ -326,4 +330,3 @@ export default function ViewRequestPage() {
         </div>
     );
 }
-
