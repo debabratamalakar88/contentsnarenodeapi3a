@@ -24,6 +24,7 @@ import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -279,6 +280,7 @@ export default function ViewRequestPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
+                            <DropdownMenuContent></DropdownMenuContent>
                         </DropdownMenu>
                     </div>
                      <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === request.form_data.length - 1}>
