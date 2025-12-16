@@ -194,7 +194,7 @@ const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, 
     return (
         <div className="flex flex-1 overflow-hidden h-full">
             <aside 
-                 className="h-screen"
+                 className="h-screen bg-card"
                  style={{
                     display: 'flex',
                     width: '20vw',

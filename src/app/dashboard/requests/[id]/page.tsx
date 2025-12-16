@@ -2,34 +2,28 @@
 
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect, useMemo, type FormEvent } from 'react';
+import React, { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission } from '@/lib/api';
+import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission, type Section } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Sparkles, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Loader2, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import Link from 'next/link';
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -39,491 +33,141 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-
-const RichTextEditorPreview = ({ question }: { question: Question }) => {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [wordCount, setWordCount] = useState(0);
-
-    const [isBold, setIsBold] = useState(false);
-    const [isItalic, setIsItalic] = useState(false);
-    const [isUnderline, setIsUnderline] = useState(false);
-    const [isUl, setIsUl] = useState(false);
-    const [isOl, setIsOl] = useState(false);
-    const [isLeftAligned, setIsLeftAligned] = useState(true);
-    const [isCenterAligned, setIsCenterAligned] = useState(false);
-    const [isRightAligned, setIsRightAligned] = useState(false);
-    const [isJustifyAligned, setIsJustifyAligned] = useState(false);
-    
-    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-    const [savedRange, setSavedRange] = useState<Range | null>(null);
-
-    const [viewMode, setViewMode] = useState<'editor' | 'html'>('editor');
-    const [htmlContent, setHtmlContent] = useState(question.defaultValue || '');
-
-    const updateToolbarState = useCallback(() => {
-        if (editorRef.current) {
-            setIsBold(document.queryCommandState('bold'));
-            setIsItalic(document.queryCommandState('italic'));
-            setIsUnderline(document.queryCommandState('underline'));
-            setIsUl(document.queryCommandState('insertUnorderedList'));
-            setIsOl(document.queryCommandState('insertOrderedList'));
-            
-            const center = document.queryCommandState('justifyCenter');
-            const right = document.queryCommandState('justifyRight');
-            const justify = document.queryCommandState('justifyFull');
-            
-            setIsCenterAligned(center);
-            setIsRightAligned(right);
-            setIsJustifyAligned(justify);
-            setIsLeftAligned(!center && !right && !justify);
-        }
-    }, []);
-
-    const updateWordCount = useCallback(() => {
-        if (editorRef.current) {
-            const textContent = editorRef.current.innerText || "";
-            const words = textContent.trim().split(/\s+/).filter(Boolean);
-            setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
-        }
-    }, []);
-
-    const execCmd = (command: string, value?: string) => {
-        if (editorRef.current) {
-            editorRef.current.focus();
-            document.execCommand(command, false, value);
-            updateToolbarState();
-            setHtmlContent(editorRef.current.innerHTML);
-            updateWordCount();
-        }
-    };
-
-    const handleFormat = (e: React.MouseEvent<HTMLButtonElement>, command: string) => {
-        e.preventDefault();
-        execCmd(command);
-    };
-
-    const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        const selection = window.getSelection();
-        let rangeToSave: Range | null = null;
-        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            rangeToSave = selection.getRangeAt(0).cloneRange();
-        }
-
-        const url = window.prompt("Enter the URL:", "https://");
-
-        if (url) {
-            editorRef.current?.focus();
-            if(rangeToSave) {
-                const currentSelection = window.getSelection();
-                if (currentSelection) {
-                    currentSelection.removeAllRanges();
-                    currentSelection.addRange(rangeToSave);
-                }
-            }
-            document.execCommand('createLink', false, url);
-            updateToolbarState();
-            setHtmlContent(editorRef.current!.innerHTML);
-            updateWordCount();
-        }
-    };
-    
-    const handleEmojiButtonMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
-            setSavedRange(selection.getRangeAt(0).cloneRange());
-        } else if (editorRef.current) {
-            editorRef.current.focus();
-            const range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            range.collapse(false);
-            setSavedRange(range);
-        }
-    };
-
-    const onEmojiClick = (emojiObject: { emoji: string }) => {
-        if (editorRef.current) {
-            editorRef.current.focus();
-            if (savedRange) {
-                const selection = window.getSelection();
-                if (selection) {
-                    selection.removeAllRanges();
-                    selection.addRange(savedRange);
-                }
-            }
-            document.execCommand('insertText', false, emojiObject.emoji);
-            setEmojiPickerOpen(false);
-            setHtmlContent(editorRef.current.innerHTML);
-            updateWordCount();
-            setSavedRange(null);
-        }
-    };
-    
-    const handleHeadingChange = (value: string) => {
-        execCmd('formatBlock', value);
-    };
-
-    const handleInput = () => {
-        if (editorRef.current) {
-            setHtmlContent(editorRef.current.innerHTML);
-            updateToolbarState();
-            updateWordCount();
-        }
-    }
-
-    const toggleViewMode = () => {
-        setViewMode(current => (current === 'editor' ? 'html' : 'editor'));
-    };
-
-    useEffect(() => {
-        if (viewMode === 'editor' && editorRef.current) {
-            if (editorRef.current.innerHTML !== htmlContent) {
-                editorRef.current.innerHTML = htmlContent;
-            }
-            updateWordCount();
-            updateToolbarState();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [viewMode]); 
-    
-    useEffect(() => {
-        const editor = editorRef.current;
-        const handleSelectionChange = () => {
-            if (document.activeElement === editor) {
-                updateToolbarState();
-            }
-        };
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-        if (editor) {
-            editor.addEventListener('focus', updateToolbarState);
-        }
-
-        return () => {
-            document.removeEventListener('selectionchange', handleSelectionChange);
-            if (editor) {
-                editor.removeEventListener('focus', updateToolbarState);
-            }
-        };
-    }, [updateToolbarState]);
-    
-    const isPlaceholderVisible = viewMode === 'editor' && !htmlContent.replace(/<p><br><\/p>/g, '').trim();
-
-    return (
-      <div className="rounded-md border border-input bg-background">
-        <div className="p-2 border-b flex items-center gap-1 text-muted-foreground flex-wrap">
-          <Select onValueChange={handleHeadingChange} defaultValue="p">
-              <SelectTrigger className="w-[120px] h-8 text-sm focus:ring-0 focus:ring-offset-0 border-none shadow-none">
-                  <SelectValue placeholder="Style" />
-              </SelectTrigger>
-              <SelectContent>
-                  <SelectItem value="p">Normal</SelectItem>
-                  <SelectItem value="h1">Heading 1</SelectItem>
-                  <SelectItem value="h2">Heading 2</SelectItem>
-                  <SelectItem value="h3">Heading 3</SelectItem>
-              </SelectContent>
-          </Select>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isBold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'bold')}><Bold className="h-4 w-4" /></Button>
-          <Button variant={isItalic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'italic')}><Italic className="h-4 w-4" /></Button>
-          <Button variant={isUnderline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'underline')}><Underline className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isUl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertUnorderedList')}><List className="h-4 w-4" /></Button>
-          <Button variant={isOl ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'insertOrderedList')}><ListOrdered className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={isLeftAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyLeft')}><AlignLeft className="h-4 w-4" /></Button>
-          <Button variant={isCenterAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyCenter')}><AlignCenter className="h-4 w-4" /></Button>
-          <Button variant={isRightAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyRight')}><AlignRight className="h-4 w-4" /></Button>
-          <Button variant={isJustifyAligned ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'justifyFull')}><AlignJustify className="h-4 w-4" /></Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleLink}><LucideLink className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={(e) => handleFormat(e, 'unlink')}><Link2Off className="h-4 w-4" /></Button>
-          <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
-              <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onMouseDown={handleEmojiButtonMouseDown} onClick={() => setEmojiPickerOpen(o => !o)}>
-                      <Smile className="h-4 w-4" />
-                  </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border-0">
-                  <EmojiPicker onEmojiClick={onEmojiClick} />
-              </PopoverContent>
-          </Popover>
-           <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button variant={viewMode === 'html' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={toggleViewMode} title="Toggle HTML View">
-              <Code className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {viewMode === 'editor' ? (
-            <div className="relative">
-                 {isPlaceholderVisible && (
-                     <div className="absolute top-3 left-3 text-muted-foreground pointer-events-none">Enter text here...</div>
-                )}
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  suppressContentEditableWarning
-                  className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 ring-offset-background focus-visible:outline-none"
-                  onInput={handleInput}
-                />
-            </div>
-        ) : (
-            <textarea
-                value={htmlContent}
-                onChange={(e) => setHtmlContent(e.target.value)}
-                className="prose-preview min-h-[200px] w-full resize-y overflow-auto p-3 font-mono text-xs bg-muted/20 ring-offset-background focus-visible:outline-none"
-                placeholder="Enter HTML here..."
-            />
-        )}
-
-        <div className="p-2 border-t text-xs text-muted-foreground flex justify-end items-center">
-            <span>Words: {wordCount}</span>
-        </div>
-        <textarea name={question.apiId} value={htmlContent} className="hidden" readOnly />
-      </div>
-    );
-};
-
-const DateRangePicker = ({ question }: { question: Question }) => {
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
-
-    const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newStartDate = e.target.value;
-        setStartDate(newStartDate);
-        if (endDate && newStartDate > endDate) {
-            setEndDate('');
-        }
-    };
-
-    return (
-        <div className="flex items-center gap-2">
-            <Input
-                type="date"
-                id={`preview-${question.id}-start`}
-                name={`${question.apiId}_start`}
-                value={startDate}
-                onChange={handleStartDateChange}
-            />
-            <span>to</span>
-            <Input
-                type="date"
-                id={`preview-${question.id}-end`}
-                name={`${question.apiId}_end`}
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                disabled={!startDate}
-            />
-        </div>
-    );
-};
-
-const CurrencyInput = ({ question }: { question: Question }) => {
-    const defaultCountry = countries.find(c => c.code === 'US' && c.currency) || countries.find(c => c.currency);
-    const [selectedCountryCode, setSelectedCountryCode] = useState<string>(defaultCountry?.code || '');
-
-    const selectedCountry = countries.find(c => c.code === selectedCountryCode);
-
-    return (
-        <div className="flex items-center gap-0 max-w-xs">
-            <Select onValueChange={setSelectedCountryCode} defaultValue={selectedCountryCode}>
-                <SelectTrigger className="w-[90px] rounded-r-none border-r-0">
-                    <SelectValue>
-                        {selectedCountry ? <div className="flex items-center gap-2 truncate"><span className="text-lg">{selectedCountry.flag}</span> <span className="text-xs text-muted-foreground">{selectedCountry.currency}</span></div> : '...'}
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                    {countries.filter(c => c.currency && c.symbol).map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                            <div className="flex items-center gap-3">
-                                <span className="text-lg">{country.flag}</span>
-                                <span className="font-medium">{country.name}</span>
-                                <span className="text-muted-foreground ml-auto">{country.currency} ({country.symbol})</span>
-                            </div>
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <div className="relative flex-1">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">{selectedCountry?.symbol}</span>
-                <Input type="number" id={`preview-${question.id}`} placeholder="100.00" name={question.apiId} className="pl-8 rounded-l-none" />
-            </div>
-        </div>
-    );
-};
-
-const renderQuestionInput = (question: Question) => {
+const renderQuestionInput = (
+    question: Question,
+    value: any,
+    onChange: (fieldName: string, value: any) => void,
+    error?: string
+) => {
     const questionId = `q-${question.id}`;
     const questionName = question.apiId || questionId;
+    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "";
 
     switch(question.type) {
-        case 'text':
-            return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'textarea':
-            return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'file':
-            return <Input id={questionId} name={questionName} type="file" required={question.required} disabled />;
-        case 'checkbox':
-            return (
-                <div className="space-y-2 pt-2">
-                    {question.options?.map((opt, i) => (
-                        <div key={i} className="flex items-center space-x-2">
-                            <Checkbox id={`${questionId}-${i}`} name={`${questionName}[]`} value={opt.value} disabled />
-                            <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
-                        </div>
-                    ))}
-                </div>
-            );
-        case 'dropdown':
-            return (
-                <Select name={questionName} defaultValue={question.defaultValue} required={question.required} disabled>
-                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
-                    <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
-                </Select>
-            );
-        case 'date':
-            return <Input id={questionId} name={questionName} type="date" defaultValue={question.defaultValue} required={question.required} className="max-w-[240px]" disabled />;
-        case 'email':
-            return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'tel':
-            return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'url':
-            return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'radio':
-            return (
-                <RadioGroup name={questionName} defaultValue={question.defaultValue}>
-                    {question.options?.map((opt, i) => (
-                        <div key={i} className="flex items-center space-x-2 pt-2">
-                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} disabled />
-                            <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
-                        </div>
-                    ))}
-                </RadioGroup>
-            );
-        case 'formatted-text':
-             return <RichTextEditorPreview question={question} />;
-        case 'image-upload':
-             return <Input id={questionId} name={questionName} type="file" accept="image/*" required={question.required} multiple disabled />;
-        case 'address':
-             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
-        case 'number':
-             return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} defaultValue={question.defaultValue} required={question.required} disabled />;
-        case 'currency':
-             return <CurrencyInput question={question} />;
-        case 'country':
-            return (
-                <Select name={questionName} defaultValue={question.defaultValue} required={question.required} disabled>
-                    <SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
-                    <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
-                </Select>
-            );
-        case 'date-range':
-             return <DateRangePicker question={question} />;
-        case 'icon-selector':
-            return <IconSelector name={questionName} defaultValue={question.defaultValue} />;
-        case 'color-picker':
-            return (
-                <div className="flex items-center gap-2">
-                    <Input type="color" className="w-12 h-10 p-1" defaultValue={question.defaultValue || '#000000'} disabled />
-                    <Input type="text" name={questionName} placeholder="#000000" defaultValue={question.defaultValue || '#000000'} className="max-w-[150px]" readOnly/>
-                </div>
-            );
-        case 'button':
-            return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'}>{question.label}</Button>;
-        default:
-            return <div className="text-sm text-red-500">Unsupported field type: {question.type}</div>;
+        case 'text': return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} minLength={question.minLength} maxLength={question.maxLength} />;
+        case 'textarea': return <Textarea id={questionId} name={questionName} placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} minLength={question.minLength} maxLength={question.maxLength} />;
+        case 'file': return <Input id={questionId} name={`${questionName}[]`} type="file" required={question.required} className={inputClassName} multiple />;
+        case 'checkbox': return (
+            <div className="space-y-2 pt-2">
+                {question.options?.map((opt, i) => (
+                    <div key={i} className="flex items-center space-x-2">
+                        <Checkbox id={`${questionId}-${i}`} name={`${questionName}[]`} value={opt.value} checked={Array.isArray(value) && value.includes(opt.value)} onCheckedChange={(checked) => { const currentValues = Array.isArray(value) ? [...value] : []; const newValues = checked ? [...currentValues, opt.value] : currentValues.filter(v => v !== opt.value); onChange(questionName, newValues); }} />
+                        <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
+                    </div>
+                ))}
+                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            </div>
+        );
+        case 'dropdown': return (
+            <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
+                <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger>
+                <SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+            </Select>
+        );
+        case 'date': return <Input id={questionId} name={questionName} type="date" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={cn("max-w-[240px]", inputClassName)} />;
+        case 'email': return <Input id={questionId} name={questionName} type="email" placeholder={question.placeholder || "email@example.com"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+        case 'tel': return <Input id={questionId} name={questionName} type="tel" placeholder={question.placeholder || "(123) 456-7890"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+        case 'url': return <Input id={questionId} name={questionName} type="url" placeholder={question.placeholder || "https://example.com"} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+        case 'radio': return (
+            <RadioGroup name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)}>
+                {question.options?.map((opt, i) => (<div key={i} className="flex items-center space-x-2 pt-2"><RadioGroupItem value={opt.value} id={`${questionId}-${i}`} /><label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label></div>))}
+            </RadioGroup>
+        );
+        case 'formatted-text': return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
+        case 'image-upload': return <Input id={questionId} name={`${questionName}[]`} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
+        case 'address': return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
+        case 'number': return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+        case 'button': return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'}>{question.label}</Button>;
+        default: return <div className="text-sm text-red-500">Unsupported field type: {question.type}</div>;
     }
 }
 
 interface ViewSidebarProps {
   request: Request;
   assignedClients: Client[];
-  pages: Page[];
-  activePageIndex: number;
-  setActivePageIndex: (id: number) => void;
-  publicUrl: string;
+  activeIds: { pageId: number | null, sectionId: number | null, questionId: number | null };
+  setActiveIds: (ids: { pageId: number, sectionId: number, questionId: number }) => void;
 }
 
-const ViewSidebar = ({ request, assignedClients, pages, activePageIndex, setActivePageIndex, publicUrl }: ViewSidebarProps) => {
-    const { toast } = useToast();
-    const [copied, setCopied] = useState(false);
+const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds }: ViewSidebarProps) => {
+    const { pageId: activePageId, sectionId: activeSectionId, questionId: activeQuestionId } = activeIds;
+    const [openPages, setOpenPages] = useState<number[]>([activePageId || (request.form_data[0]?.id ?? 0)]);
 
-    const handleCopy = () => {
-        if (!publicUrl) return;
-        navigator.clipboard.writeText(publicUrl);
-        setCopied(true);
-        toast({ title: "Copied to clipboard!", description: "The public URL has been copied." });
-        setTimeout(() => setCopied(false), 2000);
+    const handlePageClick = (pageId: number) => {
+        setOpenPages(current => current.includes(pageId) ? current.filter(id => id !== pageId) : [...current, pageId]);
     };
     
     return (
-        <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
-            <div className="flex-shrink-0">
-                <div className="p-4 border-b">
-                    <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                    {request.due_date && (
-                        <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
-                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-                            Due: {format(parseISO(request.due_date), 'PPP')}
-                        </div>
-                    )}
-                     {request.status === 'published' && request.request_code && publicUrl && (
-                        <div className="mt-4">
-                            <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
-                            <div className="flex items-center gap-1 mt-1">
-                                <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
-                                    <a
-                                        href={publicUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="truncate hover:underline"
-                                        title={publicUrl}
-                                    >
-                                        {publicUrl}
-                                    </a>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
-                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-                {assignedClients.length > 0 && (
-                    <div className="p-4 border-b">
-                        <h3 className="font-semibold text-xs mb-2 uppercase text-muted-foreground">Clients</h3>
-                        <div className="space-y-2">
-                            {assignedClients.map(client => (
-                                <div key={client.id} className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="text-sm font-semibold">{client.full_name}</p>
-                                        <p className="text-xs text-muted-foreground">{client.email}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+        <aside className="w-80 flex-shrink-0 bg-white border-r flex flex-col h-screen">
+            <div className="flex-shrink-0 p-6 space-y-4">
+                <h2 className="font-bold text-2xl leading-tight">{request.title}</h2>
+                {request.due_date && (
+                    <div className="text-sm font-medium text-muted-foreground flex items-center">
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        Due: {format(parseISO(request.due_date), 'PPP')}
                     </div>
                 )}
-            </div>
-            <div className="flex-1 p-2 space-y-1 overflow-y-auto">
-                <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
-                {pages.map((page, index) => (
-                    <button
-                        key={page.id}
-                        onClick={() => setActivePageIndex(index)}
-                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageIndex === index ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
-                    >
-                        <span className="truncate">{page.title}</span>
-                    </button>
+                {assignedClients.map(client => (
+                    <div key={client.id} className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9"><AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback></Avatar>
+                        <div>
+                            <p className="text-sm font-semibold">{client.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{client.email}</p>
+                        </div>
+                    </div>
                 ))}
             </div>
+            <div className="flex-1 p-2 space-y-1 overflow-y-auto border-t">
+                {request.form_data.map((page) => (
+                    <div key={page.id}>
+                        <button
+                            onClick={() => handlePageClick(page.id)}
+                            className={cn(
+                                "w-full text-left flex items-center justify-between text-sm p-3 rounded-md font-semibold",
+                                activePageId === page.id ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                            )}
+                        >
+                            <span className="truncate">{page.title}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs">0/{page.sections.reduce((acc, s) => acc + s.questions.length, 0)}</span>
+                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                        </button>
+                        {openPages.includes(page.id) && (
+                            <div className="pl-4 mt-1 space-y-1">
+                                {page.sections.map(section => (
+                                    <div key={section.id}>
+                                         <button onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}
+                                            className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activeSectionId === section.id && activePageId === page.id ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100")}
+                                        >
+                                            <span className="truncate">{section.title}</span>
+                                             <div className="flex items-center gap-2">
+                                                <span className="text-xs">0/{section.questions.length}</span>
+                                                <CheckCircle className="h-4 w-4 text-gray-400" />
+                                            </div>
+                                        </button>
+                                        {activeSectionId === section.id && activePageId === page.id && (
+                                            <div className="pl-4 mt-1 border-l-2 ml-2">
+                                                {section.questions.map(question => (
+                                                    <button key={question.id} onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })} className={cn("w-full text-left flex items-center gap-2 text-sm p-2 rounded-md", activeQuestionId === question.id ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:bg-gray-50")}>
+                                                        - <span className="truncate">{question.label}</span>
+                                                        <CheckCircle className="h-4 w-4 ml-auto text-gray-300" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+             <div className="p-4 border-t">
+                <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
+            </div>
         </aside>
-    );
+    )
 }
 
 export default function ViewRequestPage() {
@@ -535,12 +179,11 @@ export default function ViewRequestPage() {
 
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
-    const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [activePageIndex, setActivePageIndex] = useState(0);
-    const [currentTab, setCurrentTab] = useState("form");
+    const [activeIds, setActiveIds] = useState<{ pageId: number | null, sectionId: number | null, questionId: number | null }>({ pageId: null, sectionId: null, questionId: null });
+    const [formValues, setFormValues] = useState<Record<string, any>>({});
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -549,16 +192,18 @@ export default function ViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, clientsData, submissionsData] = await Promise.all([
+                const [requestData, clientsData] = await Promise.all([
                     getRequest(token!, id),
-                    getClients(token!),
-                    getRequestSubmissions(token!, id)
+                    getClients(token!)
                 ]);
-
                 setRequest(requestData);
                 setClients(clientsData || []);
-                const sortedSubmissions = (submissionsData || []).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-                setSubmissions(sortedSubmissions);
+                if (requestData.form_data?.length > 0) {
+                     const firstPage = requestData.form_data[0];
+                     const firstSection = firstPage.sections[0];
+                     const firstQuestion = firstSection.questions[0];
+                     setActiveIds({ pageId: firstPage.id, sectionId: firstSection.id, questionId: firstQuestion.id });
+                }
             } catch (err: any) {
                 const message = err.message || 'Failed to load request data.';
                 setError(message);
@@ -570,183 +215,113 @@ export default function ViewRequestPage() {
         fetchRequestData();
     }, [id, router, toast]);
 
+    const { activePage, activeSection, activeQuestion } = useMemo(() => {
+        if (!request || !activeIds) return { activePage: null, activeSection: null, activeQuestion: null };
+        const page = request.form_data.find(p => p.id === activeIds.pageId);
+        if (!page) return { activePage: null, activeSection: null, activeQuestion: null };
+        const section = page.sections.find(s => s.id === activeIds.sectionId);
+        if (!section) return { activePage: page, activeSection: null, activeQuestion: null };
+        const question = section.questions.find(q => q.id === activeIds.questionId);
+        return { activePage: page, activeSection: section, activeQuestion: question || null };
+    }, [request, activeIds]);
+
+    const handlePrevNextPage = (direction: 'prev' | 'next') => {
+        if (!request || !activePage) return;
+        const currentIndex = request.form_data.findIndex(p => p.id === activePage.id);
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        if (newIndex >= 0 && newIndex < request.form_data.length) {
+            const newPage = request.form_data[newIndex];
+            const firstSection = newPage.sections[0];
+            const firstQuestion = firstSection?.questions[0];
+            if (firstSection && firstQuestion) {
+                 setActiveIds({ pageId: newPage.id, sectionId: firstSection.id, questionId: firstQuestion.id });
+            }
+        }
+    };
+    
     const assignedClients = useMemo(() => {
         if (!request?.client_id || !clients) return [];
-        return clients.filter(c => request.client_id!.includes(c.id));
+        const clientIds = Array.isArray(request.client_id) ? request.client_id : [request.client_id];
+        return clients.filter(c => clientIds.includes(c.id));
     }, [request, clients]);
     
-    const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
-
-
-    const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast({ title: 'Form Submitted', description: 'Your response has been recorded (simulation).' });
-        setIsSubmitting(false);
-    };
-
-    const handleNextPage = () => {
-        if (request && activePageIndex < request.form_data.length - 1) {
-            setActivePageIndex(prev => prev + 1);
-        }
-    };
-
-    const handlePrevPage = () => {
-        if (activePageIndex > 0) {
-            setActivePageIndex(prev => prev - 1);
-        }
-    };
-
     if (isLoading) {
         return (
-            <div className="p-6 h-full flex flex-col">
-                <header className="flex items-center justify-between mb-6 pb-4 border-b">
-                    <div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /></div>
-                </header>
-                <div className="flex flex-1"><Skeleton className="w-64" /><div className="flex-1 p-6"><Skeleton className="h-full w-full" /></div></div>
+            <div className="flex h-screen bg-muted/40">
+                <Skeleton className="w-80 h-full" />
+                <div className="flex-1 p-6 space-y-6">
+                    <Skeleton className="h-10 w-1/3" />
+                    <Skeleton className="h-[400px] w-full" />
+                </div>
             </div>
         );
     }
     
-    if (error) {
-        return (
-            <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-muted/40 p-4 text-center">
-                <Card className="w-full max-w-md"><CardHeader><CardTitle className="text-destructive">Request Not Found</CardTitle><CardDescription>{error}</CardDescription></CardHeader><CardContent><Button asChild><a href="/dashboard/requests">Back to Requests</a></Button></CardContent></Card>
-            </div>
-        );
+    if (error || !request) {
+        return <div className="p-6 text-center text-muted-foreground">{error || 'Request data could not be loaded.'}</div>;
     }
-
-    if (!request || !request.form_data || request.form_data.length === 0) {
-        return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
-    }
-
-    const activePage = request.form_data[activePageIndex];
-    const isLastPage = activePageIndex === request.form_data.length - 1;
-    const publicUrl = request?.status === 'published' && request.request_code ? `${window.location.origin}/request/share/${request.request_code}` : '';
 
     return (
-        <div className="flex flex-1 flex-col bg-muted/40 overflow-hidden">
-            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-shrink-0">
-                <Button variant="outline" size="icon" asChild><a href="/dashboard/requests"><ArrowLeft className="h-4 w-4" /></a></Button>
-            </header>
-            
-            <div className="flex flex-1 overflow-hidden">
-                <ViewSidebar request={request} assignedClients={assignedClients} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl} />
-                <main className="flex-1 overflow-y-auto">
-                    <div className="p-6 space-y-6">
-                        {request.description && (
-                             <div className="p-6 border rounded-md h-[250px] overflow-y-auto bg-slate-50 shadow-sm">
-                                <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: request.description }} />
-                            </div>
-                        )}
-                        <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                            <TabsList>
-                                <TabsTrigger value="form">Form Preview</TabsTrigger>
-                                <TabsTrigger value="submissions">Submissions <Badge variant="secondary" className="ml-2">{submissions.length}</Badge></TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="form">
-                                <form className="max-w-3xl mx-auto pt-6" onSubmit={handleFormSubmit}>
-                                    {activePage ? (
-                                        <Card>
-                                            <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
-                                            <CardContent className="space-y-8">
-                                                {activePage.sections.map(section => (
-                                                    <div key={section.id}>
-                                                        <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                                        {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
-                                                        {section.questions.map(question => (
-                                                            <div key={question.id} className="grid gap-2 mb-4">
-                                                                {question.type !== 'button' && question.type !== 'formatted-text' && (
-                                                                    <div className="space-y-1">
-                                                                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                                            <Label htmlFor={`preview-${question.id}`}>
-                                                                                {question.label}
-                                                                                {question.required && <span className="text-destructive ml-1">*</span>}
-                                                                            </Label>
-                                                                            {question.showLengthValidation && question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
-                                                                            {question.showLengthValidation && question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                                {renderQuestionInput(question)}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ))}
-                                            </CardContent>
-                                            <CardFooter className="flex justify-between border-t pt-6">
-                                                <Button type="button" variant="outline" onClick={handlePrevPage} disabled={activePageIndex === 0}>
-                                                    <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                                                </Button>
-                                                {!isLastPage && (
-                                                    <Button type="button" onClick={handleNextPage}>
-                                                        Next <ArrowRight className="ml-2 h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </CardFooter>
-                                        </Card>
-                                    ) : (
-                                        <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
-                                    )}
-                                </form>
-                            </TabsContent>
-                            <TabsContent value="submissions">
-                            <Card className="mt-6">
-                                    <CardHeader><CardTitle>Request Submissions</CardTitle><CardDescription>Here are all the submissions received for this request.</CardDescription></CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Submission Code</TableHead>
-                                                    <TableHead>Submitted On</TableHead>
-                                                    <TableHead>Status</TableHead>
-                                                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {submissions.length > 0 ? submissions.map(submission => {
-                                                    return (
-                                                        <TableRow key={submission.id}>
-                                                            <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
-                                                            <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
-                                                            <TableCell>
-                                                            <Badge
-                                                                variant={'outline'}
-                                                                className={cn(
-                                                                    "capitalize",
-                                                                    submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                                                                )}
-                                                            >
-                                                                {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
-                                                                {submission.status}
-                                                            </Badge>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
-                                                                    <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
-                                                }) : (
-                                                    <TableRow>
-                                                        <TableCell colSpan={4} className="h-24 text-center">
-                                                            <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                                                            No submissions received yet.
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                            </Card>
-                            </TabsContent>
-                        </Tabs>
+        <div className="flex flex-1 overflow-hidden h-screen bg-muted/40">
+            <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} />
+            <main className="flex-1 flex flex-col overflow-hidden">
+                 <header className="flex items-center justify-between p-4 border-b bg-background">
+                    <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === 0}>
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        {activePage && request.form_data.findIndex(p => p.id === activePage.id) > 0 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
+                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" className="text-pink-600 border-pink-200">
+                            <Sparkles className="mr-2 h-4 w-4"/> Activity
+                        </Button>
+                        <Button variant="outline">Client Access Settings</Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                        </DropdownMenu>
                     </div>
-                </main>
-            </div>
+                     <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === request.form_data.length - 1}>
+                        {activePage && request.form_data.findIndex(p => p.id === activePage.id) < request.form_data.length - 1 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                </header>
+                 <div className="flex-1 overflow-y-auto p-8">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                            </div>
+                        </div>
+                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
+                           {activeQuestion ? (
+                                <form>
+                                    <div className="grid gap-2">
+                                        <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                        {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
+                                        <div className="mt-4">
+                                            {renderQuestionInput(activeQuestion, formValues[activeQuestion.apiId || ''], (name, val) => setFormValues(prev => ({...prev, [name]: val})), undefined)}
+                                        </div>
+                                    </div>
+                                    <div className="mt-8 flex justify-between items-center">
+                                        <div>
+                                            <Button>SUBMIT FOR REVIEW</Button>
+                                            <Button variant="link" className="text-primary">or Save draft and continue</Button>
+                                        </div>
+                                        <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                    </div>
+                                </form>
+                           ) : (
+                             <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
+                           )}
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }
+
