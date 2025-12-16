@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, type Request, type Question, type Page } from '@/lib/api';
+import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, type Request, type Question, type Page, type Section } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -15,14 +15,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/icons';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, CheckCircle, Info, MessageSquare, History } from 'lucide-react';
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const renderQuestionInput = (
@@ -33,7 +32,7 @@ const renderQuestionInput = (
 ) => {
     const questionId = `q-${question.id}`;
     const questionName = question.apiId || questionId;
-    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "";
+    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-ring";
 
     switch(question.type) {
         case 'text':
@@ -136,35 +135,75 @@ const renderQuestionInput = (
 interface PublicRequestSidebarProps {
   request: Request;
   pages: Page[];
-  activePageIndex: number;
-  setActivePageIndex: (id: number) => void;
+  activeIds: { pageId: number; sectionId: number; questionId: number };
+  setActiveIds: (ids: { pageId: number; sectionId: number; questionId: number }) => void;
 }
 
-const PublicRequestSidebar = ({ request, pages, activePageIndex, setActivePageIndex }: PublicRequestSidebarProps) => {
+const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: PublicRequestSidebarProps) => {
     return (
-        <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
-            <div className="flex-shrink-0">
-                <div className="p-4 border-b">
-                    <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                    {request.due_date && (
-                        <div className="text-xs font-medium text-muted-foreground mt-3 flex items-center">
-                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-                            Due: {format(parseISO(request.due_date), 'PPP')}
-                        </div>
-                    )}
-                </div>
+        <aside className="w-[340px] flex-shrink-0 bg-white border-r flex flex-col h-screen overflow-y-auto">
+            <div className="p-6 border-b">
+                <h2 className="font-bold text-2xl leading-tight">{request.title}</h2>
+                {request.due_date && (
+                    <div className="text-sm font-medium text-muted-foreground mt-2 flex items-center">
+                        Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}
+                    </div>
+                )}
             </div>
             <div className="flex-1 p-2 space-y-1 overflow-y-auto">
-                <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
-                {pages.map((page, index) => (
-                    <button
-                        key={page.id}
-                        onClick={() => setActivePageIndex(index)}
-                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageIndex === index ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
-                    >
-                        <span className="truncate">{page.title}</span>
-                    </button>
-                ))}
+                <Accordion type="multiple" defaultValue={pages.map(p => `page-${p.id}`)} className="w-full">
+                    {pages.map((page, pageIndex) => (
+                        <AccordionItem value={`page-${page.id}`} key={page.id} className="border-none">
+                            <AccordionTrigger 
+                                className={cn(
+                                    "p-3 rounded-md font-semibold text-sm hover:no-underline",
+                                    activeIds.pageId === page.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                                )}
+                                onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}
+                            >
+                                <div className="flex items-center gap-2 flex-1 truncate">
+                                    <span className="truncate">{page.title}</span>
+                                    <span className="text-xs text-muted-foreground ml-auto shrink-0">0/{page.sections.reduce((acc, s) => acc + s.questions.length, 0)}</span>
+                                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pl-4 pb-0">
+                                {page.sections.map((section, sectionIndex) => (
+                                    <div key={section.id} className="border-l my-1">
+                                        <Accordion type="multiple" defaultValue={sectionIndex === 0 && pageIndex === 0 ? [`section-${section.id}`] : []} className="w-full">
+                                            <AccordionItem value={`section-${section.id}`} className="border-none">
+                                                <AccordionTrigger 
+                                                    className={cn("p-2 rounded-md font-medium text-sm hover:no-underline", activeIds.sectionId === section.id && 'bg-primary/5')}
+                                                    onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}
+                                                >
+                                                   <div className="flex items-center gap-2 flex-1 truncate">
+                                                        <span className="truncate">{section.title}</span>
+                                                        <span className="text-xs text-muted-foreground ml-auto shrink-0">0/{section.questions.length}</span>
+                                                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="pl-4 border-l ml-4 pb-0">
+                                                    {section.questions.map(question => (
+                                                        <button 
+                                                            key={question.id} 
+                                                            onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })}
+                                                            className={cn(
+                                                                "w-full text-left py-1 text-sm text-muted-foreground truncate hover:text-primary",
+                                                                activeIds.questionId === question.id && "text-primary font-semibold"
+                                                            )}
+                                                        >
+                                                            {question.label}
+                                                        </button>
+                                                    ))}
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </div>
+                                ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
             </div>
         </aside>
     );
@@ -172,7 +211,6 @@ const PublicRequestSidebar = ({ request, pages, activePageIndex, setActivePageIn
 
 export default function SharedRequestPage() {
     const params = useParams();
-    const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
     
@@ -182,7 +220,7 @@ export default function SharedRequestPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [activePageIndex, setActivePageIndex] = useState(0);
+    const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
     const [submissionCode, setSubmissionCode] = useState<string | null>(null);
     const [allAnswers, setAllAnswers] = useState<any>({});
     const [isComplete, setIsComplete] = useState(false);
@@ -208,6 +246,14 @@ export default function SharedRequestPage() {
             try {
                 const requestData = await getSharedRequest(requestCode);
                 setRequest(requestData);
+                
+                if (requestData.form_data?.length > 0 && requestData.form_data[0].sections.length > 0 && requestData.form_data[0].sections[0].questions.length > 0) {
+                    setActiveIds({
+                        pageId: requestData.form_data[0].id,
+                        sectionId: requestData.form_data[0].sections[0].id,
+                        questionId: requestData.form_data[0].sections[0].questions[0].id
+                    });
+                }
     
                 const storedSubmissionCode = localStorage.getItem(storageKey);
                 if (storedSubmissionCode) {
@@ -243,7 +289,6 @@ export default function SharedRequestPage() {
                 }
             } catch (err: any) {
                 if (err?.status === 404 && submissionCode) {
-                    // Submission was not found on backend, clear local state
                     localStorage.removeItem(storageKey);
                     setSubmissionCode(null);
                     setAllAnswers({});
@@ -275,95 +320,32 @@ export default function SharedRequestPage() {
         }
     };
     
-    const validatePage = (page: Page): boolean => {
-        const errors: { [key: string]: string } = {};
-        let isValid = true;
-    
-        page.sections.forEach(section => {
-            section.questions.forEach(question => {
-                if (question.type === 'button' || question.type === 'formatted-text') return;
-                
-                const fieldName = question.apiId || `q-${question.id}`;
-                const formElement = formRef.current?.elements.namedItem(fieldName) as (HTMLInputElement | RadioNodeList | null);
-                
-                let value = allAnswers[fieldName];
+    const { activePage, activeSection, activeQuestion, activePageIndex } = useMemo(() => {
+        if (!request || !activeIds) return { activePage: null, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const page = request.form_data.find(p => p.id === activeIds.pageId);
+        if (!page) return { activePage: null, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const section = page.sections.find(s => s.id === activeIds.sectionId);
+        if (!section) return { activePage: page, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const question = section.questions.find(q => q.id === activeIds.questionId);
+        const pageIndex = request.form_data.findIndex(p => p.id === page.id);
+        return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
+    }, [request, activeIds]);
 
-                if (question.type === 'file' || question.type === 'image-upload') {
-                    const fileInput = formElement as HTMLInputElement;
-                    if (question.required && (!fileInput || fileInput.files?.length === 0)) {
-                        isValid = false;
-                        errors[fieldName] = "This field is required.";
-                        return;
-                    }
-                } else {
-                    if (question.required) {
-                        let isMissing = false;
-                        if (question.type === 'checkbox') {
-                            if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
-                        } else if (value === null || value === undefined || String(value).trim() === '') {
-                            isMissing = true;
-                        }
-
-                        if (isMissing) {
-                            isValid = false;
-                            errors[fieldName] = "This field is required.";
-                            return; // continue to next question
-                        }
-                    }
-                }
-    
-                if (value && String(value).trim() !== '') {
-                    if (question.type === 'email' && !/\S+@\S+\.\S+/.test(String(value))) {
-                        isValid = false;
-                        errors[fieldName] = "Please enter a valid email address.";
-                    }
-                    if (question.type === 'url' && !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(String(value))) {
-                        isValid = false;
-                        errors[fieldName] = "Please enter a valid URL.";
-                    }
-                    if (question.type === 'tel' && !/^\+?[0-9\s-()]+$/.test(String(value))) {
-                         isValid = false;
-                         errors[fieldName] = "Please enter a valid phone number.";
-                    }
-                }
-
-                if ((question.type === 'text' || question.type === 'textarea') && value) {
-                    const valueLength = String(value).length;
-                    if (question.minLength && valueLength < question.minLength) {
-                        isValid = false;
-                        errors[fieldName] = `This field must be at least ${question.minLength} characters long.`;
-                    }
-                    if (question.maxLength && valueLength > question.maxLength) {
-                        isValid = false;
-                        errors[fieldName] = `This field must be no more than ${question.maxLength} characters long.`;
-                    }
-                }
-            });
-        });
-    
-        setValidationErrors(errors);
-        if (!isValid) {
-            toast({
-                title: "Validation Error",
-                description: "Please fill out all required fields correctly.",
-                variant: "destructive",
-            });
+    const handleNextPrevPage = (direction: 'prev' | 'next') => {
+        if (!request) return;
+        const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
+        if (newIndex >= 0 && newIndex < request.form_data.length) {
+            const newPage = request.form_data[newIndex];
+            setActiveIds({ pageId: newPage.id, sectionId: newPage.sections[0].id, questionId: newPage.sections[0].questions[0].id });
         }
-        return isValid;
-    };
-
-    const getFormDataForSubmission = () => {
-        if (!formRef.current) return new FormData();
-        return new FormData(formRef.current);
     }
     
-    const handleStepChange = async (newIndex: number) => {
-        const currentPage = request?.form_data[activePageIndex];
-        if (!currentPage || !validatePage(currentPage)) return;
+    const handleSaveDraftAndContinue = async () => {
+        if (!activePage) return;
 
         const formData = getFormDataForSubmission();
         setIsSubmitting(true);
-
+    
         try {
             if (!submissionCode) {
                  const response = await startSubmission(requestCode, formData);
@@ -375,18 +357,71 @@ export default function SharedRequestPage() {
                  toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
             }
              setValidationErrors({});
-             setActivePageIndex(newIndex);
         } catch(err: any) {
-            toast({ title: "Error Saving Progress", description: err.message || "Could not save your data.", variant: "destructive" });
+            toast({ title: "Error Saving Draft", description: err.message || "Could not save your data.", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const validatePage = (page: Page): boolean => {
+        const errors: { [key: string]: string } = {};
+        let isValid = true;
+    
+        page.sections.forEach(section => {
+            section.questions.forEach(question => {
+                if (question.type === 'button' || question.type === 'formatted-text') return;
+                
+                const fieldName = question.apiId || `q-${question.id}`;
+                let value = allAnswers[fieldName];
+
+                if (question.required) {
+                    let isMissing = false;
+                    if (question.type === 'checkbox') {
+                        if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
+                    } else if (value === null || value === undefined || String(value).trim() === '') {
+                        isMissing = true;
+                    }
+
+                    if (isMissing) {
+                        isValid = false;
+                        errors[fieldName] = "This field is required.";
+                        return; // continue to next question
+                    }
+                }
+            });
+        });
+    
+        setValidationErrors(errors);
+        if (!isValid) {
+            toast({
+                title: "Validation Error",
+                description: "Please fill out all required fields before submitting.",
+                variant: "destructive",
+            });
+        }
+        return isValid;
+    };
+
+    const getFormDataForSubmission = () => {
+        if (!formRef.current) return new FormData();
+        return new FormData(formRef.current);
+    }
     
     const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const currentPage = request?.form_data[activePageIndex];
-        if (!currentPage || !validatePage(currentPage)) return;
+        
+        let allValid = true;
+        request?.form_data.forEach(page => {
+            if (!validatePage(page)) {
+                allValid = false;
+            }
+        });
+
+        if (!allValid) {
+            toast({ title: "Validation Error", description: "Please check all pages for required fields.", variant: "destructive" });
+            return;
+        }
 
         setIsSubmitting(true);
         const formData = getFormDataForSubmission();
@@ -449,7 +484,7 @@ export default function SharedRequestPage() {
          <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 text-center">
             <Card className="w-full max-w-md">
                 <CardHeader className="items-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+                    <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
                     <CardTitle>Submission Complete</CardTitle>
                     <CardDescription>Thank you! Your information has been successfully submitted.</CardDescription>
                 </CardHeader>
@@ -461,96 +496,69 @@ export default function SharedRequestPage() {
       )
     }
 
-    if (!request || !request.form_data || request.form_data.length === 0) {
+    if (!request || !request.form_data || request.form_data.length === 0 || !activeIds) {
         return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
     }
     
-    const currentPage = request.form_data[activePageIndex];
     const isLastPage = activePageIndex === request.form_data.length - 1;
 
     return (
         <div className="min-h-screen bg-muted flex flex-col">
-            <header className="w-full p-4 flex-shrink-0 bg-background border-b">
-                <div className="max-w-7xl mx-auto flex justify-center items-center">
-                    <Logo className="h-8 w-8 text-primary" />
-                </div>
-            </header>
             <div className="flex flex-1 overflow-hidden">
-                <PublicRequestSidebar request={request} pages={request.form_data} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} />
-                <main className="flex-1 overflow-y-auto">
-                    <div className="max-w-3xl mx-auto p-6">
-                        {request.description && (
-                            <div className="p-6 border rounded-md h-[250px] overflow-y-auto mb-6 bg-slate-50 shadow-sm">
-                               <div className="text-muted-foreground prose-preview" dangerouslySetInnerHTML={{ __html: request.description }} />
-                            </div>
-                        )}
-                        <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
-                             {clientId && <input type="hidden" name="client_id" value={clientId} />}
-                            {currentPage ? (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>{currentPage.title}</CardTitle>
-                                        {currentPage.instructions && <CardDescription>{currentPage.instructions}</CardDescription>}
-                                    </CardHeader>
-                                    <CardContent className="space-y-8">
-                                        {currentPage.sections.map(section => (
-                                            <div key={section.id}>
-                                                <h4 className="text-lg font-semibold border-b pb-2 mb-6">{section.title}</h4>
-                                                <div className="space-y-6">
-                                                    {section.questions.map(question => {
-                                                        const fieldName = question.apiId || `q-${question.id}`;
-                                                        const fieldError = validationErrors[fieldName];
-                                                        const value = allAnswers[fieldName];
-                                                        
-                                                        return (
-                                                            <div key={question.id} className="grid gap-2">
-                                                                {question.type !== 'button' && question.type !== 'formatted-text' && (
-                                                                     <div className="space-y-1">
-                                                                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                                            <Label htmlFor={`q-${question.id}`}>
-                                                                                {question.label}
-                                                                                {question.required && <span className="text-destructive ml-1">*</span>}
-                                                                            </Label>
-                                                                            {question.minLength && <Badge variant="outline">Min: {question.minLength}</Badge>}
-                                                                            {question.maxLength && <Badge variant="outline">Max: {question.maxLength}</Badge>}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                                {renderQuestionInput(question, value, handleAnswerChange, fieldError)}
-                                                                {fieldError && <p className="text-sm font-medium text-destructive">{fieldError}</p>}
-                                                            </div>
-                                                        );
-                                                    })}
+                <PublicRequestSidebar request={request} pages={request.form_data} activeIds={activeIds} setActiveIds={setActiveIds} />
+                <main className="flex-1 flex flex-col overflow-hidden">
+                    <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 border-b bg-background">
+                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handleNextPrevPage('prev')} disabled={activePageIndex === 0}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            {activePageIndex > 0 ? request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
+                        </Button>
+                         <div className="flex items-center gap-2">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><ArrowLeft /></Button>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><CheckCircle /></Button>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><ArrowRight /></Button>
+                         </div>
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handleNextPrevPage('next')} disabled={isLastPage}>
+                            {isLastPage ? "Final Page" : (request.form_data[activePageIndex + 1]?.title.replace(/^[0-9\.]+\s*/, '') || 'Next')}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </header>
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="max-w-3xl mx-auto p-8">
+                             <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
+                                {clientId && <input type="hidden" name="client_id" value={clientId} />}
+                                {activeQuestion ? (
+                                    <>
+                                        <h2 className="text-xl font-bold mb-6">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                        <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                            <div className="grid gap-2">
+                                                <h3 className="font-semibold text-lg">{activeQuestion.label}{activeQuestion.required && <span className="text-destructive ml-1">*</span>}</h3>
+                                                {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
+                                                <div className="mt-4">
+                                                    {renderQuestionInput(activeQuestion, allAnswers[activeQuestion.apiId || ''], handleAnswerChange, validationErrors[activeQuestion.apiId || ''])}
+                                                     {validationErrors[activeQuestion.apiId || ''] && <p className="text-sm font-medium text-destructive mt-1">{validationErrors[activeQuestion.apiId || '']}</p>}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </CardContent>
-                                    <CardFooter className="flex justify-between border-t pt-6">
-                                        <Button type="button" variant="outline" onClick={() => handleStepChange(activePageIndex - 1)} disabled={activePageIndex === 0 || isSubmitting}>
-                                            <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                                        </Button>
-                                        {isLastPage ? (
-                                            <Button type="submit" disabled={isSubmitting}>
-                                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Submit
-                                            </Button>
-                                        ) : (
-                                            <Button type="button" onClick={() => handleStepChange(activePageIndex + 1)} disabled={isSubmitting}>
-                                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Next <ArrowRight className="ml-2 h-4 w-4" />
-                                            </Button>
-                                        )}
-                                    </CardFooter>
-                                </Card>
-                            ) : (
-                                 <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
-                            )}
-                        </form>
+                                            <div className="mt-8 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <Button type="submit" disabled={isSubmitting}>
+                                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        SUBMIT FOR REVIEW
+                                                    </Button>
+                                                    <span className="text-sm text-muted-foreground">or</span>
+                                                    <Button variant="link" className="text-primary p-0 h-auto" onClick={handleSaveDraftAndContinue}>Save draft and continue</Button>
+                                                </div>
+                                                <Button variant="outline" className="rounded-full">ASK A QUESTION</Button>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
+                                )}
+                            </form>
+                        </div>
                     </div>
                 </main>
             </div>
         </div>
     );
 }
-
