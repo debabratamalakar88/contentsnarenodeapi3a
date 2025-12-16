@@ -8,7 +8,7 @@ import { getRequest, getClients, getRequestSubmissions, type Request, type Quest
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle, MoreHorizontal, Edit, Archive, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -94,9 +94,21 @@ interface ViewSidebarProps {
   assignedClients: Client[];
   activeIds: { pageId: number | null, sectionId: number | null, questionId: number | null };
   setActiveIds: (ids: { pageId: number, sectionId: number, questionId: number }) => void;
+  publicUrl: string;
 }
 
-const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds }: ViewSidebarProps) => {
+const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds, publicUrl }: ViewSidebarProps) => {
+    const { toast } = useToast();
+    const [copied, setCopied] = useState(false);
+    
+    const handleCopy = () => {
+        if (!publicUrl) return;
+        navigator.clipboard.writeText(publicUrl);
+        setCopied(true);
+        toast({ title: "Copied to clipboard!", description: "The public URL has been copied." });
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const { pageId: activePageId, sectionId: activeSectionId, questionId: activeQuestionId } = activeIds;
     const [openPages, setOpenPages] = useState<number[]>([activePageId || (request.form_data[0]?.id ?? 0)]);
 
@@ -108,6 +120,27 @@ const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds }: View
         <aside className="w-80 flex-shrink-0 bg-white border-r flex flex-col h-screen">
             <div className="flex-shrink-0 p-6 space-y-4">
                 <h2 className="font-bold text-2xl leading-tight">{request.title}</h2>
+                 {request.status === 'published' && request.request_code && publicUrl && (
+                    <div className="mt-4">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                            <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
+                                <a
+                                    href={publicUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate hover:underline"
+                                    title={publicUrl}
+                                >
+                                    {publicUrl}
+                                </a>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                    </div>
+                )}
                 {request.due_date && (
                     <div className="text-sm font-medium text-muted-foreground flex items-center">
                         <CalendarDays className="h-4 w-4 mr-2" />
@@ -252,6 +285,10 @@ export default function ViewRequestPage() {
         return clients.filter(c => clientIds.includes(c.id));
     }, [request, clients]);
     
+    const publicUrl = (typeof window !== 'undefined' && request?.status === 'published' && request.request_code)
+        ? `${window.location.origin}/request/share/${request.request_code}`
+        : '';
+        
     if (isLoading) {
         return (
             <div className="flex h-screen bg-muted/40">
@@ -272,9 +309,9 @@ export default function ViewRequestPage() {
 
     return (
         <div className="flex flex-1 overflow-hidden h-screen bg-muted/40">
-            <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} />
+            <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} publicUrl={publicUrl} />
             <main className="flex-1 flex flex-col overflow-hidden">
-                <header className="flex items-center justify-between p-4 border-b bg-background">
+                 <header className="sticky z-10 flex items-center justify-between gap-4 p-4 border-b bg-background">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={activePageIndex === 0}>
                             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -290,7 +327,11 @@ export default function ViewRequestPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent></DropdownMenuContent>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem><Edit className="mr-2 h-4 w-4" /> Edit Request</DropdownMenuItem>
+                                <DropdownMenuItem><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
+                                <DropdownMenuItem><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
+                            </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
                     <div className="flex items-center gap-2">
