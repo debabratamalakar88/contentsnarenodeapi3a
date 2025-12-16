@@ -19,12 +19,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -262,15 +268,17 @@ export default function ViewRequestPage() {
         return <div className="p-6 text-center text-muted-foreground">{error || 'Request data could not be loaded.'}</div>;
     }
 
+    const activePageIndex = request.form_data.findIndex(p => p.id === activePage?.id);
+
     return (
         <div className="flex flex-1 overflow-hidden h-screen bg-muted/40">
             <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} />
             <main className="flex-1 flex flex-col overflow-hidden">
-                 <header className="flex items-center justify-between p-4 border-b bg-background">
+                <header className="flex items-center justify-between p-4 border-b bg-background">
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === 0}>
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={activePageIndex === 0}>
                             <ChevronLeft className="h-4 w-4 mr-2" />
-                            {activePage && request.form_data.findIndex(p => p.id === activePage.id) > 0 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
+                            {activePage && activePageIndex > 0 ? request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
@@ -286,8 +294,8 @@ export default function ViewRequestPage() {
                         </DropdownMenu>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={request.form_data.findIndex(p => p.id === activePage?.id) === request.form_data.length - 1}>
-                            {activePage && request.form_data.findIndex(p => p.id === activePage.id) < request.form_data.length - 1 ? request.form_data[request.form_data.findIndex(p => p.id === activePage.id) + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
+                            {activePage && activePageIndex < request.form_data.length - 1 ? request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
                             <ChevronRight className="h-4 w-4 ml-2" />
                         </Button>
                     </div>
