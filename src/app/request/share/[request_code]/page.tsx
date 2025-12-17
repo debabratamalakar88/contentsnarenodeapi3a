@@ -353,75 +353,84 @@ export default function SharedRequestPage() {
         return formData;
     };
     
-    const handleSaveDraftAndContinue = async () => {
-        if (!activePage) return;
+    const validateCurrentQuestion = (): boolean => {
+        if (!activeQuestion) return true;
+        
+        const fieldName = activeQuestion.apiId || `q-${activeQuestion.id}`;
+        const value = allAnswers[fieldName];
+        
+        if (activeQuestion.required) {
+            let isMissing = false;
+            if (activeQuestion.type === 'checkbox') {
+                if (!Array.isArray(value) || value.length === 0) isMissing = true;
+            } else if (value === null || value === undefined || String(value).trim() === '') {
+                isMissing = true;
+            }
 
+            if (isMissing) {
+                setValidationErrors(prev => ({...prev, [fieldName]: "This field is required."}));
+                return false;
+            }
+        }
+        
+        return true;
+    };
+
+    const handleContinue = async () => {
+        if (!request || !activeIds || !validateCurrentQuestion()) return;
+
+        await handleSaveStep();
+
+        const { pageId, sectionId, questionId } = activeIds;
+        const pageIndex = request.form_data.findIndex(p => p.id === pageId);
+        if (pageIndex === -1) return;
+        const currentPage = request.form_data[pageIndex];
+
+        const sectionIndex = currentPage.sections.findIndex(s => s.id === sectionId);
+        if (sectionIndex === -1) return;
+        const currentSection = currentPage.sections[sectionIndex];
+
+        const questionIndex = currentSection.questions.findIndex(q => q.id === questionId);
+
+        if (questionIndex < currentSection.questions.length - 1) {
+            setActiveIds({ pageId, sectionId, questionId: currentSection.questions[questionIndex + 1].id });
+        } else if (sectionIndex < currentPage.sections.length - 1) {
+            const nextSection = currentPage.sections[sectionIndex + 1];
+            setActiveIds({ pageId, sectionId: nextSection.id, questionId: nextSection.questions[0].id });
+        } else if (pageIndex < request.form_data.length - 1) {
+            const nextPage = request.form_data[pageIndex + 1];
+            setActiveIds({ pageId: nextPage.id, sectionId: nextPage.sections[0].id, questionId: nextPage.sections[0].questions[0].id });
+        }
+    };
+    
+    const handleSaveStep = async () => {
+        if (!activePage) return;
         const formData = constructFormData();
         setIsSubmitting(true);
-    
         try {
             if (!submissionCode) {
                  const response = await startSubmission(requestCode, formData);
                  setSubmissionCode(response.submission_code);
                  localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
-                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: response.message });
             } else {
                  await saveStep(submissionCode, activePageIndex + 1, formData);
-                 toast({ title: `Page ${activePageIndex + 1} Saved`, description: `Progress for page ${activePageIndex + 1} has been updated.` });
             }
-             setValidationErrors({});
-        } catch(err: any) {
-            toast({ title: "Error Saving Draft", description: err.message || "Could not save your data.", variant: "destructive" });
+        } catch (err: any) {
+            toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }
 
-    const validatePage = (page: Page): boolean => {
+    const validateFullForm = (): boolean => {
         const errors: { [key: string]: string } = {};
         let isValid = true;
-    
-        page.sections.forEach(section => {
-            section.questions.forEach(question => {
-                if (question.type === 'button' || question.type === 'formatted-text') return;
-                
-                const fieldName = question.apiId || `q-${question.id}`;
-                let value = allAnswers[fieldName];
-
-                if (question.required) {
-                    let isMissing = false;
-                    if (question.type === 'checkbox') {
-                        if (!value || !Array.isArray(value) || value.length === 0) isMissing = true;
-                    } else if (value === null || value === undefined || String(value).trim() === '') {
-                        isMissing = true;
-                    }
-
-                    if (isMissing) {
-                        isValid = false;
-                        errors[fieldName] = "This field is required.";
-                    }
-                }
-            });
-        });
-    
-        setValidationErrors(prev => ({...prev, ...errors}));
-        return isValid;
-    };
-    
-    const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+        let firstErrorIds: { pageId: number; sectionId: number; questionId: number } | null = null;
         
-        let allValid = true;
-        let firstErrorPage: number | null = null;
-        let firstErrorSection: number | null = null;
-        let firstErrorQuestion: number | null = null;
-
-        const newErrors: {[key: string]: string} = {};
-
-        request?.form_data.forEach((page, pageIndex) => {
+        request?.form_data.forEach(page => {
             page.sections.forEach(section => {
                 section.questions.forEach(question => {
-                    if (question.required) {
+                    if (question.required && question.type !== 'button' && question.type !== 'formatted-text') {
                         const fieldName = question.apiId || `q-${question.id}`;
                         const value = allAnswers[fieldName];
                         let isMissing = false;
@@ -430,31 +439,32 @@ export default function SharedRequestPage() {
                         } else if (value === null || value === undefined || String(value).trim() === '') {
                             isMissing = true;
                         }
-
+                        
                         if (isMissing) {
-                            allValid = false;
-                            newErrors[fieldName] = "This field is required.";
-                            if(firstErrorPage === null) {
-                                firstErrorPage = page.id;
-                                firstErrorSection = section.id;
-                                firstErrorQuestion = question.id;
+                            isValid = false;
+                            errors[fieldName] = "This field is required.";
+                            if (!firstErrorIds) {
+                                firstErrorIds = { pageId: page.id, sectionId: section.id, questionId: question.id };
                             }
                         }
                     }
                 });
             });
         });
-        
-        setValidationErrors(newErrors);
 
-        if (!allValid) {
-            if (firstErrorPage !== null && firstErrorSection !== null && firstErrorQuestion !== null) {
-                setActiveIds({ pageId: firstErrorPage, sectionId: firstErrorSection, questionId: firstErrorQuestion });
-            }
-            toast({ title: "Validation Error", description: "Please fill out all required fields.", variant: "destructive" });
-            return;
+        setValidationErrors(errors);
+
+        if (!isValid && firstErrorIds) {
+            setActiveIds(firstErrorIds);
+            toast({ title: "Missing Information", description: "Please fill out all required fields before submitting.", variant: "destructive"});
         }
+        
+        return isValid;
+    }
 
+    const handleSubmitForReview = async () => {
+        if (!validateFullForm()) return;
+        
         setIsSubmitting(true);
         const formData = constructFormData();
         
@@ -467,10 +477,9 @@ export default function SharedRequestPage() {
                  localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             }
 
-            // Save the final state before submitting
-            await saveStep(currentSubmissionCode, 'all', formData);
-
+            await saveStep(currentSubmissionCode, 'all', formData); // Save final state
             await submitRequest(currentSubmissionCode, formData);
+            
             toast({ title: "Success", description: "Your submission has been completed." });
             setIsComplete(true);
             localStorage.removeItem(`submission_code_${requestCode}`);
@@ -535,7 +544,13 @@ export default function SharedRequestPage() {
         return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
     }
     
-    const isLastPage = activePageIndex === request.form_data.length - 1;
+    const isLastQuestion = useMemo(() => {
+        if (!activePage || !activeSection) return false;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return activePage.id === lastPage.id && activeSection.id === lastSection.id && activeQuestion?.id === lastQuestion.id;
+    }, [request.form_data, activePage, activeSection, activeQuestion]);
 
     return (
         <div className="min-h-screen bg-muted flex flex-col">
@@ -552,17 +567,24 @@ export default function SharedRequestPage() {
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><CheckCircle /></Button>
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><ArrowRight /></Button>
                          </div>
-                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handleNextPrevPage('next')} disabled={isLastPage}>
-                            {isLastPage ? "Final Page" : (request.form_data[activePageIndex + 1]?.title.replace(/^[0-9\.]+\s*/, '') || 'Next')}
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handleNextPrevPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
+                            {activePageIndex === request.form_data.length - 1 ? "Final Page" : (request.form_data[activePageIndex + 1]?.title.replace(/^[0-9\.]+\s*/, '') || 'Next')}
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </header>
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-3xl mx-auto p-8">
-                             <form onSubmit={handleFormSubmit} noValidate>
+                            <form noValidate>
                                 {activeQuestion ? (
                                     <>
-                                        <h2 className="text-xl font-bold mb-6">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                            </div>
+                                        </div>
                                         <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
                                             <div className="grid gap-2">
                                                 <h3 className="font-semibold text-lg">{activeQuestion.label}{activeQuestion.required && <span className="text-destructive ml-1">*</span>}</h3>
@@ -573,14 +595,17 @@ export default function SharedRequestPage() {
                                                 </div>
                                             </div>
                                             <div className="mt-8 flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <Button type="submit" disabled={isSubmitting}>
+                                                {isLastQuestion ? (
+                                                     <Button type="button" size="lg" className="bg-pink-600 hover:bg-pink-700" onClick={handleSubmitForReview} disabled={isSubmitting}>
                                                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                         SUBMIT FOR REVIEW
                                                     </Button>
-                                                    <span className="text-sm text-muted-foreground">or</span>
-                                                    <Button variant="link" className="text-primary p-0 h-auto" type="button" onClick={handleSaveDraftAndContinue}>Save draft and continue</Button>
-                                                </div>
+                                                ) : (
+                                                    <Button type="button" size="lg" className="bg-pink-600 hover:bg-pink-700" onClick={handleContinue} disabled={isSubmitting}>
+                                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        CONTINUE
+                                                    </Button>
+                                                )}
                                                 <Button variant="outline" className="rounded-full" type="button">ASK A QUESTION</Button>
                                             </div>
                                         </div>
@@ -596,3 +621,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
