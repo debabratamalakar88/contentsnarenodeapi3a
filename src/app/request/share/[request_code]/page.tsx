@@ -83,9 +83,7 @@ const renderQuestionInput = (
         case 'radio':
             return (
                 <RadioGroup name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)}>
-                    {question.options?.map((opt, i) => (
-                        <div key={i} className="flex items-center space-x-2 pt-2"><RadioGroupItem value={opt.value} id={`${questionId}-${i}`} /><label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label></div>
-                    ))}
+                    {question.options?.map((opt, i) => (<div key={i} className="flex items-center space-x-2 pt-2"><RadioGroupItem value={opt.value} id={`${questionId}-${i}`} /><label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label></div>))}
                 </RadioGroup>
             );
         case 'formatted-text':
@@ -346,9 +344,9 @@ export default function SharedRequestPage() {
         }
     }
 
-    const constructFormData = () => {
+    const constructFormData = (answers: any) => {
         const formData = new FormData();
-        Object.entries(allAnswers).forEach(([key, value]) => {
+        Object.entries(answers).forEach(([key, value]) => {
           if (Array.isArray(value)) {
             value.forEach(item => formData.append(`${key}[]`, item));
           } else if (value !== null && value !== undefined) {
@@ -361,10 +359,10 @@ export default function SharedRequestPage() {
         return formData;
     };
     
-    const handleSaveStep = async (): Promise<string | null> => {
+    const handleSaveStep = async (answersToSave: any): Promise<string | null> => {
         if (!activePage) return null;
         
-        const formData = constructFormData();
+        const formData = constructFormData(answersToSave);
         setIsSubmitting(true);
         try {
             if (!submissionCode) {
@@ -427,7 +425,7 @@ export default function SharedRequestPage() {
     const handleContinue = async () => {
         if (!request || !activeIds || !validateCurrentQuestion()) return;
 
-        const savedSuccessfully = await handleSaveStep();
+        const savedSuccessfully = await handleSaveStep(allAnswers);
         if (!savedSuccessfully) return;
 
         const { pageId, sectionId, questionId } = activeIds;
@@ -496,7 +494,7 @@ export default function SharedRequestPage() {
         if (!validateFullForm()) return;
         
         setIsSubmitting(true);
-        const formData = constructFormData();
+        const formData = constructFormData(allAnswers);
         
         try {
             let currentSubmissionCode = submissionCode;
