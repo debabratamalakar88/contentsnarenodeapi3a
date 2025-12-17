@@ -222,7 +222,7 @@ export default function SharedRequestPage() {
     const [isComplete, setIsComplete] = useState(false);
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     const [clientId, setClientId] = useState<string | null>(null);
-
+    
     const isLastQuestion = useMemo(() => {
         if (!request || !activeIds) return false;
         const { pageId, sectionId, questionId } = activeIds;
@@ -361,25 +361,24 @@ export default function SharedRequestPage() {
         return formData;
     };
     
-    const handleSaveStep = async (): Promise<boolean> => {
-        if (!activePage) return false;
-        
-        const formData = constructFormData(allAnswers);
+    const handleSaveStep = async (answersToSave: any): Promise<string | null> => {
         setIsSubmitting(true);
         try {
+            const formData = constructFormData(answersToSave);
             let currentSubmissionCode = submissionCode;
+
             if (!currentSubmissionCode) {
                 const response = await startSubmission(requestCode, formData);
                 currentSubmissionCode = response.submission_code;
                 setSubmissionCode(currentSubmissionCode);
                 localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             }
-            // Await the saveStep call
+            
             await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
-            return true;
+            return currentSubmissionCode;
         } catch (err: any) {
             toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
-            return false;
+            return null;
         } finally {
             setIsSubmitting(false);
         }
@@ -425,8 +424,8 @@ export default function SharedRequestPage() {
     const handleContinue = async () => {
         if (!request || !activeIds || !validateCurrentQuestion()) return;
 
-        const savedSuccessfully = await handleSaveStep();
-        if (!savedSuccessfully) return;
+        const currentSubmissionCode = await handleSaveStep(allAnswers);
+        if (!currentSubmissionCode) return;
 
         const { pageId, sectionId, questionId } = activeIds;
         const pageIndex = request.form_data.findIndex(p => p.id === pageId);
@@ -525,7 +524,7 @@ export default function SharedRequestPage() {
         setSubmissionCode(null);
         localStorage.removeItem(`submission_code_${requestCode}`);
         if(request && request.form_data.length > 0) {
-           setActiveIds({ pageId: request.form_data[0].id, sectionId: request.form_data[0].sections[0].id, questionId: request.form_data[0].sections[0].questions[0].id });
+           setActiveIds({ pageId: request.form_data[0].id, sectionId: request.form_data[0].sections[0].id, questionId: request.form_data[0].questions[0].id });
         }
         setValidationErrors({});
     };
