@@ -223,6 +223,17 @@ export default function SharedRequestPage() {
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     const [clientId, setClientId] = useState<string | null>(null);
 
+    const isLastQuestion = useMemo(() => {
+        if (!request || !activeIds) return false;
+        const { pageId, sectionId, questionId } = activeIds;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        if (pageId !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (sectionId !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return questionId === lastQuestion.id;
+    }, [request, activeIds]);
+
     useEffect(() => {
       const id = searchParams.get('client_id');
       if (id) {
@@ -325,15 +336,6 @@ export default function SharedRequestPage() {
         return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
     }, [request, activeIds]);
 
-    const isLastQuestion = useMemo(() => {
-        if (!request || !activePage || !activeSection || !activeQuestion) return false;
-        const lastPage = request.form_data[request.form_data.length - 1];
-        if (activePage.id !== lastPage.id) return false;
-        const lastSection = lastPage.sections[lastPage.sections.length - 1];
-        if (activeSection.id !== lastSection.id) return false;
-        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
-        return activeQuestion.id === lastQuestion.id;
-    }, [request, activePage, activeSection, activeQuestion]);
     
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
         if (!request || !activePage) return;
@@ -359,27 +361,25 @@ export default function SharedRequestPage() {
         return formData;
     };
     
-    const handleSaveStep = async (answersToSave: any): Promise<string | null> => {
-        if (!activePage) return null;
+    const handleSaveStep = async (): Promise<boolean> => {
+        if (!activePage) return false;
         
-        const formData = constructFormData(answersToSave);
+        const formData = constructFormData(allAnswers);
         setIsSubmitting(true);
         try {
-            if (!submissionCode) {
+            let currentSubmissionCode = submissionCode;
+            if (!currentSubmissionCode) {
                 const response = await startSubmission(requestCode, formData);
-                const newSubmissionCode = response.submission_code;
-                setSubmissionCode(newSubmissionCode);
-                localStorage.setItem(`submission_code_${requestCode}`, newSubmissionCode);
-                // Now, immediately save the first step with the new code
-                await saveStep(newSubmissionCode, activePageIndex + 1, formData);
-                return newSubmissionCode;
-            } else {
-                await saveStep(submissionCode, activePageIndex + 1, formData);
-                return submissionCode;
+                currentSubmissionCode = response.submission_code;
+                setSubmissionCode(currentSubmissionCode);
+                localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             }
+            // Await the saveStep call
+            await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
+            return true;
         } catch (err: any) {
             toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
-            return null;
+            return false;
         } finally {
             setIsSubmitting(false);
         }
@@ -425,7 +425,7 @@ export default function SharedRequestPage() {
     const handleContinue = async () => {
         if (!request || !activeIds || !validateCurrentQuestion()) return;
 
-        const savedSuccessfully = await handleSaveStep(allAnswers);
+        const savedSuccessfully = await handleSaveStep();
         if (!savedSuccessfully) return;
 
         const { pageId, sectionId, questionId } = activeIds;
@@ -641,3 +641,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
