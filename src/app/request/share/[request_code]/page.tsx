@@ -155,7 +155,11 @@ const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: Publi
                                     "p-3 rounded-md font-semibold text-sm hover:no-underline",
                                     activeIds.pageId === page.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                                 )}
-                                onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}
+                                onClick={() => {
+                                    if (page.sections?.[0]?.questions?.[0]) {
+                                        setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id });
+                                    }
+                                }}
                             >
                                 <div className="flex items-center gap-2 flex-1 truncate">
                                     <span className="truncate">{page.title}</span>
@@ -170,7 +174,11 @@ const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: Publi
                                             <AccordionItem value={`section-${section.id}`} className="border-none">
                                                 <AccordionTrigger 
                                                     className={cn("p-2 rounded-md font-medium text-sm hover:no-underline", activeIds.sectionId === section.id && 'bg-primary/5')}
-                                                    onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}
+                                                    onClick={() => {
+                                                         if (section.questions?.[0]) {
+                                                            setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id });
+                                                         }
+                                                    }}
                                                 >
                                                    <div className="flex items-center gap-2 flex-1 truncate">
                                                         <span className="truncate">{section.title}</span>
@@ -223,17 +231,6 @@ export default function SharedRequestPage() {
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     const [clientId, setClientId] = useState<string | null>(null);
     
-    const isLastQuestion = useMemo(() => {
-        if (!request || !activeIds) return false;
-        const { pageId, sectionId, questionId } = activeIds;
-        const lastPage = request.form_data[request.form_data.length - 1];
-        if (pageId !== lastPage.id) return false;
-        const lastSection = lastPage.sections[lastPage.sections.length - 1];
-        if (sectionId !== lastSection.id) return false;
-        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
-        return questionId === lastQuestion.id;
-    }, [request, activeIds]);
-
     useEffect(() => {
       const id = searchParams.get('client_id');
       if (id) {
@@ -252,7 +249,7 @@ export default function SharedRequestPage() {
                 const requestData = await getSharedRequest(requestCode);
                 setRequest(requestData);
                 
-                if (requestData.form_data?.length > 0 && requestData.form_data[0].sections.length > 0 && requestData.form_data[0].sections[0].questions.length > 0) {
+                if (requestData.form_data?.length > 0 && requestData.form_data[0].sections?.length > 0 && requestData.form_data[0].sections[0].questions?.length > 0) {
                     setActiveIds({
                         pageId: requestData.form_data[0].id,
                         sectionId: requestData.form_data[0].sections[0].id,
@@ -283,6 +280,8 @@ export default function SharedRequestPage() {
                                             Object.assign(acc, section.questions);
                                         }
                                     });
+                                } else if (pageData && typeof pageData === 'object') {
+                                     Object.assign(acc, pageData);
                                 }
                                 return acc;
                             }, {});
@@ -335,6 +334,17 @@ export default function SharedRequestPage() {
         const pageIndex = request.form_data.findIndex(p => p.id === page.id);
         return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
     }, [request, activeIds]);
+    
+    const isLastQuestion = useMemo(() => {
+        if (!request || !activeIds) return false;
+        const { pageId, sectionId, questionId } = activeIds;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        if (pageId !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (sectionId !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return questionId === lastQuestion.id;
+    }, [request, activeIds]);
 
     
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
@@ -342,7 +352,9 @@ export default function SharedRequestPage() {
         const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
         if (newIndex >= 0 && newIndex < request.form_data.length) {
             const newPage = request.form_data[newIndex];
-            setActiveIds({ pageId: newPage.id, sectionId: newPage.sections[0].id, questionId: newPage.sections[0].questions[0].id });
+            if (newPage.sections?.[0]?.questions?.[0]) {
+                 setActiveIds({ pageId: newPage.id, sectionId: newPage.sections[0].id, questionId: newPage.sections[0].questions[0].id });
+            }
         }
     }
 
@@ -361,24 +373,25 @@ export default function SharedRequestPage() {
         return formData;
     };
     
-    const handleSaveStep = async (answersToSave: any): Promise<string | null> => {
+    const handleSaveStep = async (answersToSave: any) => {
         setIsSubmitting(true);
+        let currentSubmissionCode = submissionCode;
+    
         try {
             const formData = constructFormData(answersToSave);
-            let currentSubmissionCode = submissionCode;
-
+            
             if (!currentSubmissionCode) {
                 const response = await startSubmission(requestCode, formData);
                 currentSubmissionCode = response.submission_code;
                 setSubmissionCode(currentSubmissionCode);
                 localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
+                // After getting the code, immediately save the current step's answers.
+                await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
+            } else {
+                await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
             }
-            
-            await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
-            return currentSubmissionCode;
         } catch (err: any) {
             toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
-            return null;
         } finally {
             setIsSubmitting(false);
         }
@@ -423,9 +436,8 @@ export default function SharedRequestPage() {
 
     const handleContinue = async () => {
         if (!request || !activeIds || !validateCurrentQuestion()) return;
-
-        const currentSubmissionCode = await handleSaveStep(allAnswers);
-        if (!currentSubmissionCode) return;
+        
+        await handleSaveStep(allAnswers);
 
         const { pageId, sectionId, questionId } = activeIds;
         const pageIndex = request.form_data.findIndex(p => p.id === pageId);
@@ -442,10 +454,14 @@ export default function SharedRequestPage() {
             setActiveIds({ pageId, sectionId, questionId: currentSection.questions[questionIndex + 1].id });
         } else if (sectionIndex < currentPage.sections.length - 1) {
             const nextSection = currentPage.sections[sectionIndex + 1];
-            setActiveIds({ pageId, sectionId: nextSection.id, questionId: nextSection.questions[0].id });
+            if (nextSection.questions?.[0]) {
+                setActiveIds({ pageId, sectionId: nextSection.id, questionId: nextSection.questions[0].id });
+            }
         } else if (pageIndex < request.form_data.length - 1) {
             const nextPage = request.form_data[pageIndex + 1];
-            setActiveIds({ pageId: nextPage.id, sectionId: nextPage.sections[0].id, questionId: nextPage.sections[0].questions[0].id });
+            if (nextPage.sections?.[0]?.questions?.[0]) {
+                setActiveIds({ pageId: nextPage.id, sectionId: nextPage.sections[0].id, questionId: nextPage.sections[0].questions[0].id });
+            }
         }
     };
     
@@ -504,7 +520,7 @@ export default function SharedRequestPage() {
                  localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
             }
 
-            await saveStep(currentSubmissionCode, 'all', formData); // Save final state
+            await saveStep(currentSubmissionCode, 'all', formData);
             await submitRequest(currentSubmissionCode, formData);
             
             toast({ title: "Success", description: "Your submission has been completed." });
@@ -523,8 +539,8 @@ export default function SharedRequestPage() {
         setAllAnswers({});
         setSubmissionCode(null);
         localStorage.removeItem(`submission_code_${requestCode}`);
-        if(request && request.form_data.length > 0) {
-           setActiveIds({ pageId: request.form_data[0].id, sectionId: request.form_data[0].sections[0].id, questionId: request.form_data[0].questions[0].id });
+        if(request && request.form_data.length > 0 && request.form_data[0].sections.length > 0 && request.form_data[0].sections[0].questions.length > 0) {
+           setActiveIds({ pageId: request.form_data[0].id, sectionId: request.form_data[0].sections[0].id, questionId: request.form_data[0].sections[0].questions[0].id });
         }
         setValidationErrors({});
     };
@@ -640,4 +656,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-
