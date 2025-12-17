@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
@@ -95,7 +96,7 @@ const renderQuestionInput = (
         case 'image-upload':
              return <Input id={questionId} name={`${questionName}[]`} type="file" accept="image/*" required={question.required} multiple className={inputClassName} />;
         case 'address':
-             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
+             return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value || ''} onValueChange={(val) => onChange(questionName, val)} />;
         case 'number':
              return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'currency':
@@ -116,7 +117,7 @@ const renderQuestionInput = (
                 </div>
              );
         case 'icon-selector':
-            return <IconSelector name={questionName} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
+            return <IconSelector name={questionName} defaultValue={value || ''} onValueChange={(val) => onChange(questionName, val)} />;
         case 'color-picker':
             return (
                 <div className="flex items-center gap-2">
@@ -159,6 +160,7 @@ const PublicRequestSidebar = ({ request, pages, activeIds, setActiveIds }: Publi
                                     "p-3 rounded-md font-semibold text-sm hover:no-underline",
                                     activeIds.pageId === page.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                                 )}
+                                onClick={() => setActiveIds({ pageId: page.id, sectionId: page.sections[0].id, questionId: page.sections[0].questions[0].id })}
                             >
                                 <div className="flex items-center gap-2 flex-1 truncate">
                                     <span className="truncate">{page.title}</span>
