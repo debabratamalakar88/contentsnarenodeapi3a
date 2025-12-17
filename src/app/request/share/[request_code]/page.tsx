@@ -340,14 +340,13 @@ export default function SharedRequestPage() {
 
     const constructFormData = () => {
         const formData = new FormData();
-        for (const key in allAnswers) {
-            const value = allAnswers[key];
-            if (Array.isArray(value)) {
-                value.forEach(item => formData.append(`${key}[]`, item));
-            } else if (value !== null && value !== undefined) {
-                formData.append(key, value);
-            }
-        }
+        Object.entries(allAnswers).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(item => formData.append(`${key}[]`, item));
+          } else if (value !== null && value !== undefined) {
+            formData.append(key, value);
+          }
+        });
         if (clientId) {
           formData.append('client_id', clientId);
         }
@@ -400,20 +399,12 @@ export default function SharedRequestPage() {
                     if (isMissing) {
                         isValid = false;
                         errors[fieldName] = "This field is required.";
-                        return; // continue to next question
                     }
                 }
             });
         });
     
-        setValidationErrors(errors);
-        if (!isValid) {
-            toast({
-                title: "Validation Error",
-                description: "Please fill out all required fields before submitting.",
-                variant: "destructive",
-            });
-        }
+        setValidationErrors(prev => ({...prev, ...errors}));
         return isValid;
     };
     
@@ -421,14 +412,46 @@ export default function SharedRequestPage() {
         event.preventDefault();
         
         let allValid = true;
-        request?.form_data.forEach(page => {
-            if (!validatePage(page)) {
-                allValid = false;
-            }
+        let firstErrorPage: number | null = null;
+        let firstErrorSection: number | null = null;
+        let firstErrorQuestion: number | null = null;
+
+        const newErrors: {[key: string]: string} = {};
+
+        request?.form_data.forEach((page, pageIndex) => {
+            page.sections.forEach(section => {
+                section.questions.forEach(question => {
+                    if (question.required) {
+                        const fieldName = question.apiId || `q-${question.id}`;
+                        const value = allAnswers[fieldName];
+                        let isMissing = false;
+                        if (question.type === 'checkbox') {
+                            if (!Array.isArray(value) || value.length === 0) isMissing = true;
+                        } else if (value === null || value === undefined || String(value).trim() === '') {
+                            isMissing = true;
+                        }
+
+                        if (isMissing) {
+                            allValid = false;
+                            newErrors[fieldName] = "This field is required.";
+                            if(firstErrorPage === null) {
+                                firstErrorPage = page.id;
+                                firstErrorSection = section.id;
+                                firstErrorQuestion = question.id;
+                            }
+                        }
+                    }
+                });
+            });
         });
+        
+        setValidationErrors(newErrors);
 
         if (!allValid) {
-            toast({ title: "Validation Error", description: "Please check all pages for required fields.", variant: "destructive" });
+            if (firstErrorPage !== null && firstErrorSection !== null && firstErrorQuestion !== null) {
+                setActiveIds({ pageId: firstErrorPage, sectionId: firstErrorSection, questionId: firstErrorQuestion });
+            }
+            toast({ title: "Validation Error", description: "Please fill out all required fields.", variant: "destructive" });
             return;
         }
 
@@ -442,9 +465,10 @@ export default function SharedRequestPage() {
                  currentSubmissionCode = response.submission_code;
                  setSubmissionCode(currentSubmissionCode);
                  localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
-            } else {
-                await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
             }
+
+            // Save the final state before submitting
+            await saveStep(currentSubmissionCode, 'all', formData);
 
             await submitRequest(currentSubmissionCode, formData);
             toast({ title: "Success", description: "Your submission has been completed." });
@@ -535,8 +559,7 @@ export default function SharedRequestPage() {
                     </header>
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-3xl mx-auto p-8">
-                             <form onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
-                                {clientId && <input type="hidden" name="client_id" value={clientId} />}
+                             <form onSubmit={handleFormSubmit} noValidate>
                                 {activeQuestion ? (
                                     <>
                                         <h2 className="text-xl font-bold mb-6">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
@@ -556,9 +579,9 @@ export default function SharedRequestPage() {
                                                         SUBMIT FOR REVIEW
                                                     </Button>
                                                     <span className="text-sm text-muted-foreground">or</span>
-                                                    <Button variant="link" className="text-primary p-0 h-auto" onClick={handleSaveDraftAndContinue}>Save draft and continue</Button>
+                                                    <Button variant="link" className="text-primary p-0 h-auto" type="button" onClick={handleSaveDraftAndContinue}>Save draft and continue</Button>
                                                 </div>
-                                                <Button variant="outline" className="rounded-full">ASK A QUESTION</Button>
+                                                <Button variant="outline" className="rounded-full" type="button">ASK A QUESTION</Button>
                                             </div>
                                         </div>
                                     </>
@@ -573,4 +596,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-
