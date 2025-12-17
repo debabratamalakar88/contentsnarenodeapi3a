@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
@@ -34,6 +33,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -320,14 +320,14 @@ export default function ViewRequestPage() {
             <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} publicUrl={publicUrl} />
             <main className="flex-1 flex flex-col overflow-hidden">
                  <header className="sticky z-10 flex items-center justify-between gap-4 p-4 border-b bg-white">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-1/3">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={activePageIndex === 0}>
                             <ChevronLeft className="h-4 w-4 mr-2" />
                             {activePage && activePageIndex > 0 ? request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
                         </Button>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" className="text-pink-600 border-pink-200">
+                    <div className="flex items-center justify-center gap-2 w-1/3">
+                         <Button variant="outline" className="text-pink-600 border-pink-200">
                             <Sparkles className="mr-2 h-4 w-4"/> Activity
                         </Button>
                         <Button variant="outline">Client Access Settings</Button>
@@ -342,7 +342,7 @@ export default function ViewRequestPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-1/3 justify-end">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
                             {activePage && activePageIndex < request.form_data.length - 1 ? request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
                             <ChevronRight className="ml-2 h-4 w-4" />
