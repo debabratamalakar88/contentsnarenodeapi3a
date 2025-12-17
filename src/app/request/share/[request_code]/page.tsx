@@ -227,8 +227,6 @@ export default function SharedRequestPage() {
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     const [clientId, setClientId] = useState<string | null>(null);
 
-    const formRef = React.useRef<HTMLFormElement>(null);
-
     useEffect(() => {
       const id = searchParams.get('client_id');
       if (id) {
@@ -339,11 +337,27 @@ export default function SharedRequestPage() {
             setActiveIds({ pageId: newPage.id, sectionId: newPage.sections[0].id, questionId: newPage.sections[0].questions[0].id });
         }
     }
+
+    const constructFormData = () => {
+        const formData = new FormData();
+        for (const key in allAnswers) {
+            const value = allAnswers[key];
+            if (Array.isArray(value)) {
+                value.forEach(item => formData.append(`${key}[]`, item));
+            } else if (value !== null && value !== undefined) {
+                formData.append(key, value);
+            }
+        }
+        if (clientId) {
+          formData.append('client_id', clientId);
+        }
+        return formData;
+    };
     
     const handleSaveDraftAndContinue = async () => {
         if (!activePage) return;
 
-        const formData = getFormDataForSubmission();
+        const formData = constructFormData();
         setIsSubmitting(true);
     
         try {
@@ -402,11 +416,6 @@ export default function SharedRequestPage() {
         }
         return isValid;
     };
-
-    const getFormDataForSubmission = () => {
-        if (!formRef.current) return new FormData();
-        return new FormData(formRef.current);
-    }
     
     const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -424,7 +433,7 @@ export default function SharedRequestPage() {
         }
 
         setIsSubmitting(true);
-        const formData = getFormDataForSubmission();
+        const formData = constructFormData();
         
         try {
             let currentSubmissionCode = submissionCode;
@@ -526,7 +535,7 @@ export default function SharedRequestPage() {
                     </header>
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-3xl mx-auto p-8">
-                             <form ref={formRef} onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
+                             <form onSubmit={handleFormSubmit} noValidate encType="multipart/form-data">
                                 {clientId && <input type="hidden" name="client_id" value={clientId} />}
                                 {activeQuestion ? (
                                     <>
