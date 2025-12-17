@@ -199,7 +199,7 @@ export default function SubmissionDetailPage() {
     fetchSubmissionData();
   }, [submissionId, requestId, router, toast]);
   
- const processedData = useMemo(() => {
+  const processedData = useMemo(() => {
     if (!submission || !request || !request.form_data) return [];
 
     let submissionData = submission.form_data;
@@ -212,80 +212,42 @@ export default function SubmissionDetailPage() {
         }
     }
     if (typeof submissionData !== 'object' || submissionData === null) return [];
-
-    const questionMap = new Map<string, Question>();
-    request.form_data.forEach(page => {
-      page.sections.forEach(section => {
-        section.questions.forEach(question => {
-          if (question.apiId) {
-            questionMap.set(question.apiId, question);
-          }
-        });
-      });
-    });
-
-    const answersByPageAndSection: { [pageId: number]: { [sectionId: number]: { question: Question; answer: any }[] } } = {};
-
-    Object.keys(submissionData).forEach((stepKey, index) => {
-        const pageDef = request.form_data[index];
-        if (!pageDef) return;
-
-        const stepData = submissionData[stepKey];
-        const isNestedStructure = stepData && typeof stepData === 'object' && !Array.isArray(stepData) && Object.values(stepData).some((val: any) => val && typeof val === 'object' && val.page_title);
-        
-        if (isNestedStructure) { 
-             Object.values(stepData).forEach((pageData: any) => {
-                if (pageData && pageData.sections) {
-                     pageData.sections.forEach((submittedSection: any) => {
-                        const originalSectionDef = pageDef.sections.find(s => s.title === submittedSection.section_title);
-                        if (!originalSectionDef) return;
-
-                        if (!answersByPageAndSection[pageDef.id]) answersByPageAndSection[pageDef.id] = {};
-                        if (!answersByPageAndSection[pageDef.id][originalSectionDef.id]) answersByPageAndSection[pageDef.id][originalSectionDef.id] = [];
-                        
-                        if (submittedSection.questions) {
-                            Object.entries(submittedSection.questions).forEach(([apiId, answer]) => {
-                                const question = questionMap.get(apiId);
-                                if (question) {
-                                    answersByPageAndSection[pageDef.id][originalSectionDef.id].push({ question, answer });
-                                }
-                            });
-                        }
-                    });
-                }
-             });
-        } else {
-            Object.entries(stepData).forEach(([key, answer]) => {
-                let question: Question | undefined;
-                if (key === 'images') {
-                    question = pageDef.sections.flatMap(s => s.questions).find(q => q.type === 'image-upload');
-                } else if (key === 'docs') {
-                    question = pageDef.sections.flatMap(s => s.questions).find(q => q.type === 'file');
-                } else {
-                    question = questionMap.get(key);
-                }
-
-                if (question) {
-                    const sectionDef = pageDef.sections.find(s => s.questions.some(q => q.id === question!.id));
-                    if (sectionDef) {
-                        if (!answersByPageAndSection[pageDef.id]) answersByPageAndSection[pageDef.id] = {};
-                        if (!answersByPageAndSection[pageDef.id][sectionDef.id]) answersByPageAndSection[pageDef.id][sectionDef.id] = [];
-                        answersByPageAndSection[pageDef.id][sectionDef.id].push({ question, answer });
-                    }
-                }
-            });
-        }
-    });
     
+    const allAnswers = Object.values(submissionData).reduce((acc, stepData) => {
+        if (stepData && typeof stepData === 'object' && !Array.isArray(stepData)) {
+            const isNested = Object.values(stepData).some((val: any) => val && val.page_title);
+            if (isNested) {
+                 Object.values(stepData).forEach((pageData: any) => {
+                     if(pageData && Array.isArray(pageData.sections)) {
+                        pageData.sections.forEach((section: any) => {
+                           if(section && typeof section.questions === 'object') {
+                             Object.assign(acc, section.questions);
+                           }
+                        });
+                     }
+                 });
+            } else {
+              Object.assign(acc, stepData);
+            }
+        }
+        return acc;
+    }, {});
+
+
     return request.form_data.map(pageDef => ({
-        title: pageDef.title,
-        sections: pageDef.sections.map(sectionDef => ({
-            title: sectionDef.title,
-            answers: answersByPageAndSection[pageDef.id]?.[sectionDef.id] || [],
-        })).filter(section => section.answers.length > 0),
+      title: pageDef.title,
+      sections: pageDef.sections.map(sectionDef => ({
+        title: sectionDef.title,
+        answers: sectionDef.questions
+          .map(question => ({
+            question,
+            answer: allAnswers[question.apiId || '']
+          }))
+          .filter(item => item.answer !== undefined),
+      })).filter(section => section.answers.length > 0),
     })).filter(page => page.sections.length > 0);
 
-}, [submission, request]);
+  }, [submission, request]);
 
   const handleExportPdf = async () => {
     if (!submissionContentRef.current) return;
@@ -534,3 +496,4 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
+
