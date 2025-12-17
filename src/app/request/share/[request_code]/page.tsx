@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
@@ -329,6 +328,16 @@ export default function SharedRequestPage() {
         return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
     }, [request, activeIds]);
 
+    const isLastQuestion = useMemo(() => {
+        if (!request || !activePage || !activeSection || !activeQuestion) return false;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        if (activePage.id !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (activeSection.id !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return activeQuestion.id === lastQuestion.id;
+    }, [request, activePage, activeSection, activeQuestion]);
+    
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
         if (!request || !activePage) return;
         const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
@@ -544,14 +553,6 @@ export default function SharedRequestPage() {
         return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
     }
     
-    const isLastQuestion = useMemo(() => {
-        if (!activePage || !activeSection) return false;
-        const lastPage = request.form_data[request.form_data.length - 1];
-        const lastSection = lastPage.sections[lastPage.sections.length - 1];
-        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
-        return activePage.id === lastPage.id && activeSection.id === lastSection.id && activeQuestion?.id === lastQuestion.id;
-    }, [request.form_data, activePage, activeSection, activeQuestion]);
-
     return (
         <div className="min-h-screen bg-muted flex flex-col">
             <div className="flex flex-1 overflow-hidden">
@@ -621,4 +622,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-
