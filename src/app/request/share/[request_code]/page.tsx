@@ -84,10 +84,7 @@ const renderQuestionInput = (
             return (
                 <RadioGroup name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)}>
                     {question.options?.map((opt, i) => (
-                        <div key={i} className="flex items-center space-x-2 pt-2">
-                            <RadioGroupItem value={opt.value} id={`${questionId}-${i}`} />
-                            <label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label>
-                        </div>
+                        <div key={i} className="flex items-center space-x-2 pt-2"><RadioGroupItem value={opt.value} id={`${questionId}-${i}`} /><label htmlFor={`${questionId}-${i}`} className="text-sm font-medium leading-none">{opt.label}</label></div>
                     ))}
                 </RadioGroup>
             );
@@ -364,9 +361,34 @@ export default function SharedRequestPage() {
         return formData;
     };
     
+    const handleSaveStep = async (): Promise<string | null> => {
+        if (!activePage) return null;
+        
+        const formData = constructFormData();
+        setIsSubmitting(true);
+        try {
+            if (!submissionCode) {
+                const response = await startSubmission(requestCode, formData);
+                const newSubmissionCode = response.submission_code;
+                setSubmissionCode(newSubmissionCode);
+                localStorage.setItem(`submission_code_${requestCode}`, newSubmissionCode);
+                // Now, immediately save the first step with the new code
+                await saveStep(newSubmissionCode, activePageIndex + 1, formData);
+                return newSubmissionCode;
+            } else {
+                await saveStep(submissionCode, activePageIndex + 1, formData);
+                return submissionCode;
+            }
+        } catch (err: any) {
+            toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
+            return null;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
     const validateCurrentQuestion = (): boolean => {
         if (!activeQuestion) return true;
-        
         const fieldName = activeQuestion.apiId || `q-${activeQuestion.id}`;
         const value = allAnswers[fieldName];
         
@@ -384,13 +406,29 @@ export default function SharedRequestPage() {
             }
         }
         
+        if (activeQuestion.type === 'email' && value && !/^\S+@\S+\.\S+$/.test(value)) {
+            setValidationErrors(prev => ({...prev, [fieldName]: "Please enter a valid email address."}));
+            return false;
+        }
+        
+        if (activeQuestion.minLength && String(value || '').length < activeQuestion.minLength) {
+            setValidationErrors(prev => ({...prev, [fieldName]: `This field must be at least ${activeQuestion.minLength} characters.`}));
+            return false;
+        }
+
+        if (activeQuestion.maxLength && String(value || '').length > activeQuestion.maxLength) {
+            setValidationErrors(prev => ({...prev, [fieldName]: `This field must be no more than ${activeQuestion.maxLength} characters.`}));
+            return false;
+        }
+
         return true;
     };
 
     const handleContinue = async () => {
         if (!request || !activeIds || !validateCurrentQuestion()) return;
 
-        await handleSaveStep();
+        const savedSuccessfully = await handleSaveStep();
+        if (!savedSuccessfully) return;
 
         const { pageId, sectionId, questionId } = activeIds;
         const pageIndex = request.form_data.findIndex(p => p.id === pageId);
@@ -414,25 +452,6 @@ export default function SharedRequestPage() {
         }
     };
     
-    const handleSaveStep = async () => {
-        if (!activePage) return;
-        const formData = constructFormData();
-        setIsSubmitting(true);
-        try {
-            if (!submissionCode) {
-                 const response = await startSubmission(requestCode, formData);
-                 setSubmissionCode(response.submission_code);
-                 localStorage.setItem(`submission_code_${requestCode}`, response.submission_code);
-            } else {
-                 await saveStep(submissionCode, activePageIndex + 1, formData);
-            }
-        } catch (err: any) {
-            toast({ title: "Error Saving Draft", description: err.message || "Could not save your progress.", variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
     const validateFullForm = (): boolean => {
         const errors: { [key: string]: string } = {};
         let isValid = true;
