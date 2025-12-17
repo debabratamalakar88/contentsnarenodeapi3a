@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -153,6 +154,7 @@ export interface Question {
   buttonType?: 'button' | 'submit';
   hideInstructions?: boolean;
   showPlaceholder?: boolean;
+  showLengthValidation?: boolean;
 }
 
 export interface Section {
@@ -194,6 +196,7 @@ export interface Request {
   created_at: string;
   updated_at: string;
   submissions_count?: number;
+  deleted_at?: string | null;
 }
 
 export interface Submission {

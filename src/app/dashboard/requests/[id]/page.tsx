@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission, type Section } from '@/lib/api';
+import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,6 +31,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -93,7 +96,7 @@ interface ViewSidebarProps {
   request: Request;
   assignedClients: Client[];
   activeIds: { pageId: number | null, sectionId: number | null, questionId: number | null };
-  setActiveIds: (ids: { pageId: number, sectionId: number, questionId: number }) => void;
+  setActiveIds: (ids: { pageId: number; sectionId: number; questionId: number }) => void;
   publicUrl: string;
 }
 
@@ -219,11 +222,13 @@ export default function ViewRequestPage() {
 
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
+    const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeIds, setActiveIds] = useState<{ pageId: number | null, sectionId: number | null, questionId: number | null }>({ pageId: null, sectionId: null, questionId: null });
     const [formValues, setFormValues] = useState<Record<string, any>>({});
+    const [currentTab, setCurrentTab] = useState("form");
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -232,12 +237,15 @@ export default function ViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, clientsData] = await Promise.all([
+                const [requestData, clientsData, submissionsData] = await Promise.all([
                     getRequest(token!, id),
-                    getClients(token!)
+                    getClients(token!),
+                    getRequestSubmissions(token!, id)
                 ]);
                 setRequest(requestData);
                 setClients(clientsData || []);
+                setSubmissions(submissionsData || []);
+
                 if (requestData.form_data?.length > 0) {
                      const firstPage = requestData.form_data[0];
                      const firstSection = firstPage.sections[0];
@@ -311,7 +319,7 @@ export default function ViewRequestPage() {
         <div className="flex flex-1 overflow-hidden h-screen bg-muted/40">
             <ViewSidebar request={request} assignedClients={assignedClients} activeIds={activeIds} setActiveIds={setActiveIds} publicUrl={publicUrl} />
             <main className="flex-1 flex flex-col overflow-hidden">
-                 <header className="sticky z-10 flex items-center justify-between gap-4 p-4 border-b bg-background">
+                 <header className="sticky z-10 flex items-center justify-between gap-4 p-4 border-b bg-white">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={activePageIndex === 0}>
                             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -337,43 +345,103 @@ export default function ViewRequestPage() {
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
                             {activePage && activePageIndex < request.form_data.length - 1 ? request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
-                            <ChevronRight className="h-4 w-4 ml-2" />
+                            <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 </header>
                  <div className="flex-1 overflow-y-auto p-8">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
-                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
-                           {activeQuestion ? (
-                                <form>
-                                    <div className="grid gap-2">
-                                        <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
-                                        {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
-                                        <div className="mt-4">
-                                            {renderQuestionInput(activeQuestion, formValues[activeQuestion.apiId || ''], (name, val) => setFormValues(prev => ({...prev, [name]: val})), undefined)}
+                   <Tabs value={currentTab} onValueChange={setCurrentTab} className="max-w-3xl mx-auto">
+                        <TabsList className="mb-6">
+                            <TabsTrigger value="form">Form</TabsTrigger>
+                            <TabsTrigger value="submissions">Submissions ({submissions.length})</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="form">
+                            {activeQuestion ? (
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
                                         </div>
                                     </div>
-                                    <div className="mt-8 flex justify-between items-center">
-                                        <div>
-                                            <Button>SUBMIT FOR REVIEW</Button>
-                                            <Button variant="link" className="text-primary">or Save draft and continue</Button>
-                                        </div>
-                                        <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                    <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
+                                        <form>
+                                            <div className="grid gap-2">
+                                                <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                                {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
+                                                <div className="mt-4">
+                                                    {renderQuestionInput(activeQuestion, formValues[activeQuestion.apiId || ''], (name, val) => setFormValues(prev => ({...prev, [name]: val})), undefined)}
+                                                </div>
+                                            </div>
+                                            <div className="mt-8 flex justify-between items-center">
+                                                <div>
+                                                    <Button>SUBMIT FOR REVIEW</Button>
+                                                    <Button variant="link" className="text-primary">or Save draft and continue</Button>
+                                                </div>
+                                                <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                            </div>
+                                        </form>
                                     </div>
-                                </form>
+                                </div>
                            ) : (
                              <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
                            )}
-                        </div>
-                    </div>
+                        </TabsContent>
+                        <TabsContent value="submissions">
+                           <Card>
+                                <CardHeader>
+                                    <CardTitle>Request Submissions</CardTitle>
+                                    <CardDescription>Here are all the submissions received for this request.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Submission Code</TableHead>
+                                                <TableHead>Submitted On</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {submissions.length > 0 ? submissions.map(submission => (
+                                                <TableRow key={submission.id}>
+                                                    <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
+                                                    <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                      <Badge
+                                                          variant={'outline'}
+                                                          className={cn(
+                                                              "capitalize",
+                                                              submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                                                          )}
+                                                      >
+                                                          {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                                                          {submission.status}
+                                                      </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
+                                                            <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="h-24 text-center">
+                                                        <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                                        No submissions received yet.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                           </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </main>
         </div>
