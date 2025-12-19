@@ -224,8 +224,14 @@ export default function AdminViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, usersResponse, clientsResponse, submissionsData] = await Promise.all([
-                    getAdminRequest(token!, id),
+                const requestData = await getAdminRequest(token!, id);
+
+                if (requestData.status === 'draft') {
+                    router.replace(`/admin/dashboard/requests/preview/${id}`);
+                    return;
+                }
+
+                const [usersResponse, clientsResponse, submissionsData] = await Promise.all([
                     getAdminUsers(token!, 1, '', true),
                     getAdminClients(token!, 1, '', true),
                     getAdminRequestSubmissions(token!, id)

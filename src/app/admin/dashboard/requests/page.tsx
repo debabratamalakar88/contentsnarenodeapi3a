@@ -139,6 +139,8 @@ const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, o
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
     
+    const viewUrl = request.status === 'draft' ? `/admin/dashboard/requests/preview/${request.id}` : `/admin/dashboard/requests/${request.id}`;
+
     return (
         <Card className="flex flex-col">
             <CardHeader className="p-4 border-b">
@@ -171,7 +173,7 @@ const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, o
                                 </>
                              ) : (
                                 <>
-                                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    <DropdownMenuItem asChild><Link href={viewUrl}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                                     {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                                     <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -222,6 +224,8 @@ const RequestRow = ({ request, clientMap, isArchived, onDuplicate, onArchive, on
     const clientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) || "(No Client)" : "(No Client)";
     const additionalClientsCount = clientIds.length > 1 ? clientIds.length - 1 : 0;
     
+    const viewUrl = request.status === 'draft' ? `/admin/dashboard/requests/preview/${request.id}` : `/admin/dashboard/requests/${request.id}`;
+
     return (
      <TableRow>
         <TableCell className="font-medium">{request.title}</TableCell>
@@ -262,7 +266,7 @@ const RequestRow = ({ request, clientMap, isArchived, onDuplicate, onArchive, on
                         </>
                      ) : (
                         <>
-                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href={viewUrl}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
                             {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                             <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuSeparator />
