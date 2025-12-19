@@ -64,6 +64,10 @@ import {
   getAdminArchivedRequests,
   getAdminUsers,
   getAdminClients,
+  softDeleteAdminRequest,
+  restoreAdminRequest,
+  forceDeleteAdminRequest,
+  duplicateAdminRequest,
   type Request, 
   type Client,
   type User as UserType
@@ -122,9 +126,13 @@ interface RequestCardProps {
     request: Request;
     clientMap: Map<number, string>;
     isArchived: boolean;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
 }
 
-const RequestCard = ({ request, clientMap, isArchived }: RequestCardProps) => {
+const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, onRestore, onForceDelete }: RequestCardProps) => {
     const ownerName = request.user?.name || 'Unknown User';
     const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
     const clientName = clientIds.length > 0 ? clientMap.get(clientIds[0]) || "(No Client)" : "(No Client)";
@@ -150,6 +158,29 @@ const RequestCard = ({ request, clientMap, isArchived }: RequestCardProps) => {
                             <p className="text-xs text-muted-foreground">Client</p>
                         </div>
                     </div>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                             {isArchived ? (
+                                <>
+                                    <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                </>
+                             ) : (
+                                <>
+                                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                    <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                                </>
+                             )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </CardHeader>
             <CardContent className="p-4 flex-grow">
@@ -165,14 +196,9 @@ const RequestCard = ({ request, clientMap, isArchived }: RequestCardProps) => {
                     <span>Due: {request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</span>
                     <StatusBadge status={isArchived ? 'archived' : request.status} />
                 </div>
-                <div className="flex justify-between w-full">
-                    <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="font-medium">{request.submissions_count || 0} Submissions</span>
-                    </div>
-                     <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
-                    </Button>
+                <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">{request.submissions_count || 0} Submissions</span>
                 </div>
             </CardFooter>
         </Card>
@@ -183,9 +209,13 @@ interface RequestRowProps {
     request: Request;
     clientMap: Map<number, string>;
     isArchived: boolean;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
 }
 
-const RequestRow = ({ request, clientMap, isArchived }: RequestRowProps) => {
+const RequestRow = ({ request, clientMap, isArchived, onDuplicate, onArchive, onRestore, onForceDelete }: RequestRowProps) => {
     const ownerName = request.user?.name || 'Unknown User';
     const companyName = request.company?.company_name || 'N/A';
     const clientIds = Array.isArray(request.client_id) ? request.client_id : [];
@@ -218,10 +248,29 @@ const RequestRow = ({ request, clientMap, isArchived }: RequestRowProps) => {
         <TableCell><StatusBadge status={isArchived ? 'archived' : request.status} /></TableCell>
         <TableCell>{request.submissions_count || 0}</TableCell>
         <TableCell>{request.due_date ? format(parseISO(request.due_date), 'PPP') : 'N/A'}</TableCell>
-        <TableCell>
-            <Button size="sm" asChild>
-                <Link href={`/admin/dashboard/requests/${request.id}`}>View Details</Link>
-            </Button>
+        <TableCell className="text-right">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                     {isArchived ? (
+                        <>
+                            <DropdownMenuItem onSelect={() => onRestore(request)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                        </>
+                     ) : (
+                        <>
+                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/${request.id}`}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                            {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                            <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => onArchive(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                        </>
+                     )}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </TableCell>
     </TableRow>
     );
@@ -231,9 +280,13 @@ interface RequestTableProps {
     requests: Request[];
     clientMap: Map<number, string>;
     isArchived: boolean;
+    onDuplicate: (id: number) => void;
+    onArchive: (request: Request) => void;
+    onRestore: (request: Request) => void;
+    onForceDelete: (request: Request) => void;
 }
 
-const RequestTable = ({ requests, clientMap, isArchived }: RequestTableProps) => {
+const RequestTable = ({ requests, clientMap, isArchived, ...props }: RequestTableProps) => {
     return (
         <Card>
             <Table>
@@ -256,6 +309,7 @@ const RequestTable = ({ requests, clientMap, isArchived }: RequestTableProps) =>
                           request={request}
                           clientMap={clientMap}
                           isArchived={isArchived}
+                          {...props}
                         />
                     ))}
                 </TableBody>
@@ -274,6 +328,7 @@ export default function AdminRequestsPage() {
     const router = useRouter();
 
     const [currentTab, setCurrentTab] = useState('active');
+    const [dataVersion, setDataVersion] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedOwnerId, setSelectedOwnerId] = useState('all');
     const [selectedCompanyId, setSelectedCompanyId] = useState('all');
@@ -282,7 +337,13 @@ export default function AdminRequestsPage() {
     
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
 
+    const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
+    const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
+    const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
+    
+    const refetchData = () => setDataVersion(v => v + 1);
 
     const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
@@ -332,10 +393,8 @@ export default function AdminRequestsPage() {
             status: currentTab === 'active' ? selectedStatus : undefined
         };
         fetchData(pagination.current_page, filters);
-    // We only want to refetch when page or tab changes, not on every filter change here.
-    // The filter-specific useEffect will handle filter changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pagination.current_page, currentTab]);
+    }, [pagination.current_page, currentTab, dataVersion]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -355,6 +414,58 @@ export default function AdminRequestsPage() {
         return () => clearTimeout(handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+
+
+    const handleDuplicate = async (requestId: number) => {
+        if (!token) return;
+        toast({ title: 'Duplicating request...', description: 'Please wait.' });
+        try {
+            await duplicateAdminRequest(token, requestId);
+            toast({ title: 'Success', description: 'Request duplicated successfully.' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error duplicating request', description: err.message });
+        }
+    };
+    
+    const handleArchive = async () => {
+        if (!token || !requestToArchive) return;
+        try {
+            await softDeleteAdminRequest(token, requestToArchive.id);
+            toast({ title: 'Request archived' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
+        } finally {
+            setRequestToArchive(null);
+        }
+    };
+
+    const handleRestore = async () => {
+        if (!token || !requestToRestore) return;
+        try {
+            await restoreAdminRequest(token, requestToRestore.id);
+            toast({ title: 'Request restored' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error restoring request', description: err.message });
+        } finally {
+            setRequestToRestore(null);
+        }
+    };
+    
+    const handleForceDelete = async () => {
+        if (!token || !requestToForceDelete) return;
+        try {
+            await forceDeleteAdminRequest(token, requestToForceDelete.id);
+            toast({ title: 'Request permanently deleted' });
+            refetchData();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
+        } finally {
+            setRequestToForceDelete(null);
+        }
+    };
 
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
@@ -402,75 +513,107 @@ export default function AdminRequestsPage() {
                 </div>
             )
         }
+        
+        const viewProps = {
+            clientMap,
+            onDuplicate: handleDuplicate,
+            onArchive: setRequestToArchive,
+            onRestore: setRequestToRestore,
+            onForceDelete: setRequestToForceDelete,
+        };
+
         if (viewMode === 'grid') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {requests.map(req => <RequestCard key={req.id} request={req} clientMap={clientMap} isArchived={currentTab === 'archived'}/>)}
+                    {requests.map(req => <RequestCard key={req.id} request={req} isArchived={currentTab === 'archived'} {...viewProps}/>)}
                 </div>
             )
         }
-        return <RequestTable requests={requests} clientMap={clientMap} isArchived={currentTab === 'archived'} />;
+        return <RequestTable requests={requests} isArchived={currentTab === 'archived'} {...viewProps} />;
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
-            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
-                <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
-                    <TabsList>
-                        <TabsTrigger value="active">Active</TabsTrigger>
-                        <TabsTrigger value="archived">Archived</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-                <div className="flex items-center gap-2 ml-auto">
+        <>
+            <div className="flex flex-col h-[calc(100vh-4rem)]">
+                <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
+                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
+                        <TabsList>
+                            <TabsTrigger value="active">Active</TabsTrigger>
+                            <TabsTrigger value="archived">Archived</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" className="flex items-center gap-2 font-semibold h-9"><ViewIcon className="h-4 w-4" />{viewMode === 'grid' ? 'Grid' : 'List'}</Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem><DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem></DropdownMenuContent>
+                        </DropdownMenu>
+                        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search requests..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                    </div>
+                </header>
+                <div className="flex items-center gap-2 px-6 py-3 border-b bg-background flex-wrap">
+                    <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="flex items-center gap-2 font-semibold h-9"><ViewIcon className="h-4 w-4" />{viewMode === 'grid' ? 'Grid' : 'List'}</Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem><DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem></DropdownMenuContent>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{allUsers.map(user => <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
                     </DropdownMenu>
-                    <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search requests..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Briefcase className="mr-2 h-4 w-4"/>{selectedCompanyName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedCompanyId} onValueChange={setSelectedCompanyId}><DropdownMenuRadioItem value="all">All Companies</DropdownMenuRadioItem><DropdownMenuSeparator/>{uniqueCompanies.map(company => <DropdownMenuRadioItem key={company.id} value={String(company.id)}>{company.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuRadioItem value="no-client">No Client</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                    </DropdownMenu>
+                    {currentTab === 'active' && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}>
+                                    <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
+                                    <DropdownMenuSeparator/>
+                                    {activeRequestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
-            </header>
-            <div className="flex items-center gap-2 px-6 py-3 border-b bg-background flex-wrap">
-                <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{allUsers.map(user => <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Briefcase className="mr-2 h-4 w-4"/>{selectedCompanyName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedCompanyId} onValueChange={setSelectedCompanyId}><DropdownMenuRadioItem value="all">All Companies</DropdownMenuRadioItem><DropdownMenuSeparator/>{uniqueCompanies.map(company => <DropdownMenuRadioItem key={company.id} value={String(company.id)}>{company.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuRadioItem value="no-client">No Client</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                </DropdownMenu>
-                {currentTab === 'active' && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}>
-                                <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
-                                <DropdownMenuSeparator/>
-                                {activeRequestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <main className="flex-1 p-6 overflow-y-auto">
+                    {renderContent()}
+                </main>
+                {pagination.last_page > 1 && (
+                    <div className="flex items-center justify-between p-4 border-t bg-card">
+                        <div className="text-sm text-muted-foreground">
+                            Page {pagination.current_page} of {pagination.last_page} ({pagination.total} requests)
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1}>Previous</Button>
+                            <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page}>Next</Button>
+                        </div>
+                    </div>
                 )}
             </div>
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderContent()}
-            </main>
-            {pagination.last_page > 1 && (
-                <div className="flex items-center justify-between p-4 border-t bg-card">
-                    <div className="text-sm text-muted-foreground">
-                        Page {pagination.current_page} of {pagination.last_page} ({pagination.total} requests)
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1}>Previous</Button>
-                        <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page}>Next</Button>
-                    </div>
-                </div>
-            )}
-        </div>
+
+            <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            <AlertDialog open={!!requestToRestore} onOpenChange={(open) => !open && setRequestToRestore(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Restore Request?</AlertDialogTitle><AlertDialogDescription>This will move the request back to the active list.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRestore}>Restore</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Delete Permanently?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. All data for this request will be permanently deleted.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleForceDelete}>Delete</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
 

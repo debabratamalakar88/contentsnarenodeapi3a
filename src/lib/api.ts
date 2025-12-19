@@ -729,6 +729,22 @@ export async function getAdminRequest(token: string, id: number): Promise<Reques
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token);
 }
 
+export async function softDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token, { method: 'DELETE' });
+}
+
+export async function restoreAdminRequest(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/restore`, token, { method: 'POST' });
+}
+
+export async function forceDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/force`, token, { method: 'DELETE' });
+}
+
+export async function duplicateAdminRequest(token: string, id: number): Promise<Request> {
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/duplicate`, token, { method: 'POST' });
+}
+
 export async function getAdminRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions`, token);
 }
@@ -942,7 +958,7 @@ export async function updateTeamMember(token: string, id: number, memberData: Pa
 }
 
 export async function softDeleteTeamMember(token: string, id: number): Promise<{ message: string }> {
-  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}`, token, { method: 'DELETE' });
+  return fetchWithToken(`${API_BSE_URL}/api/teams/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreTeamMember(token: string, id: number): Promise<{ message: string }> {
