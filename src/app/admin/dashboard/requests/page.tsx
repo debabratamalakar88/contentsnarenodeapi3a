@@ -173,7 +173,12 @@ const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, o
                                 </>
                              ) : (
                                 <>
-                                    <DropdownMenuItem asChild><Link href={viewUrl}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={viewUrl}>
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            {request.status === 'draft' ? 'Preview' : 'View Details'}
+                                        </Link>
+                                    </DropdownMenuItem>
                                     {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                                     <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -266,7 +271,12 @@ const RequestRow = ({ request, clientMap, isArchived, onDuplicate, onArchive, on
                         </>
                      ) : (
                         <>
-                            <DropdownMenuItem asChild><Link href={viewUrl}><Eye className="mr-2 h-4 w-4" />View Details</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={viewUrl}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    {request.status === 'draft' ? 'Preview' : 'View Details'}
+                                </Link>
+                            </DropdownMenuItem>
                             {request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
                             <DropdownMenuItem onClick={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuSeparator />
