@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { 
@@ -266,7 +265,7 @@ const RequestTable = ({ requests, clientMap, isArchived }: RequestTableProps) =>
 }
 
 export default function AdminRequestsPage() {
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [requests, setRequests] = useState<Request[]>([]);
     const [allUsers, setAllUsers] = useState<UserType[]>([]);
     const [allClients, setAllClients] = useState<Client[]>([]);
@@ -474,3 +473,4 @@ export default function AdminRequestsPage() {
         </div>
     );
 }
+
