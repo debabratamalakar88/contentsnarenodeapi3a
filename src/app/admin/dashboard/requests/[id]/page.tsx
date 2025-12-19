@@ -1,34 +1,33 @@
 
-
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAdminRequest, getAdminUsers, getAdminClients, type Request, type Client, type User as UserType, Page, Question, getAdminRequestSubmissions, type Submission } from '@/lib/api';
+import { getAdminRequest, getAdminClients, getAdminUsers, getAdminRequestSubmissions, type Request, type Question, type Client, type Page, type Submission, type User as UserType } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Eye, CalendarDays, User, Check, Sparkles, Bold, Italic, Underline, List as ListIcon, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link as LinkIcon, Smile, Link2Off, Code, Link as LucideLink, Clipboard, CheckCircle, FileText, Building } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, CalendarDays, Mail, Phone, Clipboard, Check, Eye, Users, FileText, CheckCircle, MoreHorizontal, Edit, Archive, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { format, parseISO } from 'date-fns';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import EmojiPicker from "emoji-picker-react";
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
 import { IconSelector } from '@/components/ui/icon-selector';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from "@/lib/utils";
+import { format, parseISO } from 'date-fns';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -38,40 +37,7 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-
-const RichTextEditorPreview = ({ question }: { question: Question }) => {
-    return (
-        <div className="rounded-md border border-input bg-background">
-            <div className="prose prose-preview min-h-[100px] w-full p-3" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />
-        </div>
-    );
-};
-
-const DateRangePicker = ({ question }: { question: Question }) => (
-    <div className="flex items-center gap-2">
-        <Input type="date" disabled />
-        <span>to</span>
-        <Input type="date" disabled />
-    </div>
-);
-
-const CurrencyInput = ({ question }: { question: Question }) => {
-    return (
-        <div className="flex items-center gap-0 max-w-xs">
-            <Select disabled>
-                <SelectTrigger className="w-[90px] rounded-r-none border-r-0">
-                    <SelectValue placeholder="$" />
-                </SelectTrigger>
-            </Select>
-            <div className="relative flex-1">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                <Input type="number" placeholder="100.00" disabled className="pl-8 rounded-l-none" />
-            </div>
-        </div>
-    );
-};
-
-const renderQuestionInput = (question: Question) => {
+const renderQuestionPreview = (question: Question) => {
     const questionId = `q-preview-${question.id}`;
     switch(question.type) {
         case 'text': return <Input id={questionId} type="text" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
@@ -90,15 +56,11 @@ const renderQuestionInput = (question: Question) => {
         case 'radio': return (
             <RadioGroup defaultValue={question.defaultValue}>{question.options?.map((opt, i) => (<div key={i} className="flex items-center space-x-2 pt-2"><RadioGroupItem value={opt.value} id={`${questionId}-${i}`} disabled /><label htmlFor={`${questionId}-${i}`}>{opt.label}</label></div>))}</RadioGroup>
         );
-        case 'formatted-text': return <RichTextEditorPreview question={question} />;
+        case 'formatted-text': return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: question.defaultValue || '' }} />;
         case 'image-upload': return <Input id={questionId} type="file" accept="image/*" disabled multiple />;
         case 'address': return <AddressAutocompleteInput id={questionId} placeholder={question.placeholder} defaultValue={question.defaultValue} />;
         case 'number': return <Input id={questionId} type="number" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
-        case 'currency': return <CurrencyInput question={question} />;
-        case 'country': return <Select defaultValue={question.defaultValue} disabled><SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger><SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent></Select>;
-        case 'date-range': return <DateRangePicker question={question} />;
-        case 'icon-selector': return <IconSelector defaultValue={question.defaultValue} />;
-        case 'color-picker': return (<div className="flex items-center gap-2"><div className="w-10 h-10 p-1 rounded-md border" style={{backgroundColor: question.defaultValue || '#000000'}} /><Input type="text" value={question.defaultValue || '#000000'} disabled className="max-w-[150px]"/></div>);
+        case 'currency': return <Input id={questionId} type="text" placeholder="$0.00" defaultValue={question.defaultValue} disabled />;
         case 'button': return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'} disabled>{question.label}</Button>;
         default: return <div className="text-sm text-red-500">Unsupported field type: {question.type}</div>;
     }
@@ -108,16 +70,15 @@ interface ViewSidebarProps {
   request: Request;
   ownerName: string;
   assignedClients: Client[];
-  pages: Page[];
-  activePageIndex: number;
-  setActivePageIndex: (id: number) => void;
+  activeIds: { pageId: number | null, sectionId: number | null, questionId: number | null };
+  setActiveIds: (ids: { pageId: number; sectionId: number; questionId: number }) => void;
   publicUrl: string;
 }
 
-const ViewSidebar = ({ request, ownerName, assignedClients, pages, activePageIndex, setActivePageIndex, publicUrl }: ViewSidebarProps) => {
+const ViewSidebar = ({ request, ownerName, assignedClients, activeIds, setActiveIds, publicUrl }: ViewSidebarProps) => {
     const { toast } = useToast();
     const [copied, setCopied] = useState(false);
-
+    
     const handleCopy = () => {
         if (!publicUrl) return;
         navigator.clipboard.writeText(publicUrl);
@@ -126,54 +87,58 @@ const ViewSidebar = ({ request, ownerName, assignedClients, pages, activePageInd
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const { pageId: activePageId, sectionId: activeSectionId, questionId: activeQuestionId } = activeIds;
+    const [openPages, setOpenPages] = useState<number[]>([activePageId || (request.form_data[0]?.id ?? 0)]);
+
+    const handlePageClick = (pageId: number) => {
+        setOpenPages(current => current.includes(pageId) ? current.filter(id => id !== pageId) : [...current, pageId]);
+    };
+    
     return (
-        <aside className="w-72 flex-shrink-0 bg-white border-r flex flex-col">
-            <div className="flex-shrink-0">
-                <div className="p-4 border-b">
-                    <h2 className="font-semibold text-lg leading-tight">{request.title}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">{request.description}</p>
-                    <div className="text-sm text-muted-foreground mt-3 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>Created by {ownerName}</span>
+        <aside className="w-80 flex-shrink-0 bg-white border-r flex flex-col h-screen">
+            <div className="flex-shrink-0 p-6 space-y-4">
+                <h2 className="font-bold text-2xl leading-tight">{request.title}</h2>
+                 {request.status === 'published' && request.request_code && publicUrl && (
+                    <div className="mt-4">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                            <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
+                                <a
+                                    href={publicUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate hover:underline"
+                                    title={publicUrl}
+                                >
+                                    {publicUrl}
+                                </a>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                            </Button>
                         </div>
-                        {request.company && (
-                            <div className="flex items-center gap-2">
-                                <Building className="h-4 w-4" />
-                                <span>Company: {request.company.company_name}</span>
-                            </div>
-                        )}
-                        {request.due_date && (
-                            <div className="text-xs font-medium flex items-center">
-                                <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-                                Due: {format(parseISO(request.due_date), 'PPP')}
-                            </div>
-                        )}
                     </div>
-                     {request.status === 'published' && request.request_code && publicUrl && (
-                        <div className="mt-4">
-                            <Label className="text-xs font-semibold uppercase text-muted-foreground">Public URL</Label>
-                            <div className="flex items-center gap-1 mt-1">
-                                <div className="flex h-8 w-full items-center truncate rounded-md border border-input bg-muted/50 px-3 text-xs ring-offset-background">
-                                    <a
-                                        href={publicUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="truncate hover:underline"
-                                        title={publicUrl}
-                                    >
-                                        {publicUrl}
-                                    </a>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
-                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
-                                </Button>
-                            </div>
+                )}
+                <div className="text-sm text-muted-foreground mt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>Created by {ownerName}</span>
+                    </div>
+                    {request.company && (
+                        <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            <span>Company: {request.company.company_name}</span>
+                        </div>
+                    )}
+                    {request.due_date && (
+                        <div className="text-sm font-medium flex items-center">
+                            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                            Due: {format(parseISO(request.due_date), 'PPP')}
                         </div>
                     )}
                 </div>
                  {assignedClients.length > 0 && (
-                    <div className="p-4 border-b">
+                    <div className="pt-4 border-t">
                         <h3 className="font-semibold text-xs mb-2 uppercase text-muted-foreground">Clients</h3>
                         <div className="space-y-2">
                             {assignedClients.map(client => (
@@ -188,20 +153,52 @@ const ViewSidebar = ({ request, ownerName, assignedClients, pages, activePageInd
                     </div>
                 )}
             </div>
-            <div className="flex-1 p-2 space-y-1 overflow-y-auto">
-                <h3 className="font-semibold text-xs px-2 mb-1 uppercase text-muted-foreground">Pages</h3>
-                {pages.map((page, index) => (
-                    <button
-                        key={page.id}
-                        onClick={() => setActivePageIndex(index)}
-                        className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activePageIndex === index ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent/50")}
-                    >
-                        <span className="truncate">{page.title}</span>
-                    </button>
+            <div className="flex-1 p-2 space-y-1 overflow-y-auto border-t">
+                {request.form_data.map((page) => (
+                    <div key={page.id}>
+                        <button
+                            onClick={() => handlePageClick(page.id)}
+                            className={cn(
+                                "w-full text-left flex items-center justify-between text-sm p-3 rounded-md font-semibold",
+                                activePageId === page.id ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                            )}
+                        >
+                            <span className="truncate">{page.title}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs">0/{page.sections.reduce((acc, s) => acc + s.questions.length, 0)}</span>
+                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                        </button>
+                        {openPages.includes(page.id) && (
+                            <div className="pl-4 mt-1 space-y-1">
+                                {page.sections.map(section => (
+                                    <div key={section.id}>
+                                         <button onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}
+                                            className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activeSectionId === section.id && activePageId === page.id ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100")}
+                                        >
+                                            <span className="truncate">{section.title}</span>
+                                        </button>
+                                        {activeSectionId === section.id && activePageId === page.id && (
+                                            <div className="pl-4 mt-1 border-l-2 ml-2">
+                                                {section.questions.map(question => (
+                                                    <button key={question.id} onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: question.id })} className={cn("w-full text-left flex items-center gap-2 text-sm p-2 rounded-md", activeQuestionId === question.id ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:bg-gray-50")}>
+                                                        - <span className="truncate">{question.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 ))}
             </div>
+             <div className="p-4 border-t">
+                <Button className="w-full bg-pink-600 hover:bg-pink-700">GETTING STARTED</Button>
+            </div>
         </aside>
-    );
+    )
 }
 
 export default function AdminViewRequestPage() {
@@ -216,7 +213,8 @@ export default function AdminViewRequestPage() {
     const [allClients, setAllClients] = useState<Client[]>([]);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activePageIndex, setActivePageIndex] = useState(0);
+    const [error, setError] = useState<string | null>(null);
+    const [activeIds, setActiveIds] = useState<{ pageId: number | null, sectionId: number | null, questionId: number | null }>({ pageId: null, sectionId: null, questionId: null });
     const [currentTab, setCurrentTab] = useState("form");
     
     useEffect(() => {
@@ -226,19 +224,28 @@ export default function AdminViewRequestPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, usersData, clientsData, submissionsData] = await Promise.all([
+                const [requestData, usersResponse, clientsResponse, submissionsData] = await Promise.all([
                     getAdminRequest(token!, id),
-                    getAdminUsers(token!),
-                    getAdminClients(token!),
+                    getAdminUsers(token!, 1, '', true),
+                    getAdminClients(token!, 1, '', true),
                     getAdminRequestSubmissions(token!, id)
                 ]);
+                
                 setRequest(requestData);
-                setAllUsers(usersData);
-                setAllClients(clientsData);
-                setSubmissions(submissionsData);
+                setAllUsers(usersResponse.data || []);
+                setAllClients(clientsResponse.data || []);
+                setSubmissions(submissionsData || []);
 
+                if (requestData.form_data?.length > 0) {
+                     const firstPage = requestData.form_data[0];
+                     if (firstPage.sections?.[0]?.questions?.[0]) {
+                        setActiveIds({ pageId: firstPage.id, sectionId: firstPage.sections[0].id, questionId: firstPage.sections[0].questions[0].id });
+                     }
+                }
             } catch (err: any) {
-                toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to load request data.' });
+                const message = err.message || 'Failed to load request data.';
+                setError(message);
+                toast({ variant: 'destructive', title: 'Error', description: message });
             } finally {
                 setIsLoading(false);
             }
@@ -246,92 +253,134 @@ export default function AdminViewRequestPage() {
         fetchRequestData();
     }, [id, router, toast]);
 
-    const ownerName = useMemo(() => {
+     const ownerName = useMemo(() => {
         if (!request || !allUsers.length) return `User #${request?.user_id}`;
         const owner = allUsers.find(u => u.id === request.user_id);
         return owner?.name || `User #${request.user_id}`;
     }, [request, allUsers]);
 
+    const { activePage, activeSection, activeQuestion, activePageIndex } = useMemo(() => {
+        if (!request || !activeIds) return { activePage: null, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const page = request.form_data.find(p => p.id === activeIds.pageId);
+        if (!page) return { activePage: null, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const section = page.sections.find(s => s.id === activeIds.sectionId);
+        if (!section) return { activePage: page, activeSection: null, activeQuestion: null, activePageIndex: -1 };
+        const question = section.questions.find(q => q.id === activeIds.questionId);
+        const pageIndex = request.form_data.findIndex(p => p.id === page.id);
+        return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
+    }, [request, activeIds]);
+
+    const handlePrevNextPage = (direction: 'prev' | 'next') => {
+        if (!request || !activePage) return;
+        const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
+        if (newIndex >= 0 && newIndex < request.form_data.length) {
+            const newPage = request.form_data[newIndex];
+            const firstSection = newPage.sections[0];
+            const firstQuestion = firstSection?.questions[0];
+            if (firstSection && firstQuestion) {
+                 setActiveIds({ pageId: newPage.id, sectionId: firstSection.id, questionId: firstQuestion.id });
+            }
+        }
+    };
+    
     const assignedClients = useMemo(() => {
-        if (!request?.client_id || !allClients.length) return [];
+        if (!request?.client_id || !allClients) return [];
         const clientIds = Array.isArray(request.client_id) ? request.client_id : [request.client_id];
         return allClients.filter(c => clientIds.includes(c.id));
     }, [request, allClients]);
     
-    const activePage = request?.form_data?.[activePageIndex];
-    const publicUrl = request?.status === 'published' && request.request_code ? `${window.location.origin}/request/share/${request.request_code}` : '';
-
+    const publicUrl = (typeof window !== 'undefined' && request?.status === 'published' && request.request_code)
+        ? `${window.location.origin}/request/share/${request.request_code}`
+        : '';
+        
     if (isLoading) {
         return (
-            <div className="p-6 h-full flex flex-col">
-                <header className="flex items-center justify-between mb-6 pb-4 border-b">
-                    <div className="flex items-center gap-4"><Skeleton className="h-9 w-9" /><Skeleton className="h-8 w-48" /></div>
-                </header>
-                <div className="flex flex-1"><Skeleton className="w-72" /><div className="flex-1 p-6"><Skeleton className="h-full w-full" /></div></div>
+            <div className="flex h-screen bg-muted/40">
+                <Skeleton className="w-80 h-full" />
+                <div className="flex-1 p-6 space-y-6">
+                    <Skeleton className="h-10 w-1/3" />
+                    <Skeleton className="h-[400px] w-full" />
+                </div>
             </div>
         );
     }
-
-    if (!request) {
-        return <div className="p-6 text-center text-muted-foreground">Request data could not be loaded.</div>;
+    
+    if (error || !request) {
+        return <div className="p-6 text-center text-muted-foreground">{error || 'Request data could not be loaded.'}</div>;
     }
-     const isLastPage = activePageIndex === (request?.form_data.length || 0) - 1;
-
 
     return (
-        <div className="flex flex-1 flex-col bg-muted/40 overflow-hidden">
-            <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-shrink-0">
-                <Button variant="outline" size="icon" asChild><Link href="/admin/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link></Button>
-                 <h1 className="text-lg font-semibold truncate" title={request.title}>{request.title}</h1>
-                 <Badge variant="outline" className={cn("capitalize", request.status === 'published' && "bg-green-100 text-green-800")}>{request.status}</Badge>
-            </header>
-            <div className="flex flex-1 overflow-hidden">
-                <ViewSidebar request={request} ownerName={ownerName} assignedClients={assignedClients} pages={request.form_data || []} activePageIndex={activePageIndex} setActivePageIndex={setActivePageIndex} publicUrl={publicUrl}/>
-                <main className="flex-1 overflow-y-auto">
-                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="p-6">
-                        <TabsList>
-                            <TabsTrigger value="form">Form Preview</TabsTrigger>
-                            <TabsTrigger value="submissions">Submissions <Badge variant="secondary" className="ml-2">{submissions.length}</Badge></TabsTrigger>
+        <div className="flex flex-1 overflow-hidden h-screen bg-muted/40">
+            <ViewSidebar request={request} ownerName={ownerName} assignedClients={assignedClients} activeIds={activeIds!} setActiveIds={setActiveIds} publicUrl={publicUrl} />
+            <main className="flex-1 flex flex-col overflow-hidden">
+                 <header className="sticky z-10 flex items-center justify-between gap-4 p-4 border-b bg-white">
+                    <div className="flex items-center gap-2 w-1/3">
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('prev')} disabled={activePageIndex === 0}>
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            {activePage && activePageIndex > 0 ? request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '') : 'Previous'}
+                        </Button>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 w-1/3">
+                         <Button variant="outline" className="text-pink-600 border-pink-200">
+                            <Sparkles className="mr-2 h-4 w-4"/> Activity
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                <DropdownMenuItem><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
+                                <DropdownMenuItem><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    <div className="flex items-center gap-2 w-1/3 justify-end">
+                        <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
+                            {activePage && activePageIndex < request.form_data.length - 1 ? request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '') : 'Next'}
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </div>
+                </header>
+                 <div className="flex-1 overflow-y-auto p-8">
+                   <Tabs value={currentTab} onValueChange={setCurrentTab} className="max-w-3xl mx-auto">
+                        <TabsList className="mb-6">
+                            <TabsTrigger value="form">Form</TabsTrigger>
+                            <TabsTrigger value="submissions">Submissions ({submissions.length})</TabsTrigger>
                         </TabsList>
                         <TabsContent value="form">
-                             <div className="max-w-3xl mx-auto pt-6">
-                                {activePage ? (
-                                    <Card>
-                                        <CardHeader><CardTitle>{activePage.title}</CardTitle>{activePage.instructions && <CardDescription>{activePage.instructions}</CardDescription>}</CardHeader>
-                                        <CardContent className="space-y-8">
-                                            {activePage.sections.map(section => (
-                                                <div key={section.id}>
-                                                    <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-                                                    {section.instructions && <p className="text-sm text-muted-foreground mt-1 mb-4">{section.instructions}</p>}
-                                                    {section.questions.map(question => (
-                                                        <div key={question.id} className="grid gap-2 mb-4">
-                                                            {question.type !== 'button' && question.type !== 'formatted-text' && <Label htmlFor={`q-preview-${question.id}`}>{question.label}{question.required && <span className="text-destructive"> *</span>}</Label>}
-                                                            {question.instructions && <p className="text-sm text-muted-foreground">{question.instructions}</p>}
-                                                            {renderQuestionInput(question)}
-                                                        </div>
-                                                    ))}
+                            {activeQuestion ? (
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200/80">
+                                        <form>
+                                            <div className="grid gap-2">
+                                                <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                                {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
+                                                <div className="mt-4">
+                                                    {renderQuestionPreview(activeQuestion)}
                                                 </div>
-                                            ))}
-                                        </CardContent>
-                                        <CardFooter className="flex justify-between border-t pt-6">
-                                            <Button type="button" variant="outline" onClick={() => setActivePageIndex(p => p - 1)} disabled={activePageIndex === 0}>
-                                                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                                            </Button>
-                                            {!isLastPage && (
-                                                <Button type="button" onClick={() => setActivePageIndex(p => p + 1)}>
-                                                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </CardFooter>
-                                    </Card>
-                                ) : (
-                                     <p className="text-muted-foreground text-center py-10">Select a page to view its content.</p>
-                                )}
-                            </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                           ) : (
+                             <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
+                           )}
                         </TabsContent>
-                         <TabsContent value="submissions">
-                           <Card className="mt-6">
-                                <CardHeader><CardTitle>Request Submissions</CardTitle><CardDescription>Here are all the submissions received for this request.</CardDescription></CardHeader>
+                        <TabsContent value="submissions">
+                           <Card>
+                                <CardHeader>
+                                    <CardTitle>Request Submissions</CardTitle>
+                                    <CardDescription>Here are all the submissions received for this request.</CardDescription>
+                                </CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader>
@@ -343,31 +392,29 @@ export default function AdminViewRequestPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {submissions.length > 0 ? submissions.map(submission => {
-                                                return (
-                                                    <TableRow key={submission.id}>
-                                                        <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
-                                                        <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
-                                                        <TableCell>
-                                                          <Badge
-                                                              variant={'outline'}
-                                                              className={cn(
-                                                                  "capitalize",
-                                                                  submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
-                                                              )}
-                                                          >
-                                                              {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
-                                                              {submission.status}
-                                                          </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
-                                                                <Link href={`/admin/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            }) : (
+                                            {submissions.length > 0 ? submissions.map(submission => (
+                                                <TableRow key={submission.id}>
+                                                    <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
+                                                    <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                      <Badge
+                                                          variant={'outline'}
+                                                          className={cn(
+                                                              "capitalize",
+                                                              submission.status === 'completed' && "border-green-200 bg-green-100 text-green-800"
+                                                          )}
+                                                      >
+                                                          {submission.status === 'completed' && <CheckCircle className="mr-1 h-3 w-3" />}
+                                                          {submission.status}
+                                                      </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
+                                                            <Link href={`/admin/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) : (
                                                 <TableRow>
                                                     <TableCell colSpan={4} className="h-24 text-center">
                                                         <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
@@ -381,8 +428,8 @@ export default function AdminViewRequestPage() {
                            </Card>
                         </TabsContent>
                     </Tabs>
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 }
