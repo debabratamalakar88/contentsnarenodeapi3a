@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -141,8 +142,10 @@ const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, o
     
     const viewUrl = request.status === 'draft' ? `/admin/dashboard/requests/preview/${request.id}` : `/admin/dashboard/requests/${request.id}`;
 
+    const isPublished = request.status === 'published';
+
     return (
-        <Card className="flex flex-col">
+        <Card className="flex flex-col group">
             <CardHeader className="p-4 border-b">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -190,12 +193,31 @@ const RequestCard = ({ request, clientMap, isArchived, onDuplicate, onArchive, o
                     </DropdownMenu>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 flex-grow">
-                <h3 className="font-bold text-lg">{request.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{request.description}</p>
-                 <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                    <p>Owner: {ownerName}</p>
-                    <p>Company: {request.company?.company_name || 'N/A'}</p>
+            <CardContent className="p-4 flex-grow relative">
+                <div className="transition-opacity duration-200 group-hover:opacity-0">
+                    <h3 className="font-bold text-lg">{request.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{request.description}</p>
+                    <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                        <p>Owner: {ownerName}</p>
+                        <p>Company: {request.company?.company_name || 'N/A'}</p>
+                    </div>
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-card/80">
+                    {isArchived ? (
+                        <>
+                            <Button size="sm" className="rounded-full px-8 bg-blue-600 hover:bg-blue-700" onClick={() => onRestore(request)}>RESTORE</Button>
+                            <Button variant="destructive" size="sm" className="rounded-full px-8" onClick={() => onForceDelete(request)}>DELETE PERMANENTLY</Button>
+                        </>
+                    ) : isPublished ? (
+                        <Button size="sm" className="rounded-full px-8" asChild>
+                            <Link href={`/admin/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
+                        </Button>
+                    ) : (
+                        <>
+                            <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/admin/dashboard/requests/preview/${request.id}`}>PREVIEW</Link></Button>
+                            <Button size="sm" className="rounded-full px-8" asChild><Link href={`/admin/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                        </>
+                    )}
                 </div>
             </CardContent>
             <CardFooter className="p-4 border-t flex flex-col items-start gap-3">
@@ -630,4 +652,5 @@ export default function AdminRequestsPage() {
         </>
     );
 }
+
 
