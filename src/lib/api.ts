@@ -734,7 +734,7 @@ export async function softDeleteAdminRequest(token: string, id: number): Promise
 }
 
 export async function restoreAdminRequest(token: string, id: number): Promise<{ message: string }> {
-  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/restore`, token, { method: 'POST' });
+  return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/restore`, token, { method: 'PATCH' });
 }
 
 export async function forceDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
@@ -958,7 +958,7 @@ export async function updateTeamMember(token: string, id: number, memberData: Pa
 }
 
 export async function softDeleteTeamMember(token: string, id: number): Promise<{ message: string }> {
-  return fetchWithToken(`${API_BSE_URL}/api/teams/${id}`, token, { method: 'DELETE' });
+  return fetchWithToken(`${API_BASE_URL}/api/teams/${id}`, token, { method: 'DELETE' });
 }
 
 export async function restoreTeamMember(token: string, id: number): Promise<{ message: string }> {
