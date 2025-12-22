@@ -514,7 +514,13 @@ export default function EditAdminRequestWizardPage() {
             case "Preview": 
                 if (!initialRequestData || !activeIds) return <Skeleton className="h-full w-full" />;
                 return <RequestPreview initialData={initialRequestData} clients={clients} activeIds={activeIds} setActiveIds={setActiveIds} />;
-            case "Finalize": return <AdminFinalizeStep initialData={initialRequestData} onPublish={(settings) => handleFinalSave(settings, 'published')} onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} isSubmitting={isSubmitting}/>;
+            case "Finalize": return <AdminFinalizeStep 
+                                        initialData={initialRequestData} 
+                                        onPublish={(settings) => handleFinalSave(settings, 'published')} 
+                                        onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} 
+                                        isSubmitting={isSubmitting}
+                                        companyId={initialRequestData?.company_id}
+                                     />;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
         }
     };
@@ -568,5 +574,6 @@ export default function EditAdminRequestWizardPage() {
         </div>
     );
 }
+
 
 

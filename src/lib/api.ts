@@ -1,4 +1,5 @@
 
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -99,6 +100,7 @@ export interface Client {
   full_name: string;
   email: string;
   companies: string[];
+  company_id?: number;
   phone_number: string | null;
   app_language: string | null;
   date_format: string | null;

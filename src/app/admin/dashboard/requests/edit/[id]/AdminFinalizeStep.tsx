@@ -37,6 +37,7 @@ interface AdminFinalizeStepProps {
   onPublish: (settings: any) => void;
   onSaveDraft: (settings: any) => void;
   isSubmitting: boolean;
+  companyId?: number;
 }
 
 const getInitials = (name: string): string => {
@@ -47,12 +48,12 @@ const getInitials = (name: string): string => {
     return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
 }
 
-export default function AdminFinalizeStep({ initialData, onPublish, onSaveDraft, isSubmitting }: AdminFinalizeStepProps) {
+export default function AdminFinalizeStep({ initialData, onPublish, onSaveDraft, isSubmitting, companyId }: AdminFinalizeStepProps) {
     const { toast } = useToast();
     const router = useRouter();
 
     const [dueDate, setDueDate] = useState<Date | undefined>();
-    const [clients, setClients] = useState<Client[]>([]);
+    const [allClients, setAllClients] = useState<Client[]>([]);
     const [isLoadingClients, setIsLoadingClients] = useState(true);
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
     const [allowComments, setAllowComments] = useState(true);
@@ -74,7 +75,7 @@ export default function AdminFinalizeStep({ initialData, onPublish, onSaveDraft,
 
             try {
                 const fetchedClients = await getAdminClients(token, 1, '', true);
-                setClients(fetchedClients.data || []);
+                setAllClients(fetchedClients.data || []);
             } catch (err: any) {
                 toast({
                     variant: 'destructive',
@@ -105,6 +106,13 @@ export default function AdminFinalizeStep({ initialData, onPublish, onSaveDraft,
             }
         }
     }, [initialData]);
+
+    const companyClients = useMemo(() => {
+        if (!companyId) {
+            return allClients;
+        }
+        return allClients.filter(client => client.company_id === companyId);
+    }, [allClients, companyId]);
 
     const canPublish = selectedClients.length > 0;
     
@@ -156,16 +164,16 @@ export default function AdminFinalizeStep({ initialData, onPublish, onSaveDraft,
         onSaveDraft(gatherSettings());
     };
     
-    const clientOptions = clients.map(client => ({
+    const clientOptions = companyClients.map(client => ({
         label: client.full_name,
         value: String(client.id)
     }));
       
     const selectedClientDetails = useMemo(() => {
         return selectedClients.map(clientId => {
-            return clients.find(c => String(c.id) === clientId);
+            return allClients.find(c => String(c.id) === clientId);
         }).filter((c): c is Client => c !== undefined);
-    }, [selectedClients, clients]);
+    }, [selectedClients, allClients]);
     
     const handleRemoveClient = (clientId: number) => {
         setSelectedClients(prev => prev.filter(id => id !== String(clientId)));
