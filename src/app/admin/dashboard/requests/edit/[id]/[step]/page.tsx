@@ -9,18 +9,15 @@ import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsSt
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Search, Type, Pilcrow, CheckSquare, FileUp, ImageUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, PenSquare, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getAdminRequest, updateAdminRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType, getAdminClients, type Client } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import RequestPreview from "./preview";
+import RequestPreview from "../preview";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { questionCategories } from "@/app/dashboard/requests/new/components/common";
-
 
 const steps = [
     { name: "Templates", slug: "templates" },
@@ -28,6 +25,58 @@ const steps = [
     { name: "Builder", slug: "builder" },
     { name: "Preview", slug: "preview" },
     { name: "Finalize", slug: "finalize" }
+];
+
+const questionCategories: {
+    name: string;
+    fields: {
+        type: QuestionType;
+        label: string;
+        icon: React.ElementType;
+        isNew?: boolean;
+        isHighlighted?: boolean;
+    }[];
+}[] = [
+    {
+        name: "Common Fields",
+        fields: [
+            { type: 'text', label: 'Single Line Text', icon: Type },
+            { type: 'textarea', label: 'Multiline Text', icon: Pilcrow },
+            { type: 'formatted-text', label: 'Formatted Text', icon: PenSquare },
+            { type: 'image-upload', label: 'Image(s) Upload', icon: ImageUp },
+            { type: 'file', label: 'File(s) Upload', icon: FileUp },
+        ],
+    },
+    {
+        name: "Validation Fields",
+        fields: [
+            { type: 'email', label: 'Email', icon: Mail },
+            { type: 'address', label: 'Address', icon: MapPin },
+            { type: 'url', label: 'URL', icon: Link2 },
+            { type: 'number', label: 'Number', icon: Hash },
+            { type: 'tel', label: 'Phone', icon: Phone },
+            { type: 'currency', label: 'Currency', icon: DollarSign },
+            { type: 'country', label: 'Country', icon: Globe, isNew: true, isHighlighted: true },
+            { type: 'date', label: 'Date/Time', icon: CalendarClock },
+            { type: 'date-range', label: 'Date Range', icon: CalendarRange },
+        ],
+    },
+    {
+        name: "Selection Fields",
+        fields: [
+            { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
+            { type: 'radio', label: 'Single Choice', icon: CircleDot },
+            { type: 'dropdown', label: 'Dropdown', icon: MenuSquare },
+        ],
+    },
+    {
+        name: "UI Fields",
+        fields: [
+            { type: 'icon-selector', label: 'Icon Selector', icon: Sparkles },
+            { type: 'color-picker', label: 'Color Picker', icon: Pipette },
+            { type: 'button', label: 'Button', icon: MousePointerClick },
+        ],
+    },
 ];
 
 const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
@@ -189,6 +238,7 @@ export default function EditAdminRequestWizardPage() {
     };
 
     const handleStepClick = (slug: string) => {
+        const targetIndex = steps.findIndex(s => s.slug === slug);
         if (!disabledSteps.includes(slug)) {
             router.push(`/admin/dashboard/requests/edit/${id}/${slug}`);
         }
@@ -516,3 +566,5 @@ export default function EditAdminRequestWizardPage() {
         </div>
     );
 }
+
+    
