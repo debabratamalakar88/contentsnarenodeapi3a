@@ -327,19 +327,7 @@ export default function AdminViewRequestPage() {
                         </Button>
                     </div>
                     <div className="flex items-center justify-center gap-2 w-1/3">
-                         <Button variant="outline" className="text-pink-600 border-pink-200">
-                            <Sparkles className="mr-2 h-4 w-4"/> Activity
-                        </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
-                                <DropdownMenuItem><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
-                                <DropdownMenuItem><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Removed Activity and Actions buttons */}
                     </div>
                     <div className="flex items-center gap-2 w-1/3 justify-end">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
