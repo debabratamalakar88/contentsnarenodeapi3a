@@ -729,6 +729,13 @@ export async function getAdminRequest(token: string, id: number): Promise<Reques
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token);
 }
 
+export async function updateAdminRequest(token: string, id: number, data: Partial<Request>): Promise<Request> {
+    return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    });
+}
+
 export async function softDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token, { method: 'DELETE' });
 }
