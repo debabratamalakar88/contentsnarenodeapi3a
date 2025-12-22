@@ -173,9 +173,9 @@ export default function RequestPreview({ initialData: request, clients, activeId
             >
                 <div className="p-4 border-b">
                     <h1 className="text-lg font-bold">{request.title}</h1>
-                    <div className="flex items-center gap-2 mt-2">
-                        {request.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}</Badge>}
+                     <div className="flex items-center gap-2 mt-2">
                         <Badge variant="secondary" className="capitalize">{request.status}</Badge>
+                        {request.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}</Badge>}
                     </div>
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto p-2">
@@ -225,12 +225,6 @@ export default function RequestPreview({ initialData: request, clients, activeId
                         ))}
                     </Accordion>
                 </div>
-                 <div className="p-4 border-t">
-                    <div className="flex items-center gap-2">
-                         <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold">N</div>
-                        <span className="font-bold text-lg">NARLAX</span>
-                    </div>
-                 </div>
             </aside>
             <main className="flex-1 overflow-y-auto p-8 bg-muted/40">
                 <div className="max-w-4xl mx-auto w-full">
