@@ -8,7 +8,6 @@ import { useParams, useRouter } from "next/navigation";
 import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
 import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
-import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronRight, Loader2, Search, Type, Pilcrow, CheckSquare, FileUp, ImageUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, PenSquare, Link2, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +18,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import AdminFinalizeStep from "../AdminFinalizeStep";
+
 
 const steps = [
     { name: "Templates", slug: "templates" },
@@ -513,7 +514,7 @@ export default function EditAdminRequestWizardPage() {
             case "Preview": 
                 if (!initialRequestData || !activeIds) return <Skeleton className="h-full w-full" />;
                 return <RequestPreview initialData={initialRequestData} clients={clients} activeIds={activeIds} setActiveIds={setActiveIds} />;
-            case "Finalize": return <FinalizeStep initialData={initialRequestData} onPublish={(settings) => handleFinalSave(settings, 'published')} onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} isSubmitting={isSubmitting}/>;
+            case "Finalize": return <AdminFinalizeStep initialData={initialRequestData} onPublish={(settings) => handleFinalSave(settings, 'published')} onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} isSubmitting={isSubmitting}/>;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
         }
     };
@@ -567,3 +568,5 @@ export default function EditAdminRequestWizardPage() {
         </div>
     );
 }
+
+
