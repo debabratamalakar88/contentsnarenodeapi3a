@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,21 +83,6 @@ interface RequestPreviewProps {
 }
 
 export default function RequestPreview({ initialData: request, clients, activeIds, setActiveIds }: RequestPreviewProps) {
-    const { activeQuestion, activeSection } = React.useMemo(() => {
-        if (!request || !activeIds) return { activeQuestion: null, activeSection: null };
-        
-        const page = request.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return { activeQuestion: null, activeSection: null };
-        
-        const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return { activeQuestion: null, activeSection: null };
-
-        const question = section.questions.find(q => q.id === activeIds.questionId);
-        if(!question) return { activeQuestion: null, activeSection: section };
-        
-        return { activeQuestion: question, activeSection: section };
-    }, [request, activeIds]);
-
     const assignedClients = clients.filter(c => request.client_id?.includes(c.id));
     const [activeAccordionItem, setActiveAccordionItem] = React.useState<string>(`page-${activeIds?.pageId}`);
 
@@ -157,6 +142,21 @@ export default function RequestPreview({ initialData: request, clients, activeId
         if (sectionId !== lastSection.id) return false;
         const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
         return questionId === lastQuestion.id;
+    }, [request, activeIds]);
+    
+    const { activeQuestion, activeSection } = React.useMemo(() => {
+        if (!request || !activeIds) return { activeQuestion: null, activeSection: null };
+        
+        const page = request.form_data.find(p => p.id === activeIds.pageId);
+        if (!page) return { activeQuestion: null, activeSection: null };
+        
+        const section = page.sections.find(s => s.id === activeIds.sectionId);
+        if (!section) return { activeQuestion: null, activeSection: null };
+
+        const question = section.questions.find(q => q.id === activeIds.questionId);
+        if(!question) return { activeQuestion: null, activeSection: section };
+        
+        return { activeQuestion: question, activeSection: section };
     }, [request, activeIds]);
 
     return (
