@@ -10,12 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
-import { CalendarDays, MessageSquare, History, Info, Badge, CheckCircle } from 'lucide-react';
+import { CalendarDays, MessageSquare, History, Info, Badge as BadgeIcon, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { Request, Client, Page, Section, Question } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
