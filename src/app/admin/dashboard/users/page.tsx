@@ -40,7 +40,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive, Eye, PenSquare, ArchiveRestore, Trash2 } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive, Eye, PenSquare, ArchiveRestore, Trash2, UserX, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminUsers, 
@@ -48,6 +48,7 @@ import {
   softDeleteAdminUser,
   restoreAdminUser,
   forceDeleteAdminUser,
+  toggleAdminUserStatus,
   type User as UserType,
   type PaginatedResponse
 } from "@/lib/api";
@@ -77,6 +78,7 @@ export default function ManageUsersPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [userToToggleStatus, setUserToToggleStatus] = useState<UserType | null>(null);
   const [userToArchive, setUserToArchive] = useState<UserType | null>(null);
   const [userToRestore, setUserToRestore] = useState<UserType | null>(null);
   const [userToForceDelete, setUserToForceDelete] = useState<UserType | null>(null);
@@ -125,6 +127,20 @@ export default function ManageUsersPage() {
 
     return () => clearTimeout(timer);
   }, [toast, currentTab, dataVersion, token, router, pagination.current_page, searchQuery]);
+  
+  const handleToggleStatus = async () => {
+    if (!token || !userToToggleStatus) return;
+    const newStatus = !userToToggleStatus.is_active;
+    try {
+      await toggleAdminUserStatus(token, userToToggleStatus.id, newStatus);
+      toast({ title: `User ${newStatus ? 'Activated' : 'Deactivated'}` });
+      refetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setUserToToggleStatus(null);
+    }
+  };
   
   const handleArchive = async () => {
     if (!token || !userToArchive) return;
@@ -190,6 +206,7 @@ export default function ManageUsersPage() {
     const viewProps = {
       users: users,
       isArchived,
+      onToggleStatus: setUserToToggleStatus,
       onArchive: setUserToArchive,
       onRestore: setUserToRestore,
       onForceDelete: setUserToForceDelete,
@@ -275,6 +292,21 @@ export default function ManageUsersPage() {
         </Tabs>
       </div>
 
+       <AlertDialog open={!!userToToggleStatus} onOpenChange={(open) => !open && setUserToToggleStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will {userToToggleStatus?.is_active ? 'deactivate' : 'activate'} the user's account. {userToToggleStatus?.is_active ? 'They will not be able to log in.' : 'They will regain access to their account.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggleStatus}>{userToToggleStatus?.is_active ? 'Deactivate' : 'Activate'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!userToArchive} onOpenChange={(open) => !open && setUserToArchive(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -328,12 +360,13 @@ export default function ManageUsersPage() {
 interface UsersViewProps {
   users: UserType[];
   isArchived: boolean;
+  onToggleStatus: (user: UserType) => void;
   onArchive: (user: UserType) => void;
   onRestore: (user: UserType) => void;
   onForceDelete: (user: UserType) => void;
 }
 
-function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+function UsersGrid({ users, isArchived, onToggleStatus, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {users.map(user => (
@@ -363,6 +396,10 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
                     <DropdownMenuItem asChild>
                         <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                     </DropdownMenuItem>
+                     <DropdownMenuItem onSelect={() => onToggleStatus(user)}>
+                        {user.is_active ? <UserX className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                        {user.is_active ? 'Deactivate' : 'Activate'}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => onArchive(user)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                       <Archive className="mr-2 h-4 w-4"/>Archive User
                     </DropdownMenuItem>
@@ -383,9 +420,9 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
                 Archived
               </Badge>
             ) : (
-               <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                <ShieldCheck className="h-3 w-3 mr-1" />
-                Active
+               <Badge variant="secondary" className={user.is_active ? 'text-green-700 bg-green-100 border-green-200' : 'text-red-700 bg-red-100 border-red-200'}>
+                {user.is_active ? <ShieldCheck className="h-3 w-3 mr-1" /> : <ShieldAlert className="h-3 w-3 mr-1" />}
+                {user.is_active ? 'Active' : 'Inactive'}
               </Badge>
             )}
              {user.email_verified_at ? (
@@ -418,7 +455,7 @@ function UsersGrid({ users, isArchived, onArchive, onRestore, onForceDelete }: U
   )
 }
 
-function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: UsersViewProps) {
+function UsersTable({ users, isArchived, onToggleStatus, onArchive, onRestore, onForceDelete }: UsersViewProps) {
   return (
     <Card>
       <Table>
@@ -446,9 +483,9 @@ function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: 
                         Archived
                     </Badge>
                 ) : (
-                    <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        Active
+                    <Badge variant="secondary" className={user.is_active ? 'text-green-700 bg-green-100 border-green-200' : 'text-red-700 bg-red-100 border-red-200'}>
+                        {user.is_active ? <ShieldCheck className="h-3 w-3 mr-1" /> : <ShieldAlert className="h-3 w-3 mr-1" />}
+                        {user.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                 )}
               </TableCell>
@@ -497,6 +534,10 @@ function UsersTable({ users, isArchived, onArchive, onRestore, onForceDelete }: 
                         <DropdownMenuItem asChild>
                             <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                         </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={() => onToggleStatus(user)}>
+                            {user.is_active ? <UserX className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                            {user.is_active ? 'Deactivate' : 'Activate'}
+                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onArchive(user)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                           <Archive className="mr-2 h-4 w-4"/>Archive User
                         </DropdownMenuItem>
@@ -541,4 +582,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-

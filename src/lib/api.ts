@@ -1,5 +1,4 @@
 
-
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -16,6 +15,7 @@ export interface User {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;
+  is_active?: boolean;
   company?: string | null;
   selected_company_id?: number | null;
   companies?: {
@@ -616,6 +616,10 @@ export async function updateAdminUser(token: string, id: number, userData: any):
     method: 'PUT',
     body: JSON.stringify(userData),
   });
+}
+
+export async function toggleAdminUserStatus(token: string, id: number, isActive: boolean): Promise<User> {
+  return updateAdminUser(token, id, { is_active: isActive });
 }
 
 export async function softDeleteAdminUser(token: string, id: number) {
