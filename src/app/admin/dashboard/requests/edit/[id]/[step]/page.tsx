@@ -1,0 +1,518 @@
+
+'use client'
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+
+import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
+import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsStep';
+import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
+import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getAdminRequest, updateAdminRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType, getAdminClients, type Client } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import RequestPreview from "./preview";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { questionCategories } from "@/app/dashboard/requests/new/components/common";
+
+
+const steps = [
+    { name: "Templates", slug: "templates" },
+    { name: "Essentials", slug: "essentials" },
+    { name: "Builder", slug: "builder" },
+    { name: "Preview", slug: "preview" },
+    { name: "Finalize", slug: "finalize" }
+];
+
+const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+export default function EditAdminRequestWizardPage() {
+    const router = useRouter();
+    const params = useParams();
+    const { toast } = useToast();
+    
+    const id = Number(params.id);
+    const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'essentials');
+
+    const currentStepIndex = useMemo(() => {
+        const index = steps.findIndex(s => s.slug === stepSlug);
+        return index === -1 ? 1 : index; 
+    }, [stepSlug]);
+    const currentStep = steps[currentStepIndex]?.name;
+    
+    const [requestTitle, setRequestTitle] = useState("");
+    const [requestDescription, setRequestDescription] = useState("");
+    const [pages, setPages] = useState<Page[]>([]);
+    const [activePageId, setActivePageId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [initialRequestData, setInitialRequestData] = useState<Request | null>(null);
+    const [clients, setClients] = useState<Client[]>([]);
+
+    const [isQuestionTypeDialogOpen, setQuestionTypeDialogOpen] = useState(false);
+    const [currentLocation, setCurrentLocation] = useState<{ pageId: number, sectionId: number } | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    
+    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+    const [tempQuestion, setTempQuestion] = useState<Question | null>(null);
+    const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem('adminAuthToken');
+        if (!token || !id) {
+            toast({ title: "Error", description: "Invalid request or not logged in.", variant: "destructive" });
+            router.push('/admin/dashboard/requests');
+            return;
+        }
+
+        async function fetchRequestData() {
+            try {
+                const [data, clientData] = await Promise.all([
+                    getAdminRequest(token, id),
+                    getAdminClients(token, 1, '', true),
+                ]);
+
+                setRequestTitle(data.title);
+                setRequestDescription(data.description);
+                setPages(data.form_data || []);
+                if (data.form_data?.length > 0) {
+                    const firstPage = data.form_data[0];
+                    setActivePageId(firstPage.id);
+                    if (firstPage.sections?.[0]?.questions?.[0]) {
+                        setActiveIds({
+                            pageId: firstPage.id,
+                            sectionId: firstPage.sections[0].id,
+                            questionId: firstPage.sections[0].questions[0].id
+                        });
+                    }
+                }
+                setInitialRequestData(data);
+                setClients(clientData.data || []);
+
+            } catch (error: any) {
+                toast({ title: "Failed to load request", description: error.message || "Could not fetch request data.", variant: "destructive" });
+                router.push('/admin/dashboard/requests');
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchRequestData();
+    }, [id, router, toast]);
+
+    
+    const handleFinalSave = async (settings: any, status: 'published' | 'draft' | 'scheduled') => {
+      setIsSubmitting(true);
+      const token = localStorage.getItem('adminAuthToken');
+      if (!token || !id) {
+        toast({ title: "Error", description: "Invalid request or not logged in.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+    
+      let finalStatus = initialRequestData?.status === 'published' ? 'published' : status;
+
+      if (settings.send_option === 'scheduled' && status === 'published') {
+          finalStatus = 'scheduled';
+      }
+
+      const payload = {
+        title: requestTitle,
+        description: requestDescription,
+        form_data: pages,
+        ...settings,
+        status: finalStatus,
+      };
+    
+      try {
+        await updateAdminRequest(token, id, payload);
+        let successMessage = initialRequestData?.status === 'published'
+            ? 'Request settings have been updated.'
+            : (finalStatus === 'published' ? 'Request has been successfully published and sent.' : 'Request draft has been updated.');
+        
+        toast({ title: "Success", description: successMessage });
+        router.push('/admin/dashboard/requests');
+        router.refresh();
+      } catch (error: any) {
+        const errorDescription = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+        toast({ title: "Save Failed", description: errorDescription, variant: "destructive" });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const nextStep = async () => {
+        if (currentStepIndex >= steps.length - 1) return;
+    
+        setIsSubmitting(true);
+        const token = localStorage.getItem('adminAuthToken');
+        if (!token || !id) {
+            toast({ title: "Authentication Error", description: "Please log in again.", variant: "destructive" });
+            setIsSubmitting(false);
+            return;
+        }
+        
+        try {
+            const payload: Partial<Request> = {
+                title: requestTitle,
+                description: requestDescription,
+                form_data: pages,
+            };
+            
+            await updateAdminRequest(token, id, payload);
+            toast({ title: "Request changes saved" });
+    
+            const nextStepSlug = steps[currentStepIndex + 1].slug;
+            router.push(`/admin/dashboard/requests/edit/${id}/${nextStepSlug}`);
+    
+        } catch (error: any) {
+            const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
+            toast({ title: "Save Failed", description, variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    const handleBack = () => {
+        if (currentStepIndex > 1) {
+            const prevStepSlug = steps[currentStepIndex - 1].slug;
+            router.push(`/admin/dashboard/requests/edit/${id}/${prevStepSlug}`);
+        } else {
+             router.push('/admin/dashboard/requests');
+        }
+    };
+
+    const handleStepClick = (slug: string) => {
+        if (!disabledSteps.includes(slug)) {
+            router.push(`/admin/dashboard/requests/edit/${id}/${slug}`);
+        }
+    };
+    
+    const disabledSteps = ['templates'];
+
+    const renumberItems = (pagesToRenumber: Page[]): Page[] => {
+      return pagesToRenumber.map((page, pageIndex) => {
+          const newPageNumber = pageIndex + 1;
+          const pageTitleText = page.title.replace(/^[0-9\.]+\s*/, '');
+          const renumberedSections = page.sections.map((section, sectionIndex) => {
+              const newSectionNumber = sectionIndex + 1;
+              const sectionTitleText = section.title.replace(/^[0-9\.]+\s*/, '');
+              return { ...section, title: `${newPageNumber}.${newSectionNumber} ${sectionTitleText}` };
+          });
+          return { ...page, title: `${newPageNumber}. ${pageTitleText}`, sections: renumberedSections };
+      });
+    };
+
+    const addPage = () => {
+        const newPageId = Date.now();
+        const newQuestion: Question = {
+            id: Date.now() + 2, type: 'text', label: 'Single Line Text', instructions: "",
+            placeholder: "", required: false, apiId: slugify(`single_line_text_${Date.now() + 2}`),
+        };
+        const newPage: Page = { id: newPageId, title: `New Page`, instructions: "", sections: [{ id: Date.now() + 1, title: `New Section`, instructions: '', questions: [newQuestion] }] };
+        const newPages = renumberItems([...pages, newPage]);
+        setPages(newPages);
+        setActivePageId(newPageId);
+    };
+
+    const deletePage = (pageId: number) => {
+        setPages(prevPages => {
+            if (prevPages.length <= 1) {
+                toast({ title: "Action Forbidden", description: "You cannot delete the only page.", variant: "destructive" });
+                return prevPages;
+            }
+            const pageIndexToDelete = prevPages.findIndex(p => p.id === pageId);
+            const newPages = prevPages.filter(p => p.id !== pageId);
+            if (activePageId === pageId) {
+                const newActiveIndex = Math.max(0, pageIndexToDelete - 1);
+                setActivePageId(newPages[newActiveIndex]?.id || null);
+            }
+            return renumberItems(newPages);
+        });
+    };
+    
+    const duplicatePage = (pageId: number) => {
+      setPages(prevPages => {
+          const pageToDuplicate = prevPages.find(p => p.id === pageId);
+          if (!pageToDuplicate) return prevPages;
+          const pageIndex = prevPages.findIndex(p => p.id === pageId);
+          const newPage: Page = JSON.parse(JSON.stringify(pageToDuplicate));
+          newPage.id = Date.now();
+          const originalTitle = newPage.title.replace(/^[0-9\.]+\s*/, '');
+          newPage.title = `${originalTitle.replace(/\s*\(Copy\)/gi, '').trim()} (Copy)`;
+          newPage.sections.forEach(section => {
+              section.id = Date.now() + Math.random();
+              section.questions.forEach(question => {
+                  question.id = Date.now() + Math.random();
+                  question.apiId = slugify(`${question.label}_${Date.now()}`);
+              });
+          });
+          const newPages = [...prevPages];
+          newPages.splice(pageIndex + 1, 0, newPage);
+          setActivePageId(newPage.id);
+          return renumberItems(newPages);
+      });
+    };
+
+    const addSection = (pageId: number) => {
+        setPages(prevPages => {
+            const newPages = prevPages.map(page => {
+                if (page.id === pageId) {
+                     const newQuestion: Question = {
+                        id: Date.now() + 1, type: 'text', label: 'Single Line Text', instructions: "",
+                        placeholder: "", required: false, apiId: slugify(`single_line_text_${Date.now()}`),
+                    };
+                    const newSection: Section = { id: Date.now(), title: `New Section`, instructions: '', questions: [newQuestion] };
+                    return { ...page, sections: [...page.sections, newSection] };
+                }
+                return page;
+            });
+            return renumberItems(newPages);
+        });
+    };
+    
+    const duplicateSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = [...prevPages];
+            const page = newPages.find(p => p.id === pageId);
+            if (!page) return prevPages;
+            const sectionIndex = page.sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return prevPages;
+            const sectionToDuplicate = page.sections[sectionIndex];
+            const newSection: Section = JSON.parse(JSON.stringify(sectionToDuplicate));
+            newSection.id = Date.now();
+            const originalTitle = newSection.title.replace(/^[0-9\.]+\s*/, '');
+            newSection.title = `${originalTitle.replace(/\s*\(Copy\)/gi, '').trim()} (Copy)`;
+            newSection.questions.forEach(q => {
+                q.id = Date.now() + Math.random();
+                q.apiId = slugify(`${q.label}_${Date.now()}`);
+            });
+            page.sections.splice(sectionIndex + 1, 0, newSection);
+            return renumberItems(newPages);
+        });
+    };
+
+    const deleteSection = (pageId: number, sectionId: number) => {
+        setPages(prevPages => {
+            const newPages = prevPages.map(page => {
+                if (page.id === pageId) {
+                    if (page.sections.length <= 1) {
+                         toast({ title: "Action Forbidden", description: "You cannot delete the only section on a page.", variant: "destructive" });
+                         return page;
+                    }
+                    const updatedSections = page.sections.filter(s => s.id !== sectionId);
+                    return { ...page, sections: updatedSections };
+                }
+                return page;
+            });
+            return renumberItems(newPages);
+        });
+    };
+
+    const updatePageTitle = (pageId: number, newTitle: string) => setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, title: newTitle } : page));
+    const updateSectionTitle = (pageId: number, sectionId: number, newTitle: string) => setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, title: newTitle } : section) } : page));
+
+    const handleAddFieldClick = (pageId: number, sectionId: number) => {
+        setCurrentLocation({ pageId, sectionId });
+        setSearchTerm("");
+        setQuestionTypeDialogOpen(true);
+    };
+
+    const addQuestion = (type: QuestionType) => {
+        if (!currentLocation) return;
+        const { pageId, sectionId } = currentLocation;
+        setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => {
+            if (section.id === sectionId) {
+                const fieldConfig = questionCategories.flatMap(c => c.fields).find(f => f.type === type) || { label: 'New Field' };
+                const baseLabel = fieldConfig.label;
+                const newQuestion: Question = {
+                    id: Date.now(), type: type, label: baseLabel, instructions: "", placeholder: "",
+                    options: (type === 'radio' || type === 'dropdown' || type === 'checkbox') ? [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] : undefined,
+                    required: false, apiId: slugify(`${baseLabel}_${Date.now()}`),
+                };
+                if (type === 'button') { newQuestion.buttonVariant = 'default'; newQuestion.buttonType = 'button'; }
+                return { ...section, questions: [...section.questions, newQuestion] };
+            }
+            return section;
+        })} : page));
+        setQuestionTypeDialogOpen(false);
+        setCurrentLocation(null);
+    };
+
+    const openQuestionSettings = (question: Question) => {
+        setEditingQuestion(question);
+        setTempQuestion(JSON.parse(JSON.stringify(question)));
+    };
+    
+    const updateQuestion = () => {
+        if (!tempQuestion) return;
+        setPages(prevPages => prevPages.map(page => ({ ...page, sections: page.sections.map(section => ({ ...section, questions: section.questions.map(q => q.id === tempQuestion.id ? tempQuestion : q) })) })));
+        setEditingQuestion(null);
+        setTempQuestion(null);
+    };
+    
+    const duplicateQuestion = (pageId: number, sectionId: number, questionId: number) => {
+        setPages(prevPages => {
+            const newPages = JSON.parse(JSON.stringify(prevPages));
+            const page = newPages.find((p: Page) => p.id === pageId);
+            if (page) {
+                const section = page.sections.find((s: Section) => s.id === sectionId);
+                if (section) {
+                    const questionIndex = section.questions.findIndex((q: Question) => q.id === questionId);
+                    if (questionIndex > -1) {
+                        const originalQuestion = section.questions[questionIndex];
+                        const duplicatedQuestion: Question = { ...originalQuestion, id: Date.now(), label: `${originalQuestion.label} (Copy)`, apiId: slugify(`${originalQuestion.label} (Copy) ${Date.now()}`) };
+                        section.questions.splice(questionIndex + 1, 0, duplicatedQuestion);
+                    }
+                }
+            }
+            return newPages;
+        });
+    };
+
+    const deleteQuestion = (pageId: number, sectionId: number, questionId: number) => {
+        setPages(prevPages => prevPages.map(page => page.id === pageId ? { ...page, sections: page.sections.map(section => section.id === sectionId ? { ...section, questions: section.questions.filter(q => q.id !== questionId) } : section) } : page));
+    };
+
+    const reorderQuestions = (pageId: number, sectionId: number, startIndex: number, endIndex: number) => {
+        setPages(prevPages => {
+            const newPages: Page[] = JSON.parse(JSON.stringify(prevPages));
+            const page = newPages.find(p => p.id === pageId);
+            if (page) {
+                const section = page.sections.find(s => s.id === sectionId);
+                if (section) {
+                    const [removed] = section.questions.splice(startIndex, 1);
+                    section.questions.splice(endIndex, 0, removed);
+                }
+            }
+            return newPages;
+        });
+    };
+
+    const handleTempQuestionChange = (field: keyof Question, value: any) => {
+        if (tempQuestion) {
+            const newTempQuestion = { ...tempQuestion, [field]: value };
+            if(field === 'label') newTempQuestion.apiId = slugify(value);
+            setTempQuestion(newTempQuestion);
+        }
+    };
+    
+    const handleTempOptionChange = (index: number, field: keyof QuestionOption, value: string) => {
+        if (tempQuestion && tempQuestion.options) {
+            const newOptions = [...tempQuestion.options];
+            newOptions[index] = {...newOptions[index], [field]: value};
+            if(field === 'label' && (!newOptions[index].value || slugify(newOptions[index].value) === slugify(tempQuestion.options[index].label))) newOptions[index].value = slugify(value);
+            setTempQuestion({ ...tempQuestion, options: newOptions });
+        }
+    };
+
+    const addTempOption = () => {
+        if (tempQuestion) {
+            const nextOptionNum = (tempQuestion.options?.length || 0) + 1;
+            const newOption: QuestionOption = { label: `Option ${nextOptionNum}`, value: `option_${nextOptionNum}` };
+            setTempQuestion({ ...tempQuestion, options: [...(tempQuestion.options || []), newOption] });
+        }
+    };
+
+    const removeTempOption = (index: number) => {
+        if (tempQuestion && tempQuestion.options) setTempQuestion({ ...tempQuestion, options: tempQuestion.options.filter((_, i) => i !== index) });
+    };
+
+    const filteredCategories = questionCategories.map(category => ({
+        ...category,
+        fields: category.fields.filter(field =>
+            field.label.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+    })).filter(category => category.fields.length > 0);
+
+
+    const renderStep = () => {
+        if (isLoading) {
+            return <div className="p-6 w-full max-w-3xl mx-auto space-y-4"><Skeleton className="h-12 w-1/2" /><Skeleton className="h-24 w-full" /><Skeleton className="h-10 w-full" /></div>;
+        }
+        
+        switch (currentStep) {
+            case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
+            case "Builder": return <BuilderStep
+                                        setPages={setPages}
+                                        requestTitle={requestTitle}
+                                        setRequestTitle={setRequestTitle}
+                                        pages={pages || []} addPage={addPage} addSection={addSection} onAddFieldClick={handleAddFieldClick}
+                                        updatePageTitle={updatePageTitle} updateSectionTitle={updateSectionTitle}
+                                        openQuestionSettings={openQuestionSettings} duplicateQuestion={duplicateQuestion}
+                                        deleteQuestion={deleteQuestion} activePageId={activePageId} setActivePageId={setActivePageId}
+                                        duplicatePage={duplicatePage} deletePage={deletePage} 
+                                        duplicateSection={duplicateSection} deleteSection={deleteSection}
+                                        reorderQuestions={reorderQuestions}
+                                        editingQuestion={editingQuestion}
+                                        closeQuestionSettings={() => setEditingQuestion(null)}
+                                        tempQuestion={tempQuestion}
+                                        handleTempQuestionChange={handleTempQuestionChange}
+                                        addTempOption={addTempOption}
+                                        handleTempOptionChange={handleTempOptionChange}
+                                        removeTempOption={removeTempOption}
+                                        updateQuestion={updateQuestion}
+                                    />;
+            case "Preview": 
+                if (!initialRequestData || !activeIds) return <Skeleton className="h-full w-full" />;
+                return <RequestPreview request={initialRequestData} clients={clients} activeIds={activeIds} setActiveIds={setActiveIds} />;
+            case "Finalize": return <FinalizeStep initialData={initialRequestData} onPublish={(settings) => handleFinalSave(settings, 'published')} onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} isSubmitting={isSubmitting}/>;
+            default: return <div>Step not found. Please navigate using the steps above.</div>;
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-background">
+            <header className="sticky top-16 z-20 flex items-center justify-between gap-4 p-4 border-b bg-background/95 backdrop-blur">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}><ArrowLeft className="h-4 w-4" /></Button>
+                </div>
+                 <div className="flex-1 flex justify-center">
+                    <StepNavigation steps={steps} currentStepSlug={stepSlug} onStepClick={handleStepClick} maxVisitedStepIndex={steps.length} disabledSteps={disabledSteps}/>
+                </div>
+                 <div className="flex items-center gap-2">
+                     {currentStepIndex < steps.length - 1 && (
+                        <Button onClick={nextStep} disabled={isSubmitting || isLoading}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {steps[currentStepIndex + 1].name} <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    )}
+                </div>
+            </header>
+            
+            <div className={cn("flex-grow overflow-y-auto", (currentStep === 'Builder' || currentStep === 'Preview' || currentStep === 'Finalize') ? "" : "p-6 flex justify-center items-start")}>
+                {renderStep()}
+            </div>
+
+            <Sheet open={isQuestionTypeDialogOpen} onOpenChange={setQuestionTypeDialogOpen}>
+                <SheetContent className="sm:max-w-3xl">
+                    <SheetHeader><SheetTitle>Select a field type</SheetTitle></SheetHeader>
+                    <div className="relative my-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search for a field type..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                    <div className="space-y-6 py-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-4">
+                        {filteredCategories.map(category => (
+                            <div key={category.name}>
+                                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category.name}</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {category.fields.map((field) => (
+                                        <button key={field.type} onClick={() => addQuestion(field.type)} className={cn("relative flex flex-col items-center justify-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors text-center h-24", field.isHighlighted && "border-primary ring-1 ring-primary")}>
+                                            {field.isNew && <Badge className="absolute top-1 right-1 bg-primary text-primary-foreground px-1.5 py-0.5 text-xs h-auto">NEW</Badge>}
+                                            <field.icon className="h-5 w-5 text-muted-foreground" />
+                                            <span className="text-xs font-medium leading-tight">{field.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                         {filteredCategories.length === 0 && <p className="text-center text-muted-foreground py-8">No fields found for "{searchTerm}".</p>}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
+    );
+}
