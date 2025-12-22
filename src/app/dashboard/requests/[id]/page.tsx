@@ -51,7 +51,7 @@ const renderQuestionInput = (
 ) => {
     const questionId = `q-${question.id}`;
     const questionName = question.apiId || questionId;
-    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "";
+    const inputClassName = error ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-ring";
 
     switch(question.type) {
         case 'text': return <Input id={questionId} name={questionName} type="text" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} minLength={question.minLength} maxLength={question.maxLength} />;
@@ -88,6 +88,31 @@ const renderQuestionInput = (
         case 'address': return <AddressAutocompleteInput id={questionId} name={questionName} placeholder={question.placeholder} defaultValue={value} onValueChange={(val) => onChange(questionName, val)} />;
         case 'number': return <Input id={questionId} name={questionName} type="number" placeholder={question.placeholder} value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
         case 'button': return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'}>{question.label}</Button>;
+        case 'date-range': return (
+            <div className="flex items-center gap-2">
+                    <Input id={`${questionId}-start`} name={`${questionName}_start`} type="date" value={value?.start || ''} onChange={e => onChange(questionName, {...(value || {}), start: e.target.value})} className={inputClassName} />
+                    <span>to</span>
+                    <Input id={`${questionId}-end`} name={`${questionName}_end`} type="date" value={value?.end || ''} onChange={e => onChange(questionName, {...(value || {}), end: e.target.value})} className={inputClassName} />
+            </div>
+            );
+        case 'currency':
+            return <Input id={questionId} name={questionName} type="text" placeholder="$0.00" value={value || ''} onChange={e => onChange(questionName, e.target.value)} required={question.required} className={inputClassName} />;
+        case 'country':
+            return (
+                <Select name={questionName} value={value || ''} onValueChange={val => onChange(questionName, val)} required={question.required}>
+                    <SelectTrigger id={questionId} className={inputClassName}><SelectValue placeholder={question.placeholder || "Select a country"} /></SelectTrigger>
+                    <SelectContent>{countries.map((c) => <SelectItem key={c.code} value={c.code}><div className="flex items-center gap-2"><span>{c.flag}</span><span>{c.name}</span></div></SelectItem>)}</SelectContent>
+                </Select>
+            );
+        case 'icon-selector':
+            return <IconSelector name={questionName} defaultValue={value || ''} onValueChange={(val) => onChange(questionName, val)} />;
+        case 'color-picker':
+            return (
+                <div className="flex items-center gap-2">
+                    <Input type="color" className="w-12 h-10 p-1" value={value || '#000000'} onChange={e => onChange(questionName, e.target.value)} />
+                    <Input type="text" name={questionName} placeholder="#000000" value={value || '#000000'} readOnly className="max-w-[150px]"/>
+                </div>
+            );
         default: return <div className="text-sm text-red-500">Unsupported field type: {question.type}</div>;
     }
 }
