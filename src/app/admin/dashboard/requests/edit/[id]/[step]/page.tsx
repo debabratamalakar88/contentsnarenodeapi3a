@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -123,12 +124,12 @@ export default function EditAdminRequestWizardPage() {
         async function fetchRequestData() {
             try {
                 const [data, clientData] = await Promise.all([
-                    getAdminRequest(token, id),
-                    getAdminClients(token, 1, '', true),
+                    getAdminRequest(token!, id),
+                    getAdminClients(token!, 1, '', true),
                 ]);
 
                 setRequestTitle(data.title);
-                setRequestDescription(data.description);
+                setRequestDescription(data.description || '');
                 setPages(data.form_data || []);
                 if (data.form_data?.length > 0) {
                     const firstPage = data.form_data[0];
@@ -488,7 +489,7 @@ export default function EditAdminRequestWizardPage() {
         }
         
         switch (currentStep) {
-            case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription} setDescription={setRequestDescription} />;
+            case "Essentials": return <EssentialsStep title={requestTitle} setTitle={setRequestTitle} description={requestDescription || ''} setDescription={setRequestDescription} />;
             case "Builder": return <BuilderStep
                                         setPages={setPages}
                                         requestTitle={requestTitle}
@@ -511,7 +512,7 @@ export default function EditAdminRequestWizardPage() {
                                     />;
             case "Preview": 
                 if (!initialRequestData || !activeIds) return <Skeleton className="h-full w-full" />;
-                return <RequestPreview request={initialRequestData} clients={clients} activeIds={activeIds} setActiveIds={setActiveIds} />;
+                return <RequestPreview initialData={initialRequestData} clients={clients} activeIds={activeIds} setActiveIds={setActiveIds} />;
             case "Finalize": return <FinalizeStep initialData={initialRequestData} onPublish={(settings) => handleFinalSave(settings, 'published')} onSaveDraft={(settings) => handleFinalSave(settings, 'draft')} isSubmitting={isSubmitting}/>;
             default: return <div>Step not found. Please navigate using the steps above.</div>;
         }
