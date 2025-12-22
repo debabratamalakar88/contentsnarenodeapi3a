@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
-import { IconSelector } from '@/components/ui/icon-selector';
+import { iconList } from '@/components/ui/icon-selector';
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -69,6 +69,27 @@ const renderQuestionPreview = (question: Question) => {
         case 'number': return <Input id={questionId} type="number" placeholder={question.placeholder} defaultValue={question.defaultValue} disabled />;
         case 'currency': return <Input id={questionId} type="text" placeholder="$0.00" defaultValue={question.defaultValue} disabled />;
         case 'button': return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'} disabled>{question.label}</Button>;
+        case 'country': {
+            const country = countries.find(c => c.code === question.defaultValue);
+            return <Input value={country ? `${country.flag} ${country.name}` : question.defaultValue} disabled />;
+        }
+        case 'color-picker': {
+            return (
+                <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-md border" style={{ backgroundColor: question.defaultValue }} />
+                    <Input value={question.defaultValue} disabled />
+                </div>
+            );
+        }
+        case 'icon-selector': {
+            const Icon = iconList.find(i => i.name.toLowerCase() === question.defaultValue?.toLowerCase())?.icon;
+            return (
+                <div className="flex items-center gap-2">
+                    {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                    <Input value={question.defaultValue} disabled />
+                </div>
+            );
+        }
         default: return <div className="text-sm text-red-500">Unsupported field type: {question.type}</div>;
     }
 }
