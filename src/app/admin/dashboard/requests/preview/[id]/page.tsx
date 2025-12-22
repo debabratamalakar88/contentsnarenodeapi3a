@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAdminRequest, getAdminClients, type Request, type Question, type Page, type Client } from '@/lib/api';
+import { getAdminRequest, getAdminClients, softDeleteAdminRequest, forceDeleteAdminRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -231,6 +231,9 @@ export default function AdminRequestPreviewPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
 
+    const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
+    const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
 
@@ -242,7 +245,7 @@ export default function AdminRequestPreviewPage() {
             try {
                 const [requestData, clientData] = await Promise.all([
                     getAdminRequest(token!, id),
-                    getAdminClients(token!)
+                    getAdminClients(token!, 1, '', true)
                 ]);
                 
                 if (requestData.status !== 'draft') {
@@ -271,6 +274,32 @@ export default function AdminRequestPreviewPage() {
         fetchRequestData();
     }, [id, router, toast, token]);
 
+    const handleArchive = async () => {
+        if (!token || !requestToArchive) return;
+        try {
+            await softDeleteAdminRequest(token, requestToArchive.id);
+            toast({ title: 'Request archived' });
+            router.push('/admin/dashboard/requests');
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
+        } finally {
+            setRequestToArchive(null);
+        }
+    };
+    
+    const handleForceDelete = async () => {
+        if (!token || !requestToForceDelete) return;
+        try {
+            await forceDeleteAdminRequest(token, requestToForceDelete.id);
+            toast({ title: 'Request permanently deleted' });
+            router.push('/admin/dashboard/requests');
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
+        } finally {
+            setRequestToForceDelete(null);
+        }
+    };
+    
     const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
         if (!request || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
         
@@ -294,7 +323,7 @@ export default function AdminRequestPreviewPage() {
 
         if (newIndex >= 0 && newIndex < request.form_data.length) {
             const newPage = request.form_data[newIndex];
-            if (newPage.sections[0] && newPage.sections[0].questions[0]) {
+            if (newPage.sections?.[0]?.questions?.[0]) {
                 setActiveIds({
                     pageId: newPage.id,
                     sectionId: newPage.sections[0].id,
@@ -387,72 +416,97 @@ export default function AdminRequestPreviewPage() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-muted/40">
-            <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
-                <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
-                <main className="flex-1 flex flex-col overflow-hidden">
-                     <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
-                         <div className="flex items-center justify-between">
-                            <Button variant="outline" size="icon" asChild>
-                                <Link href="/admin/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
-                            </Button>
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
-                                    <Sparkles className="mr-2 h-4 w-4"/> Activity
+        <>
+            <div className="flex flex-col h-full bg-muted/40">
+                <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
+                    <Sidebar request={request} clients={clients} activeIds={activeIds!} setActiveIds={setActiveIds} />
+                    <main className="flex-1 flex flex-col overflow-hidden">
+                         <header className="sticky z-10 flex flex-col gap-4 p-4 border-b bg-card">
+                             <div className="flex items-center justify-between">
+                                <Button variant="outline" size="icon" asChild>
+                                    <Link href="/admin/dashboard/requests"><ArrowLeft className="h-4 w-4" /></Link>
                                 </Button>
-                                <Button asChild>
-                                    <Link href={`/admin/dashboard/requests/edit/${request.id}/finalize`}>
-                                        <Rocket className="mr-2 h-4 w-4"/> Publish
-                                    </Link>
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}>
-                                    <ChevronLeft className="h-5 w-5" />
-                                </Button>
-                                <span className="text-sm font-medium text-muted-foreground">{activePageIndex > 0 && request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-right">
-                               <span className="text-sm font-medium text-muted-foreground">{activePageIndex < request.form_data.length - 1 && request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
-                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('next')} disabled={activePageIndex === request.form_data.length - 1}>
-                                    <ChevronRight className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-                     <div className="flex-1 overflow-y-auto">
-                        <div className="p-8 max-w-4xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                <div className="flex items-center gap-4">
+                                    <Button variant="outline" className="border-pink-200 text-pink-600 bg-pink-50 hover:bg-pink-100 hover:text-pink-700">
+                                        <Sparkles className="mr-2 h-4 w-4"/> Activity
+                                    </Button>
+                                    <Button asChild>
+                                        <Link href={`/admin/dashboard/requests/edit/${request.id}/finalize`}>
+                                            <Rocket className="mr-2 h-4 w-4"/> Publish
+                                        </Link>
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests/edit/${request.id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setRequestToArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setRequestToForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
-                            <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
-                                {activeQuestion ? (
-                                    <>
-                                        <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
-                                        {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
-                                        <div className="mt-6">
-                                            {renderQuestionPreview(activeQuestion)}
-                                        </div>
-                                        <div className="mt-6 flex justify-between items-center">
-                                            <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
-                                                {isLastQuestion ? "End of Form" : "Continue to next question"}
-                                            </Button>
-                                            <Button variant="outline" className="rounded-full">COMMENTS</Button>
-                                        </div>
-                                    </>
-                                ) : <p>Select a question to see the preview.</p>}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('prev')} disabled={activePageIndex === 0}>
+                                        <ChevronLeft className="h-5 w-5" />
+                                    </Button>
+                                    <span className="text-sm font-medium text-muted-foreground">{activePageIndex > 0 && request.form_data[activePageIndex - 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-right">
+                                   <span className="text-sm font-medium text-muted-foreground">{activePageIndex < request.form_data.length - 1 && request.form_data[activePageIndex + 1].title.replace(/^[0-9\.]+\s*/, '')}</span>
+                                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigatePage('next')} disabled={activePageIndex === request.form_data.length - 1}>
+                                        <ChevronRight className="h-5 w-5" />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                     </div>
-                </main>
+                        </header>
+                         <div className="flex-1 overflow-y-auto">
+                            <div className="p-8 max-w-4xl mx-auto w-full">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                    {activeQuestion ? (
+                                        <>
+                                            <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                            {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
+                                            <div className="mt-6">
+                                                {renderQuestionPreview(activeQuestion)}
+                                            </div>
+                                            <div className="mt-6 flex justify-between items-center">
+                                                <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
+                                                    {isLastQuestion ? "End of Form" : "Continue to next question"}
+                                                </Button>
+                                                <Button variant="outline" className="rounded-full">COMMENTS</Button>
+                                            </div>
+                                        </>
+                                    ) : <p>Select a question to see the preview.</p>}
+                                </div>
+                            </div>
+                         </div>
+                    </main>
+                </div>
             </div>
-        </div>
+             <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={!!requestToForceDelete} onOpenChange={(open) => !open && setRequestToForceDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Delete Permanently?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. All data for this request will be permanently deleted.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleForceDelete}>Delete</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
