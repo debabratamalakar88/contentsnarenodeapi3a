@@ -1,7 +1,8 @@
 
+
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import StepNavigation from '@/app/dashboard/requests/new/components/StepNavigation';
@@ -9,7 +10,7 @@ import EssentialsStep from '@/app/dashboard/requests/new/components/EssentialsSt
 import BuilderStep from '@/app/dashboard/templates/new/components/BuilderStep';
 import FinalizeStep from '@/app/dashboard/requests/new/components/FinalizeStep';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight, Loader2, Search, Type, Pilcrow, CheckSquare, FileUp, ImageUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, PenSquare, Link2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Search, Type, Pilcrow, CheckSquare, FileUp, ImageUp, Mail, MapPin, Hash, DollarSign, Globe, CalendarClock, CalendarRange, CircleDot, MenuSquare, Sparkles, Pipette, MousePointerClick, PenSquare, Link2, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getAdminRequest, updateAdminRequest, type Request, type Page, type Section, type Question, type QuestionOption, type QuestionType, getAdminClients, type Client } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -566,5 +567,3 @@ export default function EditAdminRequestWizardPage() {
         </div>
     );
 }
-
-    
