@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,13 +10,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
-import Link from 'next/link';
-import { ArrowLeft, CalendarDays, MoreHorizontal, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles } from 'lucide-react';
+import { CalendarDays, MessageSquare, History, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { Request, Client, Page, Section, Question } from '@/lib/api';
 
@@ -87,21 +84,19 @@ interface RequestPreviewProps {
 }
 
 export default function RequestPreview({ request, clients, activeIds, setActiveIds }: RequestPreviewProps) {
-    const { activeQuestion, activeSection, activePage, activePageIndex } = React.useMemo(() => {
-        if (!request || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+    const { activeQuestion, activeSection } = React.useMemo(() => {
+        if (!request || !activeIds) return { activeQuestion: null, activeSection: null };
         
         const page = request.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        if (!page) return { activeQuestion: null, activeSection: null };
         
         const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
+        if (!section) return { activeQuestion: null, activeSection: null };
 
         const question = section.questions.find(q => q.id === activeIds.questionId);
-        if(!question) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
+        if(!question) return { activeQuestion: null, activeSection: section };
         
-        const pageIndex = request.form_data.findIndex(p => p.id === page.id);
-
-        return { activeQuestion: question, activeSection: section, activePage: page, activePageIndex: pageIndex };
+        return { activeQuestion: question, activeSection: section };
     }, [request, activeIds]);
 
     const assignedClients = clients.filter(c => request.client_id?.includes(c.id));
