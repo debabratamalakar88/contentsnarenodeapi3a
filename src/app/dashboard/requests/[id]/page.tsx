@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Submission } from '@/lib/api';
+import { getRequest, getClients, getRequestSubmissions, type Request, type Question, type Client, type Page, type Section } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -247,7 +247,7 @@ export default function ViewRequestPage() {
 
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
-    const [submissions, setSubmissions] = useState<Submission[]>([]);
+    const [submissions, setSubmissions] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -352,20 +352,7 @@ export default function ViewRequestPage() {
                         </Button>
                     </div>
                     <div className="flex items-center justify-center gap-2 w-1/3">
-                         <Button variant="outline" className="text-pink-600 border-pink-200">
-                            <Sparkles className="mr-2 h-4 w-4"/> Activity
-                        </Button>
-                        <Button variant="outline">Client Access Settings</Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem><Edit className="mr-2 h-4 w-4" /> Edit Request</DropdownMenuItem>
-                                <DropdownMenuItem><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
-                                <DropdownMenuItem><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Buttons removed as requested */}
                     </div>
                     <div className="flex items-center gap-2 w-1/3 justify-end">
                         <Button variant="ghost" className="text-muted-foreground" onClick={() => handlePrevNextPage('next')} disabled={activePageIndex === request.form_data.length - 1}>
@@ -472,3 +459,5 @@ export default function ViewRequestPage() {
         </div>
     );
 }
+
+    
