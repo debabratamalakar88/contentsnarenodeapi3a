@@ -50,6 +50,13 @@ const renderQuestionPreview = (question: Question) => {
             <Select defaultValue={question.defaultValue} disabled><SelectTrigger id={questionId}><SelectValue placeholder={question.placeholder || "Select an option"} /></SelectTrigger><SelectContent>{question.options?.map((opt, i) => <SelectItem key={i} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select>
         );
         case 'date': return <Input id={questionId} type="date" defaultValue={question.defaultValue} disabled className="max-w-[240px]" />;
+        case 'date-range': return (
+            <div className="flex items-center gap-2">
+                <Input type="date" disabled className="max-w-[240px]" />
+                <span>to</span>
+                <Input type="date" disabled className="max-w-[240px]" />
+            </div>
+        );
         case 'email': return <Input id={questionId} type="email" placeholder={question.placeholder || "email@example.com"} defaultValue={question.defaultValue} disabled />;
         case 'tel': return <Input id={questionId} type="tel" placeholder={question.placeholder || "(123) 456-7890"} defaultValue={question.defaultValue} disabled />;
         case 'url': return <Input id={questionId} type="url" placeholder={question.placeholder || "https://example.com"} defaultValue={question.defaultValue} disabled />;
