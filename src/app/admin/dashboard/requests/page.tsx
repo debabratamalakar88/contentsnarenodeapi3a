@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -376,6 +377,7 @@ export default function AdminRequestsPage() {
     const searchParams = useSearchParams();
 
     const [currentTab, setCurrentTab] = useState('active');
+    
     const [filters, setFilters] = useState({
         search: '',
         created_by: 'all',
@@ -397,7 +399,35 @@ export default function AdminRequestsPage() {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
-    const refetchData = useCallback(() => {
+    const handleFilterChange = (filter: keyof typeof filters, value: string) => {
+        setFilters(prev => ({ ...prev, [filter]: value }));
+        setPagination(p => ({ ...p, current_page: 1 }));
+    };
+
+    // This effect runs only once on mount to set initial filters from URL
+    useEffect(() => {
+        const ownerIdFromUrl = searchParams.get('created_by');
+        if (ownerIdFromUrl) {
+            handleFilterChange('created_by', ownerIdFromUrl);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+    
+    // This effect fetches supporting data like users and clients
+    useEffect(() => {
+        if (!token) return;
+        Promise.all([
+            getAdminUsers(token, 1, '', true),
+            getAdminClients(token, 1, '', true)
+        ]).then(([usersResponse, clientsResponse]) => {
+            setAllUsers(usersResponse.data || []);
+            setAllClients(clientsResponse.data || []);
+        }).catch(err => {
+            toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+        });
+    }, [token, toast]);
+
+    const fetchData = useCallback(() => {
         if (!token) {
             router.push('/admin/login');
             return;
@@ -430,32 +460,11 @@ export default function AdminRequestsPage() {
         return () => clearTimeout(timer);
     }, [token, currentTab, pagination.current_page, filters, router, toast]);
 
+    // This is the main data fetching effect, triggered by filters/pagination changes
     useEffect(() => {
-        const ownerIdFromUrl = searchParams.get('created_by');
-        setFilters(prev => ({...prev, created_by: ownerIdFromUrl || 'all',}));
-    }, [searchParams]);
+        fetchData();
+    }, [fetchData]);
 
-    useEffect(() => {
-        refetchData();
-    }, [refetchData]);
-    
-    useEffect(() => {
-        if (!token) return;
-        Promise.all([
-            getAdminUsers(token, 1, '', true),
-            getAdminClients(token, 1, '', true)
-        ]).then(([usersResponse, clientsResponse]) => {
-            setAllUsers(usersResponse.data || []);
-            setAllClients(clientsResponse.data || []);
-        }).catch(err => {
-            toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
-        });
-    }, [token, toast]);
-
-    const handleFilterChange = (filter: keyof typeof filters, value: string) => {
-        setPagination(prev => ({ ...prev, current_page: 1 }));
-        setFilters(prev => ({ ...prev, [filter]: value }));
-    }
 
     const handleDuplicate = async (requestId: number) => {
         if (!token) return;
@@ -463,7 +472,7 @@ export default function AdminRequestsPage() {
         try {
             await duplicateAdminRequest(token, requestId);
             toast({ title: 'Success', description: 'Request duplicated successfully.' });
-            refetchData();
+            fetchData();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error duplicating request', description: err.message });
         }
@@ -474,7 +483,7 @@ export default function AdminRequestsPage() {
         try {
             await softDeleteAdminRequest(token, requestToArchive.id);
             toast({ title: 'Request archived' });
-            refetchData();
+            fetchData();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error archiving request', description: err.message });
         } finally {
@@ -487,7 +496,7 @@ export default function AdminRequestsPage() {
         try {
             await restoreAdminRequest(token, requestToRestore.id);
             toast({ title: 'Request restored' });
-            refetchData();
+            fetchData();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error restoring request', description: err.message });
         } finally {
@@ -500,7 +509,7 @@ export default function AdminRequestsPage() {
         try {
             await forceDeleteAdminRequest(token, requestToForceDelete.id);
             toast({ title: 'Request permanently deleted' });
-            refetchData();
+            fetchData();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error deleting request', description: err.message });
         } finally {
@@ -748,3 +757,4 @@ export default function AdminRequestsPage() {
         </>
     );
 }
+
