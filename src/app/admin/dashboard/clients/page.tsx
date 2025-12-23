@@ -16,14 +16,25 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -36,7 +47,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive, Eye, PenSquare, ArchiveRestore, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive, Eye, PenSquare, ArchiveRestore, Trash2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -54,6 +65,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -80,6 +92,7 @@ export default function ManageClientsPage() {
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToRestore, setClientToRestore] = useState<Client | null>(null);
   const [clientToForceDelete, setClientToForceDelete] = useState<Client | null>(null);
+  const [isUserFilterOpen, setIsUserFilterOpen] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
   const router = useRouter();
@@ -239,6 +252,12 @@ export default function ManageClientsPage() {
     return viewMode === 'grid' ? <ClientsGrid {...viewProps} /> : <ClientsTable {...viewProps} />;
   }
 
+  const userOptions = [
+    { value: 'all', label: 'All Users' },
+    { value: 'admin', label: 'Admin' },
+    ...allUsers.map(user => ({ value: String(user.id), label: user.name }))
+  ];
+
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -253,25 +272,42 @@ export default function ManageClientsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search clients..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
-               <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="flex items-center gap-1">
-                          <UserIcon className="h-4 w-4" />
-                          <span>{selectedUserName}</span>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuRadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
-                        <DropdownMenuRadioItem value="all">All Users</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
-                        <DropdownMenuSeparator />
-                        {Array.isArray(allUsers) && allUsers.map((user) => (
-                          <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>
-                        ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-              </DropdownMenu>
+                <Popover open={isUserFilterOpen} onOpenChange={setIsUserFilterOpen}>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={isUserFilterOpen} className="w-[200px] justify-between">
+                            <UserIcon className="mr-2 h-4 w-4 shrink-0" />
+                            <span className="truncate">{selectedUserName}</span>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search user..." />
+                            <CommandList>
+                                <CommandEmpty>No user found.</CommandEmpty>
+                                <CommandGroup>
+                                    {userOptions.map((option) => (
+                                        <CommandItem
+                                            key={option.value}
+                                            value={option.label}
+                                            onSelect={(currentValue) => {
+                                                const selected = userOptions.find(opt => opt.label.toLowerCase() === currentValue);
+                                                if (selected) {
+                                                    setSelectedUserId(selected.value);
+                                                }
+                                                setIsUserFilterOpen(false);
+                                            }}
+                                        >
+                                            <Check className={cn("mr-2 h-4 w-4", selectedUserId === option.value ? "opacity-100" : "opacity-0")} />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="flex items-center gap-1">
@@ -458,4 +494,5 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+
 
