@@ -1,3 +1,4 @@
+
 'use client'
 
 import { 
@@ -405,38 +406,39 @@ export default function AdminRequestsPage() {
         const effectiveFilters = {
             ...filters,
             status: currentTab === 'active' ? filters.status : undefined,
-        }
+        };
         const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
         
-        fetchFn(token, pagination.current_page, effectiveFilters)
-            .then(requestsData => {
-                setRequests(requestsData.data || []);
-                setPagination({
-                    current_page: requestsData.current_page,
-                    last_page: requestsData.last_page,
-                    total: requestsData.total,
+        const timer = setTimeout(() => {
+            fetchFn(token, pagination.current_page, effectiveFilters)
+                .then(requestsData => {
+                    setRequests(requestsData.data || []);
+                    setPagination({
+                        current_page: requestsData.current_page,
+                        last_page: requestsData.last_page,
+                        total: requestsData.total,
+                    });
+                })
+                .catch(err => {
+                    toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
+                })
+                .finally(() => {
+                    setIsLoading(false);
                 });
-            })
-            .catch(err => {
-                toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+        }, 300);
+
+        return () => clearTimeout(timer);
     }, [token, currentTab, pagination.current_page, filters, router, toast]);
+
+    useEffect(() => {
+        const ownerIdFromUrl = searchParams.get('created_by');
+        setFilters(prev => ({...prev, created_by: ownerIdFromUrl || 'all',}));
+    }, [searchParams]);
 
     useEffect(() => {
         refetchData();
     }, [refetchData]);
     
-    useEffect(() => {
-        const initialOwnerId = searchParams.get('created_by');
-        setFilters(prev => ({
-            ...prev,
-            created_by: initialOwnerId || 'all',
-        }));
-    }, [searchParams]);
-
     useEffect(() => {
         if (!token) return;
         Promise.all([
@@ -451,8 +453,8 @@ export default function AdminRequestsPage() {
     }, [token, toast]);
 
     const handleFilterChange = (filter: keyof typeof filters, value: string) => {
-        setFilters(prev => ({ ...prev, [filter]: value }));
         setPagination(prev => ({ ...prev, current_page: 1 }));
+        setFilters(prev => ({ ...prev, [filter]: value }));
     }
 
     const handleDuplicate = async (requestId: number) => {
