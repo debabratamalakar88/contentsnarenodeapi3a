@@ -16,7 +16,8 @@ import {
     Trash2,
     Eye,
     PenSquare,
-    FileText
+    FileText,
+    Check
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
@@ -38,6 +39,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
 import {
   Table,
   TableBody,
@@ -110,6 +124,8 @@ export default function ManageTemplatesPage() {
     const [templateToArchive, setTemplateToArchive] = useState<Template | null>(null);
     const [templateToRestore, setTemplateToRestore] = useState<Template | null>(null);
     const [templateToForceDelete, setTemplateToForceDelete] = useState<Template | null>(null);
+    const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+
 
     const refetchData = () => setDataVersion(v => v + 1);
 
@@ -290,6 +306,11 @@ export default function ManageTemplatesPage() {
     }
     
     const selectedCategoryName = categories.find(c => c.slug === selectedCategory)?.title || 'All Categories';
+    const categoryOptions = [
+        { value: 'all', label: 'All Categories' },
+        ...categories.map(cat => ({ value: cat.slug, label: cat.title }))
+    ];
+
 
     return (
         <>
@@ -302,22 +323,38 @@ export default function ManageTemplatesPage() {
                         </TabsList>
                     </Tabs>
                     <div className="flex items-center gap-2 ml-auto">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                        <Popover open={isCategoryFilterOpen} onOpenChange={setIsCategoryFilterOpen}>
+                            <PopoverTrigger asChild>
                                 <Button variant="outline" className="h-9">
                                     {selectedCategoryName}
                                     <ChevronDown className="h-4 w-4 ml-2" />
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => setSelectedCategory('all')}>All Categories</DropdownMenuItem>
-                                {categories.map(cat => (
-                                    <DropdownMenuItem key={cat.id} onSelect={() => setSelectedCategory(cat.slug)}>
-                                        {cat.title}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search category..." />
+                                    <CommandList>
+                                        <CommandEmpty>No category found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {categoryOptions.map((option) => (
+                                                <CommandItem
+                                                    key={option.value}
+                                                    value={option.label}
+                                                    onSelect={(currentLabel) => {
+                                                        const selectedOption = categoryOptions.find(opt => opt.label.toLowerCase() === currentLabel.toLowerCase());
+                                                        setSelectedCategory(selectedOption ? selectedOption.value : 'all');
+                                                        setIsCategoryFilterOpen(false);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedCategory === option.value ? "opacity-100" : "opacity-0")} />
+                                                    {option.label}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="flex items-center gap-2 font-semibold h-9">
@@ -393,7 +430,7 @@ interface ViewProps {
 const TemplatesGrid = ({ templates, isArchived, ...props }: ViewProps) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {Array.isArray(templates) && templates.map(template => (
-            <TemplateCard key={template.id} template={template} isArchived={isArchived} {...props} />
+            <TemplateCard key={template.id} template={template} isArchived={isArchived} {...props}/>
         ))}
          {!isArchived && (
             <Link href="/admin/dashboard/templates/new">
@@ -493,54 +530,54 @@ const TemplateCard = ({ template, onDuplicate, onArchive, onRestore, onForceDele
     );
 };
 
-const TemplateRow = ({ template, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates'>) => (
-    <TableRow>
-        <TableCell className="font-medium flex items-center gap-3">
-          <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
-          {template.title}
-        </TableCell>
-        <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
-        <TableCell>
-            {isArchived ? (
-                <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
-                    Archived
-                </Badge>
-            ) : (
-                <Badge
-                    className={cn(
-                        'capitalize font-semibold',
-                        template.status === 'published' 
-                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800'
-                            : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 hover:text-amber-800'
-                    )}
-                >
-                    {template.status}
-                </Badge>
-            )}
-        </TableCell>
-        <TableCell>{isArchived ? (template.deleted_at ? format(parseISO(template.deleted_at), 'PPP') : 'N/A') : (template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A')}</TableCell>
-        <TableCell>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
-                    {isArchived ? (
-                        <>
-                            <DropdownMenuItem onSelect={() => onRestore(template)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onForceDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
-                        </>
-                    ) : (
-                        <>
-                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-                        </>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </TableCell>
-    </TableRow>
-);
-
-    
+const TemplateRow = ({ template, onDuplicate, onArchive, onRestore, onForceDelete, isArchived }: { template: Template } & Omit<ViewProps, 'templates'>) => {
+    return (
+        <TableRow>
+            <TableCell className="font-medium flex items-center gap-3">
+              <TemplateIconDisplay iconName={template.icon} categoryColor={template.category?.color} />
+              {template.title}
+            </TableCell>
+            <TableCell><Badge variant={template.category ? "outline" : "secondary"}>{template.category?.title || 'Uncategorized'}</Badge></TableCell>
+            <TableCell>
+                {isArchived ? (
+                    <Badge className='capitalize font-semibold bg-red-100 text-red-800 border-red-200 hover:bg-red-100'>
+                        Archived
+                    </Badge>
+                ) : (
+                    <Badge
+                        className={cn(
+                            'capitalize font-semibold',
+                            template.status === 'published' 
+                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800'
+                                : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 hover:text-amber-800'
+                        )}
+                    >
+                        {template.status}
+                    </Badge>
+                )}
+            </TableCell>
+            <TableCell>{isArchived ? (template.deleted_at ? format(parseISO(template.deleted_at), 'PPP') : 'N/A') : (template.updated_at ? format(parseISO(template.updated_at), 'PPP') : 'N/A')}</TableCell>
+            <TableCell>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuSeparator />
+                        {isArchived ? (
+                            <>
+                                <DropdownMenuItem onSelect={() => onRestore(template)}><ArchiveRestore className="mr-2 h-4 w-4" /> Restore</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onForceDelete(template)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Permanently</DropdownMenuItem>
+                            </>
+                        ) : (
+                            <>
+                                <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/preview`}><Eye className="mr-2 h-4 w-4" />View/Preview</Link></DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href={`/admin/dashboard/templates/edit/${template.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onDuplicate(template.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => onArchive(template)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </TableCell>
+        </TableRow>
+    );
+};
