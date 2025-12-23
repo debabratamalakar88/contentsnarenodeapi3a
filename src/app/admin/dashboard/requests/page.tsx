@@ -1,3 +1,4 @@
+
 'use client'
 
 import { 
@@ -397,6 +398,13 @@ export default function AdminRequestsPage() {
     
     const refetchData = () => setDataVersion(v => v + 1);
 
+    useEffect(() => {
+        const initialOwnerId = searchParams.get('created_by');
+        if (initialOwnerId) {
+            setSelectedOwnerId(initialOwnerId);
+        }
+    }, [searchParams]);
+
     const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
             router.push('/admin/login');
@@ -437,25 +445,15 @@ export default function AdminRequestsPage() {
     }, [token, toast]);
     
     useEffect(() => {
-        const initialOwnerId = searchParams.get('created_by') || 'all';
-        
         const filters = {
             search: searchQuery,
-            created_by: initialOwnerId,
+            created_by: selectedOwnerId,
             company_id: selectedCompanyId,
             client_id: selectedClientId,
             status: currentTab === 'active' ? selectedStatus : undefined
         };
-
-        if (pagination.current_page !== 1) {
-            setPagination(p => ({ ...p, current_page: 1 }));
-        } else {
-             fetchData(1, filters);
-        }
-        setSelectedOwnerId(initialOwnerId);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, searchQuery, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion]);
+        fetchData(pagination.current_page, filters);
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion, fetchData, pagination.current_page]);
 
 
     const handleDuplicate = async (requestId: number) => {
