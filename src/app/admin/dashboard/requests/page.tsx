@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { 
@@ -400,10 +399,10 @@ export default function AdminRequestsPage() {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
-    const handleFilterChange = (filter: keyof typeof filters, value: string) => {
-        setFilters(prev => ({ ...prev, [filter]: value, }));
+    const handleFilterChange = useCallback((filter: keyof typeof filters, value: string) => {
+        setFilters(prev => ({ ...prev, [filter]: value }));
         setPagination(p => ({ ...p, current_page: 1 }));
-    };
+    }, []);
 
     const fetchData = useCallback(() => {
         if (!token) {
@@ -438,7 +437,6 @@ export default function AdminRequestsPage() {
         return () => clearTimeout(timer);
     }, [token, currentTab, pagination.current_page, filters, router, toast]);
 
-    // Effect for initial setup and fetching supporting data
     useEffect(() => {
         if (!token) return;
         Promise.all([
@@ -449,18 +447,21 @@ export default function AdminRequestsPage() {
             setAllClients(clientsResponse.data || []);
             
             const ownerIdFromUrl = searchParams.get('created_by');
-            if (ownerIdFromUrl) {
-                setFilters(prev => ({ ...prev, created_by: ownerIdFromUrl }));
+            const clientIdFromUrl = searchParams.get('client_id');
+            if (ownerIdFromUrl || clientIdFromUrl) {
+                setFilters(prev => ({ 
+                    ...prev, 
+                    created_by: ownerIdFromUrl || prev.created_by,
+                    client_id: clientIdFromUrl || prev.client_id
+                }));
             }
         }).catch(err => {
             toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
         }).finally(() => {
             setHasInitialized(true);
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token, toast]);
+    }, [token, searchParams, toast]);
 
-    // Main data fetching effect
     useEffect(() => {
         if (hasInitialized) {
             fetchData();
@@ -759,4 +760,3 @@ export default function AdminRequestsPage() {
         </>
     );
 }
-

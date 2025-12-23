@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive, Eye, PenSquare, ArchiveRestore, Trash2, Check } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Search, LayoutGrid, ChevronDown, List, Layers, User as UserIcon, Archive, Eye, PenSquare, ArchiveRestore, Trash2, Check, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminClients, 
@@ -293,7 +293,7 @@ export default function ManageClientsPage() {
                                             onSelect={(currentLabel) => {
                                                 const selectedOption = userOptions.find(opt => opt.label.toLowerCase() === currentLabel.toLowerCase());
                                                 const newValue = selectedOption ? selectedOption.value : 'all';
-                                                setSelectedUserId(newValue === selectedUserId ? 'all' : newValue);
+                                                setSelectedUserId(newValue);
                                                 setIsUserFilterOpen(false);
                                             }}
                                         >
@@ -402,6 +402,7 @@ function ClientsGrid({ clients, isArchived, onArchive, onRestore, onForceDelete,
                 ) : (
                   <>
                     <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4" />View Client</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests?client_id=${client.id}`}><FileText className="mr-2 h-4 w-4"/>View Requests</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => onArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
                   </>
@@ -458,6 +459,7 @@ function ClientsTable({ clients, isArchived, onArchive, onRestore, onForceDelete
                     ) : (
                       <>
                         <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}`}><Eye className="mr-2 h-4 w-4"/>View Details</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/admin/dashboard/requests?client_id=${client.id}`}><FileText className="mr-2 h-4 w-4"/>View Requests</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href={`/admin/dashboard/clients/${client.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit Client</Link></DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => onArchive(client)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Archive className="mr-2 h-4 w-4"/>Archive Client</DropdownMenuItem>
                       </>
@@ -493,4 +495,3 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
-
