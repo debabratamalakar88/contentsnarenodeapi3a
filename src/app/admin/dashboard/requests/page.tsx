@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { 
@@ -377,12 +375,13 @@ export default function AdminRequestsPage() {
     const searchParams = useSearchParams();
 
     const [currentTab, setCurrentTab] = useState('active');
-    const [dataVersion, setDataVersion] = useState(0);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedOwnerId, setSelectedOwnerId] = useState('all');
-    const [selectedCompanyId, setSelectedCompanyId] = useState('all');
-    const [selectedClientId, setSelectedClientId] = useState('all');
-    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [filters, setFilters] = useState({
+        search: '',
+        created_by: 'all',
+        company_id: 'all',
+        client_id: 'all',
+        status: 'all',
+    });
     
     const [isOwnerFilterOpen, setIsOwnerFilterOpen] = useState(false);
     const [isCompanyFilterOpen, setIsCompanyFilterOpen] = useState(false);
@@ -397,68 +396,64 @@ export default function AdminRequestsPage() {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
-    const refetchData = () => setDataVersion(v => v + 1);
-    
-    useEffect(() => {
-        const initialOwnerId = searchParams.get('created_by');
-        if (initialOwnerId) {
-            setSelectedOwnerId(initialOwnerId);
-        }
-
-        if (!token) return;
-        async function loadSupportingData() {
-            try {
-                const [usersResponse, clientsResponse] = await Promise.all([
-                    getAdminUsers(token, 1, '', true),
-                    getAdminClients(token, 1, '', true)
-                ]);
-                setAllUsers(usersResponse.data || []);
-                setAllClients(clientsResponse.data || []);
-            } catch (err: any) {
-                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
-            }
-        }
-        loadSupportingData();
-    }, [token, toast, searchParams]);
-
-    const fetchData = useCallback(async (page: number, filters: any) => {
+    const refetchData = useCallback(() => {
         if (!token) {
             router.push('/admin/login');
             return;
         }
         setIsLoading(true);
-        try {
-            const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
-            const requestsData = await fetchFn(token, page, filters);
-            setRequests(requestsData.data || []);
-            setPagination({
-                current_page: requestsData.current_page,
-                last_page: requestsData.last_page,
-                total: requestsData.total,
-            });
-        } catch(err: any) {
-            toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
+        const effectiveFilters = {
+            ...filters,
+            status: currentTab === 'active' ? filters.status : undefined,
         }
-    }, [token, router, toast, currentTab]);
-    
-     useEffect(() => {
-        const filters = {
-            search: searchQuery,
-            created_by: selectedOwnerId,
-            company_id: selectedCompanyId,
-            client_id: selectedClientId,
-            status: currentTab === 'active' ? selectedStatus : undefined
-        };
-        // Reset page to 1 whenever filters change
-        setPagination(prev => {
-            if (prev.current_page !== 1) return { ...prev, current_page: 1 };
-            return prev;
-        });
-        fetchData(1, filters);
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion, fetchData]);
+        const fetchFn = currentTab === 'active' ? getAdminAllRequests : getAdminArchivedRequests;
+        
+        fetchFn(token, pagination.current_page, effectiveFilters)
+            .then(requestsData => {
+                setRequests(requestsData.data || []);
+                setPagination({
+                    current_page: requestsData.current_page,
+                    last_page: requestsData.last_page,
+                    total: requestsData.total,
+                });
+            })
+            .catch(err => {
+                toast({ title: "Error", description: err.message || "Could not fetch requests.", variant: "destructive" });
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [token, currentTab, pagination.current_page, filters, router, toast]);
 
+    useEffect(() => {
+        refetchData();
+    }, [refetchData]);
+    
+    useEffect(() => {
+        const initialOwnerId = searchParams.get('created_by');
+        setFilters(prev => ({
+            ...prev,
+            created_by: initialOwnerId || 'all',
+        }));
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (!token) return;
+        Promise.all([
+            getAdminUsers(token, 1, '', true),
+            getAdminClients(token, 1, '', true)
+        ]).then(([usersResponse, clientsResponse]) => {
+            setAllUsers(usersResponse.data || []);
+            setAllClients(clientsResponse.data || []);
+        }).catch(err => {
+            toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+        });
+    }, [token, toast]);
+
+    const handleFilterChange = (filter: keyof typeof filters, value: string) => {
+        setFilters(prev => ({ ...prev, [filter]: value }));
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    }
 
     const handleDuplicate = async (requestId: number) => {
         if (!token) return;
@@ -532,11 +527,11 @@ export default function AdminRequestsPage() {
         }
     };
 
-    const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
-    const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
-    const selectedClientName = selectedClientId === 'no-client' ? 'No Client' : (allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients');
+    const selectedOwnerName = allUsers.find(u => String(u.id) === filters.created_by)?.name || 'All Owners';
+    const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === filters.company_id)?.name || 'All Companies';
+    const selectedClientName = filters.client_id === 'no-client' ? 'No Client' : (allClients.find(c => String(c.id) === filters.client_id)?.full_name || 'All Clients');
     const activeRequestStatuses = ['draft', 'published', 'scheduled', 'completed'];
-    const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
+    const selectedStatusName = filters.status === 'all' ? 'All Statuses' : filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
 
 
     const renderContent = () => {
@@ -602,7 +597,7 @@ export default function AdminRequestsPage() {
         <>
             <div className="flex flex-col h-[calc(100vh-4rem)]">
                 <header className="flex items-center gap-4 px-6 py-3 border-b bg-background flex-wrap">
-                    <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow">
+                    <Tabs value={currentTab} onValueChange={(tab) => { setCurrentTab(tab); setPagination(p => ({...p, current_page: 1}));}} className="flex-grow">
                         <TabsList>
                             <TabsTrigger value="active">Active</TabsTrigger>
                             <TabsTrigger value="archived">Archived</TabsTrigger>
@@ -613,7 +608,7 @@ export default function AdminRequestsPage() {
                             <DropdownMenuTrigger asChild><Button variant="outline" className="flex items-center gap-2 font-semibold h-9"><ViewIcon className="h-4 w-4" />{viewMode === 'grid' ? 'Grid' : 'List'}</Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setViewMode('grid')}>Grid</DropdownMenuItem><DropdownMenuItem onSelect={() => setViewMode('list')}>List</DropdownMenuItem></DropdownMenuContent>
                         </DropdownMenu>
-                        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search requests..." className="pl-9 h-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search requests..." className="pl-9 h-9" value={filters.search} onChange={(e) => handleFilterChange('search', e.target.value)} /></div>
                     </div>
                 </header>
                 <div className="flex items-center gap-2 px-6 py-3 border-b bg-background flex-wrap">
@@ -631,10 +626,10 @@ export default function AdminRequestsPage() {
                                     {ownerOptions.map((option) => (
                                         <CommandItem key={option.value} value={option.label} onSelect={(currentLabel) => {
                                             const selectedOption = ownerOptions.find(opt => opt.label.toLowerCase() === currentLabel.toLowerCase());
-                                            setSelectedOwnerId(selectedOption ? selectedOption.value : 'all');
+                                            handleFilterChange('created_by', selectedOption ? selectedOption.value : 'all');
                                             setIsOwnerFilterOpen(false);
                                         }}>
-                                            <Check className={cn("mr-2 h-4 w-4", selectedOwnerId === option.value ? "opacity-100" : "opacity-0")} />
+                                            <Check className={cn("mr-2 h-4 w-4", filters.created_by === option.value ? "opacity-100" : "opacity-0")} />
                                             {option.label}
                                         </CommandItem>
                                     ))}
@@ -655,8 +650,8 @@ export default function AdminRequestsPage() {
                                 <CommandEmpty>No company found.</CommandEmpty>
                                 <CommandGroup>
                                     {companyOptions.map(option => (
-                                        <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedCompanyId(option.value); setIsCompanyFilterOpen(false); }}>
-                                            <Check className={cn("mr-2 h-4 w-4", selectedCompanyId === option.value ? "opacity-100" : "opacity-0")} />
+                                        <CommandItem key={option.value} value={option.label} onSelect={(label) => { handleFilterChange('company_id', companyOptions.find(o => o.label === label)?.value || 'all'); setIsCompanyFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", filters.company_id === option.value ? "opacity-100" : "opacity-0")} />
                                             {option.label}
                                         </CommandItem>
                                     ))}
@@ -677,8 +672,8 @@ export default function AdminRequestsPage() {
                                 <CommandEmpty>No client found.</CommandEmpty>
                                 <CommandGroup>
                                     {clientOptions.map(option => (
-                                         <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedClientId(option.value); setIsClientFilterOpen(false); }}>
-                                            <Check className={cn("mr-2 h-4 w-4", selectedClientId === option.value ? "opacity-100" : "opacity-0")} />
+                                         <CommandItem key={option.value} value={option.label} onSelect={(label) => { handleFilterChange('client_id', clientOptions.find(o => o.label === label)?.value || 'all'); setIsClientFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", filters.client_id === option.value ? "opacity-100" : "opacity-0")} />
                                             {option.label}
                                         </CommandItem>
                                     ))}
@@ -700,8 +695,8 @@ export default function AdminRequestsPage() {
                                 <CommandEmpty>No status found.</CommandEmpty>
                                 <CommandGroup>
                                     {statusOptions.map(option => (
-                                        <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedStatus(option.value); setIsStatusFilterOpen(false); }}>
-                                            <Check className={cn("mr-2 h-4 w-4", selectedStatus === option.value ? "opacity-100" : "opacity-0")} />
+                                        <CommandItem key={option.value} value={option.label} onSelect={(label) => { handleFilterChange('status', statusOptions.find(o => o.label === label)?.value || 'all'); setIsStatusFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", filters.status === option.value ? "opacity-100" : "opacity-0")} />
                                             {option.label}
                                         </CommandItem>
                                     ))}
@@ -751,4 +746,3 @@ export default function AdminRequestsPage() {
         </>
     );
 }
-
