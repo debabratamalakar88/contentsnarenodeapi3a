@@ -25,6 +25,7 @@ import {
     Send,
     Briefcase,
     Filter,
+    Check
 } from "lucide-react"
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
@@ -45,9 +46,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
 import {
   Table,
   TableBody,
@@ -371,6 +383,11 @@ export default function AdminRequestsPage() {
     const [selectedClientId, setSelectedClientId] = useState('all');
     const [selectedStatus, setSelectedStatus] = useState('all');
     
+    const [isOwnerFilterOpen, setIsOwnerFilterOpen] = useState(false);
+    const [isCompanyFilterOpen, setIsCompanyFilterOpen] = useState(false);
+    const [isClientFilterOpen, setIsClientFilterOpen] = useState(false);
+    const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
@@ -527,8 +544,9 @@ export default function AdminRequestsPage() {
     const selectedOwnerName = allUsers.find(u => String(u.id) === selectedOwnerId)?.name || 'All Owners';
     const selectedCompanyName = uniqueCompanies.find(c => String(c.id) === selectedCompanyId)?.name || 'All Companies';
     const selectedClientName = selectedClientId === 'no-client' ? 'No Client' : (allClients.find(c => String(c.id) === selectedClientId)?.full_name || 'All Clients');
+    const activeRequestStatuses = ['draft', 'published', 'scheduled', 'completed'];
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1);
-    const activeRequestStatuses = ['draft', 'published', 'scheduled'];
+
 
     const renderContent = () => {
         if (isLoading) {
@@ -588,29 +606,79 @@ export default function AdminRequestsPage() {
                 </header>
                 <div className="flex items-center gap-2 px-6 py-3 border-b bg-background flex-wrap">
                     <span className="text-sm font-semibold text-muted-foreground">Filter by:</span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><User className="mr-2 h-4 w-4"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedOwnerId} onValueChange={setSelectedOwnerId}><DropdownMenuRadioItem value="all">All Owners</DropdownMenuRadioItem><DropdownMenuSeparator/>{allUsers.map(user => <DropdownMenuRadioItem key={user.id} value={String(user.id)}>{user.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Briefcase className="mr-2 h-4 w-4"/>{selectedCompanyName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedCompanyId} onValueChange={setSelectedCompanyId}><DropdownMenuRadioItem value="all">All Companies</DropdownMenuRadioItem><DropdownMenuSeparator/>{uniqueCompanies.map(company => <DropdownMenuRadioItem key={company.id} value={String(company.id)}>{company.name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuRadioItem value="no-client">No Client</DropdownMenuRadioItem><DropdownMenuSeparator/>{allClients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-                    </DropdownMenu>
+                     <Popover open={isOwnerFilterOpen} onOpenChange={setIsOwnerFilterOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" role="combobox" className="h-8"><User className="mr-2 h-4 w-4"/>{selectedOwnerName}<ChevronDown className="ml-2 h-4 w-4"/></Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search owner..."/>
+                                <CommandList>
+                                <CommandEmpty>No owner found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem value="All Owners" onSelect={() => { setSelectedOwnerId('all'); setIsOwnerFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedOwnerId === 'all' ? "opacity-100" : "opacity-0")} />All Owners</CommandItem>
+                                    {allUsers.map(user => <CommandItem key={user.id} value={user.name} onSelect={() => { setSelectedOwnerId(String(user.id)); setIsOwnerFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(user.id) === selectedOwnerId ? "opacity-100" : "opacity-0")} />{user.name}</CommandItem>)}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+
+                     <Popover open={isCompanyFilterOpen} onOpenChange={setIsCompanyFilterOpen}>
+                        <PopoverTrigger asChild>
+                           <Button variant="outline" className="h-8"><Briefcase className="mr-2 h-4 w-4"/>{selectedCompanyName}<ChevronDown className="ml-2 h-4 w-4"/></Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                             <Command>
+                                <CommandInput placeholder="Search company..."/>
+                                <CommandList>
+                                <CommandEmpty>No company found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem value="All Companies" onSelect={() => { setSelectedCompanyId('all'); setIsCompanyFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedCompanyId === 'all' ? "opacity-100" : "opacity-0")} />All Companies</CommandItem>
+                                    {uniqueCompanies.map(company => <CommandItem key={company.id} value={company.name} onSelect={() => { setSelectedCompanyId(String(company.id)); setIsCompanyFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(company.id) === selectedCompanyId ? "opacity-100" : "opacity-0")} />{company.name}</CommandItem>)}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                    
+                    <Popover open={isClientFilterOpen} onOpenChange={setIsClientFilterOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                           <Command>
+                                <CommandInput placeholder="Search client..."/>
+                                <CommandList>
+                                <CommandEmpty>No client found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem value="All Clients" onSelect={() => { setSelectedClientId('all'); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedClientId === 'all' ? "opacity-100" : "opacity-0")} />All Clients</CommandItem>
+                                    <CommandItem value="No Client" onSelect={() => { setSelectedClientId('no-client'); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedClientId === 'no-client' ? "opacity-100" : "opacity-0")} />No Client</CommandItem>
+                                    {allClients.map(client => <CommandItem key={client.id} value={client.full_name} onSelect={() => { setSelectedClientId(String(client.id)); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(client.id) === selectedClientId ? "opacity-100" : "opacity-0")} />{client.full_name}</CommandItem>)}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+
                     {currentTab === 'active' && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuRadioGroup value={selectedStatus} onValueChange={setSelectedStatus}>
-                                    <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
-                                    <DropdownMenuSeparator/>
-                                    {activeRequestStatuses.map(status => <DropdownMenuRadioItem key={status} value={status} className="capitalize">{status}</DropdownMenuRadioItem>)}
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Popover open={isStatusFilterOpen} onOpenChange={setIsStatusFilterOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="h-8"><Filter className="mr-2 h-4 w-4"/>{selectedStatusName}<ChevronDown className="ml-2 h-4 w-4"/></Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                               <Command>
+                                <CommandInput placeholder="Search status..."/>
+                                <CommandList>
+                                <CommandEmpty>No status found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem value="All Statuses" onSelect={() => { setSelectedStatus('all'); setIsStatusFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedStatus === 'all' ? "opacity-100" : "opacity-0")} />All Statuses</CommandItem>
+                                    {activeRequestStatuses.map(status => <CommandItem key={status} value={status} onSelect={() => { setSelectedStatus(status); setIsStatusFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", status === selectedStatus ? "opacity-100" : "opacity-0")} /><span className="capitalize">{status}</span></CommandItem>)}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
                     )}
                 </div>
                 <main className="flex-1 p-6 overflow-y-auto">
@@ -652,5 +720,4 @@ export default function AdminRequestsPage() {
         </>
     );
 }
-
 
