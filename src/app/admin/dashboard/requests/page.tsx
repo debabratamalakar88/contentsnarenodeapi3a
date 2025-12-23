@@ -392,6 +392,7 @@ export default function AdminRequestsPage() {
     const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
 
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
+    const [hasInitialized, setHasInitialized] = useState(false);
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToRestore, setRequestToRestore] = useState<Request | null>(null);
@@ -400,32 +401,9 @@ export default function AdminRequestsPage() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
     const handleFilterChange = (filter: keyof typeof filters, value: string) => {
-        setFilters(prev => ({ ...prev, [filter]: value }));
+        setFilters(prev => ({ ...prev, [filter]: value, }));
         setPagination(p => ({ ...p, current_page: 1 }));
     };
-
-    // This effect runs only once on mount to set initial filters from URL
-    useEffect(() => {
-        const ownerIdFromUrl = searchParams.get('created_by');
-        if (ownerIdFromUrl) {
-            handleFilterChange('created_by', ownerIdFromUrl);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
-    
-    // This effect fetches supporting data like users and clients
-    useEffect(() => {
-        if (!token) return;
-        Promise.all([
-            getAdminUsers(token, 1, '', true),
-            getAdminClients(token, 1, '', true)
-        ]).then(([usersResponse, clientsResponse]) => {
-            setAllUsers(usersResponse.data || []);
-            setAllClients(clientsResponse.data || []);
-        }).catch(err => {
-            toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
-        });
-    }, [token, toast]);
 
     const fetchData = useCallback(() => {
         if (!token) {
@@ -460,10 +438,34 @@ export default function AdminRequestsPage() {
         return () => clearTimeout(timer);
     }, [token, currentTab, pagination.current_page, filters, router, toast]);
 
-    // This is the main data fetching effect, triggered by filters/pagination changes
+    // Effect for initial setup and fetching supporting data
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (!token) return;
+        Promise.all([
+            getAdminUsers(token, 1, '', true),
+            getAdminClients(token, 1, '', true)
+        ]).then(([usersResponse, clientsResponse]) => {
+            setAllUsers(usersResponse.data || []);
+            setAllClients(clientsResponse.data || []);
+            
+            const ownerIdFromUrl = searchParams.get('created_by');
+            if (ownerIdFromUrl) {
+                setFilters(prev => ({ ...prev, created_by: ownerIdFromUrl }));
+            }
+        }).catch(err => {
+            toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+        }).finally(() => {
+            setHasInitialized(true);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, toast]);
+
+    // Main data fetching effect
+    useEffect(() => {
+        if (hasInitialized) {
+            fetchData();
+        }
+    }, [hasInitialized, fetchData]);
 
 
     const handleDuplicate = async (requestId: number) => {
@@ -546,7 +548,7 @@ export default function AdminRequestsPage() {
 
 
     const renderContent = () => {
-        if (isLoading) {
+        if (isLoading && !hasInitialized) {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-72 w-full" />)}
