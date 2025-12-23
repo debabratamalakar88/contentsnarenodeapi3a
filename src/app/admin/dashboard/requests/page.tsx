@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { 
@@ -399,13 +397,6 @@ export default function AdminRequestsPage() {
     
     const refetchData = () => setDataVersion(v => v + 1);
 
-    useEffect(() => {
-        const createdBy = searchParams.get('created_by');
-        if (createdBy) {
-            setSelectedOwnerId(createdBy);
-        }
-    }, [searchParams]);
-
     const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
             router.push('/admin/login');
@@ -446,34 +437,25 @@ export default function AdminRequestsPage() {
     }, [token, toast]);
     
     useEffect(() => {
+        const initialOwnerId = searchParams.get('created_by') || 'all';
+        
         const filters = {
             search: searchQuery,
-            created_by: selectedOwnerId,
+            created_by: initialOwnerId,
             company_id: selectedCompanyId,
             client_id: selectedClientId,
             status: currentTab === 'active' ? selectedStatus : undefined
         };
-        fetchData(pagination.current_page, filters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pagination.current_page, currentTab, dataVersion]);
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-             const filters = {
-                search: searchQuery,
-                created_by: selectedOwnerId,
-                company_id: selectedCompanyId,
-                client_id: selectedClientId,
-                status: currentTab === 'active' ? selectedStatus : undefined
-            };
-            if (pagination.current_page !== 1) {
-                 setPagination(p => ({ ...p, current_page: 1 }));
-            } else {
-                fetchData(1, filters);
-            }
-        }, 500); // Debounce search/filter calls
-        return () => clearTimeout(handler);
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, fetchData]);
+        if (pagination.current_page !== 1) {
+            setPagination(p => ({ ...p, current_page: 1 }));
+        } else {
+             fetchData(1, filters);
+        }
+        setSelectedOwnerId(initialOwnerId);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, searchQuery, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion]);
 
 
     const handleDuplicate = async (requestId: number) => {
@@ -593,6 +575,27 @@ export default function AdminRequestsPage() {
         return <RequestTable requests={requests} isArchived={currentTab === 'archived'} {...viewProps} />;
     }
 
+    const ownerOptions = [
+        { value: 'all', label: 'All Owners' },
+        ...allUsers.map(user => ({ value: String(user.id), label: user.name }))
+    ];
+
+    const companyOptions = [
+        { value: 'all', label: 'All Companies' },
+        ...uniqueCompanies.map(co => ({ value: String(co.id), label: co.name }))
+    ];
+    
+    const clientOptions = [
+        { value: 'all', label: 'All Clients' },
+        { value: 'no-client', label: 'No Client' },
+        ...allClients.map(client => ({ value: String(client.id), label: client.full_name }))
+    ];
+
+    const statusOptions = [
+        { value: 'all', label: 'All Statuses' },
+        ...activeRequestStatuses.map(status => ({ value: status, label: status.charAt(0).toUpperCase() + status.slice(1) }))
+    ];
+
     return (
         <>
             <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -623,8 +626,16 @@ export default function AdminRequestsPage() {
                                 <CommandList>
                                 <CommandEmpty>No owner found.</CommandEmpty>
                                 <CommandGroup>
-                                    <CommandItem value="All Owners" onSelect={() => { setSelectedOwnerId('all'); setIsOwnerFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedOwnerId === 'all' ? "opacity-100" : "opacity-0")} />All Owners</CommandItem>
-                                    {allUsers.map(user => <CommandItem key={user.id} value={user.name} onSelect={() => { setSelectedOwnerId(String(user.id)); setIsOwnerFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(user.id) === selectedOwnerId ? "opacity-100" : "opacity-0")} />{user.name}</CommandItem>)}
+                                    {ownerOptions.map((option) => (
+                                        <CommandItem key={option.value} value={option.label} onSelect={(currentLabel) => {
+                                            const selectedOption = ownerOptions.find(opt => opt.label.toLowerCase() === currentLabel.toLowerCase());
+                                            setSelectedOwnerId(selectedOption ? selectedOption.value : 'all');
+                                            setIsOwnerFilterOpen(false);
+                                        }}>
+                                            <Check className={cn("mr-2 h-4 w-4", selectedOwnerId === option.value ? "opacity-100" : "opacity-0")} />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
@@ -641,8 +652,12 @@ export default function AdminRequestsPage() {
                                 <CommandList>
                                 <CommandEmpty>No company found.</CommandEmpty>
                                 <CommandGroup>
-                                    <CommandItem value="All Companies" onSelect={() => { setSelectedCompanyId('all'); setIsCompanyFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedCompanyId === 'all' ? "opacity-100" : "opacity-0")} />All Companies</CommandItem>
-                                    {uniqueCompanies.map(company => <CommandItem key={company.id} value={company.name} onSelect={() => { setSelectedCompanyId(String(company.id)); setIsCompanyFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(company.id) === selectedCompanyId ? "opacity-100" : "opacity-0")} />{company.name}</CommandItem>)}
+                                    {companyOptions.map(option => (
+                                        <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedCompanyId(option.value); setIsCompanyFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", selectedCompanyId === option.value ? "opacity-100" : "opacity-0")} />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
@@ -659,9 +674,12 @@ export default function AdminRequestsPage() {
                                 <CommandList>
                                 <CommandEmpty>No client found.</CommandEmpty>
                                 <CommandGroup>
-                                    <CommandItem value="All Clients" onSelect={() => { setSelectedClientId('all'); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedClientId === 'all' ? "opacity-100" : "opacity-0")} />All Clients</CommandItem>
-                                    <CommandItem value="No Client" onSelect={() => { setSelectedClientId('no-client'); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedClientId === 'no-client' ? "opacity-100" : "opacity-0")} />No Client</CommandItem>
-                                    {allClients.map(client => <CommandItem key={client.id} value={client.full_name} onSelect={() => { setSelectedClientId(String(client.id)); setIsClientFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", String(client.id) === selectedClientId ? "opacity-100" : "opacity-0")} />{client.full_name}</CommandItem>)}
+                                    {clientOptions.map(option => (
+                                         <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedClientId(option.value); setIsClientFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", selectedClientId === option.value ? "opacity-100" : "opacity-0")} />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
@@ -679,8 +697,12 @@ export default function AdminRequestsPage() {
                                 <CommandList>
                                 <CommandEmpty>No status found.</CommandEmpty>
                                 <CommandGroup>
-                                    <CommandItem value="All Statuses" onSelect={() => { setSelectedStatus('all'); setIsStatusFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", selectedStatus === 'all' ? "opacity-100" : "opacity-0")} />All Statuses</CommandItem>
-                                    {activeRequestStatuses.map(status => <CommandItem key={status} value={status} onSelect={() => { setSelectedStatus(status); setIsStatusFilterOpen(false); }}><Check className={cn("mr-2 h-4 w-4", status === selectedStatus ? "opacity-100" : "opacity-0")} /><span className="capitalize">{status}</span></CommandItem>)}
+                                    {statusOptions.map(option => (
+                                        <CommandItem key={option.value} value={option.label} onSelect={() => { setSelectedStatus(option.value); setIsStatusFilterOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", selectedStatus === option.value ? "opacity-100" : "opacity-0")} />
+                                            {option.label}
+                                        </CommandItem>
+                                    ))}
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
@@ -727,4 +749,3 @@ export default function AdminRequestsPage() {
         </>
     );
 }
-
