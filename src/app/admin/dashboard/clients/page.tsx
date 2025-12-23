@@ -289,13 +289,10 @@ export default function ManageClientsPage() {
                                     {userOptions.map((option) => (
                                         <CommandItem
                                             key={option.value}
-                                            value={option.label}
+                                            value={option.value}
                                             onSelect={(currentValue) => {
-                                                const selected = userOptions.find(opt => opt.label.toLowerCase() === currentValue);
-                                                if (selected) {
-                                                    setSelectedUserId(selected.value);
-                                                }
-                                                setIsUserFilterOpen(false);
+                                                setSelectedUserId(currentValue === selectedUserId ? 'all' : currentValue)
+                                                setIsUserFilterOpen(false)
                                             }}
                                         >
                                             <Check className={cn("mr-2 h-4 w-4", selectedUserId === option.value ? "opacity-100" : "opacity-0")} />
@@ -494,5 +491,6 @@ function LoadingSkeleton({ view }: { view: 'grid' | 'list' }) {
       </Card>
     );
 }
+
 
 
