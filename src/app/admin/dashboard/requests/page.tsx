@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -472,8 +473,7 @@ export default function AdminRequestsPage() {
             }
         }, 500); // Debounce search/filter calls
         return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus]);
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, fetchData]);
 
 
     const handleDuplicate = async (requestId: number) => {
