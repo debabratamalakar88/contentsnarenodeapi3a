@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { 
@@ -397,13 +398,28 @@ export default function AdminRequestsPage() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
     const refetchData = () => setDataVersion(v => v + 1);
-
+    
     useEffect(() => {
         const initialOwnerId = searchParams.get('created_by');
         if (initialOwnerId) {
             setSelectedOwnerId(initialOwnerId);
         }
-    }, [searchParams]);
+
+        if (!token) return;
+        async function loadSupportingData() {
+            try {
+                const [usersResponse, clientsResponse] = await Promise.all([
+                    getAdminUsers(token, 1, '', true),
+                    getAdminClients(token, 1, '', true)
+                ]);
+                setAllUsers(usersResponse.data || []);
+                setAllClients(clientsResponse.data || []);
+            } catch (err: any) {
+                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
+            }
+        }
+        loadSupportingData();
+    }, [token, toast, searchParams]);
 
     const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
@@ -427,24 +443,7 @@ export default function AdminRequestsPage() {
         }
     }, [token, router, toast, currentTab]);
     
-    useEffect(() => {
-        if (!token) return;
-        async function loadSupportingData() {
-            try {
-                const [usersResponse, clientsResponse] = await Promise.all([
-                    getAdminUsers(token, 1, '', true),
-                    getAdminClients(token, 1, '', true)
-                ]);
-                setAllUsers(usersResponse.data || []);
-                setAllClients(clientsResponse.data || []);
-            } catch (err: any) {
-                toast({ title: "Error", description: err.message || "Could not fetch supporting data.", variant: "destructive" });
-            }
-        }
-        loadSupportingData();
-    }, [token, toast]);
-    
-    useEffect(() => {
+     useEffect(() => {
         const filters = {
             search: searchQuery,
             created_by: selectedOwnerId,
@@ -452,8 +451,13 @@ export default function AdminRequestsPage() {
             client_id: selectedClientId,
             status: currentTab === 'active' ? selectedStatus : undefined
         };
-        fetchData(pagination.current_page, filters);
-    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion, fetchData, pagination.current_page]);
+        // Reset page to 1 whenever filters change
+        setPagination(prev => {
+            if (prev.current_page !== 1) return { ...prev, current_page: 1 };
+            return prev;
+        });
+        fetchData(1, filters);
+    }, [searchQuery, selectedOwnerId, selectedCompanyId, selectedClientId, selectedStatus, currentTab, dataVersion, fetchData]);
 
 
     const handleDuplicate = async (requestId: number) => {
@@ -747,3 +751,4 @@ export default function AdminRequestsPage() {
         </>
     );
 }
+
