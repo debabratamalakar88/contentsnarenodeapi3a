@@ -40,7 +40,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive, Eye, PenSquare, ArchiveRestore, Trash2, UserX, UserCheck } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, PlusCircle, LayoutGrid, List, Search, ChevronDown, ShieldAlert, ShieldCheck, UserPlus, Archive, Eye, PenSquare, ArchiveRestore, Trash2, UserX, UserCheck, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getAdminUsers, 
@@ -394,6 +394,9 @@ function UsersGrid({ users, isArchived, onToggleStatus, onArchive, onRestore, on
                         <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                        <Link href={`/admin/dashboard/requests?created_by=${user.id}`}><FileText className="mr-2 h-4 w-4"/>View Requests</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                         <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>
                     </DropdownMenuItem>
                      <DropdownMenuItem onSelect={() => onToggleStatus(user)}>
@@ -530,6 +533,9 @@ function UsersTable({ users, isArchived, onToggleStatus, onArchive, onRestore, o
                       <>
                         <DropdownMenuItem asChild>
                             <Link href={`/admin/dashboard/users/${user.id}`}><Eye className="mr-2 h-4 w-4"/>View User</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/dashboard/requests?created_by=${user.id}`}><FileText className="mr-2 h-4 w-4"/>View Requests</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <Link href={`/admin/dashboard/users/${user.id}/edit`}><PenSquare className="mr-2 h-4 w-4"/>Edit User</Link>

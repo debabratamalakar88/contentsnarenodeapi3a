@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { 
@@ -29,7 +28,7 @@ import {
 } from "lucide-react"
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button"
@@ -374,6 +373,7 @@ export default function AdminRequestsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [currentTab, setCurrentTab] = useState('active');
     const [dataVersion, setDataVersion] = useState(0);
@@ -397,6 +397,13 @@ export default function AdminRequestsPage() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('adminAuthToken') : null;
     
     const refetchData = () => setDataVersion(v => v + 1);
+
+    useEffect(() => {
+        const createdBy = searchParams.get('created_by');
+        if (createdBy) {
+            setSelectedOwnerId(createdBy);
+        }
+    }, [searchParams]);
 
     const fetchData = useCallback(async (page: number, filters: any) => {
         if (!token) {
