@@ -235,6 +235,14 @@ export interface Reminder {
   };
 }
 
+export interface Comment {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  question_id: number;
+}
+
 export interface PaginatedResponse<T> {
     data: T[];
     current_page: number;
@@ -1025,6 +1033,22 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
     const response = await fetch(`${API_BASE_URL}/api/requestsubmissions/${submissionCode}`);
     return handleResponse(response);
 }
+
+// ===================================
+// COMMENTS API
+// ===================================
+
+export async function getComments(token: string, requestId: number, questionId: number): Promise<Comment[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token);
+}
+
+export async function addComment(token: string, requestId: number, questionId: number, content: string): Promise<Comment> {
+  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
+}
+
 
 // ===================================
 // TEMPLATES API (User-facing)
