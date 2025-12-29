@@ -8,7 +8,7 @@ import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Req
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, Bold, Italic, Underline, Link as LinkIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -158,7 +159,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                                             "w-full text-left p-3 font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer hover:no-underline",
                                             isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
                                         )}
-                                        onClick={() => handleQuestionClick(page.id, page.sections[0].id, page.sections[0].questions[0].id)}
+                                        onClick={() => { if(page.sections[0]?.questions[0]) handleQuestionClick(page.id, page.sections[0].id, page.sections[0].questions[0].id) }}
                                     >
                                         <span className="truncate">{page.title}</span>
                                         <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{totalQuestions}</span>
@@ -171,7 +172,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                                                         "w-full text-left p-2 rounded-md font-semibold transition-colors text-sm flex items-center justify-between cursor-pointer pl-2",
                                                         section.id === activeSectionId && isPageActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
                                                     )}
-                                                    onClick={() => handleQuestionClick(page.id, section.id, section.questions[0].id)}
+                                                    onClick={() => {if(section.questions[0]) handleQuestionClick(page.id, section.id, section.questions[0].id)}}
                                                 >
                                                     <span className="truncate">{section.title}</span>
                                                     <span className="text-xs text-muted-foreground ml-2 shrink-0">{0}/{section.questions.length}</span>
@@ -230,19 +231,14 @@ export default function RequestPreviewPage() {
 
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
+    const [showComments, setShowComments] = useState(false);
 
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     useEffect(() => {
-        if (!id) {
-            router.push('/dashboard/requests');
-            return;
-        }
-        if (!token) {
-            router.push('/login');
-            return;
-        }
+        if (!id) { router.push('/dashboard/requests'); return; }
+        if (!token) { router.push('/login'); return; }
 
         async function fetchRequestData() {
             try {
@@ -304,16 +300,16 @@ export default function RequestPreviewPage() {
     };
     
     const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
-        if (!request || !activeIds) return {};
-
+        if (!request || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        
         const page = request.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return {};
+        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
         
         const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return {};
+        if (!section) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
 
         const question = section.questions.find(q => q.id === activeIds.questionId);
-        if(!question) return {};
+        if(!question) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
         
         const pageIndex = request.form_data.findIndex(p => p.id === page.id);
 
@@ -469,30 +465,48 @@ export default function RequestPreviewPage() {
                         </header>
                          <div className="flex-1 overflow-y-auto">
                             <div className="p-8 max-w-4xl mx-auto w-full">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                <div className="flex items-start gap-6">
+                                    <div className="flex-1">
+                                        <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                            {activeQuestion ? (
+                                                <>
+                                                    <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
+                                                    {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
+                                                    <div className="mt-6">
+                                                        {renderQuestionPreview(activeQuestion)}
+                                                    </div>
+                                                    <div className="mt-6 flex justify-between items-center">
+                                                        <Button variant="link" className="p-0 h-auto text-pink-600 font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
+                                                            {isLastQuestion ? "End of Form" : "Continue to next question"}
+                                                        </Button>
+                                                        <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
+                                                            {showComments ? 'CLOSE COMMENTS' : 'COMMENTS'}
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            ) : <p>Select a question to see the preview.</p>}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
-                                    {activeQuestion ? (
-                                        <>
-                                            <h3 className="font-semibold text-lg">{activeQuestion.label}</h3>
-                                            {activeQuestion.instructions && <p className="text-muted-foreground mt-2">{activeQuestion.instructions}</p>}
-                                            <div className="mt-6">
-                                                {renderQuestionPreview(activeQuestion)}
-                                            </div>
-                                            <div className="mt-6 flex justify-between items-center">
-                                                <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
-                                                    {isLastQuestion ? "End of Form" : "Continue to next question"}
-                                                </Button>
-                                                <Button variant="outline" className="rounded-full">COMMENTS</Button>
-                                            </div>
-                                        </>
-                                    ) : <p>Select a question to see the preview.</p>}
+                                    {showComments && (
+                                        <div className="w-80 flex-shrink-0 relative animate-in fade-in-50 slide-in-from-right-5">
+                                            <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 bg-white transform rotate-45 border-l border-b border-gray-200/80"></div>
+                                            <Card className="shadow-lg">
+                                                <CardHeader>
+                                                    <CardTitle className="text-lg">Comments</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="flex items-center gap-2 p-2 border-b mb-2">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
+                                                    </div>
+                                                    <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" />
+                                                    <Button className="w-full mt-2">ADD COMMENT</Button>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                          </div>
