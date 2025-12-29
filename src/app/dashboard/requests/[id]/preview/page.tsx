@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -40,7 +39,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -323,11 +322,13 @@ export default function RequestPreviewPage() {
 
         if (newIndex >= 0 && newIndex < request.form_data.length) {
             const newPage = request.form_data[newIndex];
-            setActiveIds({
-                pageId: newPage.id,
-                sectionId: newPage.sections[0].id,
-                questionId: newPage.sections[0].questions[0].id,
-            });
+            if (newPage.sections?.[0]?.questions?.[0]) {
+                setActiveIds({
+                    pageId: newPage.id,
+                    sectionId: newPage.sections[0].id,
+                    questionId: newPage.sections[0].questions[0].id,
+                });
+            }
         }
     };
 
@@ -374,8 +375,6 @@ export default function RequestPreviewPage() {
                 return;
             }
         }
-
-        // If at the end, do nothing (or we could show a message)
         toast({ title: "End of Form", description: "You have reached the last question."});
     };
     
@@ -528,4 +527,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
