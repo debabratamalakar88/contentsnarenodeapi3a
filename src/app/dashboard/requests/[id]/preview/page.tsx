@@ -1,17 +1,18 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, type Request, type Question, type Page, type Client } from '@/lib/api';
+import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, type Request, type Question, type Page, type Client, type Comment } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, Bold, Italic, Underline, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, Bold, Italic, Underline, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -231,6 +232,11 @@ export default function RequestPreviewPage() {
     const [requestToArchive, setRequestToArchive] = useState<Request | null>(null);
     const [requestToForceDelete, setRequestToForceDelete] = useState<Request | null>(null);
     const [showComments, setShowComments] = useState(false);
+    
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [newComment, setNewComment] = useState("");
+    const [isCommentsLoading, setIsCommentsLoading] = useState(false);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
@@ -271,6 +277,16 @@ export default function RequestPreviewPage() {
         }
         fetchRequestData();
     }, [id, router, toast, token]);
+
+    useEffect(() => {
+        if (showComments && activeIds?.questionId && token && request) {
+            setIsCommentsLoading(true);
+            getComments(token, request.id, activeIds.questionId)
+                .then(setComments)
+                .catch(err => toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message }))
+                .finally(() => setIsCommentsLoading(false));
+        }
+    }, [showComments, activeIds?.questionId, token, request, toast]);
 
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
@@ -348,14 +364,12 @@ export default function RequestPreviewPage() {
         const questionIndex = currentSection.questions.findIndex(q => q.id === questionId);
         if (questionIndex === -1) return;
 
-        // Try to find the next question in the current section
         if (questionIndex < currentSection.questions.length - 1) {
             const nextQuestion = currentSection.questions[questionIndex + 1];
             setActiveIds({ pageId, sectionId, questionId: nextQuestion.id });
             return;
         }
 
-        // Try to find the next section in the current page
         if (sectionIndex < currentPage.sections.length - 1) {
             const nextSection = currentPage.sections[sectionIndex + 1];
             if (nextSection.questions.length > 0) {
@@ -365,7 +379,6 @@ export default function RequestPreviewPage() {
             }
         }
 
-        // Try to find the next page
         if (pageIndex < request.form_data.length - 1) {
             const nextPage = request.form_data[pageIndex + 1];
             if (nextPage.sections.length > 0 && nextPage.sections[0].questions.length > 0) {
@@ -388,6 +401,23 @@ export default function RequestPreviewPage() {
         const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
         return questionId === lastQuestion.id;
     }, [request, activeIds]);
+
+    const handleAddComment = async () => {
+        if (!token || !request || !activeIds?.questionId || !newComment.trim()) return;
+        
+        setIsSubmittingComment(true);
+        try {
+            const newCommentData = await addComment(token, request.id, activeIds.questionId, newComment);
+            setComments(prev => [newCommentData, ...prev]);
+            setNewComment('');
+            toast({ title: 'Comment added' });
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error adding comment', description: err.message });
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
 
     if (isLoading) {
         return (
@@ -475,7 +505,7 @@ export default function RequestPreviewPage() {
                                                         {renderQuestionPreview(activeQuestion)}
                                                     </div>
                                                     <div className="mt-6 flex justify-between items-center">
-                                                        <Button variant="link" className="p-0 h-auto text-pink-600 font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
+                                                        <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
                                                             {isLastQuestion ? "End of Form" : "Continue to next question"}
                                                         </Button>
                                                         <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
@@ -491,17 +521,39 @@ export default function RequestPreviewPage() {
                                             <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 bg-white transform rotate-45 border-l border-b border-gray-200/80"></div>
                                             <Card className="shadow-lg">
                                                 <CardHeader>
-                                                    <CardTitle className="text-lg">Comments</CardTitle>
+                                                    <CardTitle className="text-lg">Comments ({comments.length})</CardTitle>
                                                 </CardHeader>
                                                 <CardContent>
-                                                    <div className="flex items-center gap-2 p-2 border-b mb-2">
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
+                                                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                                                        {isCommentsLoading ? (
+                                                          <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
+                                                        ) : comments.length > 0 ? (
+                                                            comments.map(comment => (
+                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                                                                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                                        <p className="font-semibold">{comment.user_name} commented</p>
+                                                                        <p>{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                    </div>
+                                                                    <p className="text-sm mt-2">{comment.content}</p>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>
+                                                        )}
                                                     </div>
-                                                    <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" />
-                                                    <Button className="w-full mt-2">ADD COMMENT</Button>
+                                                    <div className="mt-4 pt-4 border-t">
+                                                        <div className="flex items-center gap-2 p-2 border-b mb-2">
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
+                                                        </div>
+                                                        <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+                                                        <Button className="w-full mt-2" onClick={handleAddComment} disabled={isSubmittingComment}>
+                                                            {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                            ADD COMMENT
+                                                        </Button>
+                                                    </div>
                                                 </CardContent>
                                             </Card>
                                         </div>
@@ -527,3 +579,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
