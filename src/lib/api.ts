@@ -1059,12 +1059,13 @@ export async function getComments(token: string | null, requestIdOrCode: number 
     const response = await fetchWithToken(url, token);
     return response.data || [];
   } else {
-    // Public request uses the request CODE
+    // Public request also uses the request ID now based on previous corrections
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
     });
-    return handleResponse(response);
+    const handledResponse = await handleResponse(response);
+    return handledResponse.data || [];
   }
 }
 
