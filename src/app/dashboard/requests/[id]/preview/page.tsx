@@ -280,14 +280,22 @@ export default function RequestPreviewPage() {
         fetchRequestData();
     }, [id, router, toast, token]);
 
-    useEffect(() => {
+    const fetchComments = async () => {
         if (showComments && activeIds?.questionId && token && request) {
             setIsCommentsLoading(true);
-            getComments(token, request.id, activeIds.questionId)
-                .then(setComments)
-                .catch(err => toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message }))
-                .finally(() => setIsCommentsLoading(false));
+            try {
+                const commentsData = await getComments(token, request.id, activeIds.questionId);
+                setComments(commentsData);
+            } catch (err: any) {
+                toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
+            } finally {
+                setIsCommentsLoading(false);
+            }
         }
+    };
+    
+    useEffect(() => {
+        fetchComments();
     }, [showComments, activeIds?.questionId, token, request, toast]);
 
     const handleArchive = async () => {
@@ -409,15 +417,15 @@ export default function RequestPreviewPage() {
         
         setIsSubmittingComment(true);
         try {
-            const newCommentData = await addComment(token, {
+            await addComment(token, {
                 request_id: request.id,
                 user_id: currentUser.id,
                 question_id: String(activeIds.questionId),
                 comment: newComment
             });
-            setComments(prev => [newCommentData, ...prev]);
             setNewComment('');
             toast({ title: 'Comment added' });
+            await fetchComments(); // Refetch comments to get the full object with user details
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error adding comment', description: err.message });
         } finally {
@@ -586,4 +594,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
