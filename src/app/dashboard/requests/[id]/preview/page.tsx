@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -246,6 +245,21 @@ export default function RequestPreviewPage() {
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
+    const fetchComments = async () => {
+        if (showComments && activeIds?.questionId && token && request) {
+            setIsCommentsLoading(true);
+            try {
+                const questionIdStr = String(activeIds.questionId);
+                const commentsData = await getComments(token, request.id, questionIdStr);
+                setComments(commentsData);
+            } catch (err: any) {
+                toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
+            } finally {
+                setIsCommentsLoading(false);
+            }
+        }
+    };
+
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
         if (!token) { router.push('/login'); return; }
@@ -284,24 +298,10 @@ export default function RequestPreviewPage() {
         }
         fetchRequestData();
     }, [id, router, toast, token]);
-
-    const fetchComments = async () => {
-        if (showComments && activeIds?.questionId && token && request) {
-            setIsCommentsLoading(true);
-            try {
-                const questionIdStr = String(activeIds.questionId);
-                const commentsData = await getComments(token, request.id, questionIdStr);
-                setComments(commentsData);
-            } catch (err: any) {
-                toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
-            } finally {
-                setIsCommentsLoading(false);
-            }
-        }
-    };
     
     useEffect(() => {
         fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showComments, activeIds?.questionId]);
 
     const handleArchive = async () => {
@@ -462,7 +462,7 @@ export default function RequestPreviewPage() {
         try {
             await deleteComment(token, commentToDelete.id);
             toast({ title: 'Comment deleted' });
-            setComments(comments.filter(c => c.id !== commentToDelete.id));
+            await fetchComments();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error deleting comment', description: err.message });
         } finally {
@@ -580,11 +580,22 @@ export default function RequestPreviewPage() {
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
                                                             comments.map(comment => (
-                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group relative">
+                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                        <p className="font-semibold">{comment.user.name} commented</p>
-                                                                        <p>{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                          <p className="font-semibold">{comment.user.name}</p>
+                                                                          <span>commented</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
+                                                                                <>
+                                                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.comment); }}><Pencil className="h-3 w-3" /></Button>
+                                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setCommentToDelete(comment)}><Trash2 className="h-3 w-3" /></Button>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
+                                                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
                                                                     {editingCommentId === comment.id ? (
                                                                         <div className="mt-2">
                                                                             <Textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="bg-white" />
@@ -597,12 +608,6 @@ export default function RequestPreviewPage() {
                                                                         </div>
                                                                     ) : (
                                                                         <p className="text-sm mt-2">{comment.comment}</p>
-                                                                    )}
-                                                                    {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
-                                                                        <div className="absolute top-1 right-1 flex opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.comment); }}><Pencil className="h-3 w-3" /></Button>
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setCommentToDelete(comment)}><Trash2 className="h-3 w-3" /></Button>
-                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             ))
@@ -651,3 +656,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
