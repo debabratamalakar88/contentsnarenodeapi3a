@@ -1059,7 +1059,7 @@ export async function getComments(token: string | null, requestIdOrCode: number 
     const response = await fetchWithToken(url, token);
     return response.data || [];
   } else {
-    // Public request also uses the request ID now based on previous corrections
+    // Public request uses the request code
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
