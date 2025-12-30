@@ -239,26 +239,25 @@ export default function ViewRequestPage() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     const fetchComments = useCallback(async () => {
-        if (activeIds?.questionId && token && request) {
-            setIsCommentsLoading(true);
-            try {
-                const questionIdStr = String(activeIds.questionId);
-                const commentsData = await getComments(token, request.id, questionIdStr);
-                setComments(commentsData);
-            } catch (err: any) {
-                console.error("Failed to fetch comments:", err);
-                setComments([]);
-            } finally {
-                setIsCommentsLoading(false);
-            }
-        } else {
+        if (!activeIds?.questionId || !token || !request) return;
+        setIsCommentsLoading(true);
+        try {
+            const questionIdStr = String(activeIds.questionId);
+            const commentsData = await getComments(token, request.id, questionIdStr);
+            setComments(commentsData);
+        } catch (err: any) {
+            console.error("Failed to fetch comments:", err);
             setComments([]);
+        } finally {
+            setIsCommentsLoading(false);
         }
     }, [activeIds?.questionId, request, token]);
 
     useEffect(() => {
-        fetchComments();
-    }, [fetchComments]);
+        if (request) {
+            fetchComments();
+        }
+    }, [request, activeIds, fetchComments]);
     
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -585,3 +584,6 @@ export default function ViewRequestPage() {
 
     
 
+
+
+    
