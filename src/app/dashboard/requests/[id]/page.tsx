@@ -445,7 +445,7 @@ export default function ViewRequestPage() {
                                                         </div>
                                                     </div>
                                                      <div className="mt-6 flex justify-end">
-                                                        <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
+                                                        <Button type="button" variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
                                                             {showComments ? 'CLOSE COMMENTS' : `COMMENTS (${comments.length})`}
                                                         </Button>
                                                     </div>
@@ -582,8 +582,3 @@ export default function ViewRequestPage() {
     );
 }
 
-    
-
-
-
-    
