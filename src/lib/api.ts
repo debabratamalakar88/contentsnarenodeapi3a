@@ -1051,16 +1051,37 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string, requestId: number, questionId: string): Promise<Comment[]> {
-  const response = await fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token);
-  return response.data || [];
+export async function getComments(token: string | null, requestId: number, questionId: string): Promise<Comment[]> {
+  const url = `${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`;
+
+  if (token) {
+    const response = await fetchWithToken(url, token);
+    return response.data || [];
+  } else {
+    // Public fetch for shared pages
+    const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+    });
+    const data = await handleResponse(response);
+    return data.data || [];
+  }
 }
 
-export async function addComment(token: string, data: { request_id: number; user_id: number; question_id: string; comment: string }): Promise<Comment> {
-  return fetchWithToken(`${API_BASE_URL}/api/request-comments`, token, {
+export async function addComment(token: string | null, data: { request_id: number; user_id?: number; client_name?: string; client_email?: string; question_id: string; comment: string }): Promise<Comment> {
+  const headers: { [key: string]: string } = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/request-comments`, {
     method: 'POST',
+    headers: headers,
     body: JSON.stringify(data),
   });
+  return handleResponse(response);
 }
 
 export async function updateComment(token: string, commentId: number, data: { comment: string }): Promise<Comment> {
