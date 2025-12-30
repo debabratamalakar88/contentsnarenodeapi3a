@@ -255,7 +255,7 @@ export default function SharedRequestPage() {
         setIsCommentsLoading(true);
         try {
             const questionIdStr = String(activeIds.questionId);
-            const commentsData = await getComments(requestCode, request.id, questionIdStr);
+            const commentsData = await getComments(null, requestCode, questionIdStr);
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
