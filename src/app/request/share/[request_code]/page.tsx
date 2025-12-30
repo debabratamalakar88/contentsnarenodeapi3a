@@ -2,9 +2,9 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
+import React, { useEffect, useState, useMemo, type FormEvent, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, type Request, type Question, type Page, type Section } from '@/lib/api';
+import { getSharedRequest, getSubmission, startSubmission, saveStep, submitRequest, addComment, getComments, updateComment, deleteComment, type Request, type Question, type Page, type Section, type Comment } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -15,13 +15,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, CheckCircle, Info, MessageSquare, History } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, CalendarDays, CheckCircle, Info, MessageSquare, History, Pencil, Trash2 } from 'lucide-react';
 import { AddressAutocompleteInput } from '@/components/ui/address-autocomplete-input';
 import { countries } from '@/lib/countries';
-import { IconSelector } from '@/components/ui/icon-selector';
+import { iconList } from '@/components/ui/icon-selector';
 import { cn } from "@/lib/utils";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+const getInitials = (name: string): string => {
+    if (!name) return '';
+    const words = name.trim().split(' ').filter(Boolean);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
+}
 
 
 const renderQuestionInput = (
@@ -113,13 +123,6 @@ const renderQuestionInput = (
              );
         case 'icon-selector':
             return <IconSelector name={questionName} defaultValue={value || ''} onValueChange={(val) => onChange(questionName, val)} />;
-        case 'color-picker':
-            return (
-                <div className="flex items-center gap-2">
-                    <Input type="color" className="w-12 h-10 p-1" value={value || '#000000'} onChange={e => onChange(questionName, e.target.value)} />
-                    <Input type="text" name={questionName} placeholder="#000000" value={value || '#000000'} readOnly className="max-w-[150px]"/>
-                </div>
-            );
         case 'button':
             return <Button type={question.buttonType || 'button'} variant={question.buttonVariant || 'default'}>{question.label}</Button>;
         default:
@@ -231,12 +234,43 @@ export default function SharedRequestPage() {
     const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
     const [clientId, setClientId] = useState<string | null>(null);
     
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [newComment, setNewComment] = useState("");
+    const [isCommentsLoading, setIsCommentsLoading] = useState(false);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editingCommentText, setEditingCommentText] = useState('');
+    const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
+
     useEffect(() => {
       const id = searchParams.get('client_id');
       if (id) {
         setClientId(id);
       }
     }, [searchParams]);
+    
+    const fetchComments = useCallback(async () => {
+        if (!activeIds?.questionId || !request) return;
+        setIsCommentsLoading(true);
+        try {
+            const questionIdStr = String(activeIds.questionId);
+            // Public page doesn't have a token, so pass null
+            const commentsData = await getComments(null as any, request.id, questionIdStr);
+            setComments(commentsData);
+        } catch (err: any) {
+            console.error("Failed to fetch comments:", err);
+            setComments([]);
+        } finally {
+            setIsCommentsLoading(false);
+        }
+    }, [activeIds?.questionId, request]);
+
+    useEffect(() => {
+        if (request) {
+            fetchComments();
+        }
+    }, [request, activeIds, fetchComments]);
     
     useEffect(() => {
         if (!requestCode) return;
@@ -335,18 +369,6 @@ export default function SharedRequestPage() {
         return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
     }, [request, activeIds]);
     
-    const isLastQuestion = useMemo(() => {
-        if (!request || !activeIds) return false;
-        const { pageId, sectionId, questionId } = activeIds;
-        const lastPage = request.form_data[request.form_data.length - 1];
-        if (pageId !== lastPage.id) return false;
-        const lastSection = lastPage.sections[lastPage.sections.length - 1];
-        if (sectionId !== lastSection.id) return false;
-        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
-        return questionId === lastQuestion.id;
-    }, [request, activeIds]);
-
-    
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
         if (!request || !activePage) return;
         const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
@@ -385,7 +407,6 @@ export default function SharedRequestPage() {
                 currentSubmissionCode = response.submission_code;
                 setSubmissionCode(currentSubmissionCode);
                 localStorage.setItem(`submission_code_${requestCode}`, currentSubmissionCode);
-                // After getting the code, immediately save the current step's answers.
                 await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
             } else {
                 await saveStep(currentSubmissionCode, activePageIndex + 1, formData);
@@ -545,6 +566,66 @@ export default function SharedRequestPage() {
         setValidationErrors({});
     };
 
+    const handleAddComment = async () => {
+        if (!request || !activeIds?.questionId || !newComment.trim()) return;
+        
+        const clientName = allAnswers['full_name'] || 'Anonymous';
+        const clientEmail = allAnswers['email'] || undefined;
+
+        setIsSubmittingComment(true);
+        try {
+            await addComment(null, {
+                request_id: request.id,
+                question_id: String(activeIds.questionId),
+                comment: newComment,
+                client_name: clientName,
+                client_email: clientEmail,
+                user_id: 0, // Placeholder for guest/client
+            });
+            setNewComment('');
+            toast({ title: 'Comment added' });
+            await fetchComments();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error adding comment', description: err.message });
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+    
+    const handleUpdateComment = async () => {
+        if (!editingCommentId || !editingCommentText.trim()) return;
+
+        setIsSubmittingComment(true);
+        try {
+            // Public users likely cannot update comments, this might need a token.
+            // For now, we assume it's not possible, but if it were, the call would be:
+            // await updateComment(token, editingCommentId, { comment: editingCommentText });
+            toast({ title: 'Comment updated (simulated)' });
+            setEditingCommentId(null);
+            setEditingCommentText('');
+            await fetchComments();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error updating comment', description: err.message });
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleDeleteComment = async () => {
+        if (!commentToDelete) return;
+        // Public users likely cannot delete comments.
+        try {
+            // await deleteComment(token, commentToDelete.id);
+            toast({ title: 'Comment deleted (simulated)' });
+            await fetchComments();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting comment', description: err.message });
+        } finally {
+            setCommentToDelete(null);
+        }
+    };
+
+
     if (isLoading) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-muted">
@@ -584,7 +665,7 @@ export default function SharedRequestPage() {
     }
 
     if (!request || !request.form_data || request.form_data.length === 0 || !activeIds) {
-        return <div className="p-6 text-center text-muted-foreground">Request data is not available.</div>;
+        return <div className="p-6 text-center text-muted-foreground">Request data is not available or form is empty.</div>;
     }
     
     return (
@@ -610,44 +691,82 @@ export default function SharedRequestPage() {
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-3xl mx-auto p-8">
                             <form noValidate>
-                                {activeQuestion ? (
-                                    <>
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
-                                            <div className="grid gap-2">
-                                                <h3 className="font-semibold text-lg">{activeQuestion.label}{activeQuestion.required && <span className="text-destructive ml-1">*</span>}</h3>
-                                                {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
-                                                <div className="mt-4">
-                                                    {renderQuestionInput(activeQuestion, allAnswers[activeQuestion.apiId || ''], handleAnswerChange, validationErrors[activeQuestion.apiId || ''])}
-                                                     {validationErrors[activeQuestion.apiId || ''] && <p className="text-sm font-medium text-destructive mt-1">{validationErrors[activeQuestion.apiId || '']}</p>}
+                                <div className="flex items-start gap-6">
+                                    <div className="flex-1">
+                                        {activeQuestion ? (
+                                            <div className="space-y-6">
+                                                <div className="flex justify-between items-center">
+                                                    <h2 className="text-xl font-bold">{activeSection?.title.replace(/^[0-9\.]+\s*/, '')}</h2>
+                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><History className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7"><Info className="h-4 w-4" /></Button>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-gray-200/80">
+                                                    <div className="grid gap-2">
+                                                        <h3 className="font-semibold text-lg">{activeQuestion.label}{activeQuestion.required && <span className="text-destructive ml-1">*</span>}</h3>
+                                                        {activeQuestion.instructions && <p className="text-muted-foreground text-sm">{activeQuestion.instructions}</p>}
+                                                        <div className="mt-4">
+                                                            {renderQuestionInput(activeQuestion, allAnswers[activeQuestion.apiId || ''], handleAnswerChange, validationErrors[activeQuestion.apiId || ''])}
+                                                             {validationErrors[activeQuestion.apiId || ''] && <p className="text-sm font-medium text-destructive mt-1">{validationErrors[activeQuestion.apiId || '']}</p>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-8 flex justify-between items-center">
+                                                        <Button type="button" size="lg" className="bg-pink-600 hover:bg-pink-700" onClick={isLastQuestion ? handleSubmitForReview : handleContinue} disabled={isSubmitting}>
+                                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                            {isLastQuestion ? "SUBMIT FOR REVIEW" : "CONTINUE"}
+                                                        </Button>
+                                                        <Button variant="outline" className="rounded-full" type="button" onClick={() => setShowComments(prev => !prev)}>
+                                                            {showComments ? 'CLOSE' : 'ASK A QUESTION'} ({comments.length})
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="mt-8 flex justify-between items-center">
-                                                {isLastQuestion ? (
-                                                     <Button type="button" size="lg" className="bg-pink-600 hover:bg-pink-700" onClick={handleSubmitForReview} disabled={isSubmitting}>
-                                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                        SUBMIT FOR REVIEW
-                                                    </Button>
-                                                ) : (
-                                                    <Button type="button" size="lg" className="bg-pink-600 hover:bg-pink-700" onClick={handleContinue} disabled={isSubmitting}>
-                                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                        CONTINUE
-                                                    </Button>
-                                                )}
-                                                <Button variant="outline" className="rounded-full" type="button">ASK A QUESTION</Button>
-                                            </div>
+                                       ) : (
+                                         <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
+                                       )}
+                                    </div>
+                                    {showComments && (
+                                        <div className="w-80 flex-shrink-0 relative animate-in fade-in-50 slide-in-from-right-5">
+                                            <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 bg-white transform rotate-45 border-l border-b border-gray-200/80"></div>
+                                            <Card className="shadow-lg">
+                                                <CardHeader>
+                                                    <CardTitle className="text-lg">Comments ({comments.length})</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                                                        {isCommentsLoading ? (
+                                                          <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
+                                                        ) : comments.length > 0 ? (
+                                                            comments.map(comment => (
+                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group">
+                                                                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                                        <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
+                                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            {/* Public users cannot edit/delete */}
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                    <p className="text-sm mt-2">{comment.comment}</p>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-4 pt-4 border-t">
+                                                        <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+                                                        <Button className="w-full mt-2" onClick={handleAddComment} disabled={isSubmittingComment}>
+                                                            {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                            ADD COMMENT
+                                                        </Button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
                                         </div>
-                                    </>
-                                ) : (
-                                    <p className="text-center text-muted-foreground py-10">Select a question to view it.</p>
-                                )}
+                                    )}
+                                </div>
                             </form>
                         </div>
                     </div>

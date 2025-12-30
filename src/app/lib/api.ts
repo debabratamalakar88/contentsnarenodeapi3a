@@ -1056,11 +1056,21 @@ export async function getComments(token: string, requestId: number, questionId: 
   return response.data || [];
 }
 
-export async function addComment(token: string, data: { request_id: number, user_id: number, question_id: string, comment: string }): Promise<Comment> {
-  return fetchWithToken(`${API_BASE_URL}/api/request-comments`, token, {
+export async function addComment(token: string | null, data: { request_id: number, user_id?: number, client_name?: string, client_email?: string, question_id: string, comment: string }): Promise<Comment> {
+  const headers: { [key: string]: string } = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/request-comments`, {
     method: 'POST',
+    headers: headers,
     body: JSON.stringify(data),
   });
+  return handleResponse(response);
 }
 
 export async function updateComment(token: string, commentId: number, data: { comment: string }): Promise<Comment> {
