@@ -245,21 +245,6 @@ export default function RequestPreviewPage() {
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-    const fetchComments = useCallback(async () => {
-        if (showComments && activeIds?.questionId && token && request) {
-            setIsCommentsLoading(true);
-            try {
-                const questionIdStr = String(activeIds.questionId);
-                const commentsData = await getComments(token, request.id, questionIdStr);
-                setComments(commentsData);
-            } catch (err: any) {
-                toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
-            } finally {
-                setIsCommentsLoading(false);
-            }
-        }
-    }, [activeIds?.questionId, request, showComments, token, toast]);
-
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
         if (!token) { router.push('/login'); return; }
@@ -299,10 +284,30 @@ export default function RequestPreviewPage() {
         fetchRequestData();
     }, [id, router, toast, token]);
     
+    const fetchComments = useCallback(async () => {
+        if (activeIds?.questionId && token && request) {
+            setIsCommentsLoading(true);
+            try {
+                const questionIdStr = String(activeIds.questionId);
+                const commentsData = await getComments(token, request.id, questionIdStr);
+                setComments(commentsData);
+            } catch (err: any) {
+                // Don't show toast for comment fetch errors unless panel is open
+                if (showComments) {
+                    toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
+                }
+                console.error("Failed to fetch comments:", err);
+                setComments([]);
+            } finally {
+                setIsCommentsLoading(false);
+            }
+        }
+    }, [activeIds?.questionId, request, showComments, token, toast]);
+
     useEffect(() => {
         fetchComments();
     }, [fetchComments]);
-
+    
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
         try {
@@ -558,7 +563,7 @@ export default function RequestPreviewPage() {
                                                         <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
                                                             {isLastQuestion ? "End of Form" : "Continue to next question"}
                                                         </Button>
-                                                        <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
+                                                         <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
                                                             {showComments ? 'CLOSE COMMENTS' : `COMMENTS (${comments.length})`}
                                                         </Button>
                                                     </div>
@@ -581,7 +586,7 @@ export default function RequestPreviewPage() {
                                                             comments.map(comment => (
                                                                 <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                        <p className="font-semibold">{comment.user.name}</p>
+                                                                        <p className="font-semibold">{comment.user?.name || 'User'}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
                                                                                 <>
@@ -652,3 +657,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
