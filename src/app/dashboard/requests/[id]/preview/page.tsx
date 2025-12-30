@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, updateComment, deleteComment, getProfile, type Request, type Question, type Page, type Client, type Comment, type User } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -653,4 +652,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
