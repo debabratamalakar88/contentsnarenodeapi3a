@@ -407,7 +407,11 @@ export default function RequestPreviewPage() {
         
         setIsSubmittingComment(true);
         try {
-            const newCommentData = await addComment(token, request.id, activeIds.questionId, newComment);
+            const newCommentData = await addComment(token, {
+                request_id: request.id,
+                question_id: String(activeIds.questionId),
+                comment: newComment
+            });
             setComments(prev => [newCommentData, ...prev]);
             setNewComment('');
             toast({ title: 'Comment added' });
@@ -531,10 +535,10 @@ export default function RequestPreviewPage() {
                                                             comments.map(comment => (
                                                                 <div key={comment.id} className="p-3 bg-muted rounded-lg">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                        <p className="font-semibold">{comment.user_name} commented</p>
+                                                                        <p className="font-semibold">{comment.user.name} commented</p>
                                                                         <p>{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
                                                                     </div>
-                                                                    <p className="text-sm mt-2">{comment.content}</p>
+                                                                    <p className="text-sm mt-2">{comment.comment}</p>
                                                                 </div>
                                                             ))
                                                         ) : (
@@ -579,4 +583,3 @@ export default function RequestPreviewPage() {
         </>
     );
 }
-
