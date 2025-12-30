@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -245,7 +246,7 @@ export default function RequestPreviewPage() {
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         if (showComments && activeIds?.questionId && token && request) {
             setIsCommentsLoading(true);
             try {
@@ -258,7 +259,7 @@ export default function RequestPreviewPage() {
                 setIsCommentsLoading(false);
             }
         }
-    };
+    }, [activeIds?.questionId, request, showComments, token, toast]);
 
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
@@ -301,8 +302,7 @@ export default function RequestPreviewPage() {
     
     useEffect(() => {
         fetchComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showComments, activeIds?.questionId]);
+    }, [fetchComments]);
 
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
@@ -560,7 +560,7 @@ export default function RequestPreviewPage() {
                                                             {isLastQuestion ? "End of Form" : "Continue to next question"}
                                                         </Button>
                                                         <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
-                                                            {showComments ? 'CLOSE COMMENTS' : 'COMMENTS'}
+                                                            {showComments ? 'CLOSE COMMENTS' : `COMMENTS (${comments.length})`}
                                                         </Button>
                                                     </div>
                                                 </>
@@ -582,10 +582,7 @@ export default function RequestPreviewPage() {
                                                             comments.map(comment => (
                                                                 <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                        <div className="flex items-center gap-2">
-                                                                          <p className="font-semibold">{comment.user.name}</p>
-                                                                          <span>commented</span>
-                                                                        </div>
+                                                                        <p className="font-semibold">{comment.user.name}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
                                                                                 <>
