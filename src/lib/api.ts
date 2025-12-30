@@ -1051,16 +1051,29 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string, requestId: number, questionId: number): Promise<Comment[]> {
+export async function getComments(token: string, requestId: number, questionId: string): Promise<Comment[]> {
   const response = await fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token);
   return response.data || [];
 }
 
-export async function addComment(token: string, data: { request_id: number, question_id: number | string, comment: string }): Promise<Comment> {
+export async function addComment(token: string, data: { request_id: number; user_id: number; question_id: string; comment: string }): Promise<Comment> {
   return fetchWithToken(`${API_BASE_URL}/api/request-comments`, token, {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export async function updateComment(token: string, commentId: number, data: { comment: string }): Promise<Comment> {
+    return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteComment(token: string, commentId: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
+        method: 'DELETE',
+    });
 }
 
 

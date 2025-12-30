@@ -237,10 +237,23 @@ export interface Reminder {
 
 export interface Comment {
   id: number;
-  user_name: string;
-  content: string;
+  request_id: number;
+  user_id: number;
+  question_id: string;
+  comment: string;
+  attachments: string[];
+  is_internal: boolean;
+  is_deleted: boolean;
   created_at: string;
-  question_id: number;
+  updated_at: string;
+  user: {
+    id: number;
+    name: string;
+  };
+  request: {
+    id: number;
+    title: string;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -1038,15 +1051,29 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string, requestId: number, questionId: number): Promise<Comment[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token);
+export async function getComments(token: string, requestId: number, questionId: string): Promise<Comment[]> {
+  const response = await fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token);
+  return response.data || [];
 }
 
-export async function addComment(token: string, requestId: number, questionId: number, content: string): Promise<Comment> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`, token, {
+export async function addComment(token: string, data: { request_id: number, user_id: number, question_id: string, comment: string }): Promise<Comment> {
+  return fetchWithToken(`${API_BASE_URL}/api/request-comments`, token, {
     method: 'POST',
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(data),
   });
+}
+
+export async function updateComment(token: string, commentId: number, data: { comment: string }): Promise<Comment> {
+    return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteComment(token: string, commentId: number): Promise<{ message: string }> {
+    return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
+        method: 'DELETE',
+    });
 }
 
 

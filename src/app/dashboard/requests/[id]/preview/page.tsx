@@ -1,13 +1,14 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, getProfile, type Request, type Question, type Page, type Client, type Comment, type User } from '@/lib/api';
+import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, updateComment, deleteComment, getProfile, type Request, type Question, type Page, type Client, type Comment, type User } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, Bold, Italic, Underline, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, CalendarDays, Rocket, Edit, Archive, Trash2, ChevronLeft, ChevronRight, MessageSquare, History, Info, Sparkles, Bold, Italic, Underline, Link as LinkIcon, Loader2, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -237,6 +238,10 @@ export default function RequestPreviewPage() {
     const [newComment, setNewComment] = useState("");
     const [isCommentsLoading, setIsCommentsLoading] = useState(false);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editingCommentText, setEditingCommentText] = useState('');
+    const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
 
     const id = Number(params.id);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
@@ -284,7 +289,8 @@ export default function RequestPreviewPage() {
         if (showComments && activeIds?.questionId && token && request) {
             setIsCommentsLoading(true);
             try {
-                const commentsData = await getComments(token, request.id, activeIds.questionId);
+                const questionIdStr = String(activeIds.questionId);
+                const commentsData = await getComments(token, request.id, questionIdStr);
                 setComments(commentsData);
             } catch (err: any) {
                 toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
@@ -296,7 +302,7 @@ export default function RequestPreviewPage() {
     
     useEffect(() => {
         fetchComments();
-    }, [showComments, activeIds?.questionId, token, request, toast]);
+    }, [showComments, activeIds?.questionId]);
 
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
@@ -425,14 +431,44 @@ export default function RequestPreviewPage() {
             });
             setNewComment('');
             toast({ title: 'Comment added' });
-            await fetchComments(); // Refetch comments to get the full object with user details
+            await fetchComments();
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Error adding comment', description: err.message });
         } finally {
             setIsSubmittingComment(false);
         }
     };
+    
+    const handleUpdateComment = async () => {
+        if (!token || !editingCommentId || !editingCommentText.trim()) return;
 
+        setIsSubmittingComment(true);
+        try {
+            await updateComment(token, editingCommentId, { comment: editingCommentText });
+            toast({ title: 'Comment updated' });
+            setEditingCommentId(null);
+            setEditingCommentText('');
+            await fetchComments();
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error updating comment', description: err.message });
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleDeleteComment = async () => {
+        if (!token || !commentToDelete) return;
+        
+        try {
+            await deleteComment(token, commentToDelete.id);
+            toast({ title: 'Comment deleted' });
+            setComments(comments.filter(c => c.id !== commentToDelete.id));
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error deleting comment', description: err.message });
+        } finally {
+            setCommentToDelete(null);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -544,12 +580,30 @@ export default function RequestPreviewPage() {
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
                                                             comments.map(comment => (
-                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group relative">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user.name} commented</p>
                                                                         <p>{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
                                                                     </div>
-                                                                    <p className="text-sm mt-2">{comment.comment}</p>
+                                                                    {editingCommentId === comment.id ? (
+                                                                        <div className="mt-2">
+                                                                            <Textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="bg-white" />
+                                                                            <div className="flex justify-end gap-2 mt-2">
+                                                                                <Button variant="ghost" size="sm" onClick={() => setEditingCommentId(null)}>Cancel</Button>
+                                                                                <Button size="sm" onClick={handleUpdateComment} disabled={isSubmittingComment}>
+                                                                                    {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Save
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p className="text-sm mt-2">{comment.comment}</p>
+                                                                    )}
+                                                                    {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
+                                                                        <div className="absolute top-1 right-1 flex opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.comment); }}><Pencil className="h-3 w-3" /></Button>
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setCommentToDelete(comment)}><Trash2 className="h-3 w-3" /></Button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))
                                                         ) : (
@@ -557,12 +611,6 @@ export default function RequestPreviewPage() {
                                                         )}
                                                     </div>
                                                     <div className="mt-4 pt-4 border-t">
-                                                        <div className="flex items-center gap-2 p-2 border-b mb-2">
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Bold className="h-4 w-4" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Italic className="h-4 w-4" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><Underline className="h-4 w-4" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><LinkIcon className="h-4 w-4" /></Button>
-                                                        </div>
                                                         <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
                                                         <Button className="w-full mt-2" onClick={handleAddComment} disabled={isSubmittingComment}>
                                                             {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -579,7 +627,16 @@ export default function RequestPreviewPage() {
                     </main>
                 </div>
             </div>
-             <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
+            <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Delete this comment?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteComment} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={!!requestToArchive} onOpenChange={(open) => !open && setRequestToArchive(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader><AlertDialogTitle>Archive Request?</AlertDialogTitle><AlertDialogDescription>This will move the request to the archive. You can restore it later.</AlertDialogDescription></AlertDialogHeader>
                     <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction></AlertDialogFooter>
