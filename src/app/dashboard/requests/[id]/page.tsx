@@ -177,7 +177,7 @@ const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds, public
                             <div className="pl-4 mt-1 space-y-1">
                                 {page.sections.map(section => (
                                     <div key={section.id}>
-                                         <button onClick={() => setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}
+                                         <button onClick={() => { if(section.questions[0]) setActiveIds({ pageId: page.id, sectionId: section.id, questionId: section.questions[0].id })}}
                                             className={cn("w-full text-left flex items-center justify-between text-sm p-2 rounded-md font-semibold", activeSectionId === section.id && activePageId === page.id ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100")}
                                         >
                                             <span className="truncate">{section.title}</span>
@@ -251,6 +251,8 @@ export default function ViewRequestPage() {
             } finally {
                 setIsCommentsLoading(false);
             }
+        } else {
+            setComments([]);
         }
     }, [activeIds?.questionId, request, token]);
 
@@ -582,3 +584,4 @@ export default function ViewRequestPage() {
 }
 
     
+
