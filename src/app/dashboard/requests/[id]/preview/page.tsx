@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, type Request, type Question, type Page, type Client, type Comment } from '@/lib/api';
+import { getRequest, getClients, softDeleteRequest, forceDeleteRequest, getComments, addComment, getProfile, type Request, type Question, type Page, type Client, type Comment, type User } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -225,6 +224,7 @@ export default function RequestPreviewPage() {
     const { toast } = useToast();
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeIds, setActiveIds] = useState<{ pageId: number, sectionId: number, questionId: number } | null>(null);
@@ -247,9 +247,10 @@ export default function RequestPreviewPage() {
 
         async function fetchRequestData() {
             try {
-                const [requestData, clientData] = await Promise.all([
+                const [requestData, clientData, profileData] = await Promise.all([
                     getRequest(token!, id),
-                    getClients(token!)
+                    getClients(token!),
+                    getProfile(token!),
                 ]);
                 
                 if (requestData.status !== 'draft') {
@@ -259,6 +260,7 @@ export default function RequestPreviewPage() {
 
                 setRequest(requestData);
                 setClients(clientData || []);
+                setCurrentUser(profileData.user);
 
                 if (requestData.form_data && requestData.form_data.length > 0 && requestData.form_data[0].sections.length > 0 && requestData.form_data[0].sections[0].questions.length > 0) {
                     setActiveIds({
@@ -403,12 +405,13 @@ export default function RequestPreviewPage() {
     }, [request, activeIds]);
 
     const handleAddComment = async () => {
-        if (!token || !request || !activeIds?.questionId || !newComment.trim()) return;
+        if (!token || !request || !activeIds?.questionId || !newComment.trim() || !currentUser) return;
         
         setIsSubmittingComment(true);
         try {
             const newCommentData = await addComment(token, {
                 request_id: request.id,
+                user_id: currentUser.id,
                 question_id: String(activeIds.questionId),
                 comment: newComment
             });
@@ -583,3 +586,4 @@ export default function RequestPreviewPage() {
         </>
     );
 }
+
