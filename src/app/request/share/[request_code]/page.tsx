@@ -236,9 +236,7 @@ export default function SharedRequestPage() {
     
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
-    const [newComment, setNewComment] = useState("");
     const [isCommentsLoading, setIsCommentsLoading] = useState(false);
-    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editingCommentText, setEditingCommentText] = useState('');
     const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
@@ -254,8 +252,7 @@ export default function SharedRequestPage() {
         if (!activeIds?.questionId || !request) return;
         setIsCommentsLoading(true);
         try {
-            const questionIdStr = String(activeIds.questionId);
-            const commentsData = await getComments(null, request.id, questionIdStr);
+            const commentsData = await getComments(null, request.id, String(activeIds.questionId));
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
@@ -576,66 +573,6 @@ export default function SharedRequestPage() {
         setValidationErrors({});
     };
 
-    const handleAddComment = async () => {
-        if (!request || !activeIds?.questionId || !newComment.trim()) return;
-        
-        const clientName = allAnswers['full_name'] || 'Anonymous';
-        const clientEmail = allAnswers['email'] || undefined;
-
-        setIsSubmittingComment(true);
-        try {
-            await addComment(null, {
-                request_id: request.id,
-                question_id: String(activeIds.questionId),
-                comment: newComment,
-                client_name: clientName,
-                client_email: clientEmail,
-                user_id: 0, // Placeholder for guest/client
-            });
-            setNewComment('');
-            toast({ title: 'Comment added' });
-            await fetchComments();
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error adding comment', description: err.message });
-        } finally {
-            setIsSubmittingComment(false);
-        }
-    };
-    
-    const handleUpdateComment = async () => {
-        if (!editingCommentId || !editingCommentText.trim()) return;
-
-        setIsSubmittingComment(true);
-        try {
-            // Public users likely cannot update comments, this might need a token.
-            // For now, we assume it's not possible, but if it were, the call would be:
-            // await updateComment(token, editingCommentId, { comment: editingCommentText });
-            toast({ title: 'Comment updated (simulated)' });
-            setEditingCommentId(null);
-            setEditingCommentText('');
-            await fetchComments();
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error updating comment', description: err.message });
-        } finally {
-            setIsSubmittingComment(false);
-        }
-    };
-
-    const handleDeleteComment = async () => {
-        if (!commentToDelete) return;
-        // Public users likely cannot delete comments.
-        try {
-            // await deleteComment(token, commentToDelete.id);
-            toast({ title: 'Comment deleted (simulated)' });
-            await fetchComments();
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error deleting comment', description: err.message });
-        } finally {
-            setCommentToDelete(null);
-        }
-    };
-
-
     if (isLoading) {
         return (
             <div className="flex min-h-screen w-full items-center justify-center bg-muted">
@@ -728,7 +665,7 @@ export default function SharedRequestPage() {
                                                             {isLastQuestion ? "SUBMIT FOR REVIEW" : "CONTINUE"}
                                                         </Button>
                                                         <Button variant="outline" className="rounded-full" type="button" onClick={() => setShowComments(prev => !prev)}>
-                                                            {showComments ? 'CLOSE' : 'ASK A QUESTION'} ({comments.length})
+                                                            {showComments ? 'CLOSE' : 'COMMENTS'} ({comments.length})
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -745,7 +682,7 @@ export default function SharedRequestPage() {
                                                     <CardTitle className="text-lg">Comments ({comments.length})</CardTitle>
                                                 </CardHeader>
                                                 <CardContent>
-                                                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                                                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                                                         {isCommentsLoading ? (
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
@@ -753,9 +690,6 @@ export default function SharedRequestPage() {
                                                                 <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
-                                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            {/* Public users cannot edit/delete */}
-                                                                        </div>
                                                                     </div>
                                                                     <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
                                                                     <p className="text-sm mt-2">{comment.comment}</p>
@@ -764,13 +698,6 @@ export default function SharedRequestPage() {
                                                         ) : (
                                                             <p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>
                                                         )}
-                                                    </div>
-                                                    <div className="mt-4 pt-4 border-t">
-                                                        <Textarea placeholder="Enter your comment here..." className="min-h-[100px] border-0 focus-visible:ring-0 shadow-none p-2" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
-                                                        <Button className="w-full mt-2" onClick={handleAddComment} disabled={isSubmittingComment}>
-                                                            {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                            ADD COMMENT
-                                                        </Button>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -785,3 +712,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
