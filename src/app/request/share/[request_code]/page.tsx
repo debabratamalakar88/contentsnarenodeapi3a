@@ -368,6 +368,17 @@ export default function SharedRequestPage() {
         const pageIndex = request.form_data.findIndex(p => p.id === page.id);
         return { activePage: page, activeSection: section, activeQuestion: question || null, activePageIndex: pageIndex };
     }, [request, activeIds]);
+
+    const isLastQuestion = useMemo(() => {
+        if (!request || !activeIds) return true;
+        const { pageId, sectionId, questionId } = activeIds;
+        const lastPage = request.form_data[request.form_data.length - 1];
+        if (pageId !== lastPage.id) return false;
+        const lastSection = lastPage.sections[lastPage.sections.length - 1];
+        if (sectionId !== lastSection.id) return false;
+        const lastQuestion = lastSection.questions[lastSection.questions.length - 1];
+        return questionId === lastQuestion.id;
+    }, [request, activeIds]);
     
     const handleNextPrevPage = (direction: 'prev' | 'next') => {
         if (!request || !activePage) return;
@@ -775,3 +786,4 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
