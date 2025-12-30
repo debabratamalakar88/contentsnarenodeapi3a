@@ -255,8 +255,7 @@ export default function SharedRequestPage() {
         setIsCommentsLoading(true);
         try {
             const questionIdStr = String(activeIds.questionId);
-            // Public page doesn't have a token, so pass null
-            const commentsData = await getComments(null as any, request.id, questionIdStr);
+            const commentsData = await getComments(requestCode, request.id, questionIdStr);
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
@@ -264,7 +263,7 @@ export default function SharedRequestPage() {
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, request]);
+    }, [activeIds?.questionId, request, requestCode]);
 
     useEffect(() => {
         if (request) {
@@ -397,7 +396,7 @@ export default function SharedRequestPage() {
           if (Array.isArray(value)) {
             value.forEach(item => formData.append(`${key}[]`, item));
           } else if (value !== null && value !== undefined) {
-            formData.append(key, value);
+            formData.append(key, value as string);
           }
         });
         if (clientId) {
@@ -786,4 +785,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-

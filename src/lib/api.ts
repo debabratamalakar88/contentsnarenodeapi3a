@@ -1051,14 +1051,16 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string | null, requestId: number, questionId: string): Promise<Comment[]> {
-  const url = `${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`;
-
+export async function getComments(token: string | null, requestIdOrCode: number | string, questionId: string): Promise<Comment[]> {
+  let url: string;
   if (token) {
+    // Authenticated request uses the request ID
+    url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
     return response.data || [];
   } else {
-    // Public fetch for shared pages
+    // Public request uses the request CODE
+    url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
     });
