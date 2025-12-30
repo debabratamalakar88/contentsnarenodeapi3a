@@ -255,7 +255,7 @@ export default function SharedRequestPage() {
         setIsCommentsLoading(true);
         try {
             const questionIdStr = String(activeIds.questionId);
-            const commentsData = await getComments(null, requestCode, questionIdStr);
+            const commentsData = await getComments(null, request.id, questionIdStr);
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
@@ -263,7 +263,7 @@ export default function SharedRequestPage() {
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, request, requestCode]);
+    }, [activeIds?.questionId, request]);
 
     useEffect(() => {
         if (request) {
