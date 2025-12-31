@@ -128,7 +128,7 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
                                 {notifications.map(notif => {
                                     const isDraft = notif.request.status === 'draft';
                                     const linkHref = isDraft
-                                        ? `/dashboard/requests/edit/${notif.request_id}/preview#question-${notif.question_id}`
+                                        ? `/dashboard/requests/${notif.request_id}/preview#question-${notif.question_id}`
                                         : `/dashboard/requests/${notif.request_id}#question-${notif.question_id}`;
 
                                     return (
@@ -167,4 +167,3 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
         </div>
     );
 }
-
