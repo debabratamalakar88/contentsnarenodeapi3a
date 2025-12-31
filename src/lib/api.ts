@@ -256,6 +256,19 @@ export interface Comment {
   };
 }
 
+export interface CommentNotification {
+    id: number;
+    comment: string;
+    created_at: string;
+    user: {
+        name: string;
+    };
+    request: {
+        title: string;
+    };
+    read_at: string | null;
+}
+
 export interface PaginatedResponse<T> {
     data: T[];
     current_page: number;
@@ -273,6 +286,7 @@ export interface PaginatedRequests extends PaginatedResponse<Request> {}
 export interface PaginatedUsers extends PaginatedResponse<User> {}
 export interface PaginatedClients extends PaginatedResponse<Client> {}
 export interface PaginatedReminders extends PaginatedResponse<Reminder> {}
+export interface PaginatedCommentNotifications extends PaginatedResponse<CommentNotification> {}
 
 
 export interface TemplateCategory {
@@ -1053,13 +1067,13 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 
 export async function getComments(token: string | null, requestIdOrCode: number | string, questionId: string): Promise<Comment[]> {
   let url: string;
+  // If a token is provided, we assume it's an authenticated request with a request ID
   if (token) {
-    // Authenticated request uses the request ID
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
     return response.data || [];
   } else {
-    // Public request uses the request code
+    // If no token, it's a public request using the request CODE
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
@@ -1069,7 +1083,7 @@ export async function getComments(token: string | null, requestIdOrCode: number 
   }
 }
 
-export async function addComment(token: string | null, data: { request_id: number; user_id?: number; client_name?: string; client_email?: string; question_id: string; comment: string }): Promise<Comment> {
+export async function addComment(token: string | null, data: { request_id: number; user_id?: number; client_name?: string; client_email?: string; question_id: string; comment: string; }): Promise<Comment> {
   const headers: { [key: string]: string } = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -1097,6 +1111,17 @@ export async function deleteComment(token: string, commentId: number): Promise<{
     return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
         method: 'DELETE',
     });
+}
+
+export async function getCommentNotifications(token: string, filter: 'my-requests' | 'all-requests' = 'my-requests', page: number = 1): Promise<PaginatedCommentNotifications> {
+  const url = new URL(`${API_BASE_URL}/api/comments/notifications`);
+  url.searchParams.append('filter', filter);
+  url.searchParams.append('page', String(page));
+  return fetchWithToken(url.toString(), token);
+}
+
+export async function markAllCommentsAsRead(token: string): Promise<{ message: string }> {
+  return fetchWithToken(`${API_BASE_URL}/api/comments/mark-as-read`, token, { method: 'POST' });
 }
 
 
