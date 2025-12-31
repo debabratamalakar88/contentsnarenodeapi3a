@@ -11,7 +11,7 @@ import {
   LogOut,
   Building,
   Settings,
-  MessageSquare
+  Bell
 } from "lucide-react"
 
 import {
@@ -167,7 +167,7 @@ export default function DashboardLayout({
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 relative text-white/70 hover:text-white hover:bg-white/10">
-                  <MessageSquare className="h-5 w-5" />
+                  <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                       {unreadCount > 9 ? '9+' : unreadCount}
