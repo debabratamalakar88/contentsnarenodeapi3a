@@ -254,20 +254,9 @@ export interface Comment {
     id: number;
     title: string;
   };
+  read_at?: string | null;
 }
 
-export interface CommentNotification {
-    id: number;
-    comment: string;
-    created_at: string;
-    user: {
-        name: string;
-    };
-    request: {
-        title: string;
-    };
-    read_at: string | null;
-}
 
 export interface PaginatedResponse<T> {
     data: T[];
@@ -286,7 +275,7 @@ export interface PaginatedRequests extends PaginatedResponse<Request> {}
 export interface PaginatedUsers extends PaginatedResponse<User> {}
 export interface PaginatedClients extends PaginatedResponse<Client> {}
 export interface PaginatedReminders extends PaginatedResponse<Reminder> {}
-export interface PaginatedCommentNotifications extends PaginatedResponse<CommentNotification> {}
+export interface PaginatedComments extends PaginatedResponse<Comment> {}
 
 
 export interface TemplateCategory {
@@ -1113,11 +1102,11 @@ export async function deleteComment(token: string, commentId: number): Promise<{
     });
 }
 
-export async function getCommentNotifications(token: string, filter: 'my-requests' | 'all-requests' = 'my-requests', page: number = 1): Promise<PaginatedCommentNotifications> {
-  const url = new URL(`${API_BASE_URL}/api/comments/notifications`);
-  url.searchParams.append('filter', filter);
-  url.searchParams.append('page', String(page));
-  return fetchWithToken(url.toString(), token);
+export async function getCommentNotifications(token: string, filter: 'my-requests' | 'all-requests', page: number = 1): Promise<PaginatedComments> {
+    const endpoint = filter === 'my-requests' ? 'my-requests' : 'all-requests';
+    const url = new URL(`${API_BASE_URL}/api/comments/${endpoint}`);
+    url.searchParams.append('page', String(page));
+    return fetchWithToken(url.toString(), token);
 }
 
 export async function markAllCommentsAsRead(token: string): Promise<{ message: string }> {

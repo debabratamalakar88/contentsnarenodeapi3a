@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getCommentNotifications, markAllCommentsAsRead, type CommentNotification, type PaginatedCommentNotifications } from '@/lib/api';
+import { getCommentNotifications, markAllCommentsAsRead, type Comment, type PaginatedComments } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,7 +30,7 @@ const getInitials = (name: string): string => {
 export function CommentNotifications({ onUnreadCountChange }: CommentNotificationsProps) {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'my-requests' | 'all-requests'>('my-requests');
-    const [notifications, setNotifications] = useState<CommentNotification[]>([]);
+    const [notifications, setNotifications] = useState<Comment[]>([]);
     const [pagination, setPagination] = useState<{ [key: string]: { currentPage: number, hasMore: boolean } }>({
         'my-requests': { currentPage: 1, hasMore: true },
         'all-requests': { currentPage: 1, hasMore: true },
@@ -46,7 +47,7 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
 
         setIsLoading(true);
         try {
-            const response: PaginatedCommentNotifications = await getCommentNotifications(token, tab, page);
+            const response: PaginatedComments = await getCommentNotifications(token, tab, page);
             
             if (page === 1) {
                 setNotifications(response.data);
@@ -154,4 +155,3 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
         </div>
     );
 }
-
