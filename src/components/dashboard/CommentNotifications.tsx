@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getCommentNotifications, markAllCommentsAsRead, type Comment, type PaginatedComments } from '@/lib/api';
+import { getCommentNotifications, type Comment, type PaginatedComments } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -36,7 +36,6 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
         'all-requests': { currentPage: 1, hasMore: true },
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [isMarking, setIsMarking] = useState(false);
     
     const fetchNotifications = useCallback(async (tab: 'my-requests' | 'all-requests', page: number) => {
         const token = localStorage.getItem('authToken');
@@ -84,26 +83,6 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
         }
     };
     
-    const handleMarkAllAsRead = async () => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            toast({ title: "Authentication Error", variant: "destructive" });
-            return;
-        }
-
-        setIsMarking(true);
-        try {
-            await markAllCommentsAsRead(token);
-            setNotifications(prev => prev.map(n => ({...n, read_at: new Date().toISOString() })));
-            onUnreadCountChange(0);
-            toast({ title: 'Success', description: 'All comments marked as read.' });
-        } catch(error: any) {
-             toast({ title: 'Error', description: error.message || "Failed to mark as read", variant: 'destructive' });
-        } finally {
-            setIsMarking(false);
-        }
-    }
-
     return (
         <div>
             <div className="p-4 border-b">
@@ -154,14 +133,10 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
                     </TabsContent>
                 </ScrollArea>
             </Tabs>
-             <div className="p-4 border-t flex justify-between items-center">
+             <div className="p-4 border-t flex justify-start items-center">
                  <Button variant="link" size="sm" onClick={handleLoadMore} disabled={!pagination[activeTab]?.hasMore || isLoading}>
                      {isLoading && pagination[activeTab]?.currentPage > 1 ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                      Load More Comments
-                 </Button>
-                 <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} disabled={isMarking}>
-                     {isMarking && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                     MARK ALL AS READ
                  </Button>
             </div>
         </div>
