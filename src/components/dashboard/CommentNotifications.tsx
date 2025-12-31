@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,9 +13,7 @@ import { parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-interface CommentNotificationsProps {
-    onUnreadCountChange: (count: number) => void;
-}
+interface CommentNotificationsProps {}
 
 const getInitials = (name: string): string => {
     if (!name) return '';
@@ -27,7 +24,7 @@ const getInitials = (name: string): string => {
 }
 
 
-export function CommentNotifications({ onUnreadCountChange }: CommentNotificationsProps) {
+export function CommentNotifications({}: CommentNotificationsProps) {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'my-requests' | 'all-requests'>('my-requests');
     const [notifications, setNotifications] = useState<Comment[]>([]);
@@ -62,15 +59,12 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
                 }
             }));
             
-            const unread = response.data.filter(n => !n.read_at).length;
-            onUnreadCountChange(unread);
-
         } catch (error: any) {
             toast({ title: 'Error', description: error.message || "Failed to fetch notifications", variant: 'destructive' });
         } finally {
             setIsLoading(false);
         }
-    }, [toast, onUnreadCountChange]);
+    }, [toast]);
 
     useEffect(() => {
         fetchNotifications(activeTab, 1);
@@ -107,8 +101,8 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
                                 {notifications.map(notif => {
                                     const isDraft = notif.request.status === 'draft';
                                     const linkHref = isDraft
-                                        ? `/dashboard/requests/${notif.request_id}/preview#question-${notif.question_id}`
-                                        : `/dashboard/requests/${notif.request_id}#question-${notif.question_id}`;
+                                        ? `/dashboard/requests/${notif.request_id}/preview`
+                                        : `/dashboard/requests/${notif.request_id}`;
 
                                     return (
                                         <Link key={notif.id} href={linkHref} className="block">

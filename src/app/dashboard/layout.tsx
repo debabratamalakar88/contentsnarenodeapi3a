@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -48,7 +47,6 @@ export default function DashboardLayout({
   const [isChecking, setIsChecking] = useState(true);
   const [company, setCompany] = useState<Company | null>(null);
   const { toast } = useToast();
-  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const userToken = localStorage.getItem('authToken');
@@ -168,16 +166,11 @@ export default function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 relative text-white/70 hover:text-white hover:bg-white/10">
                   <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
                   <span className="sr-only">Toggle comments</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[350px] p-0">
-                <CommentNotifications onUnreadCountChange={setUnreadCount} />
+                <CommentNotifications />
               </DropdownMenuContent>
             </DropdownMenu>
 
