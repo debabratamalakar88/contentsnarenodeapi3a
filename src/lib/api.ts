@@ -244,6 +244,7 @@ export interface Comment {
   attachments: string[];
   is_internal: boolean;
   is_deleted: boolean;
+  read_at?: string | null;
   created_at: string;
   updated_at: string;
   user: {
@@ -253,8 +254,8 @@ export interface Comment {
   request: {
     id: number;
     title: string;
+    status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   };
-  read_at?: string | null;
 }
 
 
@@ -1056,13 +1057,11 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 
 export async function getComments(token: string | null, requestIdOrCode: number | string, questionId: string): Promise<Comment[]> {
   let url: string;
-  // If a token is provided, we assume it's an authenticated request with a request ID
   if (token) {
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
     return response.data || [];
   } else {
-    // If no token, it's a public request using the request CODE
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }

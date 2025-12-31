@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -13,6 +12,7 @@ import { Loader2, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface CommentNotificationsProps {
     onUnreadCountChange: (count: number) => void;
@@ -124,19 +124,31 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
                                 <p>No comments to show.</p>
                             </div>
                         ) : (
-                            <div className="space-y-2 p-2">
-                                {notifications.map(notif => (
-                                    <div key={notif.id} className={cn("flex items-start gap-3 p-3 rounded-lg", !notif.read_at && "bg-blue-50")}>
-                                        <Avatar className="h-8 w-8 text-xs">
-                                            <AvatarFallback className="bg-green-100 text-green-800">{getInitials(notif.user.name)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <p className="text-sm"><span className="font-semibold">{notif.user.name}</span> on <span className="font-semibold">{notif.request.title}</span></p>
-                                            <p className="text-sm text-muted-foreground truncate">{notif.comment}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(parseISO(notif.created_at), { addSuffix: true })}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="space-y-1 p-2">
+                                {notifications.map(notif => {
+                                    const isDraft = notif.request.status === 'draft';
+                                    const linkHref = isDraft
+                                        ? `/dashboard/requests/edit/${notif.request_id}/preview#question-${notif.question_id}`
+                                        : `/dashboard/requests/${notif.request_id}#question-${notif.question_id}`;
+
+                                    return (
+                                        <Link key={notif.id} href={linkHref} className="block">
+                                            <div className={cn(
+                                                "flex items-start gap-3 p-3 rounded-lg hover:bg-muted",
+                                                !notif.read_at && "bg-blue-50 hover:bg-blue-100"
+                                            )}>
+                                                <Avatar className="h-8 w-8 text-xs">
+                                                    <AvatarFallback className="bg-green-100 text-green-800">{getInitials(notif.user.name)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="text-sm"><span className="font-semibold">{notif.user.name}</span> on <span className="font-semibold">{notif.request.title}</span></p>
+                                                    <p className="text-sm text-muted-foreground truncate">{notif.comment}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(parseISO(notif.created_at), { addSuffix: true })}</p>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+                                })}
                             </div>
                         )}
                     </TabsContent>
@@ -155,3 +167,4 @@ export function CommentNotifications({ onUnreadCountChange }: CommentNotificatio
         </div>
     );
 }
+
