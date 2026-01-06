@@ -132,7 +132,7 @@ export default function SelectCompanyPage() {
             router.push('/dashboard');
 
         } catch (error: any) {
-            const description = error.errors ? Object.values(error.errors).flat().join('\n') : "An unexpected error occurred.";
+            const description = error.errors ? Object.values(error.errors).flat().join('\\n') : "An unexpected error occurred.";
             toast({
                 title: 'Error creating company',
                 description: description,
