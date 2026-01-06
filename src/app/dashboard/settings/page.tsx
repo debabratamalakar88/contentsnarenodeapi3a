@@ -183,7 +183,7 @@ export default function SettingsPage() {
     }
     
     try {
-      await switchCompany(token, selectedCompany.id);
+      await switchCompany(token, selectedCompany._id);
       localStorage.removeItem('selectedCompany');
       router.push('/companies');
     } catch (error: any) {
@@ -258,7 +258,7 @@ export default function SettingsPage() {
     }
     
     try {
-        const response = await updateCompany(token, selectedCompany.id, data);
+        const response = await updateCompany(token, selectedCompany._id, data);
         localStorage.setItem('selectedCompany', JSON.stringify(response.company));
         setSelectedCompany(response.company);
         toast({ title: "Company Updated", description: "Your company details have been saved." });
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <FormField control={passwordForm.control} name="current_password" render={({ field }) => (<FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={passwordForm.control} name="new_password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={passwordForm.control} name="new_password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={passwordForm.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
                     <Button type="submit" disabled={passwordForm.formState.isSubmitting}>

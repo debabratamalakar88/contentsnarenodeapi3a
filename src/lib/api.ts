@@ -497,14 +497,14 @@ export async function createCompany(token: string, companyData: { company_name: 
     });
 }
 
-export async function updateCompany(token: string, id: number, companyData: Partial<Company>): Promise<{ message: string, company: Company }> {
+export async function updateCompany(token: string, id: string, companyData: Partial<Company>): Promise<{ message: string, company: Company }> {
     return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token, {
         method: 'PUT',
         body: JSON.stringify(companyData),
     });
 }
 
-export async function switchCompany(token: string, company_id: number): Promise<{ message: string }> {
+export async function switchCompany(token: string, company_id: string): Promise<{ message: string }> {
     return fetchWithToken(`${API_BASE_URL}/api/switchCompany`, token, {
         method: 'POST',
         body: JSON.stringify({ company_id }),
@@ -1082,7 +1082,6 @@ export async function addComment(token: string | null, data: { request_id: numbe
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-
   const response = await fetch(`${API_BASE_URL}/api/request-comments`, {
     method: 'POST',
     headers: headers,
@@ -1090,6 +1089,7 @@ export async function addComment(token: string | null, data: { request_id: numbe
   });
   return handleResponse(response);
 }
+
 
 export async function updateComment(token: string, commentId: number, data: { comment: string }): Promise<Comment> {
     return fetchWithToken(`${API_BASE_URL}/api/request-comments/${commentId}`, token, {
