@@ -84,12 +84,12 @@ interface AdminAuthResponse {
 }
 
 export interface Company {
-    id: number;
+    _id: string;
     company_name: string;
     company_subdomain: string;
     company_logo: string | null;
-    created_by: number;
-    updated_by: number;
+    created_by: string;
+    updated_by: string;
     pivot?: {
         role?: string;
     };
@@ -133,7 +133,7 @@ export interface TeamMember {
   updated_at?: string;
 }
 
-export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'color-picker' | 'button';
+export type QuestionType = 'text' | 'textarea' | 'file' | 'checkbox' | 'dropdown' | 'date' | 'email' | 'tel' | 'url' | 'radio' | 'formatted-text' | 'image-upload' | 'address' | 'number' | 'currency' | 'country' | 'date-range' | 'icon-selector' | 'button';
 
 export interface QuestionOption {
   label: string;
@@ -473,14 +473,17 @@ export async function changePassword(token: string, passwordData: any) {
 
 export async function getCompanies(token: string): Promise<Company[]> {
     const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
-    return response.companies || [];
+    return response.companies.map((item: any) => ({
+      ...item.company_id,
+      pivot: { role: item.role }
+    })) || [];
 }
 
 export async function getCompany(token: string, id: number): Promise<Company> {
     return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token);
 }
 
-export async function selectCompany(token: string, company_id: number): Promise<{ message: string; role: string; token: string }> {
+export async function selectCompany(token: string, company_id: string): Promise<{ message: string; role: string; token: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/selectCompany`, token, {
       method: 'POST',
       body: JSON.stringify({ company_id }),
@@ -1102,8 +1105,8 @@ export async function deleteComment(token: string, commentId: number): Promise<{
 }
 
 export async function getCommentNotifications(token: string, filter: 'my-requests' | 'all-requests', page: number = 1): Promise<PaginatedComments> {
-    const endpoint = filter === 'my-requests' ? 'my-requests' : 'all-requests';
-    const url = new URL(`${API_BASE_URL}/api/comments/${endpoint}`);
+    const endpoint = filter === 'my-requests' ? 'comments/my-requests' : 'comments/all-requests';
+    const url = new URL(`${API_BASE_URL}/api/${endpoint}`);
     url.searchParams.append('page', String(page));
     return fetchWithToken(url.toString(), token);
 }

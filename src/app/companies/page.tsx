@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -74,7 +75,7 @@ export default function SelectCompanyPage() {
         }
 
         try {
-            const response = await selectCompany(token, company.id);
+            const response = await selectCompany(token, company._id);
             localStorage.setItem('selectedCompany', JSON.stringify(company));
             if (response.role) {
                 localStorage.setItem('userRole', response.role);
@@ -114,15 +115,15 @@ export default function SelectCompanyPage() {
             toast({ title: 'Company created successfully' });
 
             const newCompanyId = createResponse.selected_company_id;
-            const selectResponse = await selectCompany(token, newCompanyId);
+            const selectResponse = await selectCompany(token, String(newCompanyId));
             
             const newCompanyDetails = {
-                id: newCompanyId,
+                _id: String(newCompanyId),
                 company_name: companyName,
                 company_subdomain: companySubdomain,
                 company_logo: null,
-                created_by: 0, 
-                updated_by: 0, 
+                created_by: '', 
+                updated_by: '', 
             };
             
             localStorage.setItem('selectedCompany', JSON.stringify(newCompanyDetails));
@@ -257,7 +258,7 @@ export default function SelectCompanyPage() {
                     ) : (
                         companies.map((company, index) => (
                             <button
-                                key={company.id}
+                                key={company._id}
                                 onClick={() => handleSelectCompany(company)}
                                 className="w-full flex items-center gap-4 p-4 rounded-lg bg-white border hover:border-primary hover:shadow-sm transition-all text-left"
                                 disabled={isSubmitting}
