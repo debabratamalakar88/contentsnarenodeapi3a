@@ -52,7 +52,7 @@ const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
   new_password: z.string().min(8, "New password must be at least 8 characters."),
   new_password_confirmation: z.string(),
-}).refine(data => data.new_password === data.password_confirmation, {
+}).refine(data => data.password === data.password_confirmation, {
   message: "New passwords do not match.",
   path: ["new_password_confirmation"],
 });
@@ -147,8 +147,8 @@ export default function SettingsPage() {
         const company = JSON.parse(companyData);
         setSelectedCompany(company);
         companyForm.reset({
-            company_name: company.company_name,
-            company_subdomain: company.company_subdomain,
+            company_name: company.company_name || "",
+            company_subdomain: company.company_subdomain || "",
             company_logo: company.company_logo || "",
         });
       }
@@ -156,8 +156,12 @@ export default function SettingsPage() {
       try {
         const responseData = await getProfile(token);
         const profileData = responseData.user || responseData.data || responseData;
-
-        form.reset(profileData);
+        
+        const safeProfileData = Object.fromEntries(
+            Object.entries(profileData).map(([key, value]) => [key, value ?? ''])
+        );
+        
+        form.reset(safeProfileData);
         if(profileData.email) {
             setUserEmail(profileData.email);
         }
