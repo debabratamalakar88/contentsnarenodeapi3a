@@ -52,7 +52,7 @@ const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
   new_password: z.string().min(8, "New password must be at least 8 characters."),
   new_password_confirmation: z.string(),
-}).refine(data => data.new_password === data.password_confirmation, {
+}).refine(data => data.password === data.password_confirmation, {
   message: "New passwords do not match.",
   path: ["new_password_confirmation"],
 });
@@ -157,25 +157,14 @@ export default function SettingsPage() {
         const responseData = await getProfile(token);
         const profileData = responseData.user || responseData.data || responseData;
         
-        const safeProfileData: ProfileFormValues = {
-            name: profileData.name || '',
-            phone: profileData.phone || '',
-            bio: profileData.bio || '',
-            address: profileData.address || '',
-            city: profileData.city || '',
-            state: profileData.state || '',
-            zip: profileData.zip || '',
-            country_code: profileData.country_code || '',
-            country_name: profileData.country_name || '',
-            country_flag: profileData.country_flag || '',
-            country_phone_code: profileData.country_phone_code || '',
-            locale: profileData.locale || '',
-            currency: profileData.currency || '',
-            timezone: profileData.timezone || '',
-            date_format: profileData.date_format || 'MM/DD/YYYY',
-            time_format: profileData.time_format || '12-hour',
-            language: profileData.language || 'en',
-        };
+        const defaultValues = form.getValues();
+        const safeProfileData: Partial<ProfileFormValues> = {};
+
+        // Ensure all fields have a defined, non-null value (defaults to empty string)
+        for (const key in defaultValues) {
+            const typedKey = key as keyof ProfileFormValues;
+            safeProfileData[typedKey] = profileData[typedKey] || '';
+        }
         
         form.reset(safeProfileData);
         if(profileData.email) {
