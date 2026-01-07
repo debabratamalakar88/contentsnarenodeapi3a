@@ -116,8 +116,8 @@ export interface Client {
   creator_name?: string;
   updated_by: string | null;
   deleted_by: string | null;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TeamMember {

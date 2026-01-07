@@ -1,8 +1,7 @@
 
+'use client';
 
-'use client'
-
-import { useEffect, useState, useMemo, Suspense } from "react"
+import React, { useEffect, useState, useMemo, Suspense } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -79,7 +78,7 @@ function EditClientPageComponent() {
     const [requestToForceDelete, setRequestToForceDelete] = useState<RequestType | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
 
-    const id = Number(params.id);
+    const id = params.id as string;
 
     const form = useForm<ClientFormValues>({
         resolver: zodResolver(clientFormSchema),
@@ -229,7 +228,7 @@ function EditClientPageComponent() {
 
     const clientRequests = useMemo(() => {
         return allRequests.filter(req => 
-            Array.isArray(req.client_id) && req.client_id.includes(id)
+            Array.isArray(req.client_id) && req.client_id.includes(Number(id))
         );
     }, [allRequests, id]);
     
