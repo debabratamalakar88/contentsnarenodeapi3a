@@ -124,7 +124,7 @@ export default function ClientsPage() {
         return;
     }
     try {
-        await deleteClient(token, Number(clientId)); // API still expects number
+        await deleteClient(token, clientId);
         toast({ title: "Client Archived", description: "The client has been moved to the archive." });
         refetchData();
     } catch (error: any) {
@@ -140,7 +140,7 @@ export default function ClientsPage() {
           return;
       }
       try {
-          await restoreClient(token, Number(clientId));
+          await restoreClient(token, clientId);
           toast({ title: "Client Restored", description: "The client has been successfully restored." });
           refetchData();
       } catch (error: any) {
@@ -154,7 +154,7 @@ export default function ClientsPage() {
           return;
       }
       try {
-          await forceDeleteClient(token, Number(clientId));
+          await forceDeleteClient(token, clientId);
           toast({ title: "Client Deleted", description: "The client has been permanently deleted." });
           refetchData();
       } catch (error: any) {
@@ -294,15 +294,15 @@ export default function ClientsPage() {
                     {isArchived ? (
                     canManageClients && (
                         <>
-                        <DropdownMenuItem onSelect={() => handleRestore(client._id as any)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleRestore(client._id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
                         {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                         </>
                     )
                     ) : (
                     <>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
                         {canManageClients && (
                             <>
                                 <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
@@ -380,15 +380,15 @@ export default function ClientsPage() {
                                     {isArchived ? (
                                         canManageClients && (
                                         <>
-                                            <DropdownMenuItem onSelect={() => handleRestore(client._id as any)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleRestore(client._id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
                                             {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                                         </>
                                         )
                                     ) : (
                                         <>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
-                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client.id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=client-details`}><Eye className="mr-2 h-4 w-4" /> View Client</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=requests`}><List className="mr-2 h-4 w-4" /> Go to Requests</Link></DropdownMenuItem>
+                                        <DropdownMenuItem asChild><Link href={`/dashboard/clients/${client._id}/edit?tab=client-portal`}><Layers2 className="mr-2 h-4 w-4" /> Go to Client Portal</Link></DropdownMenuItem>
                                         {canManageClients && (
                                             <>
                                                 <DropdownMenuItem onSelect={() => setClientToArchive(client)}><Archive className="mr-2 h-4 w-4" />Archive</DropdownMenuItem>
