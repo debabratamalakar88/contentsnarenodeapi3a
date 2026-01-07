@@ -49,12 +49,12 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const passwordFormSchema = z.object({
-  current_password: z.string().min(1, "Current password is required."),
-  new_password: z.string().min(8, "New password must be at least 8 characters."),
-  new_password_confirmation: z.string(),
-}).refine(data => data.new_password === data.password_confirmation, {
+  currentPassword: z.string().min(1, "Current password is required."),
+  newPassword: z.string().min(8, "New password must be at least 8 characters."),
+  newPasswordConfirmation: z.string(),
+}).refine(data => data.newPassword === data.newPasswordConfirmation, {
   message: "New passwords do not match.",
-  path: ["new_password_confirmation"],
+  path: ["newPasswordConfirmation"],
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
@@ -111,9 +111,9 @@ export default function SettingsPage() {
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: {
-      current_password: "",
-      new_password: "",
-      new_password_confirmation: "",
+      currentPassword: "",
+      newPassword: "",
+      newPasswordConfirmation: "",
     },
   });
   
@@ -241,7 +241,11 @@ export default function SettingsPage() {
     }
 
     try {
-        await changePassword(token, data);
+        await changePassword(token, {
+          current_password: data.currentPassword,
+          new_password: data.newPassword,
+          new_password_confirmation: data.newPasswordConfirmation
+        });
         toast({
             title: "Password Updated",
             description: "Your password has been changed. Please log in again.",
@@ -385,9 +389,45 @@ export default function SettingsPage() {
                 </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <FormField control={passwordForm.control} name="current_password" render={({ field }) => (<FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={passwordForm.control} name="new_password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={passwordForm.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField
+                        control={passwordForm.control}
+                        name="currentPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Current Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={passwordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>New Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={passwordForm.control}
+                        name="newPasswordConfirmation"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Confirm New Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
                     <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
