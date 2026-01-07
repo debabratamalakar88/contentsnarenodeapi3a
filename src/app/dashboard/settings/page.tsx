@@ -52,9 +52,9 @@ const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
   new_password: z.string().min(8, "New password must be at least 8 characters."),
   new_password_confirmation: z.string(),
-}).refine(data => data.password === data.password_confirmation, {
+}).refine(data => data.new_password === data.password_confirmation, {
   message: "New passwords do not match.",
-  path: ["password_confirmation"],
+  path: ["new_password_confirmation"],
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
@@ -83,27 +83,29 @@ export default function SettingsPage() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  const defaultProfileValues: ProfileFormValues = {
+    name: "",
+    phone: "",
+    bio: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    country_code: "",
+    country_name: "",
+    country_flag: "",
+    country_phone_code: "",
+    locale: "",
+    currency: "",
+    timezone: "",
+    date_format: "MM/DD/YYYY",
+    time_format: "12-hour",
+    language: "en",
+  };
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      bio: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      country_code: "",
-      country_name: "",
-      country_flag: "",
-      country_phone_code: "",
-      locale: "",
-      currency: "",
-      timezone: "",
-      date_format: "MM/DD/YYYY",
-      time_format: "12-hour",
-      language: "en",
-    },
+    defaultValues: defaultProfileValues,
   });
 
   const passwordForm = useForm<PasswordFormValues>({
@@ -139,6 +141,7 @@ export default function SettingsPage() {
           variant: "destructive",
         });
         setIsLoading(false);
+        router.push('/login');
         return;
       }
       
@@ -157,12 +160,13 @@ export default function SettingsPage() {
         const responseData = await getProfile(token);
         const profileData = responseData.user || responseData.data || responseData;
         
-        const safeProfileData: Partial<ProfileFormValues> = {};
-        const formKeys = Object.keys(form.getValues()) as (keyof ProfileFormValues)[];
-
-        formKeys.forEach(key => {
-            safeProfileData[key] = profileData[key] ?? '';
-        });
+        const safeProfileData = { ...defaultProfileValues };
+        for (const key in safeProfileData) {
+            if (Object.prototype.hasOwnProperty.call(profileData, key)) {
+                const value = profileData[key as keyof typeof profileData];
+                (safeProfileData as any)[key] = value ?? '';
+            }
+        }
         
         form.reset(safeProfileData);
 
@@ -181,7 +185,7 @@ export default function SettingsPage() {
     }
 
     loadProfileAndCompany();
-  }, [form, companyForm, toast]);
+  }, [form, companyForm, toast, router]);
 
   const handleSwitchCompany = async () => {
     const token = localStorage.getItem('authToken');
@@ -304,9 +308,9 @@ export default function SettingsPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormItem><FormLabel>Email</FormLabel><Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/></FormItem>
-                                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         </>
                      )}
@@ -382,8 +386,8 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <FormField control={passwordForm.control} name="current_password" render={({ field }) => (<FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={passwordForm.control} name="new_password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={passwordForm.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={passwordForm.control} name="new_password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={passwordForm.control} name="password_confirmation" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
                     <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
