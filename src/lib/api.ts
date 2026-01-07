@@ -534,26 +534,26 @@ export async function createClient(token: string, clientData: any) {
     });
 }
 
-export async function getClient(token: string, id: number): Promise<Client> {
+export async function getClient(token: string, id: string): Promise<Client> {
     return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token);
 }
 
-export async function updateClient(token: string, id: number, clientData: any) {
+export async function updateClient(token: string, id: string, clientData: any) {
     return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token, {
         method: 'PUT',
         body: JSON.stringify(clientData),
     });
 }
 
-export async function deleteClient(token: string, id: number) {
+export async function deleteClient(token: string, id: string) {
     return fetchWithToken(`${API_BASE_URL}/api/clients/${id}`, token, { method: 'DELETE' });
 }
 
-export async function restoreClient(token: string, id: number) {
+export async function restoreClient(token: string, id: string) {
   return fetchWithToken(`${API_BASE_URL}/api/clients/${id}/restore`, token, { method: 'POST' });
 }
 
-export async function forceDeleteClient(token: string, id: number) {
+export async function forceDeleteClient(token: string, id: string) {
   return fetchWithToken(`${API_BASE_URL}/api/clients/${id}/force`, token, { method: 'DELETE' });
 }
 

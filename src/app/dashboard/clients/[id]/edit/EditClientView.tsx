@@ -40,7 +40,7 @@ export default function EditClientView() {
     const [companyInput, setCompanyInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
-    const id = Number(params.id);
+    const id = params.id as string;
 
     const form = useForm<ClientFormValues>({
         resolver: zodResolver(clientFormSchema),
