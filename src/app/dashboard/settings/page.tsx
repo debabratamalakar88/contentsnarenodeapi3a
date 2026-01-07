@@ -52,7 +52,7 @@ const passwordFormSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
   new_password: z.string().min(8, "New password must be at least 8 characters."),
   new_password_confirmation: z.string(),
-}).refine(data => data.password === data.password_confirmation, {
+}).refine(data => data.new_password === data.password_confirmation, {
   message: "New passwords do not match.",
   path: ["new_password_confirmation"],
 });
@@ -157,9 +157,25 @@ export default function SettingsPage() {
         const responseData = await getProfile(token);
         const profileData = responseData.user || responseData.data || responseData;
         
-        const safeProfileData = Object.fromEntries(
-            Object.entries(profileData).map(([key, value]) => [key, value ?? ''])
-        );
+        const safeProfileData: ProfileFormValues = {
+            name: profileData.name || '',
+            phone: profileData.phone || '',
+            bio: profileData.bio || '',
+            address: profileData.address || '',
+            city: profileData.city || '',
+            state: profileData.state || '',
+            zip: profileData.zip || '',
+            country_code: profileData.country_code || '',
+            country_name: profileData.country_name || '',
+            country_flag: profileData.country_flag || '',
+            country_phone_code: profileData.country_phone_code || '',
+            locale: profileData.locale || '',
+            currency: profileData.currency || '',
+            timezone: profileData.timezone || '',
+            date_format: profileData.date_format || 'MM/DD/YYYY',
+            time_format: profileData.time_format || '12-hour',
+            language: profileData.language || 'en',
+        };
         
         form.reset(safeProfileData);
         if(profileData.email) {
@@ -298,11 +314,11 @@ export default function SettingsPage() {
                         <>
                              <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormItem><FormLabel>Email</FormLabel><Input type="email" value={userEmail} readOnly disabled className="bg-muted/50"/></FormItem>
-                                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="bio" render={({ field }) => (<FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="min-h-24" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         </>
                      )}
