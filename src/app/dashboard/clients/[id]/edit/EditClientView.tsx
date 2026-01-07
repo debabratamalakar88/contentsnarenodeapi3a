@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useEffect, useState } from "react"
@@ -290,7 +291,7 @@ export default function EditClientView() {
                                         <Label htmlFor="appLanguage" className="flex items-center gap-1.5 font-semibold text-gray-700">
                                             Application Language <Info className="w-4 h-4 text-gray-400" />
                                         </Label>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                             <FormControl>
                                                 <SelectTrigger id="appLanguage" className="bg-gray-50 mt-1">
                                                     <SelectValue />
@@ -314,7 +315,7 @@ export default function EditClientView() {
                                         <Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">
                                             Date Format <Info className="w-4 h-4 text-gray-400" />
                                         </Label>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                             <FormControl>
                                                 <SelectTrigger id="dateFormat" className="bg-gray-50 mt-1">
                                                     <SelectValue />
@@ -339,7 +340,7 @@ export default function EditClientView() {
                                         <Label htmlFor="timeZone" className="flex items-center gap-1.5 font-semibold text-gray-700">
                                             Time Zone <Info className="w-4 h-4 text-gray-400" />
                                         </Label>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                             <FormControl>
                                                 <SelectTrigger id="timeZone" className="bg-gray-50 mt-1">
                                                     <SelectValue />

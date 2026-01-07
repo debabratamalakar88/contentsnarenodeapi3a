@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useEffect, useState, useMemo, Suspense } from "react"
@@ -505,7 +506,7 @@ function EditClientPageComponent() {
                                                         <Label htmlFor="appLanguage" className="flex items-center gap-1.5 font-semibold text-gray-700">
                                                             Application Language <Info className="w-4 h-4 text-gray-400" />
                                                         </Label>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                                             <FormControl><SelectTrigger id="appLanguage" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 <SelectItem value="english">English</SelectItem>
@@ -522,7 +523,7 @@ function EditClientPageComponent() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <Label htmlFor="dateFormat" className="flex items-center gap-1.5 font-semibold text-gray-700">Date Format <Info className="w-4 h-4 text-gray-400" /></Label>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                                             <FormControl><SelectTrigger id="dateFormat" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
@@ -545,7 +546,7 @@ function EditClientPageComponent() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <Label htmlFor="timeZone" className="flex items-center gap-1.5 font-semibold text-gray-700">Time Zone <Info className="w-4 h-4 text-gray-400" /></Label>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                                             <FormControl><SelectTrigger id="timeZone" className="bg-gray-50 mt-1"><SelectValue /></SelectTrigger></FormControl>
                                                             <SelectContent>
                                                                 <SelectItem value="ist">(+05:30) India Standard Time</SelectItem>
@@ -676,7 +677,7 @@ const RequestCard = ({ request, clientName, clientInitials, onDuplicate, onArchi
     );
 };
 
-const RequestRow = ({ request, onDuplicate, onArchive, onRestore, onForceDelete, canManage }: { request: RequestType, onDuplicate: (id: number) => void, onArchive: (req: RequestType) => void, onRestore: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, canManage: boolean }) => {
+const RequestRow = ({ request, onArchive, onRestore, onForceDelete, onDuplicate, canManage }: { request: RequestType, onArchive: (req: RequestType) => void, onRestore: (req: RequestType) => void, onForceDelete: (req: RequestType) => void, onDuplicate: (id: number) => void, canManage: boolean }) => {
     const isArchived = !!request.deleted_at;
     const canDeletePermanently = canManage;
     

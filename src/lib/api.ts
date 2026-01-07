@@ -7,6 +7,7 @@ const API_ASSETS_BASE_URL = process.env.NEXT_PUBLIC_API_ASSETS_BASE_URL;
 
 export interface User {
   id: number;
+  _id: string;
   name: string;
   email: string;
   username?: string;
@@ -85,6 +86,7 @@ interface AdminAuthResponse {
 
 export interface Company {
     _id: string;
+    id: number;
     company_name: string;
     company_subdomain: string;
     company_logo: string | null;
@@ -97,10 +99,11 @@ export interface Company {
 
 export interface Client {
   id: number;
+  _id: string;
   full_name: string;
   email: string;
   companies: string[];
-  company_id?: number;
+  company_id?: string;
   phone_number: string | null;
   app_language: string | null;
   date_format: string | null;
@@ -109,12 +112,12 @@ export interface Client {
   is_active: boolean;
   is_deleted: boolean;
   deleted_at: string | null;
-  created_by: number | null;
+  created_by: string | null;
   creator_name?: string;
-  updated_by: number | null;
-  deleted_by: number | null;
-  created_at: string;
-  updated_at: string;
+  updated_by: string | null;
+  deleted_by: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TeamMember {

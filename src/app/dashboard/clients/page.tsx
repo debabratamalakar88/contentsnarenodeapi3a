@@ -118,13 +118,13 @@ export default function ClientsPage() {
   
   const canManageClients = userRole === 'Administrator' || userRole === 'Editor';
 
-  const handleArchive = async (clientId: number) => {
+  const handleArchive = async (clientId: string) => {
     if (!token) {
         toast({ variant: 'destructive', title: 'Authentication Error' });
         return;
     }
     try {
-        await deleteClient(token, clientId);
+        await deleteClient(token, Number(clientId)); // API still expects number
         toast({ title: "Client Archived", description: "The client has been moved to the archive." });
         refetchData();
     } catch (error: any) {
@@ -134,13 +134,13 @@ export default function ClientsPage() {
     }
   };
   
-  const handleRestore = async (clientId: number) => {
+  const handleRestore = async (clientId: string) => {
       if (!token) {
           toast({ variant: 'destructive', title: 'Authentication Error' });
           return;
       }
       try {
-          await restoreClient(token, clientId);
+          await restoreClient(token, Number(clientId));
           toast({ title: "Client Restored", description: "The client has been successfully restored." });
           refetchData();
       } catch (error: any) {
@@ -148,13 +148,13 @@ export default function ClientsPage() {
       }
   };
 
-  const handleForceDelete = async (clientId: number) => {
+  const handleForceDelete = async (clientId: string) => {
       if (!token) {
           toast({ variant: 'destructive', title: 'Authentication Error' });
           return;
       }
       try {
-          await forceDeleteClient(token, clientId);
+          await forceDeleteClient(token, Number(clientId));
           toast({ title: "Client Deleted", description: "The client has been permanently deleted." });
           refetchData();
       } catch (error: any) {
@@ -279,10 +279,10 @@ export default function ClientsPage() {
   const renderClientGrid = (clientList: Client[], isArchived: boolean) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       {clientList.map((client) => {
-        const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && client.created_by === currentUser?.id);
+        const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && String(client.created_by) === currentUser?._id);
         
         return (
-            <Card key={client.id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
+            <Card key={client._id} className="bg-card shadow-sm hover:shadow-md transition-shadow relative">
             {(!isArchived || canManageClients) && (
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -294,7 +294,7 @@ export default function ClientsPage() {
                     {isArchived ? (
                     canManageClients && (
                         <>
-                        <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleRestore(client._id as any)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
                         {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                         </>
                     )
@@ -361,9 +361,9 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
                 {clientList.map((client) => {
-                    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && client.created_by === currentUser?.id);
+                    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && String(client.created_by) === currentUser?._id);
                     return (
-                        <TableRow key={client.id}>
+                        <TableRow key={client._id}>
                             <TableCell className="font-medium">{client.full_name}</TableCell>
                             <TableCell>{client.companies?.join(', ')}</TableCell>
                             <TableCell>{client.email}</TableCell>
@@ -380,7 +380,7 @@ export default function ClientsPage() {
                                     {isArchived ? (
                                         canManageClients && (
                                         <>
-                                            <DropdownMenuItem onSelect={() => handleRestore(client.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => handleRestore(client._id as any)}><ArchiveRestore className="mr-2 h-4 w-4" />Restore</DropdownMenuItem>
                                             {canDeletePermanently && <DropdownMenuItem onSelect={() => setClientToPermanentlyDelete(client)} className="focus:bg-destructive focus:text-destructive-foreground text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Permanently</DropdownMenuItem>}
                                         </>
                                         )
@@ -577,7 +577,7 @@ export default function ClientsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => clientToArchive && handleArchive(clientToArchive.id)}>Archive</AlertDialogAction>
+            <AlertDialogAction onClick={() => clientToArchive && handleArchive(clientToArchive._id)}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -594,7 +594,7 @@ export default function ClientsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               className={buttonVariants({ variant: "destructive" })}
-              onClick={() => clientToPermanentlyDelete && handleForceDelete(clientToPermanentlyDelete.id)}>
+              onClick={() => clientToPermanentlyDelete && handleForceDelete(clientToPermanentlyDelete._id)}>
               Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
