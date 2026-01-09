@@ -522,7 +522,7 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
   const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
-  return response.map((client: any) => ({ ...client, id: client._id, creator_name: client.creator?.name || 'Admin' }));
+  return response.map((client: any) => ({ ...client, creator_name: client.creator?.name || 'Admin' }));
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
@@ -838,7 +838,7 @@ export async function restoreAdminTemplateCategory(token: string, id: number): P
 }
 
 export async function forceDeleteAdminTemplateCategory(token: string, id: number): Promise<{ message: string }> {
-    return fetchWithToken(`${API_BASE_URL}/api/admin/template-categories/${id}/force`, token, { method: 'DELETE' });
+  return fetchWithToken(`${API_BASE_URL}/api/admin/template-categories/${id}/force`, token, { method: 'DELETE' });
 }
 
 // --- Admin Template Management ---
