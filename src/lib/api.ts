@@ -183,7 +183,7 @@ export interface Request {
   request_code: string;
   form_code: string;
   form_data: Page[];
-  client_id: number[] | number | null;
+  client_id: string[] | null;
   clients?: Client[];
   status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   allow_comments: boolean;
@@ -482,7 +482,7 @@ export async function getCompanies(token: string): Promise<Company[]> {
     })) || [];
 }
 
-export async function getCompany(token: string, id: number): Promise<Company> {
+export async function getCompany(token: string, id: string): Promise<Company> {
     return fetchWithToken(`${API_BASE_URL}/api/companies/${id}`, token);
 }
 

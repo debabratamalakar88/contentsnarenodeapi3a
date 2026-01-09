@@ -114,7 +114,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
     const enableHoverEffect = canManage || !isArchived;
 
     const showActions = canManage || !isArchived;
-    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && String(request.created_by) === currentUser?._id);
 
     return (
         <Card className={cn("bg-white hover:shadow-md transition-shadow flex flex-col", enableHoverEffect && 'group')}>
@@ -252,7 +252,7 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
-    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && request.created_by === currentUser?.id);
+    const canDeletePermanently = userRole === 'Administrator' || (userRole === 'Editor' && String(request.created_by) === currentUser?._id);
     
     return (
      <TableRow>
@@ -473,7 +473,8 @@ export default function RequestsPage() {
     };
 
     const filteredRequests = useMemo(() => allRequests.filter(request => {
-      const clientNames = (Array.isArray(request.client_id) ? request.client_id : []).map(id => clientMap.get(String(id)) || '').join(' ').toLowerCase();
+      const clientIds = (Array.isArray(request.client_id) ? request.client_id : []).map(String);
+      const clientNames = clientIds.map(id => clientMap.get(id) || '').join(' ').toLowerCase();
       const searchLower = searchQuery.toLowerCase();
       
       const searchMatch = (
@@ -487,7 +488,7 @@ export default function RequestsPage() {
       
       const ownerMatch = selectedOwnerId === 'all' || String(request.created_by) === selectedOwnerId;
       
-      const clientMatch = selectedClientId === 'all' || (request.client_id && Array.isArray(request.client_id) && request.client_id.map(String).includes(selectedClientId));
+      const clientMatch = selectedClientId === 'all' || (clientIds && clientIds.includes(selectedClientId));
       
       return searchMatch && statusMatch && ownerMatch && clientMatch;
     }), [allRequests, searchQuery, clientMap, selectedStatus, selectedOwnerId, selectedClientId]);
@@ -680,4 +681,3 @@ export default function RequestsPage() {
         </>
     )
 }
-
