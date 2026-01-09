@@ -96,7 +96,7 @@ const getInitials = (name: string): string => {
 interface RequestCardProps {
     request: Request;
     clientMap: Map<string, string>;
-    onDuplicate: (id: number) => void;
+    onDuplicate: (id: string) => void;
     onArchive: (request: Request) => void;
     onRestore: (request: Request) => void;
     onForceDelete: (request: Request) => void;
@@ -158,16 +158,16 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                              ) : (
                                 <>
                                     <DropdownMenuItem asChild>
-                                        <Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}>
+                                        <Link href={request.status === 'published' ? `/dashboard/requests/${request._id}` : `/dashboard/requests/${request._id}/preview`}>
                                             <Eye className="mr-2 h-4 w-4" />
                                             {request.status === 'published' ? 'View Details' : 'Preview'}
                                         </Link>
                                     </DropdownMenuItem>
-                                    {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
-                                    {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
+                                    {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request._id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                                    {canManage && <DropdownMenuItem onClick={() => onDuplicate(request._id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
                                     {canManage && (
                                       <>
-                                        <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                                             <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                                         </DropdownMenuItem>
@@ -198,17 +198,17 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
                             </>
                          ) : request.status === 'published' ? (
                             <Button size="sm" className="rounded-full px-8" asChild>
-                                <Link href={`/dashboard/requests/${request.id}`}>VIEW REQUEST</Link>
+                                <Link href={`/dashboard/requests/${request._id}`}>VIEW REQUEST</Link>
                             </Button>
                          ) : (
                             canManage ? (
                                 <>
-                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/${request.id}/preview`}>PREVIEW</Link></Button>
-                                    <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}>PUBLISH</Link></Button>
+                                    <Button variant="outline" size="sm" className="rounded-full px-8 bg-white" asChild><Link href={`/dashboard/requests/${request._id}/preview`}>PREVIEW</Link></Button>
+                                    <Button size="sm" className="rounded-full px-8" asChild><Link href={`/dashboard/requests/edit/${request._id}/finalize`}>PUBLISH</Link></Button>
                                 </>
                             ) : (
                                 <Button size="sm" className="rounded-full px-8" asChild>
-                                    <Link href={`/dashboard/requests/${request.id}/preview`}>PREVIEW</Link>
+                                    <Link href={`/dashboard/requests/${request._id}/preview`}>PREVIEW</Link>
                                 </Button>
                             )
                          )}
@@ -237,7 +237,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
 interface RequestRowProps {
     request: Request;
     clientMap: Map<string, string>;
-    onDuplicate: (id: number) => void;
+    onDuplicate: (id: string) => void;
     onArchive: (request: Request) => void;
     onRestore: (request: Request) => void;
     onForceDelete: (request: Request) => void;
@@ -313,16 +313,16 @@ const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onF
                      ) : (
                         <>
                             <DropdownMenuItem asChild>
-                                <Link href={request.status === 'published' ? `/dashboard/requests/${request.id}` : `/dashboard/requests/${request.id}/preview`}>
+                                <Link href={request.status === 'published' ? `/dashboard/requests/${request._id}` : `/dashboard/requests/${request._id}/preview`}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     {request.status === 'published' ? 'View Details' : 'Preview'}
                                 </Link>
                             </DropdownMenuItem>
-                            {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
-                            {canManage && <DropdownMenuItem onSelect={() => onDuplicate(request.id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
+                            {canManage && request.status !== 'published' && <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request._id}/essentials`}><PenSquare className="mr-2 h-4 w-4" />Edit</Link></DropdownMenuItem>}
+                            {canManage && <DropdownMenuItem onClick={() => onDuplicate(request._id)}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>}
                             {canManage && (
                               <>
-                                <DropdownMenuItem onSelect={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onArchive(request)}><ArchiveIcon className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => onForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                                 </DropdownMenuItem>
@@ -390,8 +390,8 @@ export default function RequestsPage() {
                 setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
                 setTeamMembers(teamMembersResponse || []);
 
-                const active = requestsResponse.data || [];
-                const archived = archivedResponse.data || [];
+                const active = requestsResponse.data.map(r => ({...r, id: r._id})) || [];
+                const archived = archivedResponse.data.map(r => ({...r, id: r._id})) || [];
 
                 const combinedRequests = [...active, ...archived].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
                 setAllRequests(combinedRequests);
@@ -417,7 +417,7 @@ export default function RequestsPage() {
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
 
-    const handleDuplicate = async (requestId: number) => {
+    const handleDuplicate = async (requestId: string) => {
         const token = localStorage.getItem('authToken');
         if (!token) return;
         toast({ title: 'Duplicating request...', description: 'Please wait.'});
@@ -434,7 +434,7 @@ export default function RequestsPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToArchive) return;
         try {
-            await softDeleteRequest(token, requestToArchive.id);
+            await softDeleteRequest(token, requestToArchive._id);
             toast({ title: 'Request archived' });
             refetchData();
         } catch (err: any) {
@@ -448,7 +448,7 @@ export default function RequestsPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToRestore) return;
         try {
-            await restoreRequest(token, requestToRestore.id);
+            await restoreRequest(token, requestToRestore._id);
             toast({ title: 'Request restored' });
             refetchData();
         } catch (err: any) {
@@ -462,7 +462,7 @@ export default function RequestsPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToForceDelete) return;
         try {
-            await forceDeleteRequest(token, requestToForceDelete.id);
+            await forceDeleteRequest(token, requestToForceDelete._id);
             toast({ title: 'Request permanently deleted' });
             refetchData();
         } catch (err: any) {
@@ -559,7 +559,7 @@ export default function RequestsPage() {
         return viewMode === 'grid' ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                 {filteredRequests.map(request => (
-                    <RequestCard key={request.id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
+                    <RequestCard key={request._id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
                 ))}
                 {canManageRequests && (
                   <Link href="/dashboard/requests/new">
@@ -588,7 +588,7 @@ export default function RequestsPage() {
                     </TableHeader>
                     <TableBody>
                         {filteredRequests.map((request) => (
-                           <RequestRow key={request.id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
+                           <RequestRow key={request._id} {...viewProps} request={request} isArchived={!!request.deleted_at} />
                         ))}
                         {canManageRequests && (
                             <TableRow>

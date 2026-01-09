@@ -258,9 +258,6 @@ export default function ClientsPage() {
         setIsImportDialogOpen(false);
     };
 
-    reader.readAsText(file);
-  }
-
 
   const filteredActiveClients = activeClients.filter(
     (client) =>

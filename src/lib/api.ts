@@ -98,7 +98,7 @@ export interface Company {
 }
 
 export interface Client {
-  id: number;
+  id: string; // Use string for MongoDB _id
   _id: string;
   full_name: string;
   email: string;
@@ -177,7 +177,8 @@ export interface Page {
 }
 
 export interface Request {
-  id: number;
+  _id: string;
+  id: string; // Keep both for safety, but primary should be _id
   title: string;
   description: string;
   request_code: string;
@@ -192,12 +193,12 @@ export interface Request {
   communication_mode: string;
   started_from_scratch: boolean;
   due_date: string | null;
-  user_id: number;
+  user_id: string;
   user?: User; 
-  company_id?: number;
+  company_id?: string;
   company?: Company;
-  created_by: number;
-  updated_by?: number | null;
+  created_by: string;
+  updated_by?: string | null;
   created_at: string;
   updated_at: string;
   submissions_count?: number;
@@ -520,7 +521,7 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
   const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
-  return response.map((client: any) => ({ ...client, creator_name: client.creator?.name || 'Admin' }));
+  return response.map((client: any) => ({ ...client, id: client._id, creator_name: client.creator?.name || 'Admin' }));
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
@@ -911,7 +912,7 @@ export async function getAllRequests(token: string): Promise<Request[]> {
 
   do {
     const response: PaginatedRequests = await getRequests(token, page);
-    allRequests = allRequests.concat(response.data);
+    allRequests = allRequests.concat(response.data.map(r => ({...r, id: r._id})));
     lastPage = response.last_page;
     page++;
   } while (page <= lastPage);
@@ -936,30 +937,30 @@ export async function createRequest(token: string, requestData: any): Promise<Re
   });
 }
 
-export async function getRequest(token: string, id: number): Promise<Request> {
+export async function getRequest(token: string, id: string): Promise<Request> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token);
 }
 
-export async function updateRequest(token: string, id: number, requestData: Partial<Request>): Promise<Request> {
+export async function updateRequest(token: string, id: string, requestData: Partial<Request>): Promise<Request> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token, {
     method: 'PUT',
     body: JSON.stringify(requestData),
   });
 }
 
-export async function softDeleteRequest(token: string, id: number): Promise<{ message: string }> {
+export async function softDeleteRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${id}`, token, { method: 'DELETE' });
 }
 
-export async function forceDeleteRequest(token: string, id: number): Promise<{ message: string }> {
+export async function forceDeleteRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${id}/force`, token, { method: 'DELETE' });
 }
 
-export async function restoreRequest(token: string, id: number): Promise<{ message: string }> {
+export async function restoreRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${id}/restore`, token, { method: 'PATCH' });
 }
 
-export async function duplicateRequest(token: string, id: number): Promise<Request> {
+export async function duplicateRequest(token: string, id: string): Promise<Request> {
   const originalRequest = await getRequest(token, id);
   const newRequestData = {
     title: `(Copy) ${originalRequest.title}`.substring(0, 255),
@@ -1017,11 +1018,11 @@ export async function forceDeleteTeamMember(token: string, id: number): Promise<
 // REQUEST SUBMISSION API
 // ===================================
 
-export async function getRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
+export async function getRequestSubmissions(token: string, requestId: string): Promise<Submission[]> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions`, token);
 }
 
-export async function getSingleSubmissionForRequest(token: string, requestId: number, submissionId: number): Promise<Submission> {
+export async function getSingleSubmissionForRequest(token: string, requestId: string, submissionId: number): Promise<Submission> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
