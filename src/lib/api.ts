@@ -897,7 +897,7 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // ===================================
 // REQUEST API
 // ===================================
-export async function getRequests(token: string, page: number = 1): Promise<Request[]> {
+export async function getRequests(token: string): Promise<Request[]> {
   return fetchWithToken(`${API_BASE_URL}/api/requests`, token);
 }
 
