@@ -98,8 +98,8 @@ export interface Company {
 }
 
 export interface Client {
-  id: number;
   _id: string;
+  id: number; // Keep for legacy if needed, but primary is _id
   full_name: string;
   email: string;
   companies: string[];
@@ -178,7 +178,7 @@ export interface Page {
 
 export interface Request {
   _id: string;
-  id: string; // Keep both for safety, but primary should be _id
+  id: string; // Keep for safety, but primary should be _id
   title: string;
   description: string;
   request_code: string;
@@ -477,11 +477,7 @@ export async function changePassword(token: string, passwordData: any) {
 
 export async function getCompanies(token: string): Promise<Company[]> {
     const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
-    return response.companies.map((item: any) => ({
-      ...item.company_id,
-      _id: item.company_id.id, // Compatibility
-      pivot: { role: item.role }
-    })) || [];
+    return response.companies || [];
 }
 
 export async function getCompany(token: string, id: string): Promise<Company> {
@@ -903,7 +899,7 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // REQUEST API
 // ===================================
 export async function getRequests(token: string): Promise<Request[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests`, token);
+  return await fetchWithToken(`${API_BASE_URL}/api/requests`, token);
 }
 
 export async function getAllRequests(token: string): Promise<Request[]> {

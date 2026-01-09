@@ -172,7 +172,7 @@ const renderQuestionPreview = (question: Question) => {
 
 
 const RequestPreview = ({ initialRequestData, clients, activeIds, setActiveIds, navigatePage, handleContinue, isLastQuestion, setRequestToArchive, setRequestToForceDelete, isSubmitting, id }: any) => {
-    const assignedClient = useMemo(() => clients.find((c: Client) => initialRequestData.client_id?.includes(c.id)), [clients, initialRequestData.client_id]);
+    const assignedClient = useMemo(() => clients.find((c: Client) => initialRequestData.client_id?.includes(c._id)), [clients, initialRequestData.client_id]);
 
     const { activeQuestion, activeSection, activePage, activePageIndex } = useMemo(() => {
         if (!initialRequestData || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
@@ -326,7 +326,7 @@ export default function EditRequestWizardPage() {
     const params = useParams();
     const { toast } = useToast();
     
-    const id = Number(params.id);
+    const id = params.id as string;
     const stepSlug = Array.isArray(params.step) ? params.step[0] : (params.step || 'essentials');
 
     const currentStepIndex = useMemo(() => {
@@ -379,8 +379,8 @@ export default function EditRequestWizardPage() {
         async function fetchRequestData() {
             try {
                 const [data, clientData] = await Promise.all([
-                    getRequest(token, requestId),
-                    getClients(token),
+                    getRequest(token!, requestId),
+                    getClients(token!),
                 ]);
 
                 setRequestTitle(data.title);
@@ -912,7 +912,7 @@ export default function EditRequestWizardPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToArchive) return;
         try {
-            await updateRequest(token, requestToArchive.id, { ...requestToArchive, status: 'archived' });
+            await updateRequest(token, requestToArchive._id, { ...requestToArchive, status: 'archived' });
             toast({ title: 'Request archived' });
             router.push('/dashboard/requests');
         } catch (err: any) {
@@ -926,7 +926,7 @@ export default function EditRequestWizardPage() {
         const token = localStorage.getItem('authToken');
         if (!token || !requestToForceDelete) return;
         try {
-            await updateRequest(token, requestToForceDelete.id, { ...requestToForceDelete, is_deleted: true });
+            await updateRequest(token, requestToForceDelete._id, { ...requestToForceDelete, is_deleted: true });
             toast({ title: 'Request permanently deleted' });
             router.push('/dashboard/requests');
         } catch (err: any) {
@@ -1092,5 +1092,6 @@ export default function EditRequestWizardPage() {
 }
 
     
+
 
 
