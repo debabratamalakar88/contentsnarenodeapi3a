@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { 
@@ -93,7 +94,7 @@ const getInitials = (name: string): string => {
 
 interface RequestCardProps {
     request: Request;
-    clientMap: Map<number, string>;
+    clientMap: Map<string, string>;
     onDuplicate: (id: number) => void;
     onArchive: (request: Request) => void;
     onRestore: (request: Request) => void;
@@ -105,7 +106,7 @@ interface RequestCardProps {
 }
 
 const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestCardProps) => {
-    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(String(request.client_id[0])) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     
@@ -234,7 +235,7 @@ const RequestCard = ({ request, clientMap, onDuplicate, onArchive, onRestore, on
 
 interface RequestRowProps {
     request: Request;
-    clientMap: Map<number, string>;
+    clientMap: Map<string, string>;
     onDuplicate: (id: number) => void;
     onArchive: (request: Request) => void;
     onRestore: (request: Request) => void;
@@ -246,7 +247,7 @@ interface RequestRowProps {
 }
 
 const RequestRow = ({ request, clientMap, onDuplicate, onArchive, onRestore, onForceDelete, isArchived, canManage, currentUser, userRole }: RequestRowProps) => {
-    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
+    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(String(request.client_id[0])) || "(No Client)" : "(No Client)";
     const clientInitial = getInitials(clientName);
     const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
     const showActions = canManage || !isArchived;
@@ -410,7 +411,7 @@ export default function RequestsPage() {
     
     const canManageRequests = userRole === 'Administrator' || userRole === 'Editor';
 
-    const clientMap = useMemo(() => new Map(clients.map(c => [c.id, c.full_name])), [clients]);
+    const clientMap = useMemo(() => new Map(clients.map(c => [c._id, c.full_name])), [clients]);
     const ownerMap = useMemo(() => new Map(teamMembers.map(m => [m.id, m.name])), [teamMembers]);
 
     const ViewIcon = viewMode === 'grid' ? LayoutGrid : List;
@@ -471,7 +472,7 @@ export default function RequestsPage() {
     };
 
     const filteredRequests = useMemo(() => allRequests.filter(request => {
-      const clientNames = (request.client_id || []).map(id => clientMap.get(id) || '').join(' ').toLowerCase();
+      const clientNames = (request.client_id || []).map(id => clientMap.get(String(id)) || '').join(' ').toLowerCase();
       const searchLower = searchQuery.toLowerCase();
       
       const searchMatch = (
@@ -493,7 +494,7 @@ export default function RequestsPage() {
     const requestStatuses = ['draft', 'published', 'scheduled', 'completed', 'archived'];
     const selectedStatusName = selectedStatus === 'all' ? 'All Statuses' : requestStatuses.find(s => s === selectedStatus) || 'All Statuses';
     const selectedOwnerName = selectedOwnerId === 'all' ? 'All Owners' : ownerMap.get(Number(selectedOwnerId)) || 'All Owners';
-    const selectedClientName = selectedClientId === 'all' ? 'All Clients' : clientMap.get(Number(selectedClientId)) || 'All Clients';
+    const selectedClientName = selectedClientId === 'all' ? 'All Clients' : clientMap.get(selectedClientId) || 'All Clients';
 
     const renderLoadingSkeleton = () => (
         viewMode === 'grid' ? (
@@ -642,7 +643,7 @@ export default function RequestsPage() {
                         </DropdownMenu>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client._id} value={String(client._id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
                         </DropdownMenu>
                     </div>
                      <div className="relative max-w-xs w-full">
@@ -678,3 +679,4 @@ export default function RequestsPage() {
         </>
     )
 }
+
