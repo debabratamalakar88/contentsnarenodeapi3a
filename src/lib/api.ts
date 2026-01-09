@@ -517,8 +517,7 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
-  return response.map((client: any) => ({ ...client, creator_name: client.creator?.name || 'Admin' }));
+  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
@@ -760,38 +759,38 @@ export async function getAdminArchivedRequests(token: string, page: number = 1, 
     return fetchWithToken(url.toString(), token);
 }
 
-export async function getAdminRequest(token: string, id: number): Promise<Request> {
+export async function getAdminRequest(token: string, id: string): Promise<Request> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token);
 }
 
-export async function updateAdminRequest(token: string, id: number, data: Partial<Request>): Promise<Request> {
+export async function updateAdminRequest(token: string, id: string, data: Partial<Request>): Promise<Request> {
     return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token, {
         method: 'PUT',
         body: JSON.stringify(data)
     });
 }
 
-export async function softDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
+export async function softDeleteAdminRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}`, token, { method: 'DELETE' });
 }
 
-export async function restoreAdminRequest(token: string, id: number): Promise<{ message: string }> {
+export async function restoreAdminRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/restore`, token, { method: 'PATCH' });
 }
 
-export async function forceDeleteAdminRequest(token: string, id: number): Promise<{ message: string }> {
+export async function forceDeleteAdminRequest(token: string, id: string): Promise<{ message: string }> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/force`, token, { method: 'DELETE' });
 }
 
-export async function duplicateAdminRequest(token: string, id: number): Promise<Request> {
+export async function duplicateAdminRequest(token: string, id: string): Promise<Request> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${id}/duplicate`, token, { method: 'POST' });
 }
 
-export async function getAdminRequestSubmissions(token: string, requestId: number): Promise<Submission[]> {
+export async function getAdminRequestSubmissions(token: string, requestId: string): Promise<Submission[]> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions`, token);
 }
 
-export async function getAdminSingleSubmissionForRequest(token: string, requestId: number, submissionId: number): Promise<Submission> {
+export async function getAdminSingleSubmissionForRequest(token: string, requestId: string, submissionId: number): Promise<Submission> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
@@ -898,8 +897,8 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // ===================================
 // REQUEST API
 // ===================================
-export async function getRequests(token: string): Promise<Request[]> {
-  return await fetchWithToken(`${API_BASE_URL}/api/requests`, token);
+export async function getRequests(token: string, page: number = 1): Promise<Request[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/requests`, token);
 }
 
 export async function getAllRequests(token: string): Promise<Request[]> {
