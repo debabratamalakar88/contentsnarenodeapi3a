@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -100,7 +99,7 @@ export default function ClientsPage() {
             } else {
                 setArchivedClients(clientsData);
             }
-            setCurrentUser(profileData.user);
+            setCurrentUser(profileData.user || profileData.data || profileData);
         } catch (err: any) {
             setError(err.message || `Failed to fetch ${currentTab} clients.`);
             toast({
@@ -256,6 +255,9 @@ export default function ClientsPage() {
         setIsImporting(false);
         setIsImportDialogOpen(false);
     };
+
+    reader.readAsText(file);
+  }
 
 
   const filteredActiveClients = activeClients.filter(
