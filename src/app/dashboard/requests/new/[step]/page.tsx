@@ -242,17 +242,20 @@ export default function NewRequestWizardPage() {
                     started_from_scratch: startedFromScratch,
                 };
 
-                if (requestId) {
-                    await updateRequest(token, requestId, payload);
+                let currentRequestId = requestId;
+                if (currentRequestId) {
+                    await updateRequest(token, currentRequestId, payload);
                     toast({ title: "Request draft updated" });
-                    const nextStepSlug = steps[currentStepIndex + 1].slug;
-                    router.push(`/dashboard/requests/edit/${requestId}/${nextStepSlug}`);
                 } else {
                     const newRequest = await createRequest(token, payload);
                     setRequestId(newRequest.id);
+                    currentRequestId = newRequest.id;
                     toast({ title: "Request draft created" });
-                    router.push(`/dashboard/requests/edit/${newRequest.id}/${steps[currentStepIndex + 1].slug}`);
                 }
+                
+                const nextStepSlug = steps[currentStepIndex + 1].slug;
+                const url = `/dashboard/requests/edit/${currentRequestId}/${nextStepSlug}`;
+                router.push(url);
 
             } catch (error: any) {
                 const description = error.errors ? Object.values(error.errors).flat().join("\n") : error.message || "An unexpected error occurred.";
@@ -684,14 +687,12 @@ export default function NewRequestWizardPage() {
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBack}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="flex-1 flex justify-center">
-                    <StepNavigation
-                        steps={steps}
-                        currentStepSlug={stepSlug}
-                        onStepClick={handleStepClick}
-                        maxVisitedStepIndex={maxVisitedStepIndex}
-                    />
-                </div>
+                <StepNavigation
+                    steps={steps}
+                    currentStepSlug={stepSlug}
+                    onStepClick={handleStepClick}
+                    maxVisitedStepIndex={maxVisitedStepIndex}
+                />
                 <div className="flex items-center gap-2">
                     {currentStepIndex < steps.length - 1 && (
                         <Button onClick={nextStep} disabled={isSubmitting || (currentStepIndex === 0)}>
@@ -758,3 +759,4 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
+
