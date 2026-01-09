@@ -112,7 +112,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
         setActiveIds({ pageId, sectionId, questionId });
     };
 
-    const assignedClient = clients.find(c => request.client_id?.includes(c.id));
+    const assignedClient = clients.find(c => request.client_id?.includes(c._id));
 
     return (
         <aside 
@@ -242,7 +242,7 @@ export default function RequestPreviewPage() {
     const [editingCommentText, setEditingCommentText] = useState('');
     const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
 
-    const id = Number(params.id);
+    const id = params.id as string;
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     useEffect(() => {
@@ -292,7 +292,6 @@ export default function RequestPreviewPage() {
                 const commentsData = await getComments(token, request.id, questionIdStr);
                 setComments(commentsData);
             } catch (err: any) {
-                // Don't show toast for comment fetch errors unless panel is open
                 if (showComments) {
                     toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
                 }
@@ -428,7 +427,7 @@ export default function RequestPreviewPage() {
         setIsSubmittingComment(true);
         try {
             await addComment(token, {
-                request_id: request.id,
+                request_id: request._id,
                 user_id: currentUser.id,
                 question_id: String(activeIds.questionId),
                 comment: newComment
@@ -633,7 +632,7 @@ export default function RequestPreviewPage() {
                     </main>
                 </div>
             </div>
-            <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+             <AlertDialog open={!!commentToDelete} onOpenChange={(open) => !open && setCommentToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader><AlertDialogTitle>Delete this comment?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                     <AlertDialogFooter>
