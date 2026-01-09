@@ -61,7 +61,7 @@ export default function Dashboard() {
             getRequests(token),
             getClients(token)
         ]);
-        setRequests(requestsResponse.data || []);
+        setRequests(requestsResponse || []);
         setClients(clientsResponse || []);
       } catch (error: any) {
         toast({
@@ -77,7 +77,7 @@ export default function Dashboard() {
   }, [router, toast])
 
   const clientMap = useMemo(() => {
-    return new Map(clients.map(c => [c.id, c.full_name]));
+    return new Map(clients.map(c => [c._id, c.full_name]));
   }, [clients]);
 
   const sortedRequests = useMemo(() => {
@@ -248,7 +248,7 @@ export default function Dashboard() {
                    const clientName = request.client_id && request.client_id.length > 0 ? clientMap.get(request.client_id[0]) || "(No Client)" : "(No Client)";
                    const additionalClientsCount = request.client_id ? request.client_id.length - 1 : 0;
                    return (
-                    <TableRow key={request.id}>
+                    <TableRow key={request._id}>
                       <TableCell className="font-medium">{request.title}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-muted-foreground">
