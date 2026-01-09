@@ -1,5 +1,4 @@
 
-
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -150,7 +149,7 @@ export default function NewRequestWizardPage() {
     const [requestDescription, setRequestDescription] = useState("");
     const [pages, setPages] = useState<Page[]>(initialPagesData);
     const [activePageId, setActivePageId] = useState<number | null>(initialPagesData[0]?.id || null);
-    const [requestId, setRequestId] = useState<number | null>(null);
+    const [requestId, setRequestId] = useState<string | null>(null);
     const [startedFromScratch, setStartedFromScratch] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | MyTemplate | null>(null);
@@ -248,8 +247,8 @@ export default function NewRequestWizardPage() {
                     toast({ title: "Request draft updated" });
                 } else {
                     const newRequest = await createRequest(token, payload);
-                    setRequestId(newRequest.id);
-                    currentRequestId = newRequest.id;
+                    setRequestId(newRequest._id);
+                    currentRequestId = newRequest._id;
                     toast({ title: "Request draft created" });
                 }
                 
@@ -469,7 +468,7 @@ export default function NewRequestWizardPage() {
             return page;
         }));
     };
-
+    
     const handleAddFieldClick = (pageId: number, sectionId: number) => {
         setCurrentLocation({ pageId, sectionId });
         setSearchTerm("");
@@ -759,4 +758,3 @@ export default function NewRequestWizardPage() {
         </div>
     );
 }
-
