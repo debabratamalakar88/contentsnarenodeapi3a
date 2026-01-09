@@ -98,7 +98,7 @@ export interface Company {
 }
 
 export interface Client {
-  id: string; // Use string for MongoDB _id
+  id: number;
   _id: string;
   full_name: string;
   email: string;
@@ -479,6 +479,7 @@ export async function getCompanies(token: string): Promise<Company[]> {
     const response = await fetchWithToken(`${API_BASE_URL}/api/companies`, token);
     return response.companies.map((item: any) => ({
       ...item.company_id,
+      _id: item.company_id.id, // Compatibility
       pivot: { role: item.role }
     })) || [];
 }
@@ -901,27 +902,16 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // ===================================
 // REQUEST API
 // ===================================
-export async function getRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests?page=${page}`, token);
+export async function getRequests(token: string): Promise<Request[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/requests`, token);
 }
 
 export async function getAllRequests(token: string): Promise<Request[]> {
-  let allRequests: Request[] = [];
-  let page = 1;
-  let lastPage = 1;
-
-  do {
-    const response: PaginatedRequests = await getRequests(token, page);
-    allRequests = allRequests.concat(response.data.map(r => ({...r, id: r._id})));
-    lastPage = response.last_page;
-    page++;
-  } while (page <= lastPage);
-
-  return allRequests;
+  return getRequests(token);
 }
 
-export async function getArchivedRequests(token: string, page: number = 1): Promise<PaginatedRequests> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests/archived?page=${page}`, token);
+export async function getArchivedRequests(token: string): Promise<Request[]> {
+  return fetchWithToken(`${API_BASE_URL}/api/requests/archived`, token);
 }
 
 
@@ -1062,7 +1052,7 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string | null, requestIdOrCode: number | string, questionId: string): Promise<Comment[]> {
+export async function getComments(token: string | null, requestIdOrCode: string, questionId: string): Promise<Comment[]> {
   let url: string;
   if (token) {
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
@@ -1078,7 +1068,7 @@ export async function getComments(token: string | null, requestIdOrCode: number 
   }
 }
 
-export async function addComment(token: string | null, data: { request_id: number; user_id?: number; client_name?: string; client_email?: string; question_id: string; comment: string; }): Promise<Comment> {
+export async function addComment(token: string | null, data: { request_id: string; user_id?: string; client_name?: string; client_email?: string; question_id: string; comment: string; }): Promise<Comment> {
   const headers: { [key: string]: string } = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'

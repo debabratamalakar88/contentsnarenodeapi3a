@@ -56,7 +56,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  getRequests, 
+  getAllRequests, 
   getClients, 
   getArchivedRequests,
   softDeleteRequest,
@@ -381,7 +381,7 @@ export default function RequestsPage() {
                 const [clientsResponse, profileResponse, requestsResponse, archivedResponse, teamMembersResponse] = await Promise.all([
                     getClients(token),
                     getProfile(token),
-                    getRequests(token),
+                    getAllRequests(token),
                     getArchivedRequests(token),
                     getTeamMembers(token),
                 ]);
@@ -390,8 +390,8 @@ export default function RequestsPage() {
                 setCurrentUser(profileResponse.user || profileResponse.data || profileResponse);
                 setTeamMembers(teamMembersResponse || []);
 
-                const active = requestsResponse.data.map(r => ({...r, id: r._id})) || [];
-                const archived = archivedResponse.data.map(r => ({...r, id: r._id})) || [];
+                const active = requestsResponse.map(r => ({...r, id: r._id})) || [];
+                const archived = archivedResponse.map(r => ({...r, id: r._id})) || [];
 
                 const combinedRequests = [...active, ...archived].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
                 setAllRequests(combinedRequests);
