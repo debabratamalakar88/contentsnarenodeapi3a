@@ -899,7 +899,8 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // REQUEST API
 // ===================================
 export async function getRequests(token: string): Promise<Request[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/requests`, token);
+  return Array.isArray(response) ? response : [];
 }
 
 export async function getAllRequests(token: string): Promise<Request[]> {
@@ -907,7 +908,8 @@ export async function getAllRequests(token: string): Promise<Request[]> {
 }
 
 export async function getArchivedRequests(token: string): Promise<Request[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/requests/archived`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/requests/archived`, token);
+  return Array.isArray(response) ? response : [];
 }
 
 
@@ -1053,18 +1055,17 @@ export async function getComments(token: string | null, requestIdOrCode: string,
   if (token) {
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
-    return response.data || [];
+    return Array.isArray(response) ? response : [];
   } else {
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
         headers: { 'Accept': 'application/json' }
     });
-    const handledResponse = await handleResponse(response);
-    return handledResponse.data || [];
+    return await handleResponse(response);
   }
 }
 
-export async function addComment(token: string | null, data: { request_id: string; user_id?: string; client_name?: string; client_email?: string; question_id: string; comment: string; }): Promise<Comment> {
+export async function addComment(token: string | null, data: { request_id: string; user_id?: number; client_name?: string; client_email?: string; question_id: string; comment: string; }): Promise<Comment> {
   const headers: { [key: string]: string } = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
