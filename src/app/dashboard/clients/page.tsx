@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -101,7 +100,7 @@ export default function ClientsPage() {
             } else {
                 setArchivedClients(clientsData);
             }
-            setCurrentUser(profileData.user || profileData.data || profileData);
+            setCurrentUser(profileData.user);
         } catch (err: any) {
             setError(err.message || `Failed to fetch ${currentTab} clients.`);
             toast({
