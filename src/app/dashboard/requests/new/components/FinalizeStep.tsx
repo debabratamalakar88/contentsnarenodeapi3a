@@ -124,7 +124,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
         }
 
         const clientIds = selectedClients.length > 0
-            ? selectedClients.map(Number)
+            ? selectedClients
             : (initialData?.client_id ?? []);
 
         return {
@@ -164,17 +164,17 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
     
     const clientOptions = clients.map(client => ({
         label: client.full_name,
-        value: String(client.id)
+        value: client._id
     }));
       
     const selectedClientDetails = useMemo(() => {
         return selectedClients.map(clientId => {
-            return clients.find(c => String(c.id) === clientId);
+            return clients.find(c => c._id === clientId);
         }).filter((c): c is Client => c !== undefined);
     }, [selectedClients, clients]);
     
-    const handleRemoveClient = (clientId: number) => {
-        setSelectedClients(prev => prev.filter(id => id !== String(clientId)));
+    const handleRemoveClient = (clientId: string) => {
+        setSelectedClients(prev => prev.filter(id => id !== clientId));
     }
 
     const ClientSelector = () => {
@@ -183,7 +183,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
           <div>
             <div className="space-y-2 mb-2">
               {selectedClientDetails.map(client => (
-                <Card key={client.id} className="flex items-center gap-3 p-3">
+                <Card key={client._id} className="flex items-center gap-3 p-3">
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className="bg-green-100 text-green-800 text-sm font-bold border">
                         {getInitials(client.full_name)}
@@ -197,7 +197,7 @@ export default function FinalizeStep({ initialData, onPublish, onSaveDraft, isSu
                     </div>
                   </div>
                    {selectedClientDetails.length > 1 && (
-                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveClient(client.id)}>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveClient(client._id)}>
                         <Trash2 className="h-4 w-4" />
                      </Button>
                    )}
