@@ -517,7 +517,8 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  return Array.isArray(response) ? response : [];
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
