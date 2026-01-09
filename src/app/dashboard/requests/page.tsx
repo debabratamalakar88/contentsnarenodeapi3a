@@ -23,7 +23,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import * as React from 'react';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -51,6 +51,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton";
@@ -472,7 +473,7 @@ export default function RequestsPage() {
     };
 
     const filteredRequests = useMemo(() => allRequests.filter(request => {
-      const clientNames = (request.client_id || []).map(id => clientMap.get(String(id)) || '').join(' ').toLowerCase();
+      const clientNames = (Array.isArray(request.client_id) ? request.client_id : []).map(id => clientMap.get(String(id)) || '').join(' ').toLowerCase();
       const searchLower = searchQuery.toLowerCase();
       
       const searchMatch = (
@@ -486,7 +487,7 @@ export default function RequestsPage() {
       
       const ownerMatch = selectedOwnerId === 'all' || String(request.created_by) === selectedOwnerId;
       
-      const clientMatch = selectedClientId === 'all' || (request.client_id && request.client_id.includes(Number(selectedClientId)));
+      const clientMatch = selectedClientId === 'all' || (request.client_id && Array.isArray(request.client_id) && request.client_id.map(String).includes(selectedClientId));
       
       return searchMatch && statusMatch && ownerMatch && clientMatch;
     }), [allRequests, searchQuery, clientMap, selectedStatus, selectedOwnerId, selectedClientId]);
@@ -643,7 +644,7 @@ export default function RequestsPage() {
                         </DropdownMenu>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="outline" className="h-8"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>{selectedClientName}<ChevronDown className="ml-2 h-4 w-4"/></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client._id} value={String(client._id)}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+                            <DropdownMenuContent><DropdownMenuRadioGroup value={selectedClientId} onValueChange={setSelectedClientId}><DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem><DropdownMenuSeparator/>{clients.map(client => <DropdownMenuRadioItem key={client._id} value={client._id}>{client.full_name}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
                         </DropdownMenu>
                     </div>
                      <div className="relative max-w-xs w-full">
