@@ -207,8 +207,8 @@ export interface Request {
 
 export interface Submission {
   id: number;
-  request_id: number;
-  client_id: number | null;
+  request_id: string;
+  client_id: string | null;
   client_name?: string;
   client_email?: string;
   submission_code: string;
@@ -220,22 +220,22 @@ export interface Submission {
 
 export interface Reminder {
   id: number;
-  request_id: number;
-  client_id: number;
+  request_id: string;
+  client_id: string;
   reminder_date: string;
   sent: boolean;
   created_at: string;
   updated_at: string;
   client: {
-    id: number;
+    id: string;
     full_name: string;
     email: string;
   };
   request: {
-    id: number;
+    id: string;
     title: string;
     request_code: string;
-    created_by: number;
+    created_by: string;
   };
 }
 
@@ -518,7 +518,8 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
+  return response;
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {
@@ -900,7 +901,7 @@ export async function forceDeleteAdminTemplate(token: string, id: number): Promi
 // ===================================
 export async function getRequests(token: string): Promise<Request[]> {
   const response = await fetchWithToken(`${API_BASE_URL}/api/requests`, token);
-  return Array.isArray(response) ? response : [];
+  return Array.isArray(response) ? response.map(r => ({...r, client_id: r.client_id || []})) : [];
 }
 
 export async function getAllRequests(token: string): Promise<Request[]> {
@@ -1055,7 +1056,7 @@ export async function getComments(token: string | null, requestIdOrCode: string,
   if (token) {
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
-    return Array.isArray(response) ? response : [];
+    return response.data || [];
   } else {
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
