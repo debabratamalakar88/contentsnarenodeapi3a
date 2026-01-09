@@ -241,7 +241,7 @@ export interface Reminder {
 
 export interface Comment {
   id: number;
-  request_id: number;
+  request_id: string;
   user_id: number;
   question_id: string;
   comment: string;
@@ -256,7 +256,8 @@ export interface Comment {
     name: string;
   };
   request: {
-    id: number;
+    id: string;
+    _id: string;
     title: string;
     status: 'draft' | 'published' | 'completed' | 'archived' | 'scheduled';
   };
@@ -517,8 +518,7 @@ export async function switchCompany(token: string, company_id: string): Promise<
 // CLIENT API
 // ===================================
 export async function getClients(token: string): Promise<Client[]> {
-  const response = await fetchWithToken(`${API_BASE_URL}/api/clients`, token);
-  return Array.isArray(response) ? response : [];
+  return fetchWithToken(`${API_BASE_URL}/api/clients`, token);
 }
 
 export async function getArchivedClients(token: string): Promise<Client[]> {

@@ -148,7 +148,7 @@ const ViewSidebar = ({ request, assignedClients, activeIds, setActiveIds, public
                     </div>
                 )}
                 {assignedClients.map(client => (
-                    <div key={client.id} className="flex items-center gap-3">
+                    <div key={client._id} className="flex items-center gap-3">
                         <Avatar className="h-9 w-9"><AvatarFallback className="text-xs bg-pink-100 text-pink-700">{getInitials(client.full_name)}</AvatarFallback></Avatar>
                         <div>
                             <p className="text-sm font-semibold">{client.full_name}</p>
@@ -215,7 +215,7 @@ export default function ViewRequestPage() {
     const params = useParams();
     const { toast } = useToast();
 
-    const id = Number(params.id);
+    const id = params.id as string;
 
     const [request, setRequest] = useState<Request | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
@@ -243,7 +243,7 @@ export default function ViewRequestPage() {
         setIsCommentsLoading(true);
         try {
             const questionIdStr = String(activeIds.questionId);
-            const commentsData = await getComments(token, request.id, questionIdStr);
+            const commentsData = await getComments(token, request._id, questionIdStr);
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
@@ -320,7 +320,7 @@ export default function ViewRequestPage() {
     const assignedClients = useMemo(() => {
         if (!request?.client_id || !clients) return [];
         const clientIds = Array.isArray(request.client_id) ? request.client_id : [request.client_id];
-        return clients.filter(c => clientIds.includes(c.id));
+        return clients.filter(c => clientIds.includes(c._id));
     }, [request, clients]);
     
     const publicUrl = (typeof window !== 'undefined' && request?.status === 'published' && request.request_code)
@@ -333,8 +333,8 @@ export default function ViewRequestPage() {
         setIsSubmittingComment(true);
         try {
             await addComment(token, {
-                request_id: request.id,
-                user_id: currentUser.id,
+                request_id: request._id,
+                user_id: currentUser._id,
                 question_id: String(activeIds.questionId),
                 comment: newComment
             });
@@ -549,7 +549,7 @@ export default function ViewRequestPage() {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
-                                                            <Link href={`/dashboard/requests/${request.id}/submissions/${submission.id}`}>View</Link>
+                                                            <Link href={`/dashboard/requests/${request._id}/submissions/${submission.id}`}>View</Link>
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
