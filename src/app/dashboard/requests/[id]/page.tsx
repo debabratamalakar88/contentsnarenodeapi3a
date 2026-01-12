@@ -246,7 +246,6 @@ export default function ViewRequestPage() {
             const commentsData = await getComments(token, request._id, questionIdStr);
             setComments(commentsData);
         } catch (err: any) {
-            console.error("Failed to fetch comments:", err);
             setComments([]);
         } finally {
             setIsCommentsLoading(false);
@@ -481,7 +480,7 @@ export default function ViewRequestPage() {
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                {comment.created_at && <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>}
                                                                 {editingCommentId === comment.id ? (
                                                                     <div className="mt-2">
                                                                         <Textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="bg-white" />

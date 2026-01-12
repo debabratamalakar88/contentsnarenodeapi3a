@@ -595,7 +595,7 @@ export default function RequestPreviewPage() {
                                                                             )}
                                                                         </div>
                                                                     </div>
-                                                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                    {comment.created_at && <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>}
                                                                     {editingCommentId === comment.id ? (
                                                                         <div className="mt-2">
                                                                             <Textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="bg-white" />
