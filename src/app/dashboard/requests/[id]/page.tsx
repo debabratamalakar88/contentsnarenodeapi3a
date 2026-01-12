@@ -319,7 +319,7 @@ export default function ViewRequestPage() {
     
     const assignedClients = useMemo(() => {
         if (!request?.client_id || !clients) return [];
-        const clientIds = Array.isArray(request.client_id) ? request.client_id : [request.client_id];
+        const clientIds = Array.isArray(request.client_id) ? request.client_id.map(String) : [String(request.client_id)];
         return clients.filter(c => clientIds.includes(c._id));
     }, [request, clients]);
     
@@ -334,7 +334,7 @@ export default function ViewRequestPage() {
         try {
             await addComment(token, {
                 request_id: request._id,
-                user_id: currentUser._id,
+                user_id: currentUser.id,
                 question_id: String(activeIds.questionId),
                 comment: newComment
             });
@@ -471,9 +471,9 @@ export default function ViewRequestPage() {
                                                         comments.map(comment => (
                                                             <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                 <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                    <p className="font-semibold">{comment.user?.name || 'User'}</p>
+                                                                    <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
+                                                                        {currentUser?.id === comment.user?.id && editingCommentId !== comment.id && (
                                                                             <>
                                                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.comment); }}><Pencil className="h-3 w-3" /></Button>
                                                                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setCommentToDelete(comment)}><Trash2 className="h-3 w-3" /></Button>

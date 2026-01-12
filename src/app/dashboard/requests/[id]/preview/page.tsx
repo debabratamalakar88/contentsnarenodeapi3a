@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
@@ -295,7 +296,6 @@ export default function RequestPreviewPage() {
                 if (showComments) {
                     toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
                 }
-                console.error("Failed to fetch comments:", err);
                 setComments([]);
             } finally {
                 setIsCommentsLoading(false);
@@ -587,7 +587,7 @@ export default function RequestPreviewPage() {
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
+                                                                            {currentUser?.id === comment.user?.id && editingCommentId !== comment.id && (
                                                                                 <>
                                                                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.comment); }}><Pencil className="h-3 w-3" /></Button>
                                                                                     <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setCommentToDelete(comment)}><Trash2 className="h-3 w-3" /></Button>
@@ -655,6 +655,5 @@ export default function RequestPreviewPage() {
             </AlertDialog>
         </>
     );
+}
 
-
-    
