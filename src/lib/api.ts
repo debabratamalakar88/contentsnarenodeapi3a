@@ -1056,7 +1056,7 @@ export async function getComments(token: string | null, requestIdOrCode: string,
   if (token) {
     url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
     const response = await fetchWithToken(url, token);
-    return response.data || [];
+    return response || [];
   } else {
     url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
      const response = await fetch(url, {
