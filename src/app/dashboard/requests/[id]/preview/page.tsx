@@ -289,7 +289,7 @@ export default function RequestPreviewPage() {
             setIsCommentsLoading(true);
             try {
                 const questionIdStr = String(activeIds.questionId);
-                const commentsData = await getComments(token, request.id, questionIdStr);
+                const commentsData = await getComments(token, request._id, questionIdStr);
                 setComments(commentsData);
             } catch (err: any) {
                 if (showComments) {
@@ -310,7 +310,7 @@ export default function RequestPreviewPage() {
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
         try {
-            await softDeleteRequest(token, requestToArchive.id);
+            await softDeleteRequest(token, requestToArchive._id);
             toast({ title: 'Request archived' });
             router.push('/dashboard/requests');
         } catch (err: any) {
@@ -323,7 +323,7 @@ export default function RequestPreviewPage() {
     const handleForceDelete = async () => {
         if (!token || !requestToForceDelete) return;
         try {
-            await forceDeleteRequest(token, requestToForceDelete.id);
+            await forceDeleteRequest(token, requestToForceDelete._id);
             toast({ title: 'Request permanently deleted' });
             router.push('/dashboard/requests');
         } catch (err: any) {
@@ -337,10 +337,10 @@ export default function RequestPreviewPage() {
         if (!request || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
         
         const page = request.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
+        if (!page) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
         
         const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
+        if (!section) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
 
         const question = section.questions.find(q => q.id === activeIds.questionId);
         if(!question) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
@@ -514,7 +514,7 @@ export default function RequestPreviewPage() {
                                         <Sparkles className="mr-2 h-4 w-4"/> Activity
                                     </Button>
                                     <Button asChild>
-                                        <Link href={`/dashboard/requests/edit/${request.id}/finalize`}>
+                                        <Link href={`/dashboard/requests/edit/${request._id}/finalize`}>
                                             <Rocket className="mr-2 h-4 w-4"/> Publish
                                         </Link>
                                     </Button>
@@ -523,8 +523,8 @@ export default function RequestPreviewPage() {
                                             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
-                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request.id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request._id}/finalize`}><Rocket className="mr-2 h-4 w-4" /> Publish Request</Link></DropdownMenuItem>
+                                            <DropdownMenuItem asChild><Link href={`/dashboard/requests/edit/${request._id}/builder`}><Edit className="mr-2 h-4 w-4" /> Edit Request</Link></DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setRequestToArchive(request)}><Archive className="mr-2 h-4 w-4" /> Archive Request</DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setRequestToForceDelete(request)} className="text-destructive focus:bg-destructive focus:text-destructive-foreground"><Trash2 className="mr-2 h-4 w-4" /> Delete Request</DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -562,7 +562,7 @@ export default function RequestPreviewPage() {
                                                         <Button variant="link" className="p-0 h-auto text-primary font-semibold" onClick={handleContinue} disabled={isLastQuestion}>
                                                             {isLastQuestion ? "End of Form" : "Continue to next question"}
                                                         </Button>
-                                                         <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
+                                                        <Button variant="outline" className="rounded-full" onClick={() => setShowComments(prev => !prev)}>
                                                             {showComments ? 'CLOSE COMMENTS' : `COMMENTS (${comments.length})`}
                                                         </Button>
                                                     </div>
@@ -585,7 +585,7 @@ export default function RequestPreviewPage() {
                                                             comments.map(comment => (
                                                                 <div key={comment.id} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                                        <p className="font-semibold">{comment.user?.name || 'User'}</p>
+                                                                        <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             {currentUser?.id === comment.user.id && editingCommentId !== comment.id && (
                                                                                 <>
@@ -655,5 +655,6 @@ export default function RequestPreviewPage() {
             </AlertDialog>
         </>
     );
-}
 
+
+    
