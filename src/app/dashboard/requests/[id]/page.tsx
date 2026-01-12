@@ -228,9 +228,9 @@ export default function ViewRequestPage() {
 
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
-    const [newComment, setNewComment] = useState("");
     const [isCommentsLoading, setIsCommentsLoading] = useState(false);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [newComment, setNewComment] = useState("");
     
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editingCommentText, setEditingCommentText] = useState('');
@@ -468,7 +468,7 @@ export default function ViewRequestPage() {
                                                       <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                     ) : comments.length > 0 ? (
                                                         comments.map(comment => (
-                                                            <div key={comment.id} className="p-3 bg-muted rounded-lg group">
+                                                            <div key={comment.id || comment.created_at} className="p-3 bg-muted rounded-lg group">
                                                                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                     <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

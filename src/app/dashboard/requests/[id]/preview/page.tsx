@@ -246,6 +246,28 @@ export default function RequestPreviewPage() {
     const id = params.id as string;
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
+    const fetchComments = useCallback(async () => {
+        if (activeIds?.questionId && token && request) {
+            setIsCommentsLoading(true);
+            try {
+                const questionIdStr = String(activeIds.questionId);
+                const commentsData = await getComments(token, request._id, questionIdStr);
+                setComments(commentsData);
+            } catch (err: any) {
+                if (showComments) {
+                    toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
+                }
+                setComments([]);
+            } finally {
+                setIsCommentsLoading(false);
+            }
+        }
+    }, [activeIds?.questionId, request, showComments, token, toast]);
+
+    useEffect(() => {
+        fetchComments();
+    }, [fetchComments]);
+    
     useEffect(() => {
         if (!id) { router.push('/dashboard/requests'); return; }
         if (!token) { router.push('/login'); return; }
@@ -284,29 +306,7 @@ export default function RequestPreviewPage() {
         }
         fetchRequestData();
     }, [id, router, toast, token]);
-    
-    const fetchComments = useCallback(async () => {
-        if (activeIds?.questionId && token && request) {
-            setIsCommentsLoading(true);
-            try {
-                const questionIdStr = String(activeIds.questionId);
-                const commentsData = await getComments(token, request._id, questionIdStr);
-                setComments(commentsData);
-            } catch (err: any) {
-                if (showComments) {
-                    toast({ variant: 'destructive', title: 'Error fetching comments', description: err.message });
-                }
-                setComments([]);
-            } finally {
-                setIsCommentsLoading(false);
-            }
-        }
-    }, [activeIds?.questionId, request, showComments, token, toast]);
 
-    useEffect(() => {
-        fetchComments();
-    }, [fetchComments]);
-    
     const handleArchive = async () => {
         if (!token || !requestToArchive) return;
         try {
@@ -583,7 +583,7 @@ export default function RequestPreviewPage() {
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
                                                             comments.map(comment => (
-                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group">
+                                                                <div key={comment.id || comment.created_at} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -595,7 +595,7 @@ export default function RequestPreviewPage() {
                                                                             )}
                                                                         </div>
                                                                     </div>
-                                                                    {comment.created_at && <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>}
+                                                                    {comment.created_at ? <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p> : null}
                                                                     {editingCommentId === comment.id ? (
                                                                         <div className="mt-2">
                                                                             <Textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="bg-white" />
