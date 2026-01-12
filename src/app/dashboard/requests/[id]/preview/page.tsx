@@ -113,7 +113,7 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
         setActiveIds({ pageId, sectionId, questionId });
     };
 
-    const assignedClient = clients.find(c => request.client_id?.includes(c._id));
+    const assignedClients = clients.filter(c => request.client_id?.includes(c._id));
 
     return (
         <aside 
@@ -134,15 +134,19 @@ const Sidebar = ({ request, clients, activeIds, setActiveIds }: { request: Reque
                     {request.due_date && <Badge variant="outline"><CalendarDays className="h-3 w-3 mr-1.5" />Due: {format(parseISO(request.due_date), 'dd/MM/yyyy')}</Badge>}
                     <Badge variant="secondary" className="capitalize">{request.status}</Badge>
                 </div>
-                 {assignedClient && (
-                    <div className="mt-4 flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                            <AvatarFallback>{getInitials(assignedClient.full_name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="text-sm font-semibold">{assignedClient.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{assignedClient.email}</p>
-                        </div>
+                 {assignedClients && assignedClients.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                        {assignedClients.map(client => (
+                            <div key={client._id} className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarFallback>{getInitials(client.full_name)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="text-sm font-semibold">{client.full_name}</p>
+                                    <p className="text-xs text-muted-foreground">{client.email}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
@@ -337,10 +341,10 @@ export default function RequestPreviewPage() {
         if (!request || !activeIds) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
         
         const page = request.form_data.find(p => p.id === activeIds.pageId);
-        if (!page) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
+        if (!page) return { activeQuestion: null, activeSection: null, activePage: null, activePageIndex: -1 };
         
         const section = page.sections.find(s => s.id === activeIds.sectionId);
-        if (!section) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
+        if (!section) return { activeQuestion: null, activeSection: null, activePage: page, activePageIndex: -1 };
 
         const question = section.questions.find(q => q.id === activeIds.questionId);
         if(!question) return { activeQuestion: null, activeSection: section, activePage: page, activePageIndex: -1 };
@@ -352,8 +356,7 @@ export default function RequestPreviewPage() {
     
     const navigatePage = (direction: 'next' | 'prev') => {
         if (!request || !activePage) return;
-        const currentIndex = request.form_data.findIndex(p => p.id === activePage.id);
-        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        const newIndex = direction === 'next' ? activePageIndex + 1 : activePageIndex - 1;
 
         if (newIndex >= 0 && newIndex < request.form_data.length) {
             const newPage = request.form_data[newIndex];
@@ -582,8 +585,8 @@ export default function RequestPreviewPage() {
                                                         {isCommentsLoading ? (
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
-                                                            comments.map(comment => (
-                                                                <div key={comment.id || comment.created_at} className="p-3 bg-muted rounded-lg group">
+                                                            comments.map((comment, index) => (
+                                                                <div key={comment.id || comment.created_at || index} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
