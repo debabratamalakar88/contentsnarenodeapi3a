@@ -248,7 +248,7 @@ export default function SharedRequestPage() {
     }, [searchParams]);
     
     const fetchComments = useCallback(async () => {
-        if (!showComments || !activeIds?.questionId || !request) return;
+        if (!activeIds?.questionId || !request) return;
         setIsCommentsLoading(true);
         try {
             const commentsData = await getComments(null, request._id, String(activeIds.questionId));
@@ -258,13 +258,11 @@ export default function SharedRequestPage() {
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, request, showComments]);
+    }, [activeIds?.questionId, request]);
 
     useEffect(() => {
-        if (showComments) {
-          fetchComments();
-        }
-    }, [showComments, fetchComments]);
+        fetchComments();
+    }, [fetchComments]);
     
     useEffect(() => {
         if (!requestCode) return;
@@ -685,7 +683,7 @@ export default function SharedRequestPage() {
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
                                                             comments.map((comment, index) => (
-                                                                <div key={comment.id || index} className="p-3 bg-muted rounded-lg group">
+                                                                <div key={comment.id || comment.created_at || index} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     </div>
@@ -710,3 +708,5 @@ export default function SharedRequestPage() {
         </div>
     );
 }
+
+    
