@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useEffect, useState, useMemo, type FormEvent, useCallback } from 'react';
@@ -249,24 +247,21 @@ export default function SharedRequestPage() {
     }, [searchParams]);
     
     const fetchComments = useCallback(async () => {
-        if (!activeIds?.questionId || !requestCode) return;
+        if (!showComments || !activeIds?.questionId || !requestCode) return;
         setIsCommentsLoading(true);
         try {
             const commentsData = await getComments(null, requestCode, String(activeIds.questionId));
             setComments(commentsData);
         } catch (err: any) {
-            console.error("Failed to fetch comments:", err);
             setComments([]);
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, requestCode]);
+    }, [activeIds?.questionId, requestCode, showComments]);
 
     useEffect(() => {
-        if (requestCode) {
-            fetchComments();
-        }
-    }, [requestCode, activeIds, fetchComments]);
+        fetchComments();
+    }, [fetchComments]);
     
     useEffect(() => {
         if (!requestCode) return;
@@ -686,8 +681,8 @@ export default function SharedRequestPage() {
                                                         {isCommentsLoading ? (
                                                           <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                         ) : comments.length > 0 ? (
-                                                            comments.map(comment => (
-                                                                <div key={comment.id} className="p-3 bg-muted rounded-lg group">
+                                                            comments.map((comment, index) => (
+                                                                <div key={comment.id || index} className="p-3 bg-muted rounded-lg group">
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     </div>
@@ -712,4 +707,3 @@ export default function SharedRequestPage() {
         </div>
     );
 }
-
