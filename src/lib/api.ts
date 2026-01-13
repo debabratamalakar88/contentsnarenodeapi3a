@@ -205,6 +205,7 @@ export interface Request {
 }
 
 export interface Submission {
+  _id: string;
   id: number;
   request_id: string;
   client_id: string | null;
@@ -791,7 +792,7 @@ export async function getAdminRequestSubmissions(token: string, requestId: strin
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions`, token);
 }
 
-export async function getAdminSingleSubmissionForRequest(token: string, requestId: string, submissionId: number): Promise<Submission> {
+export async function getAdminSingleSubmissionForRequest(token: string, requestId: string, submissionId: string): Promise<Submission> {
   return fetchWithToken(`${API_BASE_URL}/api/admin/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
@@ -1010,7 +1011,7 @@ export async function getRequestSubmissions(token: string, requestId: string): P
   return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions`, token);
 }
 
-export async function getSingleSubmissionForRequest(token: string, requestId: string, submissionId: number): Promise<Submission> {
+export async function getSingleSubmissionForRequest(token: string, requestId: string, submissionId: string): Promise<Submission> {
   return fetchWithToken(`${API_BASE_URL}/api/requests/${requestId}/submissions/${submissionId}`, token);
 }
 
@@ -1051,9 +1052,13 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // ===================================
 
 export async function getComments(token: string | null, requestId: string, questionId: string): Promise<Comment[]> {
-    const url = `${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`;
-    let response;
+  const isPublic = !token;
+  const url = isPublic
+    ? `${API_BASE_URL}/api/requests/share/${requestId}/questions/${questionId}/comments`
+    : `${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`;
 
+  let response;
+  try {
     if (token) {
         response = await fetchWithToken(url, token);
     } else {
@@ -1068,6 +1073,10 @@ export async function getComments(token: string | null, requestId: string, quest
         return response.data;
     }
     return [];
+  } catch (error) {
+    console.error("Error in getComments:", error);
+    return []; // Return empty array on error
+  }
 }
 
 
@@ -1103,7 +1112,7 @@ export async function deleteComment(token: string, commentId: number): Promise<{
 
 export async function getCommentNotifications(token: string, filter: 'my-requests' | 'all-requests', page: number = 1): Promise<PaginatedComments> {
     const endpoint = filter === 'my-requests' ? 'comments/my-requests' : 'comments/all-requests';
-    const url = new URL(`${API_BASE_URL}/api/${endpoint}`);
+    const url = new URL(`${API_BASE_URL}/api/request-comments/${endpoint}`);
     url.searchParams.append('page', String(page));
     return fetchWithToken(url.toString(), token);
 }
