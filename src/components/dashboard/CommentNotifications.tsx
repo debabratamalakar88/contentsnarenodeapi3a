@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -46,9 +47,9 @@ export function CommentNotifications({}: CommentNotificationsProps) {
             const response: PaginatedComments = await getCommentNotifications(token, tab, page);
             
             if (page === 1) {
-                setNotifications(response.data);
+                setNotifications(response.data || []);
             } else {
-                setNotifications(prev => [...prev, ...response.data]);
+                setNotifications(prev => [...prev, ...(response.data || [])]);
             }
             
             setPagination(prev => ({
