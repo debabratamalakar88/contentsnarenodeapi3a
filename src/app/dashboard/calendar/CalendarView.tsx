@@ -215,7 +215,7 @@ export default function CalendarView() {
 
           clientIds.forEach(clientId => {
             const clientName = clientMap.get(clientId) || 'Unknown Client';
-            if (req.status === 'published') {
+            if (req.status === 'published' && req.updated_at) {
                 fetchedEvents.push({
                   id: `req-pub-${req.id}-${clientId}`,
                   type: 'request-published',
@@ -418,3 +418,4 @@ export default function CalendarView() {
     </div>
   );
 }
+
