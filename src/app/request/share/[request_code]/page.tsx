@@ -249,10 +249,10 @@ export default function SharedRequestPage() {
     }, [searchParams]);
     
     const fetchComments = useCallback(async () => {
-        if (!activeIds?.questionId || !request) return;
+        if (!activeIds?.questionId || !requestCode) return;
         setIsCommentsLoading(true);
         try {
-            const commentsData = await getComments(null, request.id, String(activeIds.questionId));
+            const commentsData = await getComments(null, requestCode, String(activeIds.questionId));
             setComments(commentsData);
         } catch (err: any) {
             console.error("Failed to fetch comments:", err);
@@ -260,13 +260,13 @@ export default function SharedRequestPage() {
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, request]);
+    }, [activeIds?.questionId, requestCode]);
 
     useEffect(() => {
-        if (request) {
+        if (requestCode) {
             fetchComments();
         }
-    }, [request, activeIds, fetchComments]);
+    }, [requestCode, activeIds, fetchComments]);
     
     useEffect(() => {
         if (!requestCode) return;
@@ -691,7 +691,7 @@ export default function SharedRequestPage() {
                                                                     <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                         <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     </div>
-                                                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p>
+                                                                    {comment.created_at ? <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(comment.created_at), { addSuffix: true })}</p> : null}
                                                                     <p className="text-sm mt-2">{comment.comment}</p>
                                                                 </div>
                                                             ))
