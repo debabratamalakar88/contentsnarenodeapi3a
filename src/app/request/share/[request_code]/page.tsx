@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useMemo, type FormEvent, useCallback } from 'react';
@@ -247,21 +248,23 @@ export default function SharedRequestPage() {
     }, [searchParams]);
     
     const fetchComments = useCallback(async () => {
-        if (!showComments || !activeIds?.questionId || !requestCode) return;
+        if (!showComments || !activeIds?.questionId || !request) return;
         setIsCommentsLoading(true);
         try {
-            const commentsData = await getComments(null, requestCode, String(activeIds.questionId));
+            const commentsData = await getComments(null, request._id, String(activeIds.questionId));
             setComments(commentsData);
         } catch (err: any) {
             setComments([]);
         } finally {
             setIsCommentsLoading(false);
         }
-    }, [activeIds?.questionId, requestCode, showComments]);
+    }, [activeIds?.questionId, request, showComments]);
 
     useEffect(() => {
-        fetchComments();
-    }, [fetchComments]);
+        if (showComments) {
+          fetchComments();
+        }
+    }, [showComments, fetchComments]);
     
     useEffect(() => {
         if (!requestCode) return;

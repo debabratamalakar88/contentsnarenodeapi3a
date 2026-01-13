@@ -1,3 +1,4 @@
+
 'use client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -1049,29 +1050,24 @@ export async function getSubmission(submissionCode: string): Promise<Submission>
 // COMMENTS API
 // ===================================
 
-export async function getComments(token: string | null, requestIdOrCode: string, questionId: string): Promise<Comment[]> {
-  let url: string;
-  let response;
-  
-  if (token) {
-    // Authenticated user path
-    url = `${API_BASE_URL}/api/requests/${requestIdOrCode}/questions/${questionId}/comments`;
-    response = await fetchWithToken(url, token);
-  } else {
-    // Public path
-    url = `${API_BASE_URL}/api/requests/share/${requestIdOrCode}/questions/${questionId}/comments`;
-    const fetchResponse = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    response = await handleResponse(fetchResponse);
-  }
-  
-  // The backend might return an object with a 'data' property or a direct array
-  if (Array.isArray(response)) {
-    return response;
-  }
-  if (response && Array.isArray(response.data)) {
-    return response.data;
-  }
-  return [];
+export async function getComments(token: string | null, requestId: string, questionId: string): Promise<Comment[]> {
+    const url = `${API_BASE_URL}/api/requests/${requestId}/questions/${questionId}/comments`;
+    let response;
+
+    if (token) {
+        response = await fetchWithToken(url, token);
+    } else {
+        const fetchResponse = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        response = await handleResponse(fetchResponse);
+    }
+
+    if (Array.isArray(response)) {
+        return response;
+    }
+    if (response && Array.isArray(response.data)) {
+        return response.data;
+    }
+    return [];
 }
 
 
