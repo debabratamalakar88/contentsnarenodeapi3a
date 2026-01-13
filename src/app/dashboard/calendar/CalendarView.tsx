@@ -22,8 +22,8 @@ interface CalendarEvent {
   date: Date;
   title: string;
   clientName: string;
-  clientId: number;
-  ownerId: number;
+  clientId: string;
+  ownerId: string;
   data: Request | Reminder;
 }
 
@@ -206,7 +206,7 @@ export default function CalendarView() {
         setClients(clientsData || []);
         setTeamMembers(teamMembersData || []);
 
-        const clientMap = new Map(clientsData.map(c => [c.id, c.full_name]));
+        const clientMap = new Map(clientsData.map(c => [c._id, c.full_name]));
         const fetchedEvents: CalendarEvent[] = [];
 
         requestsData.forEach((req) => {
@@ -214,39 +214,39 @@ export default function CalendarView() {
           const ownerId = req.created_by;
 
           clientIds.forEach(clientId => {
-            const clientName = clientMap.get(clientId) || 'Unknown Client';
+            const clientName = clientMap.get(String(clientId)) || 'Unknown Client';
             if (req.status === 'published' && req.updated_at) {
                 fetchedEvents.push({
-                  id: `req-pub-${req.id}-${clientId}`,
+                  id: `req-pub-${req._id}-${clientId}`,
                   type: 'request-published',
                   date: parseISO(req.updated_at),
                   title: req.title,
                   clientName,
-                  clientId,
+                  clientId: String(clientId),
                   ownerId,
                   data: req,
                 });
             }
             if (req.status === 'published' && req.due_date) {
                 fetchedEvents.push({
-                  id: `req-due-${req.id}-${clientId}`,
+                  id: `req-due-${req._id}-${clientId}`,
                   type: 'request-due',
                   date: parseISO(req.due_date),
                   title: req.title,
                   clientName,
-                  clientId,
+                  clientId: String(clientId),
                   ownerId,
                   data: req,
                 });
             }
             if (req.status === 'scheduled' && req.scheduled_at) {
                 fetchedEvents.push({
-                  id: `req-sch-${req.id}-${clientId}`,
+                  id: `req-sch-${req._id}-${clientId}`,
                   type: 'request-scheduled',
                   date: parseISO(req.scheduled_at),
                   title: req.title,
                   clientName,
-                  clientId,
+                  clientId: String(clientId),
                   ownerId,
                   data: req,
                 });
@@ -262,8 +262,8 @@ export default function CalendarView() {
               date: parseISO(rem.reminder_date),
               title: `${rem.request.title}`,
               clientName: rem.client.full_name,
-              clientId: rem.client.id,
-              ownerId: rem.request.created_by,
+              clientId: String(rem.client.id),
+              ownerId: String(rem.request.created_by),
               data: rem,
             });
           }
@@ -285,8 +285,8 @@ export default function CalendarView() {
 
   const filteredEvents = useMemo(() => {
     return allEvents.filter(event => {
-      const ownerMatch = selectedOwnerId === 'all' || event.ownerId === Number(selectedOwnerId);
-      const clientMatch = selectedClientId === 'all' || event.clientId === Number(selectedClientId);
+      const ownerMatch = selectedOwnerId === 'all' || event.ownerId === selectedOwnerId;
+      const clientMatch = selectedClientId === 'all' || event.clientId === selectedClientId;
       return ownerMatch && clientMatch;
     });
   }, [allEvents, selectedOwnerId, selectedClientId]);
@@ -369,7 +369,7 @@ export default function CalendarView() {
                     <DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem>
                     <DropdownMenuSeparator />
                     {clients.map(client => (
-                        <DropdownMenuRadioItem key={client.id} value={String(client.id)}>{client.full_name}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem key={client._id} value={client._id}>{client.full_name}</DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
@@ -418,4 +418,3 @@ export default function CalendarView() {
     </div>
   );
 }
-
