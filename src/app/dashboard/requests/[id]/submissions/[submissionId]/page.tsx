@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -167,8 +166,8 @@ export default function SubmissionDetailPage() {
   const [isExporting, setIsExporting] = useState(false);
   const submissionContentRef = useRef<HTMLDivElement>(null);
 
-  const submissionId = Number(params.submissionId);
-  const requestId = Number(params.id);
+  const submissionId = params.submissionId as string;
+  const requestId = params.id as string;
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -496,4 +495,3 @@ export default function SubmissionDetailPage() {
     </div>
   );
 }
-

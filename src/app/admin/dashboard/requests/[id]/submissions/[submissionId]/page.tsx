@@ -167,8 +167,8 @@ export default function AdminSubmissionDetailPage() {
   const [isExporting, setIsExporting] = useState(false);
   const submissionContentRef = useRef<HTMLDivElement>(null);
 
-  const submissionId = Number(params.submissionId);
-  const requestId = Number(params.id);
+  const submissionId = params.submissionId as string;
+  const requestId = params.id as string;
 
   useEffect(() => {
     const token = localStorage.getItem('adminAuthToken');
