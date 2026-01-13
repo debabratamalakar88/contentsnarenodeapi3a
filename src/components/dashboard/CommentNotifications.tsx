@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getCommentNotifications, type Comment, type PaginatedComments } from '@/lib/api';
+import { getCommentNotifications, type Comment } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -44,19 +44,20 @@ export function CommentNotifications({}: CommentNotificationsProps) {
 
         setIsLoading(true);
         try {
-            const response: PaginatedComments = await getCommentNotifications(token, tab, page);
+            const response = await getCommentNotifications(token, tab, page);
+            const responseData = Array.isArray(response) ? response : (response.data || []);
             
             if (page === 1) {
-                setNotifications(response.data || []);
+                setNotifications(responseData);
             } else {
-                setNotifications(prev => [...prev, ...(response.data || [])]);
+                setNotifications(prev => [...prev, ...responseData]);
             }
             
             setPagination(prev => ({
                 ...prev,
                 [tab]: {
-                    currentPage: response.current_page,
-                    hasMore: response.current_page < response.last_page
+                    currentPage: response.current_page || page,
+                    hasMore: response.last_page ? response.current_page < response.last_page : false,
                 }
             }));
             
@@ -100,24 +101,30 @@ export function CommentNotifications({}: CommentNotificationsProps) {
                         ) : (
                             <div className="space-y-1 p-2">
                                 {notifications.map(notif => {
-                                    const isDraft = notif.request.status === 'draft';
+                                    if (!notif || !notif.request_id) return null;
+                                    const request = 'title' in notif.request_id ? notif.request_id : notif.request;
+                                    const user = 'name' in notif.user_id ? notif.user_id : notif.user;
+
+                                    if (!request || !user) return null;
+                                    
+                                    const isDraft = request.status === 'draft';
                                     const linkHref = isDraft
-                                        ? `/dashboard/requests/${notif.request_id}/preview`
-                                        : `/dashboard/requests/${notif.request_id}`;
+                                        ? `/dashboard/requests/${request._id}/preview`
+                                        : `/dashboard/requests/${request._id}`;
 
                                     return (
-                                        <Link key={notif.id} href={linkHref} className="block">
+                                        <Link key={notif._id || notif.id} href={linkHref} className="block">
                                             <div className={cn(
                                                 "flex items-start gap-3 p-3 rounded-lg hover:bg-muted",
                                                 !notif.read_at && "bg-blue-50 hover:bg-blue-100"
                                             )}>
                                                 <Avatar className="h-8 w-8 text-xs">
-                                                    <AvatarFallback className="bg-green-100 text-green-800">{getInitials(notif.user.name)}</AvatarFallback>
+                                                    <AvatarFallback className="bg-green-100 text-green-800">{getInitials(user.name)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex-1 overflow-hidden">
-                                                    <p className="text-sm"><span className="font-semibold">{notif.user.name}</span> on <span className="font-semibold">{notif.request.title}</span></p>
+                                                    <p className="text-sm"><span className="font-semibold">{user.name}</span> on <span className="font-semibold">{request.title}</span></p>
                                                     <p className="text-sm text-muted-foreground truncate">{notif.comment}</p>
-                                                    <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(parseISO(notif.created_at), { addSuffix: true })}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(parseISO(notif.createdAt || notif.created_at), { addSuffix: true })}</p>
                                                 </div>
                                             </div>
                                         </Link>
