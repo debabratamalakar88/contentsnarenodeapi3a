@@ -466,8 +466,8 @@ export default function ViewRequestPage() {
                                                     {isCommentsLoading ? (
                                                       <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                     ) : comments.length > 0 ? (
-                                                        comments.map((comment) => (
-                                                            <div key={comment.id} className="p-3 bg-muted rounded-lg group">
+                                                        comments.map((comment, index) => (
+                                                            <div key={comment.id || index} className="p-3 bg-muted rounded-lg group">
                                                                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                     <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -530,7 +530,7 @@ export default function ViewRequestPage() {
                                         </TableHeader>
                                         <TableBody>
                                             {submissions.length > 0 ? submissions.map(submission => (
-                                                <TableRow key={submission.id || submission.submission_code}>
+                                                <TableRow key={(submission as any)._id || submission.id}>
                                                     <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
                                                     <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
                                                     <TableCell>
