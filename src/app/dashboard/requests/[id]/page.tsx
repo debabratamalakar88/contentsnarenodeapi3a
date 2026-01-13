@@ -467,7 +467,7 @@ export default function ViewRequestPage() {
                                                       <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
                                                     ) : comments.length > 0 ? (
                                                         comments.map((comment, index) => (
-                                                            <div key={comment.id || index} className="p-3 bg-muted rounded-lg group">
+                                                            <div key={comment.id || comment.created_at || index} className="p-3 bg-muted rounded-lg group">
                                                                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                                                                     <p className="font-semibold">{comment.user?.name || 'Guest'}</p>
                                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -530,7 +530,7 @@ export default function ViewRequestPage() {
                                         </TableHeader>
                                         <TableBody>
                                             {submissions.length > 0 ? submissions.map(submission => (
-                                                <TableRow key={(submission as any)._id || submission.id}>
+                                                <TableRow key={(submission as any)._id}>
                                                     <TableCell className="font-mono text-xs">{submission.submission_code}</TableCell>
                                                     <TableCell>{submission.updated_at ? format(parseISO(submission.updated_at), 'PPP p') : 'N/A'}</TableCell>
                                                     <TableCell>
@@ -547,7 +547,7 @@ export default function ViewRequestPage() {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Button variant="default" size="sm" asChild className="bg-pink-600 hover:bg-pink-700 text-white">
-                                                            <Link href={`/dashboard/requests/${request._id}/submissions/${submission.id}`}>View</Link>
+                                                            <Link href={`/dashboard/requests/${request._id}/submissions/${(submission as any)._id}`}>View</Link>
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
