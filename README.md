@@ -1,14 +1,3 @@
-
-
-
-# Firebase Studio
-
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
-
----
-
 ## API Documentation
 
 This document outlines the API endpoints the frontend application expects for user authentication.
